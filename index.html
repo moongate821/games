@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゲーム置き場</title>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<style>
+:root { --bg:#faf7f2; --fg:#222; --sub:#666; --card:#fff; --line:#e4ddd2; }
+@media (prefers-color-scheme: dark) { :root { --bg:#16141a; --fg:#eee; --sub:#aaa; --card:#221f27; --line:#3a3540; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic UI",sans-serif; line-height:1.6; }
+main { max-width:1000px; margin:0 auto; padding:24px 16px 48px; }
+h1 { font-size:1.8rem; margin:0 0 4px; }
+.lead { color:var(--sub); margin:0 0 20px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-top:6px solid var(--c); border-radius:14px; padding:16px; display:flex; flex-direction:column; }
+.card h2 { margin:0 0 6px; font-size:1.25rem; }
+.card p { margin:0 0 12px; color:var(--sub); flex:1; }
+.play { display:block; text-align:center; background:var(--c); color:#fff; text-decoration:none; font-weight:700; padding:12px; border-radius:10px; font-size:1.1rem; }
+.qr { margin:14px 0 0; text-align:center; }
+.video { margin:0 0 12px; border-radius:10px; overflow:hidden; background:#000; }
+.video video { display:block; width:100%; aspect-ratio:16/9; background:#000; }
+.vcap { font-size:.75rem; color:#ccc; padding:4px 8px; background:#111; }
+.video.dev { aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px;
+  background:repeating-linear-gradient(45deg,#2a1020 0 14px,#1a0a14 14px 28px); color:#ffd6e4; font-size:.85rem; line-height:1.7; }
+.video.dev b { font-size:1.1rem; color:#fff; }
+.badge { display:inline-block; font-size:.7rem; vertical-align:middle; background:var(--c); color:#fff; padding:1px 8px; border-radius:99px; margin-left:4px; }
+.qr svg { width:150px; height:150px; border-radius:6px; }
+.qr figcaption { font-size:.72rem; color:var(--sub); word-break:break-all; }
+.how { margin-top:28px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.how h2 { margin:0 0 8px; font-size:1.1rem; }
+.how ul { margin:0; padding-left:1.2em; }
+.top { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
+.top .qr { margin:0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div style="flex:1;min-width:220px">
+      <h1>ゲーム置き場</h1>
+      <p class="lead">ブラウザで遊べる6つのゲーム。宣伝動画つき。スマホは QR コードを読み取ると開けます。</p>
+    </div>
+    <figure class="qr"><svg width="132" height="132" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h33v33h-33z"/><path class="qrline" stroke="#111" d="M2 2.5h7m2 0h4m1 0h1m1 0h1m2 0h1m2 0h7m-29 1h1m5 0h1m2 0h1m2 0h1m2 0h1m1 0h2m1 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h2m1 0h1m2 0h1m1 0h2m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h5m4 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h3m2 0h2m1 0h2m3 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h1m2 0h1m3 0h2m2 0h1m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h3m1 0h1m2 0h2m1 0h2m-21 1h1m2 0h1m1 0h2m1 0h2m4 0h1m6 0h1m1 0h1m-24 1h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h2m2 0h3m1 0h3m2 0h1m2 0h1m-26 1h2m1 0h1m1 0h1m2 0h4m1 0h1m2 0h3m3 0h3m-25 1h1m3 0h1m4 0h2m1 0h2m1 0h1m3 0h3m1 0h2m-25 1h1m2 0h1m7 0h1m1 0h2m1 0h4m2 0h1m1 0h2m-26 1h1m1 0h1m1 0h4m2 0h2m2 0h1m1 0h1m1 0h1m-22 1h3m1 0h3m1 0h1m2 0h1m1 0h2m3 0h1m1 0h1m1 0h1m2 0h4m-29 1h1m2 0h2m3 0h3m4 0h3m1 0h1m4 0h2m1 0h1m-28 1h2m1 0h1m2 0h2m3 0h1m1 0h1m1 0h1m1 0h3m1 0h1m5 0h1m-27 1h3m1 0h1m1 0h1m1 0h3m1 0h2m1 0h2m2 0h1m1 0h2m1 0h1m2 0h1m-29 1h1m3 0h3m2 0h1m2 0h1m1 0h1m2 0h1m2 0h4m3 0h2m-27 1h2m3 0h1m1 0h1m1 0h1m2 0h4m1 0h1m1 0h2m1 0h1m2 0h2m-29 1h1m2 0h1m1 0h2m1 0h2m2 0h1m3 0h1m3 0h5m1 0h1m-19 1h2m1 0h1m2 0h1m1 0h1m3 0h1m3 0h1m1 0h3m-29 1h7m2 0h1m2 0h1m3 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m-28 1h1m5 0h1m1 0h3m3 0h1m1 0h1m1 0h3m3 0h4m-28 1h1m1 0h3m1 0h1m4 0h2m3 0h2m2 0h5m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m9 0h6m-28 1h1m1 0h3m1 0h1m3 0h2m8 0h1m3 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m4 0h3m1 0h1m6 0h1m-28 1h7m1 0h4m3 0h1m1 0h5m1 0h1m1 0h1m1 0h1"/></g></svg><figcaption>このページ</figcaption></figure>
+  </div>
+  <div class="grid">
+  <article class="card" style="--c:#7c4dff">
+    <h2>DROP PARTY</h2>
+    <p>TERRARIUM GENESIS と QUANTUM DROP の2本立て落ち物パズル。ひとり・CPU対戦・デモ観戦。</p>
+    <div class="video"><video controls playsinline preload="none" poster="videos/落ち物3作品_宣伝動画_3分.jpg" src="videos/落ち物3作品_宣伝動画_3分.mp4"></video>
+      <div class="vcap">▶ 落ち物3作品の宣伝動画(3分)・約23MB</div></div>
+    <a class="play" href="drop-party/">あそぶ ▶</a>
+    <figure class="qr"><svg width="148" height="148" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#111" d="M2 2.5h7m4 0h3m3 0h5m1 0h1m2 0h7m-33 1h1m5 0h1m5 0h6m2 0h3m3 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m4 0h1m2 0h6m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m3 0h1m1 0h1m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h6m1 0h1m1 0h2m2 0h3m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h2m1 0h4m1 0h1m1 0h2m2 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m3 0h1m1 0h2m5 0h4m-25 1h1m1 0h5m2 0h2m2 0h3m1 0h1m4 0h1m1 0h1m1 0h5m-31 1h1m1 0h3m2 0h1m3 0h2m3 0h1m2 0h2m1 0h2m2 0h2m1 0h2m1 0h1m-33 1h2m4 0h1m2 0h1m2 0h1m2 0h2m1 0h1m2 0h1m2 0h3m1 0h1m1 0h2m-32 1h1m4 0h1m4 0h1m1 0h1m1 0h2m3 0h5m1 0h2m1 0h4m-31 1h1m2 0h5m9 0h2m3 0h1m1 0h1m1 0h3m1 0h2m-33 1h5m2 0h1m2 0h1m1 0h1m1 0h3m3 0h2m1 0h1m1 0h2m2 0h4m-33 1h3m2 0h2m2 0h1m1 0h1m1 0h2m4 0h1m1 0h2m2 0h7m-32 1h2m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h4m2 0h4m1 0h2m-31 1h1m3 0h1m1 0h1m2 0h2m2 0h1m3 0h1m1 0h1m2 0h1m1 0h2m1 0h3m2 0h1m-33 1h1m2 0h2m2 0h1m4 0h2m2 0h4m3 0h1m2 0h2m1 0h2m1 0h1m-33 1h5m1 0h3m1 0h1m2 0h1m1 0h1m1 0h1m2 0h1m1 0h1m4 0h2m1 0h2m-32 1h1m2 0h3m1 0h1m1 0h1m3 0h1m2 0h3m2 0h3m3 0h5m-32 1h1m1 0h1m3 0h3m3 0h1m3 0h1m3 0h2m1 0h2m3 0h2m-30 1h2m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m3 0h1m1 0h1m-33 1h1m1 0h1m1 0h4m2 0h1m1 0h2m1 0h2m1 0h1m1 0h3m1 0h4m1 0h1m1 0h1m-32 1h1m2 0h2m6 0h2m2 0h1m2 0h1m2 0h2m1 0h2m4 0h3m-33 1h1m1 0h2m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m3 0h5m2 0h2m-25 1h1m1 0h1m3 0h1m4 0h1m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m3 0h2m3 0h1m2 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h1m1 0h1m1 0h1m6 0h1m1 0h1m1 0h2m3 0h5m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h1m4 0h1m2 0h1m2 0h1m2 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h6m1 0h2m3 0h1m2 0h1m1 0h1m2 0h2m2 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h4m5 0h1m1 0h1m1 0h1m2 0h2m1 0h1m-30 1h1m5 0h1m2 0h4m1 0h1m1 0h1m2 0h3m1 0h1m1 0h2m1 0h3m-31 1h7m1 0h1m3 0h2m3 0h1m1 0h2m2 0h3m1 0h1m3 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/drop-party/</figcaption></figure>
+  </article>
+  <article class="card" style="--c:#e0703a">
+    <h2>WORLD BUILD DROP</h2>
+    <p>言葉を落として物語を編む落ち物パズル。合体して章を完成させよう。</p>
+    <div class="video"><video controls playsinline preload="none" poster="videos/落ち物3作品_宣伝動画_3分.jpg" src="videos/落ち物3作品_宣伝動画_3分.mp4"></video>
+      <div class="vcap">▶ 落ち物3作品の宣伝動画(3分)・約23MB</div></div>
+    <a class="play" href="world-build-drop/">あそぶ ▶</a>
+    <figure class="qr"><svg width="148" height="148" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#111" d="M2 2.5h7m2 0h4m1 0h1m1 0h1m1 0h1m3 0h1m3 0h7m-33 1h1m5 0h1m1 0h3m1 0h3m1 0h2m2 0h1m5 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m1 0h3m2 0h1m2 0h5m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h1m2 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h3m1 0h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m4 0h4m1 0h1m1 0h1m7 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m5 0h1m7 0h1m-23 1h1m5 0h1m1 0h1m3 0h4m1 0h1m4 0h1m1 0h3m2 0h3m-31 1h1m2 0h2m1 0h4m1 0h1m1 0h2m3 0h1m1 0h1m1 0h1m4 0h3m-29 1h6m1 0h1m1 0h2m2 0h2m1 0h1m2 0h2m1 0h1m3 0h1m1 0h2m-31 1h1m2 0h2m3 0h2m1 0h1m1 0h1m3 0h3m2 0h1m2 0h6m-32 1h1m3 0h1m1 0h1m3 0h5m1 0h3m7 0h1m-27 1h1m1 0h1m6 0h1m1 0h1m1 0h2m1 0h1m1 0h3m2 0h1m2 0h2m1 0h4m-32 1h1m1 0h2m1 0h2m1 0h2m1 0h2m6 0h3m1 0h3m1 0h4m-32 1h1m1 0h4m2 0h3m2 0h1m1 0h1m2 0h2m2 0h4m1 0h1m1 0h2m1 0h1m-33 1h1m3 0h3m2 0h1m1 0h3m3 0h1m1 0h1m2 0h1m1 0h2m1 0h3m2 0h1m-31 1h3m3 0h2m1 0h1m2 0h6m3 0h1m2 0h1m2 0h2m1 0h1m-32 1h1m1 0h4m1 0h2m4 0h3m2 0h1m1 0h1m1 0h1m3 0h1m1 0h2m1 0h1m-33 1h1m1 0h2m1 0h1m2 0h1m1 0h9m4 0h1m4 0h4m-32 1h1m1 0h2m2 0h3m2 0h1m4 0h1m6 0h3m1 0h3m-30 1h1m1 0h1m1 0h2m3 0h2m1 0h2m2 0h4m2 0h2m3 0h2m1 0h1m-31 1h1m2 0h2m1 0h2m3 0h3m1 0h2m1 0h1m2 0h2m2 0h2m1 0h2m1 0h1m-32 1h1m1 0h1m1 0h2m3 0h4m1 0h1m3 0h2m2 0h1m2 0h1m1 0h1m2 0h2m-32 1h2m1 0h6m1 0h2m3 0h2m2 0h1m2 0h1m1 0h6m2 0h1m-25 1h1m1 0h2m3 0h1m3 0h1m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m2 0h1m3 0h3m2 0h1m2 0h4m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m2 0h1m2 0h5m2 0h2m2 0h2m3 0h4m-32 1h1m1 0h3m1 0h1m2 0h3m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m2 0h2m1 0h1m3 0h1m2 0h3m1 0h1m1 0h1m1 0h3m1 0h2m-33 1h1m1 0h3m1 0h1m4 0h1m4 0h2m1 0h4m2 0h1m1 0h2m2 0h2m-33 1h1m5 0h1m2 0h2m2 0h4m3 0h1m4 0h1m1 0h4m-31 1h7m1 0h5m1 0h1m2 0h1m2 0h1m3 0h1m2 0h1m1 0h1m1 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/world-build-drop/</figcaption></figure>
+  </article>
+  <article class="card" style="--c:#2f9e6e">
+    <h2>アリスの小さな大冒険</h2>
+    <p>クレヨン画の絵本をめくって進む分岐ゲーム。結末は40種類。</p>
+    <div class="video"><video controls playsinline preload="none" poster="videos/アリスの小さな大冒険_紹介映像_初版.jpg" src="videos/アリスの小さな大冒険_紹介映像_初版.mp4"></video>
+      <div class="vcap">▶ 紹介映像・初版(4分)・約30MB</div></div>
+    <a class="play" href="alice/">あそぶ ▶</a>
+    <figure class="qr"><svg width="132" height="132" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h33v33h-33z"/><path class="qrline" stroke="#111" d="M2 2.5h7m2 0h2m1 0h1m3 0h1m2 0h2m1 0h7m-29 1h1m5 0h1m2 0h1m2 0h1m2 0h2m3 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h3m2 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m3 0h1m3 0h4m1 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h3m3 0h3m1 0h1m1 0h1m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m2 0h2m5 0h3m-21 1h1m1 0h5m2 0h2m1 0h6m4 0h5m-27 1h3m4 0h1m2 0h4m2 0h1m2 0h6m3 0h1m-27 1h3m1 0h3m3 0h1m2 0h2m-17 1h1m10 0h2m1 0h3m2 0h2m1 0h2m1 0h1m1 0h1m-22 1h2m1 0h3m1 0h3m1 0h1m1 0h1m5 0h2m-27 1h2m1 0h2m3 0h5m3 0h1m1 0h2m1 0h4m3 0h1m-29 1h1m5 0h1m2 0h1m2 0h2m1 0h4m1 0h2m1 0h1m1 0h2m-27 1h1m1 0h2m1 0h1m4 0h1m3 0h3m1 0h1m4 0h1m3 0h1m-24 1h3m2 0h1m3 0h2m2 0h2m1 0h1m4 0h2m-27 1h4m1 0h1m1 0h1m1 0h1m6 0h4m2 0h3m1 0h1m1 0h1m-29 1h1m2 0h5m1 0h1m1 0h1m2 0h4m5 0h1m2 0h1m-27 1h1m2 0h1m1 0h1m5 0h2m1 0h2m2 0h2m1 0h1m1 0h1m3 0h1m-28 1h1m1 0h2m1 0h3m2 0h1m1 0h2m1 0h1m1 0h1m2 0h5m1 0h3m-21 1h4m1 0h1m2 0h5m3 0h5m-29 1h7m2 0h1m2 0h5m1 0h3m1 0h1m1 0h3m-27 1h1m5 0h1m1 0h1m3 0h1m1 0h1m1 0h1m3 0h1m3 0h1m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h2m2 0h2m2 0h3m6 0h4m-29 1h1m1 0h3m1 0h1m1 0h10m2 0h8m-28 1h1m5 0h1m2 0h1m1 0h4m1 0h1m2 0h2m2 0h3m1 0h1m-28 1h7m1 0h2m3 0h1m3 0h2m4 0h1m2 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/alice/</figcaption></figure>
+  </article>
+  <article class="card" style="--c:#b8892b">
+    <h2>Dungeon Explorer</h2>
+    <p>3Dの迷宮を進むダンジョンRPG。街・カジノ・闘技場つき。セーブは端末に保存。</p>
+    <div class="video"><video controls playsinline preload="none" poster="videos/宣伝動画_DungeonExplorer_3分第3版_2026-10-03.jpg" src="videos/宣伝動画_DungeonExplorer_3分第3版_2026-10-03.mp4"></video>
+      <div class="vcap">▶ 宣伝動画(3分)・約34MB</div></div>
+    <a class="play" href="dungeon/">あそぶ ▶</a>
+    <figure class="qr"><svg width="148" height="148" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#111" d="M2 2.5h7m1 0h1m3 0h3m1 0h3m2 0h2m3 0h7m-33 1h1m5 0h1m1 0h4m2 0h3m1 0h1m1 0h1m1 0h1m3 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h3m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h1m2 0h1m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h5m2 0h3m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h2m4 0h2m1 0h1m1 0h1m5 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h2m2 0h1m1 0h1m2 0h2m1 0h2m-23 1h1m4 0h4m1 0h1m1 0h1m3 0h1m1 0h1m2 0h4m5 0h2m-33 1h1m1 0h3m2 0h1m2 0h2m1 0h1m1 0h3m1 0h1m3 0h1m4 0h3m-31 1h2m2 0h3m1 0h2m2 0h6m3 0h2m1 0h2m2 0h1m1 0h2m-31 1h1m6 0h1m8 0h4m1 0h2m1 0h7m-31 1h2m2 0h2m3 0h2m3 0h3m2 0h1m3 0h1m1 0h2m4 0h1m-32 1h4m2 0h4m1 0h2m2 0h4m3 0h2m1 0h2m2 0h3m-33 1h3m2 0h2m1 0h3m6 0h2m2 0h2m2 0h2m1 0h1m2 0h1m-32 1h2m1 0h1m1 0h1m1 0h1m1 0h1m4 0h1m1 0h4m2 0h4m1 0h1m2 0h1m1 0h1m-32 1h3m2 0h1m2 0h2m3 0h4m1 0h1m2 0h1m1 0h2m1 0h2m3 0h1m-33 1h3m2 0h1m1 0h1m3 0h2m3 0h2m1 0h1m1 0h1m1 0h1m2 0h1m2 0h4m-32 1h1m3 0h2m1 0h1m2 0h2m1 0h1m2 0h3m3 0h1m1 0h3m1 0h2m1 0h1m-33 1h1m1 0h1m2 0h1m1 0h1m2 0h1m2 0h3m2 0h1m4 0h1m1 0h1m2 0h3m-28 1h2m1 0h1m4 0h2m2 0h2m5 0h2m1 0h1m1 0h3m2 0h1m-33 1h2m2 0h1m3 0h1m1 0h6m3 0h1m2 0h2m4 0h2m-30 1h1m1 0h1m1 0h1m1 0h3m1 0h1m2 0h1m2 0h2m2 0h3m2 0h2m1 0h1m2 0h1m-32 1h1m1 0h3m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m2 0h1m1 0h4m-31 1h7m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m3 0h8m-22 1h1m2 0h4m1 0h4m2 0h1m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m3 0h3m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m2 0h1m1 0h4m4 0h2m2 0h2m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m1 0h1m1 0h1m1 0h1m4 0h1m1 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m3 0h1m1 0h1m2 0h1m3 0h3m1 0h1m1 0h1m1 0h2m3 0h1m-33 1h1m1 0h3m1 0h1m3 0h4m1 0h1m3 0h1m1 0h2m2 0h1m1 0h2m1 0h3m-33 1h1m5 0h1m1 0h2m1 0h4m1 0h2m2 0h1m4 0h6m-31 1h7m2 0h2m1 0h1m2 0h1m4 0h1m2 0h3m1 0h1m3 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/dungeon/</figcaption></figure>
+  </article>
+  <article class="card" style="--c:#2a7fd4">
+    <h2>1980s GALAXY SHOOTER</h2>
+    <p>ワイヤーフレームの宇宙を飛ぶ3Dシューティング。横向きで遊びます。</p>
+    <div class="video"><video controls playsinline preload="none" poster="videos/STARFIGHTER_紹介動画_3分.jpg" src="videos/STARFIGHTER_紹介動画_3分.mp4"></video>
+      <div class="vcap">▶ 紹介動画(3分)・約32MB</div></div>
+    <a class="play" href="starfighter/">あそぶ ▶</a>
+    <figure class="qr"><svg width="148" height="148" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#111" d="M2 2.5h7m2 0h3m6 0h4m1 0h1m2 0h7m-33 1h1m5 0h1m2 0h4m2 0h2m1 0h1m1 0h3m3 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h3m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m5 0h1m3 0h1m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h5m2 0h2m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h3m1 0h3m3 0h2m1 0h1m2 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m1 0h1m3 0h1m1 0h1m2 0h4m1 0h1m-25 1h1m1 0h5m4 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h5m-27 1h2m2 0h4m1 0h1m2 0h2m1 0h5m2 0h2m1 0h2m1 0h1m-29 1h1m1 0h1m3 0h1m2 0h5m3 0h2m1 0h1m3 0h1m1 0h2m-32 1h3m1 0h2m3 0h3m1 0h1m1 0h1m1 0h7m1 0h1m2 0h4m-32 1h3m3 0h1m2 0h1m4 0h1m1 0h1m2 0h2m1 0h4m1 0h3m1 0h2m-30 1h1m3 0h3m3 0h1m1 0h1m2 0h1m2 0h3m1 0h2m2 0h4m-30 1h1m1 0h3m3 0h6m3 0h3m2 0h3m1 0h3m-32 1h1m1 0h3m2 0h3m1 0h3m1 0h1m2 0h1m2 0h1m1 0h1m1 0h2m2 0h2m-30 1h2m1 0h7m1 0h1m1 0h2m1 0h1m4 0h1m1 0h2m1 0h3m2 0h1m-30 1h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h1m1 0h2m1 0h1m1 0h1m2 0h2m1 0h2m1 0h1m-30 1h4m3 0h4m1 0h1m2 0h1m1 0h1m6 0h2m1 0h2m-32 1h2m3 0h1m2 0h1m1 0h2m4 0h1m4 0h1m1 0h1m2 0h6m-30 1h2m1 0h2m5 0h2m4 0h1m4 0h3m2 0h2m-30 1h1m2 0h3m6 0h2m1 0h3m2 0h2m1 0h1m2 0h1m3 0h1m1 0h1m-33 1h1m3 0h5m1 0h1m1 0h1m5 0h2m1 0h2m2 0h2m1 0h2m1 0h1m-32 1h1m1 0h1m1 0h2m1 0h1m3 0h4m1 0h1m1 0h5m1 0h2m1 0h1m2 0h1m-31 1h1m2 0h1m2 0h2m1 0h1m1 0h3m3 0h1m1 0h2m2 0h6m-21 1h3m2 0h2m2 0h1m1 0h1m2 0h1m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m2 0h1m2 0h1m2 0h1m1 0h1m4 0h3m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h3m6 0h3m1 0h4m3 0h5m-33 1h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h3m4 0h1m2 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h3m2 0h1m4 0h1m1 0h1m2 0h2m1 0h2m-33 1h1m1 0h3m1 0h1m1 0h4m2 0h3m4 0h1m1 0h1m2 0h2m1 0h1m-30 1h1m5 0h1m2 0h1m1 0h2m1 0h2m5 0h1m3 0h1m2 0h3m-31 1h7m1 0h1m1 0h2m2 0h2m1 0h1m2 0h1m2 0h2m1 0h2m1 0h1m1 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/starfighter/</figcaption></figure>
+  </article>
+  <article class="card" style="--c:#d6336c">
+    <h2>RALLY X SURVIVORS <span class="badge">開発中</span></h2>
+    <p>止まらない車で迷路を走り、敵を引き連れて煙幕で玉突き。レベルアップで武器が増えるサバイバル。</p>
+    <div class="video dev"><div><b>🚧 ただいま開発中!</b><br>まだ作っている途中の最新版を、先行で遊べます。<br>宣伝動画は完成したら公開します。</div></div>
+    <a class="play" href="rally-x/">あそぶ ▶</a>
+    <figure class="qr"><svg width="148" height="148" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#111" d="M2 2.5h7m1 0h6m4 0h4m1 0h1m2 0h7m-33 1h1m5 0h1m2 0h3m2 0h1m1 0h1m1 0h1m1 0h1m5 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m3 0h2m1 0h1m3 0h1m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h1m2 0h2m2 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h2m6 0h1m1 0h2m4 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-24 1h4m1 0h1m1 0h1m2 0h5m-23 1h7m1 0h1m3 0h1m3 0h1m1 0h1m2 0h3m2 0h2m3 0h1m-29 1h1m2 0h2m2 0h1m2 0h1m2 0h1m1 0h5m2 0h2m1 0h2m1 0h1m-29 1h3m1 0h1m3 0h1m2 0h3m3 0h1m2 0h2m2 0h1m1 0h2m-31 1h1m1 0h1m4 0h1m4 0h3m1 0h7m1 0h2m1 0h4m-31 1h1m2 0h1m1 0h4m2 0h1m1 0h2m3 0h1m2 0h4m1 0h3m1 0h1m-29 1h2m5 0h6m1 0h3m1 0h1m1 0h2m1 0h1m3 0h3m-33 1h2m1 0h1m1 0h3m1 0h2m1 0h1m2 0h4m2 0h2m2 0h2m1 0h1m2 0h1m-32 1h3m1 0h2m1 0h1m2 0h1m4 0h1m1 0h2m2 0h1m1 0h4m1 0h1m1 0h1m-30 1h1m1 0h1m2 0h1m2 0h3m2 0h4m1 0h1m2 0h1m1 0h2m1 0h2m3 0h1m-32 1h5m1 0h1m1 0h1m1 0h2m2 0h2m2 0h1m3 0h1m2 0h2m1 0h4m-32 1h2m1 0h4m1 0h1m2 0h3m1 0h1m3 0h3m4 0h2m1 0h2m-32 1h4m1 0h1m1 0h1m1 0h1m3 0h2m2 0h1m3 0h1m1 0h1m1 0h1m1 0h4m-31 1h1m3 0h1m1 0h1m4 0h5m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m2 0h1m-33 1h3m4 0h3m2 0h2m2 0h1m2 0h3m1 0h1m2 0h2m1 0h1m2 0h1m-33 1h1m3 0h1m1 0h3m1 0h1m1 0h2m3 0h1m2 0h3m2 0h2m1 0h1m2 0h1m-32 1h1m1 0h3m3 0h3m1 0h1m1 0h2m2 0h1m1 0h3m2 0h1m2 0h3m-31 1h1m2 0h1m2 0h1m2 0h3m1 0h1m3 0h4m3 0h5m2 0h2m-25 1h2m1 0h6m1 0h2m2 0h1m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m1 0h3m2 0h1m1 0h2m1 0h1m2 0h4m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h2m1 0h3m1 0h2m2 0h1m1 0h1m1 0h2m3 0h3m-31 1h1m1 0h3m1 0h1m1 0h1m2 0h1m3 0h1m1 0h2m3 0h1m1 0h6m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h5m1 0h1m3 0h2m2 0h2m1 0h1m2 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h2m1 0h1m2 0h2m1 0h1m2 0h2m1 0h2m-31 1h1m5 0h1m1 0h1m3 0h4m1 0h1m3 0h1m3 0h2m1 0h3m-31 1h7m2 0h4m2 0h1m3 0h2m2 0h3m1 0h1m3 0h1"/></g></svg><figcaption>https://moongate821.github.io/games/rally-x/</figcaption></figure>
+  </article>
+  </div>
+  <section class="how">
+    <h2>遊びかた・注意</h2>
+    <ul>
+      <li>iPhone・iPad: Safari で開き、共有ボタン(□に↑)→「ホーム画面に追加」で、アプリのように全画面で遊べます。</li>
+      <li>音が出ないときは、画面を1回タップしてください。</li>
+      <li>宣伝動画は ▶ を押したときだけ読み込みます(1本 20〜35MB)。Wi-Fi での再生がおすすめです。</li>
+      <li>ランキング・称号・しおりは、遊んだ端末の中にだけ保存されます。</li>
+      <li>落ち物の「ふたり対戦」はキーボードかゲームパッドの2人用です(スマホは「ひとり」「CPUと対戦」)。</li>
+      <li>Dungeon Explorer は最初の読み込みが重め(約47MB)です。Wi-Fi で開いてください。</li>
+      <li>1980s GALAXY SHOOTER は横向きで遊びます。ゲームパッドにも対応しています。</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

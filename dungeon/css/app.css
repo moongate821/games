@@ -1,0 +1,252 @@
+/* ダンジョンゲーム Web版。羊皮紙+金属枠+ダークパープル/金文字(Windows版と同じ配色)。 */
+:root {
+    --purple: #2a0c26;
+    --purple-2: #3a1834;
+    --panel: #22101f;
+    --gold: #f2d38a;
+    --gold-2: #c9a24d;
+    --gold-3: #8a6a2a;
+    --text: #f4ecd6;
+    --danger: #e0475b;
+    --mp: #4a86e8;
+    --ok: #6fd08c;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --u: min(1vw, 1.8vh); /* 画面の大きさに合わせた基本単位 */
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+    margin: 0; height: 100%; overflow: hidden; background: #0b0509; color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP", "Meiryo", sans-serif;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
+    overscroll-behavior: none;
+}
+
+[hidden] { display: none !important; }
+
+button { font: inherit; color: inherit; }
+
+/* ---------- 起動中 ---------- */
+#boot {
+    position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 35%, #3a1834, #150710 70%); text-align: center; padding: 20px;
+}
+.boot-title { font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; letter-spacing: .02em; font-size: clamp(28px, 7vw, 56px); font-weight: 800; font-style: italic; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 24px #b8842a88; }
+.boot-sub { margin: 6px 0 22px; color: var(--gold-2); letter-spacing: .2em; }
+.boot-bar { width: min(70vw, 420px); height: 10px; border: 1px solid var(--gold-3); border-radius: 6px; overflow: hidden; background: #120611; }
+.boot-bar i { display: block; height: 100%; width: 8%; background: linear-gradient(90deg, #8a6a2a, #f2d38a); transition: width .25s; }
+.boot-note { margin-top: 14px; font-size: 13px; color: #cdbb98; max-width: 80vw; }
+
+#app { position: fixed; inset: 0; }
+.screen { position: absolute; inset: 0; }
+
+/* ---------- 共通の部品 ---------- */
+.btn, .abtn, .menu button, .dialog button {
+    border: 1.5px solid var(--gold-2); border-radius: 10px; background: linear-gradient(#4a3a2e, #2b2018);
+    padding: .55em 1em; min-height: 44px; color: var(--gold); font-weight: 700; cursor: pointer;
+    box-shadow: inset 0 1px 0 #ffffff22, 0 2px 4px #000a; text-align: left;
+    display: inline-flex; align-items: center; gap: .55em;
+}
+.btn:active, .abtn:active, .menu button:active, .dialog button:active, .focus { filter: brightness(1.35); }
+button:disabled { opacity: .45; }
+button.focus, .row.focus { outline: 3px solid #ffe28a; outline-offset: 1px; }
+button .ic { width: 1.6em; height: 1.6em; object-fit: contain; flex: none; image-rendering: pixelated; }
+button.round { width: 46px; height: 46px; min-height: 0; border-radius: 50%; padding: 0; justify-content: center; font-size: 22px; background: linear-gradient(#5a463a, #2b2018); }
+
+/* ---------- 開始画面 ---------- */
+#title {
+    background: linear-gradient(#150710cc, #150710aa), var(--title-bg, #150710) center/cover;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.title-inner { padding: 16px; max-height: 100%; overflow: auto; }
+#title h1 { margin: 0; font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; letter-spacing: .02em; font-size: clamp(30px, 8vw, 64px); font-style: italic; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 30px #b8842a99; }
+.subtitle { color: var(--gold-2); letter-spacing: .25em; margin: 4px 0 18px; }
+.menu { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.menu button { width: min(78vw, 340px); font-size: 17px; justify-content: center; text-align: center; }
+.foot { margin-top: 14px; font-size: 12px; color: #cdbb98; opacity: .85; }
+
+/* ---------- ゲーム画面 ---------- */
+#stage { position: absolute; inset: 0 calc(var(--safe-r) + min(38vw, 300px) + 12px) 0 0; background: #060306; display: flex; align-items: center; justify-content: center; }
+body.no-side #stage { right: 0; }
+#scene { width: 100%; height: 100%; object-fit: contain; image-rendering: auto; touch-action: none; }
+
+#topbar { position: absolute; top: calc(var(--safe-t) + 6px); right: calc(var(--safe-r) + 8px); display: flex; gap: 8px; align-items: center; pointer-events: none; }
+#topbar > * { pointer-events: auto; }
+#resource {
+    display: flex; gap: 10px; align-items: center; padding: 5px 12px; border-radius: 16px; font-size: 13px; font-weight: 700;
+    background: #1a0c18cc; border: 1px solid var(--gold-3); color: var(--gold); white-space: nowrap;
+}
+#resource b { color: #fff; }
+
+#party {
+    position: absolute; top: calc(var(--safe-t) + 6px); left: calc(var(--safe-l) + 8px); display: flex; flex-direction: column; gap: 4px;
+    width: min(31vw, 260px); z-index: 3;
+}
+.pcard {
+    display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: center; padding: 3px 6px 3px 3px; border-radius: 8px;
+    background: #1a0c18cc; border: 1px solid var(--gold-3); font-size: 11.5px; line-height: 1.15; cursor: pointer;
+}
+.pcard.down { opacity: .55; filter: grayscale(.7); }
+.pcard img { width: 34px; height: 34px; image-rendering: pixelated; border: 1px solid var(--gold-3); background: #3a2a20; }
+.pcard .nm { color: var(--gold); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcard .nm small { color: #cdbb98; font-weight: 400; }
+.bar { height: 12px; border-radius: 3px; background: #0a0409; overflow: hidden; margin-top: 2px; border: 1px solid #000; position: relative; }
+.bar i { display: block; height: 100%; }
+.bar.hp i { background: linear-gradient(#ff7a86, #d0324a); }
+.bar.mp i { background: linear-gradient(#78b0ff, #2f62c8); }
+.bar.low i { background: linear-gradient(#ffd25a, #e08a1a); }
+/* 2026-09-30(ユーザー指定「HP/MPを数値でも常時表示」): バーの上に、いつでも読める数値を重ねる */
+.bar .num {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 8.5px; font-weight: 700; color: #fff; line-height: 1; pointer-events: none;
+    text-shadow: 0 1px 1px #000, 0 0 3px #000, 0 0 3px #000;
+}
+
+#log {
+    position: absolute; left: calc(var(--safe-l) + 8px); right: calc(var(--safe-r) + 8px); bottom: calc(var(--safe-b) + 6px); z-index: 2;
+    pointer-events: none; display: flex; justify-content: center;
+}
+#log-text {
+    max-width: min(94vw, 900px); padding: 8px 14px; border-radius: 10px; font-size: 14px; line-height: 1.45; text-align: center;
+    background: linear-gradient(#2a0c26ee, #1a0818ee); border: 1.5px solid var(--gold-3); color: #ffe8b0; pointer-events: auto;
+    max-height: 4.6em; overflow: hidden; cursor: pointer; position: relative;
+}
+/* 2026-09-30(Codex提案「戦闘ログを読み返せる履歴」): ログの窓をタップすると履歴が開くことを、角の小さな印で示す */
+#log-text::after {
+    content: '履歴 ▸'; position: absolute; right: 6px; bottom: 2px; font-size: 9.5px; color: #c9a24d; opacity: .85;
+    text-shadow: 0 0 3px #000;
+}
+
+#dpad {
+    position: absolute; left: calc(var(--safe-l) + 14px); bottom: calc(var(--safe-b) + 58px); width: 150px; height: 150px; z-index: 3;
+    display: grid; grid-template: "a up b" 1fr "left . right" 1fr "c down d" 1fr / 1fr 1fr 1fr;
+}
+#dpad button {
+    border: 2px solid var(--gold-2); border-radius: 12px; background: linear-gradient(#5a463a, #2b2018); color: var(--gold);
+    font-size: 24px; padding: 0; margin: 2px; box-shadow: 0 2px 5px #000a; touch-action: none;
+}
+#dpad [data-dir=up] { grid-area: up; } #dpad [data-dir=left] { grid-area: left; } #dpad [data-dir=right] { grid-area: right; } #dpad [data-dir=down] { grid-area: down; }
+#dpad button:active { filter: brightness(1.5); }
+
+#actions {
+    position: absolute; right: calc(var(--safe-r) + 8px); bottom: calc(var(--safe-b) + 58px); top: calc(var(--safe-t) + 60px); z-index: 3;
+    width: min(38vw, 300px); display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; overflow-y: auto; padding: 2px;
+    scrollbar-width: none;
+}
+#actions::-webkit-scrollbar { display: none; }
+#actions.town { justify-content: flex-start; }
+.abtn { font-size: 14px; }
+.abtn small { display: block; font-weight: 400; color: #d8c8a4; font-size: 11px; }
+.abtn.primary { background: linear-gradient(#7a5a1c, #4a3610); border-color: #ffe28a; }
+.abtn.sub { font-size: 12.5px; min-height: 38px; }
+
+/* ---------- ダイアログ ---------- */
+#modal { position: fixed; inset: 0; z-index: 30; background: #050205bb; display: flex; align-items: center; justify-content: center; padding: calc(var(--safe-t) + 6px) calc(var(--safe-r) + 6px) calc(var(--safe-b) + 6px) calc(var(--safe-l) + 6px); }
+.dialog {
+    width: min(94vw, 760px); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(#3a1834, #22101f); border: 3px solid var(--gold-2); box-shadow: 0 0 0 2px #000, 0 10px 40px #000c;
+}
+.dialog h2 { margin: 0; padding: 10px 16px; font-size: 18px; font-style: italic; color: var(--gold); border-bottom: 1px solid var(--gold-3); }
+.dialog-body { padding: 10px 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 60px; }
+.dialog-buttons { display: flex; gap: 8px; padding: 8px 12px 10px; flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid #ffffff14; }
+.dialog-buttons button { min-width: 110px; justify-content: center; text-align: center; }
+.msg { white-space: pre-wrap; line-height: 1.6; font-size: 15px; }
+.list { display: flex; flex-direction: column; gap: 5px; }
+.row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; background: #2e1a2a; border: 1px solid #ffffff18; cursor: pointer; font-size: 14px; line-height: 1.35;
+}
+.row.sel { background: linear-gradient(#7a5a1c, #4a3610); border-color: var(--gold); }
+.row .ic { width: 34px; height: 34px; image-rendering: pixelated; flex: none; }
+.row .grow { flex: 1; min-width: 0; }
+.row .sub { color: #d8c8a4; font-size: 12px; }
+.row .price { color: #ffe28a; font-weight: 700; white-space: nowrap; }
+.row.disabled { opacity: .5; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cols > div { min-width: 0; }
+.h3 { color: var(--gold); font-weight: 700; margin: 4px 0; font-size: 13px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; font-size: 14px; }
+.kv span:nth-child(odd) { color: #cdbb98; }
+.field { margin: 6px 0; }
+.field label { display: block; color: var(--gold); font-size: 12px; margin-bottom: 2px; }
+.field input[type=text] { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--gold-3); background: #1a0c18; color: var(--gold); font-size: 16px; }
+.stat-row { display: grid; grid-template-columns: 1fr auto 44px auto; align-items: center; gap: 8px; margin: 3px 0; }
+.stat-row button { min-height: 38px; width: 42px; padding: 0; justify-content: center; }
+.stat-row .v { text-align: center; font-weight: 700; color: #fff; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 12px; border-radius: 16px; border: 1.5px solid var(--gold-3); background: #2b2018; color: var(--gold); font-size: 13px; cursor: pointer; }
+.chip.sel { background: linear-gradient(#7a5a1c, #4a3610); border-color: #ffe28a; }
+.chip.disabled { opacity: .4; }
+.face-pick { display: flex; align-items: center; gap: 10px; }
+.face-pick img { width: 72px; height: 72px; image-rendering: pixelated; border: 2px solid var(--gold-2); background: #3a2a20; }
+.map-wrap { overflow: auto; max-height: 60vh; background: #0b0509; border-radius: 8px; padding: 4px; text-align: center; }
+.map-wrap canvas { image-rendering: pixelated; }
+.note { color: #cdbb98; font-size: 12px; }
+
+#toast { position: fixed; left: 50%; bottom: calc(var(--safe-b) + 90px); transform: translateX(-50%); z-index: 40; padding: 10px 18px; border-radius: 20px; background: #000d; border: 1px solid var(--gold-3); color: #ffe8b0; max-width: 90vw; text-align: center; pointer-events: none; }
+#rotate { position: fixed; bottom: calc(var(--safe-b) + 10px); left: 50%; transform: translateX(-50%); z-index: 45; padding: 6px 14px; border-radius: 16px; background: #000c; border: 1px solid var(--gold-3); font-size: 12px; color: var(--gold); pointer-events: none; }
+
+/* 冒険者のカードの演出(戦闘) */
+.pcard { position: relative; }
+.pcard.fx-hit { animation: fxHit var(--fx-ms, 900ms) ease-out; }
+.pcard.fx-heal { animation: fxHeal var(--fx-ms, 900ms) ease-out; }
+.pcard.fx-guard { animation: fxGuard var(--fx-ms, 900ms) ease-out; }
+.pcard.fx-act { animation: fxAct var(--fx-ms, 900ms) ease-out; }
+.pcard.fx-levelup, .pcard.fx-buff { animation: fxGold var(--fx-ms, 900ms) ease-out; }
+@keyframes fxHit { 0% { background: #ff2a2acc; transform: translateX(0); } 10% { transform: translateX(-4px); } 20% { transform: translateX(4px); } 30% { transform: translateX(-3px); } 45% { transform: translateX(2px); } 100% { background: #1a0c18cc; transform: translateX(0); } }
+@keyframes fxHeal { 0% { background: #3cff7acc; box-shadow: 0 0 14px #5dffa0; } 100% { background: #1a0c18cc; box-shadow: none; } }
+@keyframes fxGuard { 0% { background: #4a86e8cc; box-shadow: 0 0 12px #6aa0ff; } 100% { background: #1a0c18cc; box-shadow: none; } }
+@keyframes fxAct { 0% { box-shadow: 0 0 0 3px #ffe28a, 0 0 14px #ffd25a; } 100% { box-shadow: none; } }
+@keyframes fxGold { 0% { background: #ffd25acc; box-shadow: 0 0 16px #ffe28a; } 100% { background: #1a0c18cc; box-shadow: none; } }
+.fx-num { position: absolute; left: 44px; top: 2px; font-size: 20px; font-weight: 800; text-shadow: 0 0 3px #000, 0 0 3px #000, 1px 1px 0 #000; animation: fxFloat var(--fx-ms, 900ms) ease-out forwards; pointer-events: none; }
+.fx-num.hit { color: #ff6a6a; } .fx-num.heal { color: #7dffa8; }
+@keyframes fxFloat { 0% { transform: translateY(6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-14px); opacity: 0; } }
+.fx-img { position: absolute; left: -6px; top: -8px; width: 52px; height: 52px; object-fit: contain; pointer-events: none; animation: fxImg var(--fx-ms, 900ms) ease-out forwards; }
+@keyframes fxImg { 0% { transform: scale(.7); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+
+body.busy #actions, body.busy #dpad { pointer-events: none; opacity: .7; }
+body.busy #party { pointer-events: none; }
+
+/* ---------- 縦向き(スマホ): 上に画面、下に操作 ---------- */
+@media (orientation: portrait) {
+    #stage { inset: 0 0 auto 0; height: calc(100vw * 9 / 16 + var(--safe-t)); padding-top: var(--safe-t); }
+    #party { top: calc(100vw * 9 / 16 + var(--safe-t) + 6px); left: 6px; right: 6px; width: auto; flex-direction: row; flex-wrap: wrap; }
+    #party .pcard { flex: 1 1 calc(50% - 4px); }
+    #topbar { top: calc(var(--safe-t) + 4px); }
+    #resource { font-size: 11px; padding: 3px 8px; gap: 6px; }
+    #log { bottom: auto; top: calc(100vw * 9 / 16 + var(--safe-t) - 52px); }
+    #log-text { font-size: 12.5px; padding: 5px 10px; max-height: 3.4em; }
+    #dpad { left: 10px; bottom: calc(var(--safe-b) + 14px); width: 168px; height: 168px; }
+    /* 2026-09-30(Codex提案「縦画面の余白を詰める」): コマンドを下へ寄せず、冒険者欄のすぐ下から並べて空白を無くす */
+    #actions { top: calc(100vw * 9 / 16 + var(--safe-t) + 120px); bottom: calc(var(--safe-b) + 10px); right: 8px; left: 190px; width: auto; justify-content: flex-start; }
+    #actions.town { left: 8px; top: calc(100vw * 9 / 16 + var(--safe-t) + 120px); display: grid; grid-template-columns: 1fr 1fr; align-content: start; }
+    .dialog { width: 96vw; }
+    .cols { grid-template-columns: 1fr; }
+}
+
+/* 小さな横向き(iPhone) */
+@media (orientation: landscape) and (max-height: 460px) {
+    #party { width: min(26vw, 200px); gap: 3px; }
+    .pcard { grid-template-columns: 26px 1fr; font-size: 10.5px; padding: 2px 4px 2px 2px; }
+    .pcard img { width: 26px; height: 26px; }
+    .bar { height: 9px; margin-top: 1px; }
+    .bar .num { font-size: 7px; }
+    #dpad { width: 132px; height: 132px; bottom: calc(var(--safe-b) + 46px); }
+    #stage { right: calc(var(--safe-r) + min(34vw, 250px) + 10px); }
+    #actions { width: min(34vw, 250px); bottom: calc(var(--safe-b) + 46px); top: calc(var(--safe-t) + 54px); }
+    .abtn { min-height: 38px; font-size: 13px; padding: .35em .8em; }
+    #log-text { font-size: 12.5px; padding: 5px 10px; max-height: 3.4em; }
+    .dialog h2 { padding: 6px 12px; font-size: 15px; }
+    .dialog-body { padding: 6px 10px; }
+    .row { padding: 5px 8px; }
+}
+#resource span.night b { color: #9ab8ff; }
+
+/* 2026-09-30(裏ボス): 称号「深淵を越えし者」の印 */
+.pcard .nm small.title-badge { color: #ffd76a; font-weight: 700; }
+.abtn.locked { opacity: .55; filter: grayscale(.6); }
+.hell-badge { color: #ff6a4a; text-shadow: 0 0 8px #ff3010; }
+.hell-badge b { color: #ff8a6a; letter-spacing: .08em; }

@@ -1,0 +1,272 @@
+[
+ {
+  "no": 1,
+  "key": "title",
+  "file": "01_title",
+  "title": "旅立ちの序曲",
+  "place": "タイトル画面",
+  "seconds": 43.6364,
+  "bpm": 88
+ },
+ {
+  "no": 2,
+  "key": "create",
+  "file": "02_create",
+  "title": "名もなき勇者",
+  "place": "キャラクター作成",
+  "seconds": 35.5556,
+  "bpm": 108
+ },
+ {
+  "no": 3,
+  "key": "town",
+  "file": "03_town",
+  "title": "ルミナスの街",
+  "place": "街(広場)",
+  "seconds": 33.1034,
+  "bpm": 116
+ },
+ {
+  "no": 4,
+  "key": "guild",
+  "file": "04_guild",
+  "title": "冒険者ギルド",
+  "place": "冒険者ギルド",
+  "seconds": 36.9231,
+  "bpm": 104
+ },
+ {
+  "no": 5,
+  "key": "shop",
+  "file": "05_shop",
+  "title": "商人たちの店",
+  "place": "武器屋・防具屋・雑貨屋・倉庫・鑑定所",
+  "seconds": 30.0,
+  "bpm": 128
+ },
+ {
+  "no": 6,
+  "key": "inn",
+  "file": "06_inn",
+  "title": "やすらぎの宿",
+  "place": "宿屋",
+  "seconds": 37.8948,
+  "bpm": 76
+ },
+ {
+  "no": 7,
+  "key": "temple",
+  "file": "07_temple",
+  "title": "祈りの神殿",
+  "place": "神殿",
+  "seconds": 29.0909,
+  "bpm": 66
+ },
+ {
+  "no": 8,
+  "key": "smith",
+  "file": "08_smith",
+  "title": "鉄と炎",
+  "place": "鍛冶屋・訓練所",
+  "seconds": 32.0,
+  "bpm": 120
+ },
+ {
+  "no": 9,
+  "key": "story",
+  "file": "09_story",
+  "title": "試練の物語",
+  "place": "物語の画面",
+  "seconds": 45.7143,
+  "bpm": 84
+ },
+ {
+  "no": 10,
+  "key": "cave1",
+  "file": "10_cave1",
+  "title": "初心者の洞窟",
+  "place": "洞窟 1〜3階",
+  "seconds": 32.0,
+  "bpm": 120
+ },
+ {
+  "no": 11,
+  "key": "cave2",
+  "file": "11_cave2",
+  "title": "しずくの回廊",
+  "place": "洞窟 4〜6階",
+  "seconds": 34.9091,
+  "bpm": 110
+ },
+ {
+  "no": 12,
+  "key": "cave3",
+  "file": "12_cave3",
+  "title": "深き闇の入口",
+  "place": "洞窟 7〜9階",
+  "seconds": 38.4,
+  "bpm": 100
+ },
+ {
+  "no": 13,
+  "key": "cave10",
+  "file": "13_cave10",
+  "title": "王の間の前で",
+  "place": "洞窟 10階(ボスの階)",
+  "seconds": 41.7391,
+  "bpm": 92
+ },
+ {
+  "no": 14,
+  "key": "abyss1",
+  "file": "14_abyss1",
+  "title": "深淵の大迷宮",
+  "place": "大迷宮 1〜100階",
+  "seconds": 30.4762,
+  "bpm": 126
+ },
+ {
+  "no": 15,
+  "key": "abyss2",
+  "file": "15_abyss2",
+  "title": "石の迷い路",
+  "place": "大迷宮 101〜300階",
+  "seconds": 33.1034,
+  "bpm": 116
+ },
+ {
+  "no": 16,
+  "key": "abyss3",
+  "file": "16_abyss3",
+  "title": "奈落へ続く階段",
+  "place": "大迷宮 301〜500階",
+  "seconds": 29.0909,
+  "bpm": 132
+ },
+ {
+  "no": 17,
+  "key": "abyss4",
+  "file": "17_abyss4",
+  "title": "忘れられた神殿跡",
+  "place": "大迷宮 501〜700階",
+  "seconds": 36.9231,
+  "bpm": 104
+ },
+ {
+  "no": 18,
+  "key": "abyss5",
+  "file": "18_abyss5",
+  "title": "灼熱の回廊",
+  "place": "大迷宮 701〜900階",
+  "seconds": 27.4286,
+  "bpm": 140
+ },
+ {
+  "no": 19,
+  "key": "abyss6",
+  "file": "19_abyss6",
+  "title": "世界の底",
+  "place": "大迷宮 901〜1000階",
+  "seconds": 40.0,
+  "bpm": 96
+ },
+ {
+  "no": 20,
+  "key": "night",
+  "file": "20_night",
+  "title": "闇夜の迷宮",
+  "place": "ダンジョンの夜",
+  "seconds": 26.6667,
+  "bpm": 72
+ },
+ {
+  "no": 21,
+  "key": "rest",
+  "file": "21_rest",
+  "title": "旅人のひと休み",
+  "place": "ダンジョンの旅の宿屋・行商人",
+  "seconds": 40.0,
+  "bpm": 96
+ },
+ {
+  "no": 22,
+  "key": "vault",
+  "file": "22_vault",
+  "title": "眠れる宝",
+  "place": "宝物庫・隠し部屋",
+  "seconds": 43.6364,
+  "bpm": 88
+ },
+ {
+  "no": 23,
+  "key": "battle",
+  "file": "23_battle",
+  "title": "戦いの時",
+  "place": "通常の戦闘",
+  "seconds": 25.6,
+  "bpm": 150
+ },
+ {
+  "no": 24,
+  "key": "battle2",
+  "file": "24_battle2",
+  "title": "魔物の群れ",
+  "place": "強い敵・3体以上・モンスターハウス",
+  "seconds": 24.0,
+  "bpm": 160
+ },
+ {
+  "no": 25,
+  "key": "foe",
+  "file": "25_foe",
+  "title": "徘徊する強敵",
+  "place": "強敵との戦闘",
+  "seconds": 26.6667,
+  "bpm": 144
+ },
+ {
+  "no": 26,
+  "key": "boss",
+  "file": "26_boss",
+  "title": "階の主",
+  "place": "ボス戦",
+  "seconds": 24.6154,
+  "bpm": 156
+ },
+ {
+  "no": 27,
+  "key": "lastboss",
+  "file": "27_lastboss",
+  "title": "奈落の王",
+  "place": "大迷宮の深部のボス(強大な魔物)",
+  "seconds": 45.7143,
+  "bpm": 168
+ },
+ {
+  "no": 28,
+  "key": "victory",
+  "file": "28_victory",
+  "title": "封印は解かれた",
+  "place": "ボスを倒したあとの階",
+  "seconds": 29.0909,
+  "bpm": 132
+ },
+ {
+  "no": 29,
+  "key": "gameover",
+  "file": "29_gameover",
+  "title": "倒れし者たちへ",
+  "place": "全滅",
+  "seconds": 16.0,
+  "bpm": 60
+ },
+ {
+  "no": 30,
+  "key": "ending",
+  "file": "30_ending",
+  "title": "伝説の勇者たち",
+  "place": "ダンジョン制覇",
+  "seconds": 34.2857,
+  "bpm": 112
+ }
+]

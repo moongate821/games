@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070d17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STARFIGHTER">
+<meta name="description" content="ネオンの宇宙を駆ける、ワイヤーフレーム・フライトシューティング。">
+<title>STARFIGHTER — Neon Frontier</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main id="game-stage" aria-label="スターファイター ゲーム画面" data-i18n-aria="a_game"></main>
+<div id="toolbar" hidden><button id="pause-button" aria-label="一時停止" data-i18n-aria="a_pause">Ⅱ <span>PAUSE</span></button></div>
+<div id="shipyard-ui" hidden><div><p class="eyebrow">FLEET DATABASE / DESIGN INSPECTION</p><h2 data-i18n="y_title">艦艇図鑑</h2></div><div class="yard-controls"><label><span data-i18n="y_faction">勢力</span> <select id="yard-faction"><option value="empire" data-i18n="y_f_empire">帝国</option><option value="machine" data-i18n="y_f_machine">機械</option><option value="bio" data-i18n="y_f_bio">バイオ</option><option value="ancient" data-i18n="y_f_ancient">古代</option><option value="void" data-i18n="y_f_void">ヴォイド</option></select></label><label><span data-i18n="y_class">艦種</span> <select id="yard-class"><option value="cruiser" data-i18n="y_c_cruiser">巡洋艦</option><option value="battle" data-i18n="y_c_battle">戦艦</option><option value="carrier" data-i18n="y_c_carrier">空母</option><option value="dread" data-i18n="y_c_dread">ドレッドノート</option><option value="titan" data-i18n="y_c_titan">タイタン</option><option value="fighter" data-i18n="y_c_fighter">艦載機・ドローン</option></select></label><label><span data-i18n="y_view">視点</span> <input id="yard-angle" type="range" min="-180" max="180" value="40"></label><button id="yard-exit" class="secondary" data-i18n="y_exit">タイトルに戻る</button></div></div>
+<div id="app-ui">
+  <section id="title-screen" class="screen">
+    <header class="mast"><span class="wordmark"><i></i> SF / FLIGHT SYSTEMS</span><span class="edition">NEON FRONTIER · 02</span></header>
+    <div class="hero">
+      <div class="hero-copy"><p class="eyebrow">ALL-RANGE SPACE COMBAT</p><h1>STAR<span>FIGHTER</span></h1><p class="tagline" data-i18n="t_tag">光の軌跡で、銀河を切り拓け。</p><p class="description" data-i18n="t_desc">5つの勢力。25のボス。<br>機体を変形させ、艦隊の隙間を駆け抜けろ。</p>
+      <div class="launch-row"><button id="launch-button" class="primary" data-i18n="t_launch">出撃する <span>↗</span></button><button id="continue-button" class="secondary" data-i18n="t_continue" hidden>続きから</button></div>
+      <div class="secondary-row"><button id="help-button" class="text-button" data-i18n="t_help">操作ガイド <span>＋</span></button><button id="settings-button" class="text-button" data-i18n="t_settings">設定 <span>⚙</span></button><button id="shipyard-button" class="text-button" data-i18n="t_yard">艦艇図鑑 <span>◇</span></button><button id="install-button" class="text-button" data-i18n="t_install">アプリとして追加 <span>↓</span></button></div>
+      <p id="title-status" class="status-line"></p>
+      </div>
+      <div class="ship-art" aria-hidden="true">
+       <svg viewBox="0 0 600 540" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="halo"><stop stop-color="#34cedf" stop-opacity=".16"/><stop offset="1" stop-color="#34cedf" stop-opacity="0"/></radialGradient><linearGradient id="exhaust" x2="0" y2="1"><stop stop-color="#b5f9ff"/><stop offset=".2" stop-color="#5ce3f4" stop-opacity=".65"/><stop offset="1" stop-color="#34cfff" stop-opacity="0"/></linearGradient></defs>
+        <circle cx="310" cy="260" r="260" fill="url(#halo)"/>
+        <g fill="none" stroke="#315967" stroke-width="1"><ellipse cx="302" cy="283" rx="223" ry="188" transform="rotate(-22 302 283)"/><ellipse cx="302" cy="283" rx="190" ry="161" transform="rotate(-22 302 283)" stroke-dasharray="3 13"/><path d="M70 283H115M491 283H540M302 36V78M302 490V527"/></g>
+        <g transform="rotate(24 300 260)">
+         <path d="M269 327L259 511 282 351M330 327L342 511 318 351" fill="url(#exhaust)"/>
+         <g fill="#071421" stroke="#75e8ed" stroke-width="1.7" stroke-linejoin="round">
+          <path d="M300 75L323 219 495 333 482 362 333 314 324 353 276 353 267 314 118 362 105 333 277 219Z"/>
+          <path d="M300 75L288 246 300 312 312 246Z" fill="#102a37"/>
+          <path d="M277 219L288 246 267 314 105 333M323 219L312 246 333 314 495 333"/>
+          <path d="M300 312L300 353M288 246L276 353M312 246L324 353M152 324L149 343 254 302 260 269M448 324L451 343 346 302 340 269"/>
+          <path d="M260 277L274 280 274 335 255 335ZM326 280L340 277 345 335 326 335Z"/>
+          <path d="M293 183L307 183 312 240 300 264 288 240Z" fill="#174251" stroke="#b2f9fb"/>
+          <path d="M120 332L120 300 128 307 137 342M480 332L480 300 472 307 463 342"/>
+         </g>
+         <g fill="none" stroke="#ffbf73" stroke-width="2.4"><path d="M262 336H273M327 336H338M126 353L187 333M474 353L413 333"/></g>
+        </g>
+        <g fill="#81abb8" font-family="monospace" font-size="10" letter-spacing="2"><text x="393" y="110">SF—01</text><text x="54" y="448">VARIABLE WING</text><text x="54" y="465" fill="#e7bd7c">COMBAT READY</text></g>
+        <path d="M397 119H446L466 144M185 444H223L245 422" fill="none" stroke="#527781"/>
+       </svg>
+      </div>
+    </div>
+    <footer class="title-footer"><span><i></i> SYSTEMS ONLINE</span><span>KEYBOARD / GAMEPAD / TOUCH</span><span id="offline-status">…</span></footer>
+  </section>
+  <section id="pause-screen" class="modal-screen" hidden><div class="modal"><p class="eyebrow">FLIGHT SUSPENDED</p><h2 data-i18n="p_title">一時停止</h2><p data-i18n="p_text">準備ができたら、飛行を再開。</p><button id="resume-button" class="primary" data-i18n="p_resume">飛行を再開 ↗</button><button id="pause-help" class="secondary" data-i18n="p_help">操作ガイド</button><button id="pause-settings" class="secondary" data-i18n="p_settings">設定</button><p class="small" data-i18n="p_small">Esc / P またはコントローラーの Start で再開</p></div></section>
+  <section id="help-screen" class="modal-screen" hidden><div class="modal wide-modal"><p class="eyebrow">PILOT BRIEFING</p><h2 data-i18n="h_title">操作ガイド</h2><div class="guide-grid"><p data-i18n="h_move"><b>移動</b><span>矢印キー / 左スティック / 画面左をドラッグ</span></p><p data-i18n="h_fire"><b>射撃</b><span>Space / A・R1 / FIRE</span></p><p data-i18n="h_lock"><b>誘導ミサイル</b><span>X / B・L1 / LOCK を長押しして離す</span></p><p data-i18n="h_boost"><b>ブースト・ブレーキ</b><span>Shift・Z / R2・L2 / BOOST・BRAKE</span></p><p data-i18n="h_form"><b>変形・ワイド砲</b><span>F・B / Y・X / FORM・WIDE</span></p><p data-i18n="h_roll"><b>回避・Uターン</b><span>Q・E・V / 右スティック・R3 / ROLL・U-TURN</span></p><p data-i18n="h_view"><b>視点・音</b><span>C：コックピット(計器盤とガラスのHUD) / I：上下反転 / M：消音</span></p><p data-i18n="h_fa"><b>姿勢制御</b><span>G：オン・オフ(オフだと横滑りが残る)</span></p><p data-i18n="h_map"><b>星図</b><span>分かれ道では、← →で航路を選び、Space / Enter / A / タップで決定</span></p><p data-i18n="h_pause"><b>一時停止</b><span>Esc・P / Start / 画面下の Ⅱ</span></p><p data-i18n="h_ship"><b>機体</b><span>出撃の前に選ぶ:VALKYRIE(標準)・RAPTOR(速い・よく曲がる)・BASTION(硬い・3門の砲)。条件を満たすと、隠し機体も</span></p><p data-i18n="h_coop"><b>2人で出撃(パソコン版)</b><span>上が1P・下が2P。2P はゲームパッド、または W A S D で移動・R 射撃・T ロック・Y ブースト・H ブレーキ・1 2 ロール・3 ワイド・4 変形・5 Uターン</span></p></div><p class="briefing" data-i18n="h_brief">惑星へ向かい、ボスまたは艦隊を撃破。航路は分岐し、ハブで合流して、最後の一本に続きます。戦艦はシールド発生器から破壊すると艦橋を攻撃できます。巡航形態は高速移動用。誘導弾とワイド砲は戦闘形態で使用します。</p><p class="small" data-i18n="h_small">格納庫の購入は Space / A、次の出撃は Enter / Start。タッチは項目を選んでもう一度タップ。保存は格納庫到着・購入・次ステージ出撃時。同じ端末・同じアプリで再開できます。</p><button id="close-help" class="primary" data-i18n="h_ok">了解</button></div></section>
+    <section id="settings-screen" class="modal-screen" hidden><div class="modal"><p class="eyebrow">SYSTEM SETTINGS</p><h2 data-i18n="s_title">設定</h2>
+    <div class="setgroup"><span class="setlabel" data-i18n="s_lang">言語</span><div class="seg" id="lang-seg" role="group"><button type="button" data-lang="ja">日本語</button><button type="button" data-lang="en">English</button></div></div>
+    <div class="setgroup"><span class="setlabel" data-i18n="s_diff">難易度</span><div class="seg seg4" id="diff-seg" role="group"><button type="button" data-diff="0"></button><button type="button" data-diff="1"></button><button type="button" data-diff="2"></button><button type="button" data-diff="3"></button></div><p id="diff-desc" class="diff-desc"></p><p id="diff-stats" class="small"></p></div>
+    <div class="settings"><label><span data-i18n="s_sfx">効果音</span> <input id="sfx-volume" type="range" min="0" max="1" step="0.05" value="0.85"></label><label><span data-i18n="s_bgm">BGM</span> <input id="bgm-volume" type="range" min="0" max="1" step="0.05" value="0.3"></label><label><input id="lite-setting" type="checkbox"> <span data-i18n="s_lite">軽量表示</span></label></div>
+    <p class="small" data-i18n="s_note">難易度は、ゲーム中でも変えられます。得点は、難易度ごとに記録されます。</p>
+    <button id="close-settings" class="primary" data-i18n="s_close">閉じる</button></div></section>
+  <section id="install-screen" class="modal-screen" hidden><div class="modal"><p class="eyebrow">TAKE FLIGHT ANYWHERE</p><h2 data-i18n="i_title">ホーム画面に追加</h2><p data-i18n="i_ios"><b>iPhone / iPad</b><br>Safari の共有メニューから「ホーム画面に追加」。表示される場合は「Webアプリとして開く」をオンにします。</p><p data-i18n="i_win"><b>Windows</b><br>Edge のアドレスバーのアプリ追加アイコン、またはメニューの「アプリ」からインストール。</p><p id="install-note" class="small" data-i18n="i_note">初回読み込みとオフライン準備が終わると、次回から通信なしで遊べます。保存は端末ごとです。</p><button id="close-install" class="primary" data-i18n="i_close">閉じる</button></div></section>
+</div>
+<div id="rotate-hint" data-i18n="rotate">横向きにすると、広い画面で操縦できます ↻</div>
+<script>window.SF_NO_COOP = true;</script><script src="lib/p5.min.js"></script><script src="i18n.js"></script><script src="assets.js"></script><script src="tune.js"></script><script src="audio.js"></script><script src="sketch.js"></script><script src="models.js"></script><script src="flight.js"></script><script src="cinema.js"></script><script src="cockpit2.js"></script><script src="ship.js"></script><script src="zones.js"></script><script src="coop.js"></script><script src="app.js"></script>
+</body></html>

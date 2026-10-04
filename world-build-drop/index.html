@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>WORLD BUILD DROP</title>
+<meta name="description" content="言葉を落として、物語を編む。ワールドビルド・ドロップ。ひとり・2人対戦・CPU対戦。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="WORLD BUILD DROP">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1030">
+<style>
+  html,body{margin:0;height:100%;background:#0a1030;color:#fff;font-family:sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+  #wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}
+  canvas{max-width:100%;max-height:100%;min-height:0;background:#000}
+  #pad{display:none;gap:10px;margin:8px 0}
+  #pad button{width:60px;height:60px;border-radius:16px;border:2px solid #b9a0ff;background:#2a1a5a;color:#fff;font-size:22px;touch-action:manipulation}
+  #pad button:active{background:#6a4ad0}
+  @media (hover:none){body[data-scene=play] #pad{display:flex}}
+</style>
+</head>
+<body data-scene="menu">
+<div id="wrap">
+  <canvas id="c" width="960" height="640"></canvas>
+  <div id="pad">
+    <button data-a="left">◀</button><button data-a="right">▶</button>
+    <button data-a="down">▼</button><button data-a="rot">⟳</button><button data-a="act">◉</button>
+  </div>
+</div>
+<script src="i18n.js"></script>
+<script src="audio.js"></script>
+<script src="art.js"></script>
+<script src="engine.js"></script>
+<script src="ai.js"></script>
+<script src="rank.js"></script>
+<script src="kanji.js"></script>
+<script src="worldbuild.js"></script>
+<script>
+// オフライン用(https で配るときだけ働く。PC のローカルや http のときは何もしない)
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
+</body>
+</html>

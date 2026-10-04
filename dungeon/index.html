@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow, noarchive">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1e0a1c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dungeon Explorer" />
+    <meta name="description" content="Wizardry と トルネコの大冒険 に憧れて作られた、一人称視点のダンジョンRPG。" />
+    <title>Dungeon Explorer</title>
+    <base href="./" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/slot.css">
+    <link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+    <!-- 起動中の表示(WebAssemblyとゲームデータを読み込んでいる間) -->
+    <div id="boot">
+        <div class="boot-title">Dungeon Explorer</div>
+        <div class="boot-sub">〜 試練の洞窟 〜</div>
+        <div class="boot-bar"><i id="boot-fill"></i></div>
+        <div class="boot-note" id="boot-note">ゲームを読み込んでいます…(初回だけ時間がかかります)</div>
+    </div>
+
+    <div id="app" hidden>
+        <!-- 開始画面 -->
+        <section id="title" class="screen" hidden>
+            <div class="title-inner">
+                <h1>Dungeon Explorer</h1>
+                <p class="subtitle">〜 試練の洞窟 〜</p>
+                <div class="menu" id="title-menu"></div>
+                <p class="foot" id="title-foot"></p>
+            </div>
+        </section>
+
+        <!-- ゲーム画面 -->
+        <section id="main" class="screen" hidden>
+            <div id="stage"><canvas id="scene" width="1280" height="720"></canvas></div>
+            <div id="party"></div>
+            <div id="topbar">
+                <div id="resource"></div>
+                <button id="btn-menu" class="round" aria-label="メニュー">☰</button>
+            </div>
+            <div id="log"><div id="log-text"></div></div>
+            <div id="dpad" hidden>
+                <button data-dir="up" aria-label="前進">▲</button>
+                <button data-dir="left" aria-label="左を向く">◀</button>
+                <button data-dir="down" aria-label="後ろを向く">▼</button>
+                <button data-dir="right" aria-label="右を向く">▶</button>
+            </div>
+            <div id="actions"></div>
+        </section>
+
+        <!-- ダイアログ(選択・確認・キャラクター画面・地図など) -->
+        <div id="modal" hidden>
+            <div class="dialog" id="dialog">
+                <h2 id="dialog-title"></h2>
+                <div class="dialog-body" id="dialog-body"></div>
+                <div class="dialog-buttons" id="dialog-buttons"></div>
+            </div>
+        </div>
+
+        <div id="toast" hidden></div>
+        <div id="rotate" hidden>端末を横向きにすると、遊びやすくなります</div>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="js/api.js"></script>
+    <script src="js/loc.js"></script>
+    <script src="js/assets.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/scene.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/flows.js"></script>
+    <script src="js/slot.js"></script>
+    <script src="js/screens.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/selftest.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

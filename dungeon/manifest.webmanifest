@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Dungeon Explorer",
+  "short_name": "Dungeon Explorer",
+  "lang": "ja",
+  "description": "Wizardry と トルネコの大冒険 に憧れて作られた、一人称視点のダンジョンRPG。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1e0a1c",
+  "theme_color": "#1e0a1c",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

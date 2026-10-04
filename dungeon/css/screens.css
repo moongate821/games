@@ -1,0 +1,13 @@
+/* 持ち物一覧・詳細ステータス(2026-10-01) */
+.inv-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.inv-tabs .abtn { min-height: 34px; padding: 4px 12px; font-size: 13px; }
+.inv-cols { grid-template-columns: 1.1fr 1fr; align-items: start; }
+.inv-list { max-height: 46vh; overflow-y: auto; }
+.inv-detail { background: #1e0c1c; border: 1px solid #ffffff18; border-radius: 9px; padding: 10px 12px; min-height: 200px; }
+.inv-head { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+.inv-head .ic, .inv-head img { width: 44px; height: 44px; image-rendering: pixelated; }
+.detail-sec { margin-bottom: 8px; }
+.detail-h { background: #46283c; color: var(--gold); font-weight: 700; padding: 4px 10px; border-radius: 6px; margin-bottom: 3px; }
+.detail-l { padding: 2px 12px; font-size: 14px; line-height: 1.5; }
+.detail-l.note { color: #c8aa82; font-size: 12.5px; }
+@media (max-width: 640px) { .inv-cols { grid-template-columns: 1fr; } .inv-list { max-height: 30vh; } }
