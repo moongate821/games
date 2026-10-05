@@ -20,5 +20,6 @@
 - 翡翠の約束: https://moongate821.github.io/games/hisui/ — 作者の小説が原作。翡翠の首飾りがつなぐ縁を、浮世絵の絵本ゲームに。結末は40種類。
 - 世界の果てで君を探す: https://moongate821.github.io/games/sekai/ — 作者の小説が原作。いなくなった君を探す旅を、油絵の絵本ゲームに。結末は40種類。
 - 君に逢うために: https://moongate821.github.io/games/kimi/ — 作者の小説が原作。雨の夜の祈りからやり直す二度目の人生を、ポップなコミック調の絵本ゲームに。結末は40種類。
+- RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。赤い敵の車が行進してくる、ひとり用サバイバー。
 - NEON RIDER ― 光の轍: https://moongate821.github.io/games/neonrider/ — 光の道を走る疑似3Dのバイクレース(Tron×AKIRA 風)。全30コース、バイク5台。
 - GALACTIC HEGEMONY ― 銀河覇権: https://moongate821.github.io/games/stellar/ — 銀河を舞台にした宇宙戦略・艦隊戦シミュレーション。補給線、提督、3Dの艦隊戦。
