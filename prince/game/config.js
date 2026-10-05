@@ -1,9 +1,9 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "prince40",
-  title: "王子さまと四十の夕日",
+  title: "王子さまと夕日の星",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
-  subtitle: "四十の夕日をさがす、星めぐりの絵本ゲーム",
+  subtitle: "夕日をさがす、星めぐりの絵本ゲーム",
   credit: "原案: サン＝テグジュペリ『星の王子さま』(1943)",
   start: "planet",
   items: {

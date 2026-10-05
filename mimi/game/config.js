@@ -1,7 +1,7 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "mimi40",
-  title: "ミミと四十の帰り道",
+  title: "ミミのながい帰り道",
   eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
   subtitle: "おいていかれた、ぬいぐるみの、帰り道の絵本ゲーム",
   credit: "書き下ろしの物語",

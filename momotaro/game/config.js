@@ -1,9 +1,9 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "momo40",
-  title: "桃太郎と四十のきびだんご",
+  title: "桃太郎ときびだんごの旅",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
-  subtitle: "四十の結末をさがす、鬼ヶ島への絵本ゲーム",
+  subtitle: "鬼ヶ島へ、選んで進む絵本ゲーム",
   credit: "原案: 昔話『桃太郎』",
   start: "river",
   items: {

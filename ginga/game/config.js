@@ -1,9 +1,9 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "ginga40",
-  title: "銀河鉄道と四十の切符",
+  title: "銀河鉄道と星の切符",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
-  subtitle: "四十の結末をさがす、星めぐりの汽車の絵本ゲーム",
+  subtitle: "星めぐりの汽車に乗る、絵本ゲーム",
   credit: "原案: 宮沢賢治『銀河鉄道の夜』",
   start: "school",
   items: {

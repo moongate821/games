@@ -1,7 +1,7 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "neko40",
-  title: "ねこのレストランと四十のメニュー",
+  title: "ねこのレストランと満月オムライス",
   eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
   subtitle: "子ねこのコックと、ふしぎなお客の、切り絵の絵本ゲーム",
   credit: "書き下ろしの物語",

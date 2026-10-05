@@ -1,7 +1,7 @@
 /* ゲームの設定(題名・持ち物・場所・結末の種類)。物語本文は story_*.js。 */
 window.GAME = {
   id: "yuki40",
-  title: "ユキと四十の足あと",
+  title: "ユキと春の足あと",
   eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
   subtitle: "春にとけてしまう、雪の子の、絵本ゲーム",
   credit: "書き下ろしの物語",
