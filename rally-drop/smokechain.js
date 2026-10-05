@@ -157,8 +157,9 @@ const PICK_CARD = i => ({ x: 25 + i * 200, y: 170, w: 190, h: 290 });
 
 // ---------- 見た目 ----------
 function tile(ctx, s, col, alpha) {
-  ctx.fillStyle = col; ctx.globalAlpha = alpha * .35; DG.rr(ctx, -s / 2 + 2, -s / 2 + 2, s - 4, s - 4, 8); ctx.fill();
-  ctx.globalAlpha = Math.min(1, alpha * .9); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
+  const a0 = ctx.globalAlpha;                      // 呼び出し側の透明度(着地予告の半透明など)を引き継ぐ
+  ctx.fillStyle = col; ctx.globalAlpha = a0 * alpha * .35; DG.rr(ctx, -s / 2 + 2, -s / 2 + 2, s - 4, s - 4, 8); ctx.fill();
+  ctx.globalAlpha = a0 * Math.min(1, alpha * .9); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = a0;
 }
 function drawCell(ctx, c, x, y, s, scale, t) {
   const k = c.c; ctx.save(); ctx.translate(x + s / 2, y + s / 2); if (scale !== 1) ctx.scale(scale, scale);
@@ -358,7 +359,8 @@ function aiEval(g) {
 // ---------- ルール本体 ----------
 const R = DG.smokechain = {
   aiKey: c => c.c, aiEval,
-  id: 'smokechain', title: 'RALLY DROP', actLabel: 'S旗', nav: '本部', bgm: 'smoke', survivor: true,
+  id: 'smokechain', title: 'RALLY DROP', ghostAlpha: .42,        // 落ちる先(着地の予告)は半透明
+  actLabel: 'S旗', nav: '本部', bgm: 'smoke', survivor: true,
   hello: 'ラリーX本部より入電。赤い車の群れが、この道を進軍中。引き連れて、煙幕で焼け!', garbageMsg: '敵の車が 行進してきた!',
   overMsg: '車は囲まれた…。もう一回、走る?(Enter)',
   levels: [{ name: 'ふつう', bonus: 1 }], levelCount: 1, setOptions() {}, levelName: P => 'FLOOR ' + ((P && P.stat && P.stat.floor) || 1),

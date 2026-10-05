@@ -229,7 +229,7 @@ class Player {
     }
     if (this.piece) {
       const p = this.piece, [sx, sy] = this.satPos(p.px, p.py, p.rot), gy = this.landing(), [gsx, gsy] = this.satPos(p.px, gy, p.rot);
-      ctx.globalAlpha = .22;
+      ctx.globalAlpha = R.ghostAlpha || .22;
       if (R.ghost === 'outline') {           // 枠はブロックに見えて紛らわしいので、落ちる列の光の柱と着地の▼だけにする
         ctx.globalAlpha = 1;
         for (const [x, y, y0] of [[p.px, gy, p.py], [gsx, gsy, sy]]) {
