@@ -13,7 +13,7 @@ const EN = {
   'アカシック・エディタ': 'The Akashic Editor',
   'ブロックは「言葉」。となり合わせると合体して、物語になる。': 'Blocks are WORDS. Put them side by side and they merge into a story.',
   '章を完成させて、世界の編纂者になろう。': 'Complete chapters and become the Compiler of Worlds.',
-  '1P ひとりで': '1P Solo', '2P ふたりで対戦': '2P Versus', '🤖 CPUと対戦': '🤖 vs CPU', '👀 デモ観戦': '👀 Watch Demo',
+  '▶ はじめる': '▶ Start', '1P ひとりで': '1P Solo', '2P ふたりで対戦': '2P Versus', '🤖 CPUと対戦': '🤖 vs CPU', '👀 デモ観戦': '👀 Watch Demo',
   '🏆 ランキング (R)': '🏆 Ranking (R)', '⚙ 設定 (O)': '⚙ Settings (O)', '📖 図鑑 (B)': '📖 Codex (B)', 'あなたの称号': 'Your title', 'あなた': 'You',
   '難しさ (Q)': 'Difficulty (Q)',
   '← → むずかしさ  ↑ ↓ / 1-4 遊び方  T 駒  O 設定  R ランキング  B 図鑑  Enter / タップで スタート  M ミュート  20秒放置でデモ': '← → Difficulty   ↑ ↓ / 1-4 Play style   T Piece   O Settings   R Ranking   B Codex   Enter / Tap: Start   M Mute   Idle 20s: Demo',

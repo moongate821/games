@@ -472,6 +472,7 @@ document.querySelectorAll('#pad button').forEach(b => {
   b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up);
 });
 const MODES = [0, 1, 2, 3].map(i => ({ x: 90 + i * 200, y: 396, w: 190, h: 50 }));
+const STARTBTN = { x: 370, y: 452, w: 220, h: 36 };      // タップで始めるボタン(以前はキーボード Enter かパッドの Start でしか始められなかった)
 const CPUBTN = { x: 20, y: 596, w: 150, h: 26 };
 const CODEXBTN = { x: 780, y: 98, w: 170, h: 34 };
 const STYLEBTN = { x: 740, y: 140, w: 210, h: 34 };
@@ -540,7 +541,8 @@ cv.addEventListener('pointerdown', e => {
   if (S.scene === 'menu') {
     Music.play('menu');
     const inR = (b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
-    for (let i = 0; i < 4; i++) if (inR(MODES[i])) { menu.mode = i; Sfx.select(); return; }
+    if (inR(STARTBTN)) { confirm(); return; }
+    for (let i = 0; i < 4; i++) if (inR(MODES[i])) { if (menu.mode === i) { confirm(); return; } menu.mode = i; Sfx.select(); return; }      // えらんでいるモードをもう一度タップで始まる
     for (let i = 0; i < 4; i++) if (inR(QDBTNS[i])) { menu.lv[0] = i; Sfx.select(); return; }
     if (inR(CPUBTN) && menu.mode >= 2) { menu.cpu = (menu.cpu + 1) % 3; Sfx.select(); }
     if (inR(RANKBTN)) { S.scene = 'rank'; Sfx.select(); }
@@ -607,6 +609,12 @@ function drawMenu(t) {
     ctx.lineWidth = 3; ctx.strokeStyle = on ? '#b57a00' : '#a89060'; ctx.stroke();
     DG.text(ctx, lab, b.x + b.w / 2, b.y + 33, 18, on ? '#4a2e00' : '#3a2a1a', 'center');
   });
+  {   // 「はじめる」ボタン(タップ用。ゆっくり光る)
+    const b = STARTBTN, pulse = .5 + .5 * Math.sin(t * 4);
+    ctx.save(); ctx.shadowColor = 'rgba(255,211,77,' + (.45 + .4 * pulse) + ')'; ctx.shadowBlur = 14; ctx.fillStyle = '#ffd34d'; rr(ctx, b.x, b.y, b.w, b.h, 18); ctx.fill(); ctx.restore();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#b57a00'; rr(ctx, b.x, b.y, b.w, b.h, 18); ctx.stroke();
+    DG.text(ctx, '▶ はじめる', b.x + b.w / 2, b.y + 25, 19, '#4a2e00', 'center', { weight: 'bold' });
+  }
   {   // むずかしさ(4段階)
     const cur = menu.lv[0]; DG.text(ctx, '難しさ (Q)', QDBTNS[0].x - 12, 516, 13, '#fff', 'right', { stroke: '#0a1030', sw: 3 });
     R.levels.forEach((lv, i) => {
