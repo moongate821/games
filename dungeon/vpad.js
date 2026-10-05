@@ -122,7 +122,10 @@
       cfg = c;
       if (!touchDev && !force) return;
       cv = document.createElement('canvas'); cv.id = 'vpad';
-      cv.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;';
+      // 重ねる層は、ゲームのページの canvas 用の CSS(背景色・最大幅など)に影響されないよう、すべて !important で固定する。
+      // (落ち物のページに canvas{background:#000} があり、この層が真っ黒に塗られて、ゲーム全体が隠れたことがある)
+      cv.style.cssText = 'position:fixed!important;left:0!important;top:0!important;pointer-events:none!important;z-index:2147483000!important;background:none transparent!important;'
+        + 'max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;opacity:1!important;display:block!important;';
       document.body.appendChild(cv); cx = cv.getContext('2d');
       probe = document.createElement('div'); probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'; document.body.appendChild(probe);
       resize(); addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 200));

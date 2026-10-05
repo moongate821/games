@@ -5,7 +5,7 @@ self.assetsManifest = {
       "url": "pad.js"
     },
     {
-      "hash": "sha256-HyJFC98Y9EkjbyH2k2G2awsswW071P5jcZbajBTh5ag=",
+      "hash": "sha256-XAiCLWglD2IQJ+HFzYZjDnUhNTmTz4E4whso80wkZvI=",
       "url": "vpad.js"
     },
     {
@@ -4757,5 +4757,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "YaUA5JMw-9072a1cc"
+  "version": "YaUA5JMw-07283a4e"
 };
