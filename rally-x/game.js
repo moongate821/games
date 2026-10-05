@@ -670,6 +670,12 @@ function openLevelUp() {
   const opts = [];
   if (fusions.length) opts.push(fusions[ri(fusions.length)]);
   if (upgrades.length) opts.push(upgrades[ri(upgrades.length)]);
+  if(slots>0){
+    const partners=FUSION_RECIPES.flatMap(r=>lv(r.left)&&!lv(r.right)?[r.right]:lv(r.right)&&!lv(r.left)?[r.left]:[]);
+    const starters=[...new Set(FUSION_RECIPES.flatMap(r=>[r.left,r.right]))].filter(k=>!lv(k));
+    const guided=(partners.length?partners:starters).filter(k=>!opts.includes(k));
+    if(guided.length&&opts.length<3)opts.push(guided[ri(guided.length)]);
+  }
   const pool = [...newcomers, ...upgrades, ...fusions.filter(k=>!opts.includes(k))];
   while (opts.length < 3 && pool.length) { const k=pool.splice(ri(pool.length),1)[0]; if(!opts.includes(k)) opts.push(k); }
   const fill = ['hpup', 'power'];
@@ -853,6 +859,7 @@ function drawHUD() {
     glow(VW / 2, 100, 160, '#ffd040', .6); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     const bounce = 1 + Math.max(0, .5 - tm) * 1.2 * Math.abs(Math.sin(tm * 14));
     txt('LEVEL UP!', VW / 2, 112, 42 * bounce, '#ffe14a', 'center');
+    txt(`装備 ${equippedSkills().length}/${SKILL_SLOTS}枠  ・  合成は素材2つ→完成品1つ`,VW/2,145,16,'#c9e5ff','center');
     G.opts.forEach((k, i) => drawSkillCard(k, i, i === G.sel, tm));
   }
   if (state === 'dead' || state === 'win') {
