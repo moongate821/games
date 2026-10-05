@@ -17,3 +17,6 @@
 - ユキと春の足あと: https://moongate821.github.io/games/yuki/ — 書き下ろし。春にとけてしまう雪の子と、窓ごしの友だちの絵本ゲーム。
 - ねこのレストランと満月オムライス: https://moongate821.github.io/games/neko/ — 書き下ろし。子ねこのコックと、ドラゴン・おばけ・宇宙人のお客。切り絵の絵本ゲーム。
 - ダンボールロケットで月まで: https://moongate821.github.io/games/rocket/ — 書き下ろし。段ボールのロケットで、月のうさぎにケーキをとどける。段ボール工作の絵本ゲーム。
+- 翡翠の約束: https://moongate821.github.io/games/hisui/ — 作者の小説が原作。翡翠の首飾りがつなぐ縁を、墨絵の絵本ゲームに。結末は40種類。
+- 世界の果てで君を探す: https://moongate821.github.io/games/sekai/ — 作者の小説が原作。いなくなった君を探す旅を、水彩の絵本ゲームに。結末は40種類。
+- 君に逢うために: https://moongate821.github.io/games/kimi/ — 作者の小説が原作。雨の夜の祈りからやり直す二度目の人生を、光のポスター調の絵本ゲームに。結末は40種類。
