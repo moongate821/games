@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "name": "STELLAR HEGEMONY ― 銀河覇権",
+  "short_name": "銀河覇権",
+  "lang": "ja",
+  "description": "宇宙戦略・戦術シミュレーション『STELLAR HEGEMONY ― 銀河覇権』",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#05070c",
+  "theme_color": "#05070c",
+  "icons": []
+}
