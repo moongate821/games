@@ -1,7 +1,7 @@
 // 作る.py が、落ち物2作・シューティングの sw.js をこれに置きかえる(版名・接頭辞・ファイル一覧は、元の sw.js から引き継ぐ)。
 // 以前の作りは「保存した版を先に使い、新しい版は古い画面がすべて閉じるまで使わない」ため、iPhone では更新が届かず古い版が出続けた。
 // 今の作り: まず最新を取りに行く(取れないとき=電波がないときだけ保存した版を使う)。新しい版はすぐに引き継ぐ。
-const CACHE = 'stellar-hegemony-v1-20261003-4-gh50b6cbd4';
+const CACHE = 'stellar-hegemony-v1-20261003-4-gh95445173';
 const PREFIX = 'stellar-hegemony-';
 const FILES = ['./index.html', './app.css', './app.js', './constants.js', './utils.js', './shipmodels.js', './gallery.js', './missions.js', './input.js', './audio.js', './starmap.js', './command.js', './hexbattle.js', './cinema.js', './dogfight.js', './postcombat.js', './sketch.js', './lib/p5.min.js', './manifest.webmanifest'];
 self.addEventListener('install', e => {

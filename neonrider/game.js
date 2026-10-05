@@ -602,5 +602,7 @@ function mousePressed(event) {
   if (touchMode || (event && event.target && event.target.closest && event.target.closest('#app-ui, #garage-ui'))) return;
   if (state === 'select') selTap(mouseX, mouseY); else if (state === 'course') courseTap(mouseX, mouseY); else if (state === 'result' && resultT > 1) resultTap(mouseX, mouseY);
 }
-function touchEnded() { GAR.tx = null; SND.resume(); return false; }
-function touchMoved() { if (state === 'select' && touches.length) { GAR.A += (touches[0].x - (GAR.tx == null ? touches[0].x : GAR.tx)) * 0.01; GAR.tx = touches[0].x; GAR.auto = false; } return false; }
+// 画面のボタン(発進・ガレージなど)の上では、既定の動作を止めない(止めると iPhone でタップがクリックにならず、ボタンが押せない)
+function onAppUI(event) { return !!(event && event.target && event.target.closest && event.target.closest('#app-ui, #toolbar, #garage-ui')); }
+function touchEnded(event) { GAR.tx = null; SND.resume(); if (onAppUI(event)) return; return false; }
+function touchMoved(event) { if (onAppUI(event)) return; if (state === 'select' && touches.length) { GAR.A += (touches[0].x - (GAR.tx == null ? touches[0].x : GAR.tx)) * 0.01; GAR.tx = touches[0].x; GAR.auto = false; } return false; }

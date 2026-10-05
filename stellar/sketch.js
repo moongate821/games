@@ -1224,9 +1224,12 @@ function touchStarted(evt) {
   SND.resume();
   return inputTouchStarted(evt, W, H, (x, y) => {});
 }
-function touchEnded() { lastPinchDist = null; return false; }
+// 画面のボタン(出撃など)の上では、既定の動作を止めない(止めると iPhone でタップがクリックにならず、ボタンが押せない)
+function onAppUI(evt) { return !!(evt && evt.target && evt.target.closest && evt.target.closest('#app-ui, #toolbar')); }
+function touchEnded(evt) { if (onAppUI(evt)) return; lastPinchDist = null; return false; }
 let lastPinchDist = null;
-function touchMoved() {
+function touchMoved(evt) {
+  if (onAppUI(evt)) return;
   if (state === 'play' && !paused && GAME && GAME.phase === 'strategy' && touches.length >= 2) {
     const d = Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y);
     if (lastPinchDist !== null) { GAME.camZoom *= 1 + (d - lastPinchDist) * 0.0025; clampCam(); }
