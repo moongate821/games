@@ -71,7 +71,8 @@ function drawSprite(s, x, y, ang, sc, alpha) {
 // ---- 迷路 ----
 let grid, mapCv, wallCv;
 const solid = (tx, ty) => tx < 0 || ty < 0 || tx >= GW || ty >= GH || grid[ty * GW + tx] === 1;
-function genMaze() {
+function genMaze(stage = 1) {
+  activeField = fieldForStage(stage);
   grid = new Uint8Array(GW * GH).fill(1);
   const carve = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) grid[y * GW + x] = 0; };
   const seen = new Uint8Array(CELLS * CELLS), st = [[ri(CELLS), ri(CELLS)]];
@@ -87,38 +88,38 @@ function genMaze() {
     if (!nb.length) { st.pop(); continue; }
     const [nx, ny] = nb[ri(nb.length)]; seen[ny * CELLS + nx] = 1; link(cx, cy, nx, ny); st.push([nx, ny]);
   }
-  for (let i = 0; i < CELLS * CELLS * 0.6; i++) { // 輪を作る(ぐるぐる回って敵を引き連れるため)
+  for (let i = 0; i < CELLS * CELLS * activeField.loops; i++) { // 輪の密度は区画ごとに違う
     const cx = ri(CELLS - 1), cy = ri(CELLS - 1);
     if (rnd() < 0.5) link(cx, cy, cx + 1, cy); else link(cx, cy, cx, cy + 1);
   }
-  for (let i = 0; i < 5; i++) { const cx = ri(CELLS - 1), cy = ri(CELLS - 1); carve(1 + 3 * cx, 1 + 3 * cy, 5 + 3 * cx, 5 + 3 * cy); } // 広場
+  for (let i = 0; i < activeField.plazas; i++) { const cx = ri(CELLS - 1), cy = ri(CELLS - 1); carve(1 + 3 * cx, 1 + 3 * cy, 5 + 3 * cx, 5 + 3 * cy); } // 広場
   // 描画済み背景
   wallCv = document.createElement('canvas'); wallCv.width = wallCv.height = WORLD;
   const g = wallCv.getContext('2d');
-  g.fillStyle = '#0a0d24'; g.fillRect(0, 0, WORLD, WORLD);
-  g.strokeStyle = 'rgba(60,90,200,0.10)'; g.lineWidth = 1;
+  g.fillStyle = activeField.floor; g.fillRect(0, 0, WORLD, WORLD);
+  g.strokeStyle = activeField.grid; g.globalAlpha = .13; g.lineWidth = 1;
   for (let i = 0; i <= GW; i++) { g.beginPath(); g.moveTo(i * T + .5, 0); g.lineTo(i * T + .5, WORLD); g.moveTo(0, i * T + .5); g.lineTo(WORLD, i * T + .5); g.stroke(); }
-  for (let ty = 0; ty < GH; ty++) for (let tx = 0; tx < GW; tx++) if (grid[ty * GW + tx] === 1) paintWall(g, tx, ty);
+  g.globalAlpha = 1;
+  for (let ty = 0; ty < GH; ty++) for (let tx = 0; tx < GW; tx++) if (grid[ty * GW + tx] === 1) paintWall(g, tx, ty); else fieldFloor(g, tx, ty);
   mapCv = document.createElement('canvas'); mapCv.width = GW; mapCv.height = GH;
   const m = mapCv.getContext('2d'); m.fillStyle = '#03040c'; m.fillRect(0, 0, GW, GH);
-  for (let i = 0; i < GW * GH; i++) if (grid[i] === 1) { m.fillStyle = '#25308a'; m.fillRect(i % GW, (i / GW) | 0, 1, 1); }
+  for (let i = 0; i < GW * GH; i++) if (grid[i] === 1) { m.fillStyle = activeField.map; m.fillRect(i % GW, (i / GW) | 0, 1, 1); }
 }
 function paintTile(tx, ty, rubble) { // 1マスを描き直す(rubble=砕かれた跡)
   if (tx < 0 || ty < 0 || tx >= GW || ty >= GH) return;
   const g = wallCv.getContext('2d'), x = tx * T, y = ty * T;
-  g.fillStyle = '#0a0d24'; g.fillRect(x, y, T, T);
-  g.strokeStyle = 'rgba(60,90,200,0.10)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + .5, y); g.lineTo(x + .5, y + T); g.moveTo(x, y + .5); g.lineTo(x + T, y + .5); g.stroke();
+  fieldFloor(g, tx, ty);
   if (grid[ty * GW + tx] === 1) paintWall(g, tx, ty);
-  else if (rubble) { g.fillStyle = '#1a2050'; for (let k = 0; k < 7; k++) g.fillRect(x + ri(T - 6), y + ri(T - 6), 3 + ri(4), 3 + ri(4)); }
-  const m = mapCv.getContext('2d'); m.fillStyle = grid[ty * GW + tx] === 1 ? '#25308a' : '#03040c'; m.fillRect(tx, ty, 1, 1);
+  else if (rubble) { g.fillStyle = activeField.rubble; for (let k = 0; k < 7; k++) g.fillRect(x + ri(T - 6), y + ri(T - 6), 3 + ri(4), 3 + ri(4)); }
+  const m = mapCv.getContext('2d'); m.fillStyle = grid[ty * GW + tx] === 1 ? activeField.map : '#03040c'; m.fillRect(tx, ty, 1, 1);
 }
 function paintWall(g, tx, ty) {
   {
     const x = tx * T, y = ty * T;
-    g.fillStyle = '#141a4a'; g.fillRect(x, y, T, T);
-    g.fillStyle = '#1b2468'; g.fillRect(x + 4, y + 4, T - 8, T - 8);
-    g.fillStyle = '#10163c'; g.fillRect(x + 8, y + 8, T - 16, T - 16);
-    const e = (dx, dy, rx, ry, w, h) => { if (!solid(tx + dx, ty + dy)) { g.fillStyle = '#2f8cff'; g.fillRect(x + rx, y + ry, w, h); g.fillStyle = '#9fd0ff'; g.fillRect(x + rx + (w > h ? 0 : (dx > 0 ? 0 : 1)), y + ry + (h > w ? 0 : (dy > 0 ? 0 : 1)), w > h ? w : 1, h > w ? h : 1); } };
+    g.fillStyle = activeField.wall; g.fillRect(x, y, T, T);
+    g.fillStyle = activeField.face; g.fillRect(x + 4, y + 4, T - 8, T - 8);
+    g.fillStyle = activeField.core; g.fillRect(x + 8, y + 8, T - 16, T - 16);
+    const e = (dx, dy, rx, ry, w, h) => { if (!solid(tx + dx, ty + dy)) { g.fillStyle = activeField.edge; g.fillRect(x + rx, y + ry, w, h); g.fillStyle = activeField.shine; g.fillRect(x + rx + (w > h ? 0 : (dx > 0 ? 0 : 1)), y + ry + (h > w ? 0 : (dy > 0 ? 0 : 1)), w > h ? w : 1, h > w ? h : 1); } };
     e(0, -1, 0, 0, T, 3); e(0, 1, 0, T - 3, T, 3); e(-1, 0, 0, 0, 3, T); e(1, 0, T - 3, 0, 3, T);
   }
 }
@@ -201,8 +202,8 @@ function drive(p, dist) {
 let state = 'title', G;
 const KEYS = {};
 const INFL = 250; // このレベルからインフレ(攻撃力・連射が急に伸び、武器の上限がLv10に)
-const pw = () => (1 + .004 * Math.min(G.level, INFL) + (G.level > INFL ? .05 * (G.level - INFL) : 0)) * (1 + .05 * lv('power'));
-const cdMul = () => G.level > INFL ? 1 + .02 * (G.level - INFL) : 1;
+const pw = () => (1 + .004 * Math.min(G.level, INFL) + (G.level > INFL ? .05 * (G.level - INFL) : 0)) * (1 + .05 * lv('power') + skillStat('damage'));
+const cdMul = () => (G.level > INFL ? 1 + .02 * (G.level - INFL) : 1) * (1 + skillStat('rate'));
 const WEAPONS = {
   lance: { name: 'フラッグ・ランス', desc: lv => `旗の槍を連射。${lv < 1 ? '' : ''}数が増え、Lv3から貫通` },
   mine: { name: 'ロック・マイン', desc: () => '後ろに岩を置く。敵が触れると爆発' },
@@ -212,17 +213,18 @@ const WEAPONS = {
   fuel: { name: 'ハイオク燃料', desc: () => '燃料の量と煙幕の持続が伸びる', passive: 1 },
   hpup: { name: '装甲強化', desc: () => '最大HP+10、HPを30回復', passive: 1, filler: 1 },
   power: { name: 'オーバークロック', desc: () => '全ての攻撃力+5%', passive: 1, filler: 1 },
+  ...EXTRA_SKILLS,
 };
-const maxLv = k => WEAPONS[k].filler ? 999 : WEAPONS[k].passive ? 5 : (G.level >= INFL ? 10 : 5);
+const maxLv = k => WEAPONS[k].filler ? 999 : (G.level >= INFL ? 10 : 5);
 function newGame() {
-  genMaze();
+  genMaze(1);
   const p0 = randNode(0);
   G = {
     t: 0, stage: 1, score: 0, kills: 0, level: 1, xp: 0, need: 4, fever: 0, flags: 0, shake: 0, shakeA: 5, log: [], msg: '', msgT: 0,
     chain: 0, chainT: 0, best: 0, crashes: 0, pops: [], freeze: 0, lastPop: -9, lastKillSfx: -9,
     parts: [], nums: [], ghosts: [], flash: null, rocks: [], xpGlow: 0, chainBump: 0, luAt: 0,
     p: { x: p0.x, y: p0.y, hp: 100, maxhp: 100, fuel: 100, ang: -Math.PI / 2, tang: -Math.PI / 2, inv: 0, dir: { x: 0, y: -1 }, want: null, wantT: 0, smokeCD: 0, brake: 100, braking: false, lane: -16, lx: -16, ly: 0, cx: p0.x - 16, cy: p0.y },
-    boss: null, bossWarn: 0, clearT: 0,
+    boss: null, bossWarn: 0, clearT: 0, hunter:null, camp:{x:p0.x,y:p0.y,t:0},
     w: { lance: 1 }, enemies: [], gems: [], items: [], shots: [], mines: [], puffs: [], fx: [], flagsList: [], acc: 0, spawnAcc: 0,
     wt: { lance: 0, mine: 1, radar: 0 }, sweep: 0, dist: null, dtile: -1, sFlag: null, sTimer: 40, opts: [], sel: 0, deadAt: 0, botPath: null, botTgt: null,
   };
@@ -419,7 +421,7 @@ function step(dt) {
   else if (p.wantT > 0) { p.wantT -= dt; if (p.wantT <= 0) p.want = null; }
   if (inp.lane) p.lane = inp.lane;
   else if (p.want && (p.want.x !== 0) !== (p.dir.x !== 0)) { const side = Math.sign(p.dir.x * p.want.y - p.dir.y * p.want.x); if (side && p.lane !== side * 16) { p.lane = side * 16; sfx(500, .04, 'triangle', .02); } }
-  const spd = 305 * (1 + .06 * lv('speed')) * (fev ? 1.15 : 1);
+  const spd = 305 * (1 + .06 * lv('speed') + skillStat('speed')) * (fev ? 1.15 : 1);
   p.braking = inp.brake && p.brake > 0;
   if (p.braking) {
     p.brake = Math.max(0, p.brake - 45 * dt);
@@ -431,12 +433,14 @@ function step(dt) {
   { const kl = Math.min(1, dt * 12); p.lx += (-p.dir.y * p.lane - p.lx) * kl; p.ly += (p.dir.x * p.lane - p.ly) * kl; p.cx = p.x + p.lx; p.cy = p.y + p.ly; }
   let da = p.tang - p.ang; da = Math.atan2(Math.sin(da), Math.cos(da)); p.ang += da * Math.min(1, dt * 18);
   if (p.inv > 0) p.inv -= dt;
+  updateHunter(dt);
+  if(state!=='play')return;
   // 煙幕
-  const fmax = 100 * (1 + .15 * lv('fuel')); p.maxfuel = fmax;
+  const fmax = 100 * (1 + .15 * lv('fuel') + skillStat('smoke')); p.maxfuel = fmax;
   p.smokeCD -= dt;
   if (inp.smoke && (p.fuel > 0 || fev)) {
     if (!fev) p.fuel = Math.max(0, p.fuel - 30 * dt); G.smokeT = (G.smokeT || 0) + dt;
-    if (p.smokeCD <= 0) { p.smokeCD = .06; G.puffs.push({ x: p.cx - Math.cos(p.ang) * 26 + rr(-6, 6), y: p.cy - Math.sin(p.ang) * 26 + rr(-6, 6), l: 3 + .6 * lv('fuel'), m: 3 + .6 * lv('fuel'), r: rr(34, 44) }); }
+    if (p.smokeCD <= 0) { p.smokeCD = .06; G.puffs.push({ x: p.cx - Math.cos(p.ang) * 26 + rr(-6, 6), y: p.cy - Math.sin(p.ang) * 26 + rr(-6, 6), l: 3 + .6 * lv('fuel') + skillStat('smoke'), m: 3 + .6 * lv('fuel') + skillStat('smoke'), r: rr(34, 44) }); }
   } else p.fuel = Math.min(fmax, p.fuel + 4 * dt);
   for (let i = G.puffs.length - 1; i >= 0; i--) { G.puffs[i].l -= dt; if (G.puffs[i].l <= 0) G.puffs.splice(i, 1); }
   // 流れ場
@@ -481,7 +485,7 @@ function step(dt) {
     if (d2 < 26 * 26 && e.spin > 0) { // スピン中の車は体当たりで弾き飛ばせる(ボウリング)
       if (e.crashCD <= 0) { const dd = Math.sqrt(d2) || 1; hurt(e, 10 + 3 * G.stage, (e.x - p.cx) / dd, (e.y - p.cy) / dd, 420, 'ram'); e.crashCD = .3; sfx(180, .08, 'square', .04, 90); }
     } else if (d2 < 26 * 26) {
-      if (p.inv <= 0) { G.hits = (G.hits || 0) + 1; p.hp -= T0.dmg * (1 + G.t / 400); p.inv = .9; shove(); G.shake = .15; G.shakeA = 5; sfx(120, .2, 'sawtooth', .07, 60); boom(p.cx, p.cy, '#6ab0ff', 6); if (p.hp <= 0) { die(); return; } }
+      if (p.inv <= 0) { G.hits = (G.hits || 0) + 1; p.hp -= T0.dmg * (1 + G.t / 400) / (1 + skillStat('guard')); p.inv = .9; shove(); G.shake = .15; G.shakeA = 5; sfx(120, .2, 'sawtooth', .07, 60); boom(p.cx, p.cy, '#6ab0ff', 6); if (p.hp <= 0) { die(); return; } }
       if (T0.kami) { e.hp = 0; }
       else { const L2 = Math.hypot(e.x - p.cx, e.y - p.cy) || 1; e.vx += (e.x - p.cx) / L2 * 150; e.vy += (e.y - p.cy) / L2 * 150; }
     }
@@ -498,7 +502,7 @@ function step(dt) {
   weapons(wdt, dt);
   updateBoss(dt); if (state !== 'play' || G.stageJustCleared) { G.stageJustCleared = false; return; }
   // 宝石・アイテム
-  const mag = 70 + 45 * lv('antenna');
+  const mag = 70 + 45 * lv('antenna') + 100 * skillStat('pickup');
   for (let i = G.gems.length - 1; i >= 0; i--) {
     const g = G.gems[i], d = Math.hypot(p.x - g.x, p.y - g.y);
     if (d < mag || g.mag) { g.mag = d < mag || g.mag; const k = Math.max(d, 1); const s = 560 * dt; g.x += (p.x - g.x) / k * Math.min(s, d); g.y += (p.y - g.y) / k * Math.min(s, d); }
@@ -563,8 +567,36 @@ function shove() { // 被弾の衝撃波: 囲まれても抱きつかれ続け�
   const p = G.p; ring(p.cx, p.cy, 90, .25, '#6ab0ff', 5); flash(.25, '#ff2020');
   near(p.cx, p.cy, 90, o => { const dx = o.x - p.cx, dy = o.y - p.cy, d = Math.hypot(dx, dy) || 1; hurt(o, 6, dx / d, dy / d, 380); });
 }
+function updateHunter(dt) {
+  const p=G.p,c=G.camp, moved=Math.hypot(p.x-c.x,p.y-c.y)>95;
+  if(moved){c.x=p.x;c.y=p.y;c.t=0;if(G.hunter&&G.hunter.leave<0)G.hunter.leave=5;}
+  else if(!G.hunter)c.t+=dt;
+  if(!G.hunter&&c.t>=20){
+    const a=p.ang+Math.PI,dist=240;
+    G.hunter={x:Math.max(60,Math.min(WORLD-60,p.x+Math.cos(a)*dist)),y:Math.max(60,Math.min(WORLD-60,p.y+Math.sin(a)*dist)),leave:-1,carve:0,hit:0,ang:a};
+    pop(p.x,p.y-80,'破壊者 接近！','#ff9448',24);flash(.45,'#ff6030');G.shake=.35;G.shakeA=8;
+  }
+  const h=G.hunter;if(!h)return;
+  if(h.leave>=0){h.leave-=dt;if(h.leave<=0){G.hunter=null;return;}}
+  const dx=p.cx-h.x,dy=p.cy-h.y,d=Math.hypot(dx,dy)||1,spd=220+Math.min(130,G.stage*5);
+  h.x+=dx/d*spd*dt;h.y+=dy/d*spd*dt;h.ang=Math.atan2(dy,dx);h.carve-=dt;h.hit-=dt;
+  if(h.carve<=0){h.carve=.18;carveCircle(h.x,h.y,36);G.dtile=-1;}
+  if(d<36&&h.hit<=0&&p.inv<=0){h.hit=1.2;p.hp-=Math.max(40,p.maxhp*.42)/(1+skillStat('guard')*.5);p.inv=.65;
+    shove();pop(p.cx,p.cy-40,'破壊者 -大ダメージ','#ff6040',20);G.shake=.45;G.shakeA=10;
+    if(p.hp<=0)die();
+  }
+}
 function weapons(wdt, dt) {
   const p = G.p; wdt *= cdMul();
+  // Scan and blast modules emit a periodic local wave. Evolutions make it much stronger.
+  const pulse=skillStat('pulse'), blast=skillStat('blast'), evolved=equippedSkills().filter(k=>WEAPONS[k].fusion);
+  if(pulse+blast>0 || evolved.length){G.moduleT=(G.moduleT||0)-dt;
+    if(G.moduleT<=0){G.moduleT=Math.max(.28,1.6/(1+pulse+blast));const r=110+95*pulse+50*blast+evolved.length*25;
+      near(p.cx,p.cy,r,e=>{const d=Math.hypot(e.x-p.cx,e.y-p.cy)||1;if(d<r)hurt(e,4+22*blast+12*pulse+evolved.length*12,(e.x-p.cx)/d,(e.y-p.cy)/d,90+100*blast);});
+      if(G.boss&&bossHit(p.cx,p.cy,r))bossHurt(3+18*blast+10*pulse+evolved.length*10,'module');
+      ring(p.cx,p.cy,r,.26,evolved.length?'#ff9cec':blast?'#ff7752':'#61e9a5',2+Math.min(6,evolved.length));
+    }
+  }
   // ランス
   if (lv('lance')) {
     G.wt.lance -= wdt;
@@ -624,20 +656,34 @@ function die() {
 }
 function stageClear() {
   G.stageJustCleared = true; G.boss = null; G.bossWarn = 0; G.clearT = 0;
-  G.stage++; const p = G.p; genMaze(); const s = randNode(0); p.x = s.x; p.y = s.y; p.want = null; G.pops.length = 0; G.enemies.length = 0; G.puffs.length = 0; G.mines.length = 0; G.shots.length = 0;
+  G.stage++; const p = G.p; genMaze(G.stage); const s = randNode(0); p.x = s.x; p.y = s.y; p.want = null; G.pops.length = 0; G.enemies.length = 0; G.puffs.length = 0; G.mines.length = 0; G.shots.length = 0;
+  G.hunter=null;G.camp={x:p.x,y:p.y,t:0};
   G.dtile = -1; G.sFlag = null; G.items.length = 0; placeFlags(); p.hp = p.maxhp; G.score += 3000; G.botTgt = null;
   say([`> 断片10/10を回収。階層 ${G.stage} へのアクセスを許可。`, '> 警告:赤性プログラムが強化されました。']); sfx(440, .5, 'square', .06, 1760);
 }
 function openLevelUp() {
   // 普通の武器・強化を優先。足りない分を「装甲強化」「オーバークロック」で埋める
-  const pool = Object.keys(WEAPONS).filter(k => !WEAPONS[k].filler && lv(k) < maxLv(k)), fill = ['hpup', 'power'];
-  const opts = []; while (opts.length < 3 && pool.length) opts.push(pool.splice(ri(pool.length), 1)[0]);
+  const owned = equippedSkills(), slots = SKILL_SLOTS - owned.length;
+  const upgrades = owned.filter(k => lv(k) < maxLv(k));
+  const newcomers = slots > 0 ? Object.keys(WEAPONS).filter(k => !WEAPONS[k].filler && !WEAPONS[k].fusion && !lv(k)) : [];
+  const fusions = fusionOptions().map(r=>r.key);
+  const opts = [];
+  if (fusions.length) opts.push(fusions[ri(fusions.length)]);
+  if (upgrades.length) opts.push(upgrades[ri(upgrades.length)]);
+  const pool = [...newcomers, ...upgrades, ...fusions.filter(k=>!opts.includes(k))];
+  while (opts.length < 3 && pool.length) { const k=pool.splice(ri(pool.length),1)[0]; if(!opts.includes(k)) opts.push(k); }
+  const fill = ['hpup', 'power'];
   while (opts.length < 3 && fill.length) opts.push(fill.splice(ri(fill.length), 1)[0]);
   G.opts = opts; G.sel = 0; state = 'levelup'; G.luAt = performance.now(); flash(.7, '#fff7c0');
   [523, 659, 784, 1047].forEach((f, i) => sfx(f, .18, 'square', .05, 0, i * .07)); sfx(1568, .4, 'triangle', .04, 0, .28);
 }
 function pick(i) {
-  const k = G.opts[i]; if (!k) return; G.w[k] = lv(k) + 1; state = 'play';
+  const k = G.opts[i]; if (!k) return;
+  const recipe=FUSION_RECIPES.find(r=>r.key===k);
+  if(recipe){if(!lv(recipe.left)||!lv(recipe.right))return;delete G.w[recipe.left];delete G.w[recipe.right];G.w[k]=1;
+    G.freeze=Math.max(G.freeze,.3);G.shake=.65;G.shakeA=12;pop(G.p.x,G.p.y-70,'FUSION!',EXTRA_LOOK[k].color,30);
+  } else {if(!lv(k)&&!WEAPONS[k].filler&&equippedSkills().length>=SKILL_SLOTS)return;G.w[k]=lv(k)+1;}
+  state = 'play';
   if (k === 'fuel') G.p.fuel = G.p.maxfuel || 100;
   if (k === 'hpup') { G.p.maxhp += 10; G.p.hp = Math.min(G.p.maxhp, G.p.hp + 30); }
   skillAcquire(k, lv(k), maxLv(k));
@@ -677,6 +723,12 @@ function draw() {
     const T0 = ETYPES[e.type]; drawSprite(SP[T0.sp], e.x, e.y, e.ang + Math.PI / 2, T0.sc);
     if (e.spin > 0) { ctx.fillStyle = '#fff59a'; for (let k = 0; k < 3; k++) { const a = G.t * 9 + k * 2.09; ctx.fillRect(e.x + Math.cos(a) * 18 - 2, e.y - 16 + Math.sin(a) * 6 - 2, 4, 4); } }
     if (e.flash > 0) drawSprite(whiteOf(SP[T0.sp]), e.x, e.y, e.ang + Math.PI / 2, T0.sc, Math.min(1, e.flash / .1));
+  }
+  if(G.hunter&&on(G.hunter.x,G.hunter.y,80)){
+    const h=G.hunter;ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.ang);ctx.fillStyle='#101018';ctx.strokeStyle='#ff6b36';ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(28,0);ctx.lineTo(6,-25);ctx.lineTo(-24,-20);ctx.lineTo(-32,0);ctx.lineTo(-24,20);ctx.lineTo(6,25);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ffe27a';ctx.fillRect(0,-6,17,12);ctx.fillStyle='#ffffff';ctx.fillRect(19,-3,7,6);ctx.restore();
+    glow(h.x,h.y,48,'#ff6833',.45);ctx.globalAlpha=1;
   }
   drawBoss();
   // 撃破の残像: 白く光りながら膨らんで消える
@@ -748,7 +800,10 @@ function drawHUD() {
   const p = G.p;
   txt(`LEVEL ${G.level}`, 12, 24, 20, G.level >= INFL ? `hsl(${(G.t * 300) % 360},100%,70%)` : '#ffe14a');
   txt(G.level >= INFL ? `インフレ 攻撃×${pw().toFixed(1)}` : `Lv${INFL}でインフレ解禁`, 140, 24, 12, G.level >= INFL ? '#ff8cff' : '#8a90b8'); txt(`FLAGS ${G.flags}/10`, 12, 48, 16, '#ffd400'); txt(`SCORE ${G.score}`, 12, 70, 14);
-  txt(`階層 ${G.stage}`, 12, 90, 13, '#9fb4ff');
+  txt(`階層 ${G.stage}/20  ${activeField.name}`, 12, 90, 13, activeField.shine);
+  txt(`装備 ${equippedSkills().length}/${SKILL_SLOTS}`, 12, 108, 12, '#ffffff');
+  if(G.camp.t>10&&!G.hunter)txt(`停滞警報 ${Math.ceil(20-G.camp.t)}秒`,12,126,13,'#ff9a58');
+  if(G.hunter)txt(`破壊者追跡中 ${G.hunter.leave>=0?G.hunter.leave.toFixed(1)+'秒':''}`,12,126,13,'#ff6a36');
   txt(`${Math.floor(G.t / 60)}:${String(Math.floor(G.t % 60)).padStart(2, '0')}`, VW / 2, 34, 28, '#ffffff', 'center');
   txt(`撃破 ${G.kills}`, VW / 2, 54, 13, '#ffb0b0', 'center');
   bar(12, VH - 22, 200, 10, p.hp / p.maxhp, '#e03a3a', 'HP'); bar(220, VH - 22, 200, 10, p.fuel / (p.maxfuel || 100), '#3ab0ff', 'FUEL'); bar(428, VH - 22, 120, 10, p.brake / 100, p.braking ? '#ffffff' : '#ff9a3a', 'BRAKE');
@@ -785,7 +840,7 @@ function drawHUD() {
     txt('スピン中の車は体当たりで弾ける。玉突きで倒し続けると連鎖で経験値が最大2倍', VW / 2, 320, 15, '#fff', 'center');
     txt('S旗は画面の敵が多いほど大爆発。ギリギリまで引きつけてから取れ', VW / 2, 346, 15, '#ffd400', 'center');
     txt('道は2車線。曲がる方向を先に押すと、その側の車線へ(すれ違いで敵をよけられる)', VW / 2, 372, 14, '#9fe8ff', 'center');
-    txt('旗10本でボス「ギガ・レッド」。弾いた敵をぶつけると大ダメージ', VW / 2, 396, 14, '#ff8080', 'center');
+    txt('全20体のボス。8枠のスキルを合成し、最後は全装備Lv10で撃破', VW / 2, 396, 14, '#ff8080', 'center');
     txt('[ キー / タップでスタート ]', VW / 2, 440, 22, '#ffd400', 'center');
     txt('[ D ] AIデモ(放っておいても8秒で始まります)   [ M ] BGM ' + (BGM.on ? 'ON' : 'OFF'), VW / 2, 470, 15, '#7dff9a', 'center');
   }
@@ -800,8 +855,9 @@ function drawHUD() {
     txt('LEVEL UP!', VW / 2, 112, 42 * bounce, '#ffe14a', 'center');
     G.opts.forEach((k, i) => drawSkillCard(k, i, i === G.sel, tm));
   }
-  if (state === 'dead') {
+  if (state === 'dead' || state === 'win') {
     ctx.fillStyle = 'rgba(0,0,0,.85)'; ctx.fillRect(0, 0, VW, VH);
+    if(state==='win')txt('ALL CLEAR!',VW/2,130,54,'#ffe081','center');
     G.log.forEach((l, i) => txt(l, 90, 190 + i * 30, 18, '#58ff7a'));
   }
 }
@@ -815,14 +871,14 @@ function wrapText(s, x, y, w, size) {
 const touch = { on: false, dx: 0, dy: 0, smoke: false, id: null, sx: 0, sy: 0 };
 function startDemo() { initAudio(); newGame(); DEMO = true; state = 'play'; }
 function leaveDemo() { DEMO = false; demoIdle = 0; newGame(); state = 'title'; }
-function startOrRestart() { initAudio(); if (state === 'title' || state === 'dead') { newGame(); state = 'play'; } }
+function startOrRestart() { initAudio(); if (state === 'title' || state === 'dead' || state === 'win') { newGame(); state = 'play'; } }
 addEventListener('keydown', e => {
   if (e.key === 'm' || e.key === 'M') { BGM.on = !BGM.on; initAudio(); return; } // BGMの消音
   demoIdle = 0; if (DEMO && !BOT) { leaveDemo(); return; }
   if (state === 'title' && (e.key === 'd' || e.key === 'D')) { startDemo(); return; }
   KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key] = true; initAudio();
   if (e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault();
-  if (state === 'title' || (state === 'dead' && (e.key === 'r' || e.key === 'R' || e.key === 'Enter'))) startOrRestart();
+  if (state === 'title' || ((state === 'dead'||state==='win') && (e.key === 'r' || e.key === 'R' || e.key === 'Enter'))) startOrRestart();
   else if (state === 'levelup') {
     if (e.key >= '1' && e.key <= '3') pick(+e.key - 1);
     if (e.key === 'ArrowLeft' || e.key === 'a') G.sel = (G.sel + G.opts.length - 1) % G.opts.length;
@@ -835,7 +891,7 @@ function toLogical(ev) { return { x: (ev.clientX * (devicePixelRatio || 1) - vie
 cv.addEventListener('pointerdown', ev => {
   demoIdle = 0; if (DEMO && !BOT) { leaveDemo(); return; }
   initAudio(); const q = toLogical(ev);
-  if (state === 'title' || state === 'dead') return startOrRestart();
+  if (state === 'title' || state === 'dead' || state==='win') return startOrRestart();
   if (state === 'levelup') { G.opts.forEach((k, i) => { const x = 90 + i * 270; if (q.x > x && q.x < x + 250 && q.y > 160 && q.y < 400) pick(i); }); return; }
   if (ev.pointerType === 'touch' && q.x > VW - 150 && q.y > VH - 150) { touch.smoke = true; touch.sid = ev.pointerId; return; }
   if (ev.pointerType === 'touch' && q.x < 150 && q.y > VH - 150) { touch.brake = true; touch.bid = ev.pointerId; return; }

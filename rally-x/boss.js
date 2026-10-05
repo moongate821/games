@@ -42,25 +42,38 @@ const BOSS_BOX = makeSprite([
   "ooMMMMMMMMMMMMoo",
   ".oooooooooooooo.",
 ], BOSS_PAL);
+const BOSS_ROSTER = [
+  ['ギガ・レッド','#ff5555','rush'],['鉄骨グラップル','#ffb14a','rock'],['夜光ジャガー','#9c7bff','rush'],['ノイズ・バグ','#ff63d7','swarm'],
+  ['溶岩キャリア','#ff693b','rock'],['氷結ゼロ号','#7feaff','laser'],['スクラップ・キング','#b6d67b','swarm'],['紅蓮マグナム','#ff417c','laser'],
+  ['ミラージュ・ロード','#b4a0ff','rush'],['サンダー・ランナー','#f5df62','laser'],['砲台エクスプレス','#ff9457','rock'],['緑鋼ヘラクレス','#79f5a1','swarm'],
+  ['ファントム・トレイン','#bc8cfa','rush'],['プラズマ・ワーム','#67caff','laser'],['マグマ・ブルドーザー','#ff542e','rock'],['マザー・ハイブ','#f583bd','swarm'],
+  ['流星ブレイカー','#f6cc72','rush'],['クロノ・タイタン','#85dfdf','laser'],['終端ギガ・ブラック','#dad7e8','rock'],['ゼロ・アーク','#ffffff','final']
+].map(([name,color,mode],i)=>({name,color,mode,segments:3+i%4, speed:1+i%5*.07, spawn:1+i%3, laser:mode==='laser'||mode==='final', rock:mode==='rock'||mode==='final'}));
+function bossProfile(){return BOSS_ROSTER[Math.min(19,Math.max(0,G.stage-1))];}
+function bossTint(sprite,color){
+  const c=document.createElement('canvas');c.width=sprite.width;c.height=sprite.height;
+  const g=c.getContext('2d');g.drawImage(sprite,0,0);g.globalCompositeOperation='source-atop';g.fillStyle=color;g.globalAlpha=.52;g.fillRect(0,0,c.width,c.height);return c;
+}
+for(const b of BOSS_ROSTER){b.cab=bossTint(BOSS_CAB,b.color);b.box=bossTint(BOSS_BOX,b.color);}
 const BOSS_SC = 4, BOSS_R = 36, BOSS_SEGS = 4, BOSS_STEP = 16; // 軌跡は4pxごと、16点=64px間隔でトレーラーが続く
 
 function startBoss() {
   G.flagsList.length = 0; G.bossWarn = 3;
-  say(['> 警告: 階層管理プログラム「ギガ・レッド」が起動。', '> 壁を破壊しながら接近中。煙幕でセンサーを乱せ。']);
+  say([`> 警告: 第${G.stage}管理体「${bossProfile().name}」が起動。`, G.stage===20?'> 全8装備を究極MAXにするとコアを破壊できる。':'> 壁を破壊しながら接近中。煙幕でセンサーを乱せ。']);
 }
 function spawnBoss() {
   const p = G.p; let pos = null;
   for (let k = 0; k < 80; k++) { const n = randNode(0), d = Math.hypot(n.x - p.x, n.y - p.y); if (d > 650 && d < 1000) { pos = n; break; } }
   if (!pos) pos = randNode(500, p);
   const hp = 450 + 650 * (G.stage - 1) + 300 * G.stage * G.stage * .5 + 4 * G.level; // 1体目は弱め、階層ごとに硬く
-  G.boss = { x: pos.x, y: pos.y, ang: Math.atan2(p.y - pos.y, p.x - pos.x), trail: [], hp, max: hp, phase: 1, lastPhase: 1, t: 0, spawnT: 1, rockT: 2, laserT: 2, rocks: [], lasers: [], flash: 0, dying: 0, boomT: 0, swT: 0, num: null, lastCrunch: -9 };
-  for (let i = 0; i < BOSS_SEGS * BOSS_STEP + 4; i++) G.boss.trail.push({ x: pos.x, y: pos.y });
+  G.boss = { x: pos.x, y: pos.y, profile:bossProfile(), ang: Math.atan2(p.y - pos.y, p.x - pos.x), trail: [], hp, max: hp, phase: 1, lastPhase: 1, t: 0, spawnT: 1, rockT: 2, laserT: 2, rocks: [], lasers: [], flash: 0, dying: 0, boomT: 0, swT: 0, num: null, lastCrunch: -9 };
+  for (let i = 0; i < G.boss.profile.segments * BOSS_STEP + 4; i++) G.boss.trail.push({ x: pos.x, y: pos.y });
   G.boss.parts = bossParts();
   flash(.5, '#ff2020'); G.shake = .6; G.shakeA = 10; sfx(60, 1.2, 'sawtooth', .1, 30);
 }
 function bossParts() {
   const b = G.boss, out = [{ x: b.x, y: b.y, head: true }];
-  for (let i = 1; i <= BOSS_SEGS; i++) { const q = b.trail[Math.min(b.trail.length - 1, i * BOSS_STEP)]; out.push({ x: q.x, y: q.y, i }); }
+  for (let i = 1; i <= b.profile.segments; i++) { const q = b.trail[Math.min(b.trail.length - 1, i * BOSS_STEP)]; out.push({ x: q.x, y: q.y, i }); }
   return out;
 }
 function bossHit(x, y, r) {
@@ -71,6 +84,7 @@ function bossHit(x, y, r) {
 function bossHurt(dmg, src) {
   const b = G.boss; if (!b || b.dying > 0) return;
   dmg *= pw(); b.hp -= dmg; b.flash = .08;
+  if(G.stage===20 && !allEquippedMax() && b.hp<=1){b.hp=1;if(G.t-(b.gateMsg||-9)>2){b.gateMsg=G.t;pop(b.x,b.y-90,`封印: 装備${equippedSkills().length}/8 全てLv10`, '#ffffff',20);}}
   if (b.num && b.num.l > .45) b.num.v += dmg; else if (G.nums.length < 180) { b.num = { x: b.x + rr(-20, 20), y: b.y - 50, v: dmg, l: .75 }; G.nums.push(b.num); }
   if (b.hp <= 0) { b.hp = 0; b.dying = 2.2; b.rocks.length = 0; b.lasers.length = 0; sfx(50, 2, 'sawtooth', .09, 25); }
 }
@@ -123,12 +137,12 @@ function updateBoss(dt) {
   // 煙幕でセンサーが乱れて遅くなる
   let slow = 1; for (const q of G.puffs) if ((q.x - b.x) ** 2 + (q.y - b.y) ** 2 < (q.r + 30) ** 2) { slow = .4; break; }
   b.slowed = slow < 1;
-  const spd = [0, 95, 115, 140][b.phase] * slow * (1 + (G.stage - 1) * .1);
+  const spd = [0, 95, 115, 140][b.phase] * slow * (1 + (G.stage - 1) * .04) * b.profile.speed * (b.profile.mode==='rush'?1.23:1);
   const ta = Math.atan2(cy - b.y, cx - b.x), da = Math.atan2(Math.sin(ta - b.ang), Math.cos(ta - b.ang));
   b.ang += Math.max(-1.6 * dt, Math.min(1.6 * dt, da));
   b.x = Math.max(T * 1.5, Math.min(WORLD - T * 1.5, b.x + Math.cos(b.ang) * spd * dt));
   b.y = Math.max(T * 1.5, Math.min(WORLD - T * 1.5, b.y + Math.sin(b.ang) * spd * dt));
-  const last = b.trail[0]; if (Math.hypot(b.x - last.x, b.y - last.y) >= 4) { b.trail.unshift({ x: b.x, y: b.y }); if (b.trail.length > BOSS_SEGS * BOSS_STEP + 4) b.trail.pop(); }
+  const last = b.trail[0]; if (Math.hypot(b.x - last.x, b.y - last.y) >= 4) { b.trail.unshift({ x: b.x, y: b.y }); if (b.trail.length > b.profile.segments * BOSS_STEP + 4) b.trail.pop(); }
   b.parts = bossParts();
   // 壁を砕く
   let broke = 0; for (const q of b.parts) broke += carveCircle(q.x, q.y, BOSS_R - 2);
@@ -152,12 +166,12 @@ function updateBoss(dt) {
   // 第1〜3段階: 後ろのハッチから赤い車を射出(だんだん間隔が空く)
   b.spawnT -= dt;
   if (b.spawnT <= 0) {
-    b.spawnT = [0, 1.3, 2.4, 3.2][b.phase]; const tail = b.parts[b.parts.length - 1];
-    for (let k = 0; k < 2; k++) spawnEnemy(snapNode(tail.x + rr(-30, 30), tail.y + rr(-30, 30)), 'red');
+    b.spawnT = [0, 1.3, 2.4, 3.2][b.phase] * (b.profile.mode==='swarm'?.55:1); const tail = b.parts[b.parts.length - 1];
+    for (let k = 0; k < b.profile.spawn; k++) spawnEnemy(snapNode(tail.x + rr(-30, 30), tail.y + rr(-30, 30)), 'red');
     burst(tail.x, tail.y, '#ff5050', 10, 260, 'spark'); sfx(300, .1, 'square', .04, 150);
   }
   // 第2段階: 岩を投げる(自機の少し先を狙う。煙幕の中では遅くなる)
-  if (b.phase === 2) {
+  if (b.phase === 2 || (b.profile.rock && b.phase>=2)) {
     b.rockT -= dt;
     if (b.rockT <= 0) {
       b.rockT = 1.5; const tx = cx + p.dir.x * 305 * .35, ty = cy + p.dir.y * 305 * .35, a = Math.atan2(ty - b.y, tx - b.x);
@@ -171,7 +185,7 @@ function updateBoss(dt) {
     if (r.l <= 0) { burst(r.x, r.y, '#a89a88', 10, 240, 'shard'); b.rocks.splice(i, 1); }
   }
   // 第3段階: コアからレーザー(0.8秒の予告線 → 0.35秒の照射。壁を無視する)
-  if (b.phase === 3) {
+  if (b.phase === 3 || (b.profile.laser && b.phase>=2)) {
     b.laserT -= dt;
     if (b.laserT <= 0) {
       b.laserT = 2.0; const n = G.stage >= 2 ? 3 : 1, a0 = Math.atan2(cy - b.y, cx - b.x);
@@ -197,10 +211,11 @@ function bossDefeated() {
   for (let i = 0; i < 30; i++) dropGem(b.x + rr(-140, 140), b.y + rr(-140, 140), true, 1);
   for (const g of G.gems) g.mag = true;
   const bonus = 20000 * G.stage; G.score += bonus;
-  pop(b.x, b.y - 90, `ギガ・レッド撃破!  +${bonus}`, '#ffe040', 30);
+  pop(b.x, b.y - 90, `${b.profile.name}撃破!  +${bonus}`, '#ffe040', 30);
   say(['> 階層管理プログラムを停止。', '> 次の階層への経路を開きます。']);
   [523, 659, 784, 1047, 1319].forEach((f, i) => sfx(f, .25, 'square', .06, 0, i * .1)); sfx(1568, .8, 'triangle', .05, 0, .5);
-  G.boss = null; G.clearT = 3; G.freeze = .25; G.shake = .8; G.shakeA = 14; G.bossKills = (G.bossKills || 0) + 1;
+  G.boss = null; G.clearT = G.stage===20?0:3; G.freeze = .25; G.shake = .8; G.shakeA = 14; G.bossKills = (G.bossKills || 0) + 1;
+  if(G.stage===20){state='win';G.log=['> ゼロ・アークのコアを停止。','> 全20体の管理体を突破しました。',`> 最終スコア ${G.score} / 生存 ${Math.floor(G.t)}秒`,'> [R / タップ]で新しい観測サイクルへ'];}
 }
 
 // ---- 描画 ----
@@ -236,13 +251,13 @@ function drawBoss() {
   // トレーラー(後ろから描く)
   for (let i = parts.length - 1; i >= 1; i--) {
     const q = parts[i], a = bossSegAngle(b, i * BOSS_STEP);
-    drawSprite(BOSS_BOX, q.x, q.y, a + Math.PI / 2, BOSS_SC);
+    drawSprite(b.profile.box, q.x, q.y, a + Math.PI / 2, BOSS_SC);
     if (b.flash > 0) drawSprite(whiteOf(BOSS_BOX), q.x, q.y, a + Math.PI / 2, BOSS_SC, b.flash / .08);
     if (b.phase === 1 && i === parts.length - 1 && b.spawnT < .4) { ctx.globalCompositeOperation = 'lighter'; glow(q.x, q.y, 50, '#ff3030', (.4 - b.spawnT) * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   }
   // 頭: 第3段階(と撃破中)はワイヤーフレームのコア
   if (b.phase < 3) {
-    drawSprite(BOSS_CAB, b.x, b.y, b.ang + Math.PI / 2, BOSS_SC);
+    drawSprite(b.profile.cab, b.x, b.y, b.ang + Math.PI / 2, BOSS_SC);
     if (b.flash > 0) drawSprite(whiteOf(BOSS_CAB), b.x, b.y, b.ang + Math.PI / 2, BOSS_SC, b.flash / .08);
   } else drawWireCore(b.x, b.y, b.t, 30 + (b.flash > 0 ? 6 : 0));
   if (b.slowed && b.dying <= 0) txt('センサー妨害中', b.x, b.y - 58, 13, '#c0c8ff', 'center');
@@ -254,11 +269,12 @@ function drawBossHUD() {
     ctx.fillStyle = `rgba(160,0,0,${.35 * a})`; ctx.fillRect(0, VH / 2 - 48, VW, 96);
     ctx.fillStyle = `rgba(255,210,0,${a})`; for (let x = -40 + (G.t * 120) % 40; x < VW; x += 40) { ctx.beginPath(); ctx.moveTo(x, VH / 2 - 48); ctx.lineTo(x + 20, VH / 2 - 48); ctx.lineTo(x + 10, VH / 2 - 40); ctx.lineTo(x - 10, VH / 2 - 40); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, VH / 2 + 48); ctx.lineTo(x + 20, VH / 2 + 48); ctx.lineTo(x + 10, VH / 2 + 40); ctx.lineTo(x - 10, VH / 2 + 40); ctx.fill(); }
     txt('WARNING', VW / 2, VH / 2 + 4, 54, `rgba(255,60,60,${.6 + .4 * a})`, 'center');
-    txt('巨大トレーラー「ギガ・レッド」接近', VW / 2, VH / 2 + 32, 16, '#ffd0d0', 'center');
+    txt(`第${G.stage}管理体「${bossProfile().name}」接近`, VW / 2, VH / 2 + 32, 16, '#ffd0d0', 'center');
   }
   const b = G.boss; if (!b) return;
   const w = 420, x = VW / 2 - w / 2, y = 80;
-  txt('ギガ・レッド', VW / 2, y - 4, 14, '#ff8080', 'center');
+  txt(`${G.stage}/20  ${b.profile.name}`, VW / 2, y - 4, 14, b.profile.color, 'center');
+  if(G.stage===20&&!allEquippedMax())txt(`封印解除: 装備 ${equippedSkills().length}/8 を全てLv10へ`, VW/2,y+29,13,'#fff3a0','center');
   ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(x - 3, y - 1, w + 6, 12);
   ctx.fillStyle = b.phase === 3 ? `hsl(${(G.t * 300) % 360},90%,55%)` : '#e02828'; ctx.fillRect(x, y + 1, w * b.hp / b.max, 8);
   ctx.fillStyle = '#ffffff'; ctx.fillRect(x + w * .33, y - 1, 2, 12); ctx.fillRect(x + w * .66, y - 1, 2, 12);

@@ -11,6 +11,7 @@ const SKILL_LOOK = {
   hpup:    { family: '装甲', color: '#a0ed6d', dark: '#3b662b', symbol: 'shield' },
   power:   { family: '出力', color: '#ff83b6', dark: '#71304e', symbol: 'bolt' },
 };
+Object.assign(SKILL_LOOK, EXTRA_LOOK);
 
 function skillSymbol(k, x, y, size, color) {
   const ctx0 = ctx, shape = SKILL_LOOK[k].symbol;
@@ -48,6 +49,7 @@ function skillAcquire(k, level, cap) {
   ring(x, y, 70 + tier * 10, .38, look.color, 3 + tier);
   glowFx(x, y, 48 + tier * 15, look.color, .45);
   burst(x, y, look.color, 8 + tier * 5 + (maxed ? 45 : 0), 140 + tier * 55, 'spark');
+  if(WEAPONS[k].fusion && level===1){ring(x,y,280,.8,look.color,10);ring(x,y,390,1,'#ffffff',4);burst(x,y,look.color,70,620,'spark');flash(.7,look.color);G.shake=.6;G.shakeA=13;G.skillAward.duration=2400;}
   if (tier >= 3) ring(x, y, 120 + tier * 9, .5, '#ffffff', 2);
   if (maxed) {
     ring(x, y, 230, .8, look.color, 9); ring(x, y, 320, 1.0, '#ffffff', 3);
@@ -98,14 +100,14 @@ function drawSkillCard(k, i, selected, tm) {
   txt(look.family, x + 68, y + 33, 16, look.color);
   txt(`${i + 1}`, x + 228, y + 30, 18, '#ffffff', 'right');
   txt(WEAPONS[k].name, x + 125, y + 93, 19, '#ffffff', 'center');
-  txt(maxed ? '★ MAXIMUM ★' : level ? `Lv ${level} → ${next}${WEAPONS[k].filler ? ' ∞' : ` / ${cap}`}` : 'NEW  Lv 1', x + 125, y + 120, 16, maxed ? '#fff2a0' : look.color, 'center');
+  txt(WEAPONS[k].fusion && !level ? '★ 合成進化 / 2→1枠 ★' : maxed ? '★ MAXIMUM ★' : level ? `Lv ${level} → ${next}${WEAPONS[k].filler ? ' ∞' : ` / ${cap}`}` : 'NEW  Lv 1', x + 125, y + 120, 16, maxed ? '#fff2a0' : look.color, 'center');
   skillPips(k, Math.min(next, WEAPONS[k].filler ? 5 : cap), WEAPONS[k].filler ? 5 : Math.min(cap, 10), x + 25, y + 132, 200);
   wrapText(WEAPONS[k].desc(level), x + 125, y + 164, 215, 16);
 }
 
 function drawSkillHud() {
   let yy = 208;
-  for (const k of Object.keys(WEAPONS)) {
+  for (const k of [...equippedSkills(), 'hpup', 'power']) {
     const level = lv(k); if (!level) continue;
     const look = SKILL_LOOK[k], cap = maxLv(k);
     ctx.fillStyle = 'rgba(3,6,22,.78)'; ctx.fillRect(VW - 177, yy - 13, 164, 27);
