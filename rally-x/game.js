@@ -685,7 +685,8 @@ function openLevelUp() {
 }
 function pick(i) {
   const k = G.opts[i]; if (!k) return;
-  const recipe=FUSION_RECIPES.find(r=>r.key===k);
+  // 合成スキルを「すでに持っている」とき(=強化として出た選択肢)は、合成ではなく Lv+1。材料は合成のときに消えているので、合成扱いにすると何も起きなかった
+  const recipe=lv(k)?null:FUSION_RECIPES.find(r=>r.key===k);
   if(recipe){if(!lv(recipe.left)||!lv(recipe.right))return;delete G.w[recipe.left];delete G.w[recipe.right];G.w[k]=1;
     G.freeze=Math.max(G.freeze,.3);G.shake=.65;G.shakeA=12;pop(G.p.x,G.p.y-70,'FUSION!',EXTRA_LOOK[k].color,30);
   } else {if(!lv(k)&&!WEAPONS[k].filler&&equippedSkills().length>=SKILL_SLOTS)return;G.w[k]=lv(k)+1;}
