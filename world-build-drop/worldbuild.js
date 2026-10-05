@@ -364,7 +364,7 @@ function drawCell(ctx, c, x, y, s, scale, t) {
 // ---- 右パネル: 原稿用紙 ----
 function wrapLines(ctx, s, maxW, fs) {
   ctx.font = `${fs}px ${SERIF}`; const out = []; let line = '';
-  const tokens = /[ぁ-んァ-ヶ一-龥]/.test(s) ? [...s] : s.split(/(?<= )/);
+  const tokens = /[ぁ-んァ-ヶ一-龥]/.test(s) ? [...s] : (s.match(/[^ ]* |[^ ]+/g) || [s]);   // 空白のうしろで区切る(後読み (?<= ) は iOS 16.3 以前の Safari で読み込みごと失敗するので使わない)
   for (const tk of tokens) { if (ctx.measureText(line + tk).width > maxW && line) { out.push(line); line = tk.trimStart(); } else line += tk; }
   if (line) out.push(line); return out;
 }

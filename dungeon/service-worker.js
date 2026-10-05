@@ -24,6 +24,7 @@ async function onInstall(event) {
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
         .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
     await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+    self.skipWaiting();   // 新しい版はすぐ引き継ぐ(古い版が残り続けるのを防ぐ)
 }
 
 async function onActivate(event) {
@@ -34,9 +35,19 @@ async function onActivate(event) {
     await Promise.all(cacheKeys
         .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
         .map(key => caches.delete(key)));
+    await self.clients.claim();
 }
 
 async function onFetch(event) {
+    // 画面(index.html)は、まず最新を取りに行く。4秒たっても取れない・電波がないときだけ、保存した版を使う
+    if (event.request.method === 'GET' && event.request.mode === 'navigate' && !manifestUrlList.some(url => url === event.request.url)) {
+        try {
+            const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 4000);
+            const r = await fetch(new URL('index.html', baseUrl).href, { cache: 'no-cache', signal: ac.signal });
+            clearTimeout(timer);
+            if (r.ok) return r;
+        } catch (e) { }
+    }
     let cachedResponse = null;
     if (event.request.method === 'GET') {
         // For all navigation requests, try to serve index.html from cache,
