@@ -640,6 +640,7 @@ function pick(i) {
   const k = G.opts[i]; if (!k) return; G.w[k] = lv(k) + 1; state = 'play';
   if (k === 'fuel') G.p.fuel = G.p.maxfuel || 100;
   if (k === 'hpup') { G.p.maxhp += 10; G.p.hp = Math.min(G.p.maxhp, G.p.hp + 30); }
+  skillAcquire(k, lv(k), maxLv(k));
 }
 
 // ---- 描画 ----
@@ -737,6 +738,7 @@ function draw() {
   }
   if (G.flash && G.flash.a > 0) { ctx.globalAlpha = G.flash.a; ctx.fillStyle = G.flash.c; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
   drawHUD();
+  if (state === 'play') drawSkillAward();
   ctx.restore();
 }
 const FONT = '"Meiryo","Yu Gothic","MS Gothic",monospace';
@@ -770,8 +772,7 @@ function drawHUD() {
   drawBossRadar(rx, ry, k);
   ctx.fillStyle = '#4af'; ctx.fillRect(rx + p.x * k - 2, ry + p.y * k - 2, 5, 5);
   txt('RADAR', rx, ry + rs + 16, 11, '#7dff9a');
-  let yy = ry + rs + 38;
-  for (const k2 of Object.keys(WEAPONS)) if (lv(k2)) { txt(`${WEAPONS[k2].name} Lv${lv(k2)}`, VW - 12, yy, 12, WEAPONS[k2].passive ? '#9fe8ff' : '#fff', 'right'); yy += 17; }
+  drawSkillHud();
   drawBossHUD();
   if (G.msgT > 0 && state === 'play') { G.log.forEach((l, i) => txt(l, VW / 2, 140 + i * 22, 15, '#58ff7a', 'center')); }
   if (DEMO && state !== 'title') txt('AIデモ中 ― キー / タップでタイトルへ', VW / 2, VH - 30, 15, '#7dff9a', 'center');
@@ -797,15 +798,7 @@ function drawHUD() {
     glow(VW / 2, 100, 160, '#ffd040', .6); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     const bounce = 1 + Math.max(0, .5 - tm) * 1.2 * Math.abs(Math.sin(tm * 14));
     txt('LEVEL UP!', VW / 2, 112, 42 * bounce, '#ffe14a', 'center');
-    G.opts.forEach((k, i) => {
-      const e = Math.min(1, Math.max(0, (tm - .08 * i) / .3)), drop = (1 - e) * (1 - e) * -340;
-      const x = 90 + i * 270, y = 160 + drop, sel = i === G.sel; ctx.fillStyle = sel ? '#243a9a' : '#141a4a'; ctx.fillRect(x, y, 250, 240);
-      if (sel) { ctx.globalCompositeOperation = 'lighter'; glow(x + 125, y + 120, 170, '#ffd040', .25 + .1 * Math.sin(tm * 6)); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
-      ctx.strokeStyle = sel ? '#ffd400' : '#3a4cff'; ctx.lineWidth = 3; ctx.strokeRect(x, y, 250, 240);
-      txt(`${i + 1}`, x + 12, y + 28, 20, '#ffd400'); txt(WEAPONS[k].name, x + 125, y + 80, 18, '#fff', 'center'); if (!lv(k)) txt('NEW!', x + 238, y + 26, 15, '#ff6af0', 'right');
-      txt(`Lv ${lv(k)} → ${lv(k) + 1}`, x + 125, y + 112, 16, '#7dff9a', 'center');
-      wrapText(WEAPONS[k].desc(lv(k)), x + 125, y + 150, 220, 15);
-    });
+    G.opts.forEach((k, i) => drawSkillCard(k, i, i === G.sel, tm));
   }
   if (state === 'dead') {
     ctx.fillStyle = 'rgba(0,0,0,.85)'; ctx.fillRect(0, 0, VW, VH);
