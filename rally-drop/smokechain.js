@@ -1,13 +1,13 @@
 // RALLY DROP SURVIVORS(スモーク・チェーン)のルールと見た目。
-// 落ちてくるのは「車」(青・黄・緑・紫)。同色4つ以上で消える(連鎖)。赤い敵の車が行進してきて、盤を埋めていく。
+// 落ちてくるのは「車」(青・黄・緑・紫)。同色5つ以上で消える(連鎖)。赤い敵の車が行進してきて、盤を埋めていく。
 //   煙幕ブロック: 着地すると、まわりの敵がスピン → 次の手順で「玉突き」(ぶつかって両方ダメージ、となりもスピン)
 //   S旗(Space): 溜めておいて、敵が密集したときに使う。全敵に大ダメージ+スピン(敵が多いほど得点)
 //   旗10本(敵を5台倒すごとに1本)でボス「ギガ・レッド」。倒すと次の階層(迷路のテーマが変わる)
 //   経験値 → レベルアップでスキルを3択(ランス・煙幕タンク・ドリフト・ガード)
 (() => {
 const DG = window.DG, { Sfx } = DG.Audio, { TAU } = DG.Art, { COLS, ROWS, CELL, BX, BY, PW } = DG.C;
-const MATCH = 4;
-const N4 = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+const MATCH = 5;   // ななめもつながるので5つ
+const N4 = [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]];   // 8角形の駒: 縦横+ななめ(8方向)がつながる。名前は昔のまま
 const KIND = ['blue', 'yellow', 'green', 'purple'];                    // c = 0..3 は車の色
 const TILE = ['#3d7bff', '#ffd21a', '#35d36a', '#b45cff'];
 const NAMES = ['青', '黄', '緑', '紫'];
@@ -156,10 +156,17 @@ function wrapJa(s, n) {
 const PICK_CARD = i => ({ x: 25 + i * 200, y: 170, w: 190, h: 290 });
 
 // ---------- 見た目 ----------
+// 駒は8角形(幾何学ふう)。外枠+内側の細い8角形+角の光点
+function oct(ctx, r, cut) {
+  const h = r - cut; ctx.beginPath();
+  ctx.moveTo(-h, -r); ctx.lineTo(h, -r); ctx.lineTo(r, -h); ctx.lineTo(r, h); ctx.lineTo(h, r); ctx.lineTo(-h, r); ctx.lineTo(-r, h); ctx.lineTo(-r, -h); ctx.closePath();
+}
 function tile(ctx, s, col, alpha) {
-  const a0 = ctx.globalAlpha;                      // 呼び出し側の透明度(着地予告の半透明など)を引き継ぐ
-  ctx.fillStyle = col; ctx.globalAlpha = a0 * alpha * .35; DG.rr(ctx, -s / 2 + 2, -s / 2 + 2, s - 4, s - 4, 8); ctx.fill();
-  ctx.globalAlpha = a0 * Math.min(1, alpha * .9); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = a0;
+  const a0 = ctx.globalAlpha, r = s / 2 - 2, cut = r * .34;       // 呼び出し側の透明度(着地予告の半透明など)を引き継ぐ
+  ctx.fillStyle = col; ctx.globalAlpha = a0 * alpha * .35; oct(ctx, r, cut); ctx.fill();
+  ctx.globalAlpha = a0 * Math.min(1, alpha * .9); ctx.strokeStyle = col; ctx.lineWidth = 2.4; ctx.lineJoin = 'miter'; ctx.stroke();
+  ctx.globalAlpha = a0 * Math.min(1, alpha) * .45; ctx.lineWidth = 1; oct(ctx, r - 5, cut * .8); ctx.stroke();
+  ctx.globalAlpha = a0;
 }
 function drawCell(ctx, c, x, y, s, scale, t) {
   const k = c.c; ctx.save(); ctx.translate(x + s / 2, y + s / 2); if (scale !== 1) ctx.scale(scale, scale);
@@ -317,7 +324,7 @@ function drawMenu(ctx, t, o) {
   DG.text(ctx, 'RALLY DROP', 480, 140, 76, '#7fd4ff', 'center', { stroke: '#0a1c4a', sw: 14 });
   DG.text(ctx, 'SURVIVORS', 480, 204, 46, '#ff6a8a', 'center', { stroke: '#3a0a1a', sw: 10 });
   DG.text(ctx, '煙幕で固めて、玉突きで焼く。落ち物 × ラリーX', 480, 248, 20, '#fff', 'center', { stroke: '#000', sw: 5 });
-  const how = ['同じ色の車を4つ つなげて消す(連鎖で大ダメージ)。赤い敵の車は、となりを消すと倒せる',
+  const how = ['同じ色の車を5つ つなげて消す(ななめもつながる)(連鎖で大ダメージ)。赤い敵の車は、となりを消すと倒せる',
     '煙幕の駒が落ちると、まわりの敵がスピン。そこから玉突きで連鎖!   Space で S旗の大爆発',
     '敵を倒して旗を10本あつめると ボス「ギガ・レッド」。レベルアップでスキルを選ぼう'];
   how.forEach((s, i) => DG.text(ctx, s, 480, 310 + i * 28, 16, '#dfeaff', 'center', { stroke: '#000', sw: 4, maxW: 900 }));
