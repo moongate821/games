@@ -2414,8 +2414,10 @@ function touchStarted(event) {
   return false;
 }
 function mousePressed(event) { if (paused || (event && event.target && event.target.closest && event.target.closest('#app-ui, #toolbar'))) return; if (!touchMode) { SND.resume(); if (state === 'play' && (mode === 'hangar' || mode === 'ending')) hangarTap({ x: mouseX, y: mouseY }); } }
-function touchEnded() { SND.resume(); return false; }
-function touchMoved() { return false; }
+// 画面のボタン(出撃・設定など)の上では、既定の動作を止めない(止めると iPhone でタップがクリックにならず、ボタンが押せない)
+function onAppUI(event) { return !!(event && event.target && event.target.closest && event.target.closest('#app-ui, #toolbar, #shipyard-ui')); }
+function touchEnded(event) { SND.resume(); if (onAppUI(event)) return; return false; }
+function touchMoved(event) { if (onAppUI(event)) return; return false; }
 function drawTouchUI() {
   if (!touchMode && !location.hash.includes('touch')) return;
   const o = stickOrg || { x: 170, y: H - 150 }, k = stickPos || o;

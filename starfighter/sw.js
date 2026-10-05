@@ -1,4 +1,4 @@
-const CACHE = 'starfighter-neon-v2-20261002-1';
+const CACHE = 'starfighter-neon-v2-20261005-1-gh7529afec';
 const FILES = ['./', './index.html', './app.css', './i18n.js', './app.js', './models.js', './flight.js', './cinema.js', './cockpit2.js', './ship.js', './zones.js', './coop.js', './sketch.js', './assets.js', './audio.js', './tune.js', './lib/p5.min.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); });
 // New releases wait until all old windows close, preventing mixed game versions.

@@ -1,6 +1,14 @@
 self.assetsManifest = {
   "assets": [
     {
+      "hash": "sha256-SxhPI3LSU8MsJfJN344t4/RyvGZKCzuaLnaB3Uil9wQ=",
+      "url": "pad.js"
+    },
+    {
+      "hash": "sha256-HyJFC98Y9EkjbyH2k2G2awsswW071P5jcZbajBTh5ag=",
+      "url": "vpad.js"
+    },
+    {
       "hash": "sha256-kEzf6ldaldh+2Dpia2Y2CtUyskGvW1LIFERTWrumlI4=",
       "url": "_framework\/blazor.webassembly.js"
     },
@@ -4693,7 +4701,7 @@ self.assetsManifest = {
       "url": "img\/ui\/wall_town.webp"
     },
     {
-      "hash": "sha256-vGxLwrbEYJsNt9aFhrsOGQuA/Kys+6O03yz0KPbENzk=",
+      "hash": "sha256-LMzqIfIfWomLxmZeXpq0snr1YBCh9AsXOtB2SQ1ii6k=",
       "url": "index.html"
     },
     {
@@ -4749,5 +4757,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "YaUA5JMw-vGxLwrbE"
+  "version": "YaUA5JMw-9072a1cc"
 };

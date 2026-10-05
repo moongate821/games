@@ -44,5 +44,6 @@
 // オフライン用(https で配るときだけ働く。PC のローカルや http のときは何もしない)
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
 </script>
+<script src="vpad.js"></script><script src="pad.js"></script>
 </body>
 </html>
