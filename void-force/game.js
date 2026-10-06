@@ -30,9 +30,28 @@
   const hueOf = n => (n * 37 + 200) % 360;
   // 20面の定義: 地形 M=要塞 O=生体洞窟 A=小惑星 / ボスの仮の形(bosses.js)。参考: 20面構成案.md
   const STAGE_DEF = [
-    ['M', 'octa'], ['O', 'insect'], ['A', 'squid'], ['M', 'serpent'], ['O', 'fortress'], ['M', 'cruiser'], ['A', 'ring'], ['M', 'shark'], ['M', 'crab'], ['O', 'carrier'],
-    ['O', 'squid'], ['O', 'serpent'], ['A', 'fortress'], ['O', 'jelly'], ['A', 'crab'], ['M', 'destroyer'], ['O', 'cruiser'], ['A', 'squid'], ['M', 'fortress'], ['O', 'octa'],
+    ['M', 'octa'], ['O', 'insect'], ['A', 'squid'], ['M', 'serpent'], ['O', 'fortress'], ['M', 'cruiser'], ['R', 'ring'], ['M', 'shark'], ['M', 'crab'], ['O', 'carrier'],
+    ['O', 'squid'], ['R', 'serpent'], ['A', 'fortress'], ['O', 'jelly'], ['C', 'crab'], ['M', 'destroyer'], ['R', 'cruiser'], ['C', 'squid'], ['M', 'fortress'], ['C', 'octa'],
   ].map(a => ({ terr: a[0], arch: a[1] }));
+  // 敵の種類 → 画像素材の名前(複数ならその面・その場面で選ぶ)。assets/sprites.json に無ければ仮の絵
+  const ART = {   // 敵の種類 → {テーマ: 画像素材の名前の候補}
+    drone: { M: ['en_m01', 'en_m02', 'en_m03', 'en_m04', 'en_g1_08', 'en_g1_09'], O: ['en_o01', 'en_o02', 'en_o03', 'en_o04', 'en_o05', 'en_o06'], A: ['en_c01', 'en_c02', 'en_c03', 'en_c04', 'en_c05'] },
+    swoop: { M: ['en_g1_01', 'en_g1_02', 'en_g1_03', 'en_m05', 'en_m06'], O: ['en_o07', 'en_o08', 'en_o09', 'en_o10', 'en_g1_02'], A: ['en_c06', 'en_c07', 'en_c08', 'en_g1_03'] },
+    turret: { M: ['tm_turret1', 'tm_turret2'], O: ['tm_turret2', 'tm_turret1'], A: ['tm_turret1', 'tm_turret2'] },
+    ringer: { M: ['part_turret', 'part_cannon', 'en_g1_04', 'core_c'], O: ['part_cannon', 'core_chaos', 'en_g1_12', 'part_turret'], A: ['core_crystal', 'part_cannon', 'core_chaos'] },
+    carrier: { M: ['mid_shark', 'cruiser_a', 'cruiser_b', 'part_armor', 'mid_gunshark', 'mid_sub', 'mid_gunboat'], O: ['mid_fish', 'mid_dragon', 'mid_swarm1', 'mid_mind', 'cruiser_b'], A: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_swarm2', 'mid_gunshark'], R: ['mid_station', 'mid_sub', 'mid_gunboat'], C: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_station'] },
+    spinner: { M: ['core_c', 'core_b', 'core_g', 'en_g1_06'], O: ['core_b', 'core_chaos', 'core_g', 'part_core_b'], A: ['core_crystal', 'core_chaos', 'core_c'] },
+    seg: { M: ['en_m07', 'en_m09', 'en_g1_15', 'en_m10'], O: ['to_heart', 'to_blob1', 'en_o07', 'en_o10'], A: ['en_c09', 'en_c10', 'en_c11', 'en_c12'] },
+    mine: { M: ['en_g1_16', 'en_g1_19', 'en_g1_20', 'en_g1_17'], O: ['to_blob1', 'to_heart', 'to_rock1'], A: ['to_rock2', 'ta_cry3', 'en_g1_19'] },
+    sniper: { M: ['part_gun', 'en_g1_07', 'en_g1_14'], O: ['part_gun', 'en_g1_14', 'en_g1_07'], A: ['part_gun', 'en_g1_07', 'en_g1_14'] },
+    splitter: { M: ['part_module', 'en_g1_11', 'en_g1_13', 'part_organ2'], O: ['to_brain', 'to_mass', 'part_organ1', 'part_organ2'], A: ['part_armor', 'en_g1_13', 'part_chaos'] },
+  };
+  const ROCKS = ['rock_a', 'rock_b', 'rock_c', 'rock_d', 'rock_e', 'rock_f'];
+  const pickArt = (type, o) => {
+    if (type === 'rock') return o && o.big ? ['rock_c', 'rock_f'][(S ? S.wv : 0) % 2] : ROCKS[Math.floor(rr() * 4)];
+    const L = ART[type]; if (!L) return null; const th0 = S ? STAGE_DEF[S.n - 1].terr : 'M', th = th0 === 'C' ? 'A' : th0 === 'R' ? 'M' : th0, l = (type === 'carrier' && L[th0]) || L[th] || L.M;
+    return l[((S ? S.n : 0) + (S ? S.wv || 0 : 0)) % l.length];
+  };
   const BOSS_R = { octa: 34, spider: 30, insect: 28, squid: 28, serpent: 24, fortress: 36, cruiser: 30, carrier: 30, ring: 32, shark: 28, jelly: 28, crab: 28, destroyer: 28 };
 
   // ---------- スキル ----------
@@ -72,7 +91,8 @@
 
   // ---------- 状態 ----------
   let state = 'title', R = null, S = null, P = null, IN = null;
-  const EB = [], PB = [], EN = [], GM = [], PT = [], BEAM = [];
+  const EB = [], PB = [], EN = [], GM = [], PT = [], BEAM = [], FXL = [];
+  const fx = (nm, x, y, dur, s0, s1, o) => { if (FXL.length < 80) FXL.push(Object.assign({ nm, x, y, t: 0, dur, s0, s1 }, o || {})); };
   let time = 0, shake = 0, banner = null, bossB = null, selStage = 1, menuSel = 0;
   const keys = {}, touch = { sx: 0, sy: 0, on: false, wave: false, slow: false, force: false }, edge = { force: false, ok: false, pause: false, left: false, right: false, up: false, down: false, num: 0 };
   const stars = []; { const r = rngOf(5); for (let i = 0; i < 90; i++) stars.push({ x: r() * W, y: r() * H, z: 1 + Math.floor(r() * 3), c: r() }); }
@@ -203,11 +223,12 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       splitter: { hp: 10, r: 6, sc: 220, xp: 2, spr: SP.splitter },
     }[type];
     if (type === 'rock' && o && o.big) { T.hp = 14; T.r = 7; T.spr = SP.rock; T.xp = 2; }
-    const e = Object.assign({ type, x, y, hp: T.hp * (o && o.hpm || 1) * DF().h * (1 + (S.n - 1) * .1), r: T.r, sc: T.sc, xp: T.xp, spr: T.spr, t: 0, fl: 0, cd: 1 + rr() * 1.2, y0: y, ph: rr() * 6 }, o || {});
+    const e = Object.assign({ type, x, y, hp: T.hp * (o && o.hpm || 1) * DF().h * (1 + (S.n - 1) * .1), r: T.r, sc: T.sc, xp: T.xp, spr: T.spr, art: pickArt(type, o), t: 0, fl: 0, cd: 1 + rr() * 1.2, y0: y, ph: rr() * 6 }, o || {});
+    if (type === 'carrier') e.r = 13;
     EN.push(e); return e;
   }
   function runScript(it) {
-    const n = S.n;
+    const n = S.n; S.wv = Math.floor(rr() * 3);
     switch (it.k) {
       case 'drones': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * .35, f: () => enemy('drone', W + 10, it.y, { amp: it.amp, vx: -62 })}); break;
       case 'swoop': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * .4, f: () => enemy('swoop', W + 10, it.top ? 30 : H - 30, { dir: it.top ? 1 : -1 }) }); break;
@@ -273,6 +294,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   function killEnemy(e) {
     e.dead = 1; R.kills++; R.score += e.sc;
     boom(e.x, e.y, e.type === 'carrier' ? 40 : 10, e.type === 'carrier' ? 2 : 1);
+    if (e.type === 'carrier') { fx('fx_boom2', e.x, e.y, .7, .8, 2.4); fx('fx_fire', e.x - 6, e.y + 4, .9, .6, 2.2); } else fx(e.type === 'ringer' || e.type === 'spinner' ? 'fx_boom2' : 'fx_boom1', e.x, e.y, .38, .5, e.type === 'ringer' || e.type === 'spinner' ? 1.5 : 1.1);
     for (let i = 0, n = Math.ceil(e.xp); i < n; i++) GM.push({ x: e.x + (rr() - .5) * 8, y: e.y + (rr() - .5) * 8, vx: -20 + rr() * 30, vy: (rr() - .5) * 40, v: 1 });
     Snd.se(e.type === 'carrier' ? 'big' : 'kill'); if (e.type === 'carrier') shake = 12;
     if (e.type === 'splitter') for (let k = 0; k < 3; k++) enemy('drone', e.x, e.y + (k - 1) * 9, { y0: e.y + (k - 1) * 12, amp: 14, vx: -75 - k * 12, hpm: .6 });
@@ -368,7 +390,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
 
   // ---------- 面の開始・終了 ----------
   function startStage(n, retry) {
-    DR.length = 0; R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
+    DR.length = 0; FXL.length = 0; R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
     S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, elaser: [], gim: (RECIPES[n] || {}).gim || null, shut: [], cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
     if (S.gim === 'shutter') { const rs = rngOf(n * 17); for (let i0 = 36, k = 0; i0 < 560; i0 += 30 + Math.floor(rs() * 12), k++) S.shut.push({ i0, w: 3, top: k % 2 === 0, ph: rs() * 6 }); }
     P = { x: 56, y: H / 2, inv: 1.5, dead: 0, charge: 0, F: { mode: 'front', x: 72, y: H / 2, vx: 0, vy: 0, cd: 0 }, bitCd: 0, anim: 0 };
@@ -537,7 +559,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     while (fx.length < RAR[ri].k && pool.length) fx.push(pool.splice(Math.floor(rr() * pool.length), 1)[0]);
     DR.push({ x, y, vx: -24 - rr() * 10, vy: (rr() - .5) * 30, ri, fx, t: 0 });
   }
-  function pickLoot(d) {
+  function pickLoot(d) { fx('fx_swirl2', P.x, P.y, .5, .4, 1.6);
     const R0 = RAR[d.ri];
     for (const k of d.fx) { const o = S.buffs[k]; const keepT = o && o.t > 0 ? o.t : 0, keepR = o && o.t > 0 ? o.r : 0; S.buffs[k] = { t: Math.max(R0.t, keepT), r: Math.max(d.ri, keepR), max: Math.max(R0.t, keepT) }; }
     banner = { t: 2.2, a: R0.n, b: d.fx.map(k => FX[k].n).join(' + ') + '  ' + R0.t + '秒', col: R0.c };
@@ -575,13 +597,13 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function fireWave(ch) {
     const L = lvOf('wave'), tot = 110 * (.35 + ch) * (1 + .25 * L) * bm('dmg');
-    BEAM.push({ t: .35, max: .35, w: 5 + ch * 16, y: P.y, x0: P.x + 12, dps: tot / .35, ch });
+    BEAM.push({ t: .35, max: .35, w: 5 + ch * 16, y: P.y, x0: P.x + 12, dps: tot / .35, ch }); fx('fx_fire', P.x + 18, P.y, .3, .6 + ch, 1.4 + ch);
     Snd.se('wave'); shake = Math.max(shake, 2 + ch * 3);
   }
   function playerHit() {
     if (P.inv > 0) return;
     if (S.guard > 0) { S.guard--; P.inv = 1.6; for (let i = EB.length - 1; i >= 0; i--) if (Math.hypot(EB[i].x - P.x, EB[i].y - P.y) < 46) EB.splice(i, 1); Snd.se('big'); boom(P.x, P.y, 14, .6); banner = { t: 1.2, a: 'GUARD!', b: '被弾を防いだ' }; return; }
-    R.lives--; P.dead = 1.6; boom(P.x, P.y, 36, 1.4); Snd.se('miss'); shake = 10; EB.length = 0;
+    R.lives--; P.dead = 1.6; boom(P.x, P.y, 36, 1.4); fx('fx_boom2', P.x, P.y, .8, 1, 3); fx('fx_fire', P.x, P.y, 1, .8, 2.4); Snd.se('miss'); shake = 10; EB.length = 0;
     if (lvOf('guard') >= 5) S.guard = guardMax();
     const own = Object.keys(R.skills).filter(k => R.skills[k] > (k === 'shot' ? 1 : 0)); if (own.length) { const k = own[Math.floor(rr() * own.length)]; R.skills[k]--; if (R.skills[k] <= 0) delete R.skills[k]; banner = { t: 2, a: 'MISS', b: SK[k].n + ' が1つ下がった' }; }
   }
@@ -637,7 +659,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       if (l.t >= l.w) { shake = Math.max(shake, 1.5); if (P.inv <= 0 && P.dead <= 0 && P.x < l.x && Math.abs(P.y - l.y) < l.h / 2 + hitR(IN.slow)) playerHit(); }
     }
     for (const e of EN) updEnemy(e, dt);
-    if (bossB) { if (bossB.dead) { bossB.dying -= dt; if (rr() < .5) boom(bossB.x + (rr() - .5) * 60, bossB.y + (rr() - .5) * 60, 8, 1); if (bossB.dying <= 0) { R.bossKills++; R.score += 10000 * S.n; bossB = null; stageClear(); return; } } else if (S.warn <= 0 || bossB.enter) updBoss(bossB, dt); }
+    if (bossB) { if (bossB.dead) { bossB.dying -= dt; if (rr() < .5) { const bx = bossB.x + (rr() - .5) * 70, by = bossB.y + (rr() - .5) * 70; boom(bx, by, 8, 1); if (rr() < .6) fx(rr() < .5 ? 'fx_boom2' : 'fx_fire', bx, by, .6, .8, 2.2); } if (bossB.dying <= 0) { R.bossKills++; R.score += 10000 * S.n; bossB = null; stageClear(); return; } } else if (S.warn <= 0 || bossB.enter) updBoss(bossB, dt); }
     // 自機の弾
     for (let i = PB.length - 1; i >= 0; i--) {
       const b = PB[i]; b.life -= dt;
@@ -687,7 +709,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (banner) { banner.t -= dt; if (banner.t <= 0) banner = null; }
     clearEdges();
   }
-  function updFx(dt) { for (let i = PT.length - 1; i >= 0; i--) { const p = PT[i]; p.l -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .96; p.vy *= .96; if (p.l <= 0) PT.splice(i, 1); } }
+  function updFx(dt) { for (let i = FXL.length - 1; i >= 0; i--) { const f = FXL[i]; f.t += dt; if (f.t >= f.dur) FXL.splice(i, 1); } for (let i = PT.length - 1; i >= 0; i--) { const p = PT[i]; p.l -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .96; p.vy *= .96; if (p.l <= 0) PT.splice(i, 1); } }
 
   // ---------- 描画(ドット) ----------
   const hsl = (h, s, l) => 'hsl(' + h + ',' + s + '%,' + l + '%)';
@@ -705,7 +727,35 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     ctx.fillStyle = hsl(hue, 40, 16);
     for (let i = 0; i < 6; i++) { const x = ((i * 190 - sc * .25) % (W + 200) + W + 200) % (W + 200) - 100; ctx.fillRect(x | 0, 100 + (i * 37) % 70, 70, 6); ctx.fillRect((x + 12) | 0, 94 + (i * 37) % 70, 40, 6); ctx.fillRect((x + 20) | 0, 106 + (i * 37) % 70, 50, 4); }
   }
+  // ---- 地形(タイルの絵) ----
+  const TT = {
+    M: { fill: 'tm_fill', lip: 'tm_lip', deco: ['tm_panel1', 'tm_panel2', 'tm_hatch', 'tm_door1', 'tm_door2', 'tm_term1', 'tm_pipe', 'tm_grate'] },
+    O: { fill: 'to_fill', spike: ['to_spike_up', 'to_spike_dn'], deco: ['to_brain', 'to_blob1', 'to_heart', 'to_rock1', 'to_rock2', 'to_mass'] },
+    A: { fill: 'ta_wall1', fill2: 'ta_wall2', boulder: ['ta_big1', 'ta_big2', 'rock_c', 'rock_f', 'rock_d', 'ice_a', 'ice_b', 'ice_d'], deco: ['ta_cry1', 'ta_cry2', 'ta_cry3', 'ice_c', 'ice_e'] },
+    R: { fill: 'tr_fill', fill2: 'tr_fill2', deco: ['tr_pil1', 'tr_pil2', 'tr_pil3', 'tr_pil4', 'tr_slab', 'tr_wall', 'tr_moss', 'tr_face', 'tr_stairs'] },
+    C: { fill: 'tc_fill', every: 8, spike: ['tc_ice', 'tc_ice'], deco: ['tc_cry1', 'tc_cry2', 'tc_cry3', 'tc_cry4', 'tc_big', 'tc_pillar', 'tc_mirror'] },
+  };
+  const thash = i => { let h = (i * 2654435761) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; return (h ^ (h >>> 13)) >>> 0; };
+  function stripFill(tex, i, sx, y0, h) {      // 縦に y0 から h ぶん、タイルの模様でうめる(模様は画面の上端にそろえる)
+    if (h <= 0) return; const tw = tex.width, th = tex.height, srcX = (i * 8) % tw;
+    for (let y = y0; y < y0 + h;) { const sy = ((y % th) + th) % th, hh = Math.min(th - sy, y0 + h - y); ctx.drawImage(tex, srcX, sy, 8, hh, sx, y, 8, hh); y += hh; }
+  }
   function drawTerrain() {
+    if (!S) return; const type = STAGE_DEF[S.n - 1].terr, T = TT[type]; const f1 = SP.ext[T && T.fill];
+    if (!T || !f1) return drawTerrainOld();
+    const f2 = T.fill2 && SP.ext[T.fill2], i0 = Math.floor(S.scroll / 8) - 1;
+    for (let i = i0; i < i0 + 62; i++) {
+      if (i < 0 || i >= S.ter.top.length) continue; const sx = Math.round(i * 8 - S.scroll), th = Math.round(colH(i, true)), bh = Math.round(colH(i, false)), fx0 = (f2 && (i % 6) >= 3) ? f2 : f1;
+      stripFill(fx0, i, sx, 0, th); stripFill(fx0, i, sx, H - bh, bh);
+      if (T.lip) { const lp = SP.ext[T.lip]; if (lp) { const lh = lp.height; ctx.save(); ctx.translate(sx, th); ctx.scale(1, -1); ctx.drawImage(lp, (i * 8) % lp.width, 0, 8, lh, 0, 0, 8, lh); ctx.restore(); ctx.drawImage(lp, (i * 8) % lp.width, 0, 8, lh, sx, H - bh, 8, lh); } }
+      const hs = thash(i + S.n * 1000);
+      if (T.spike && i % (T.every || 3) === 0) { const sp = SP.ext[T.spike[hs % 2]]; if (sp) { ctx.save(); ctx.translate(sx, th - 3); ctx.scale(1, -1); ctx.drawImage(sp, 0, -sp.height); ctx.restore(); ctx.drawImage(sp, sx, H - bh + 3 - sp.height); } }
+      if (T.boulder && hs % 9 === 0) { const nm = T.boulder[(hs >> 4) % T.boulder.length], im = SP.ext[nm]; if (im) { const w = Math.min(im.width, 22); const ww = nm.startsWith('ta_big') ? Math.round(im.width * .55) : im.width; SP.drawScaled(ctx, nm, sx + 4, (hs >> 8) & 1 ? th : H - bh, ww); } }
+      if (T.deco && th > 30 && hs % 13 === 1) { const nm = T.deco[(hs >> 5) % T.deco.length], im = SP.ext[nm]; if (im && im.height + 8 < th) SP.drawScaled(ctx, nm, sx + 8, Math.round(th - im.height / 2 - 6), im.width, { flipY: type !== 'M' }); }
+      if (T.deco && bh > 30 && hs % 13 === 6) { const nm = T.deco[(hs >> 5) % T.deco.length], im = SP.ext[nm]; if (im && im.height + 8 < bh) SP.drawScaled(ctx, nm, sx + 8, Math.round(H - bh + im.height / 2 + 6), im.width); }
+    }
+  }
+  function drawTerrainOld() {
     if (!S) return; const type = STAGE_DEF[S.n - 1].terr, t = S.ter;
     const H0 = type === 'M' ? 220 : type === 'O' ? 285 : 28, SAT = type === 'A' ? 22 : 30;
     for (let sx = -((S.scroll % 8) | 0); sx < W; sx += 8) {
@@ -743,21 +793,36 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (S && state !== 'title') {
       drawTerrain();
       for (const g of GM) ctx.drawImage(SP.gem, Math.round(g.x) - 2, Math.round(g.y) - 2);
-      for (const e of EN) SP.draw(ctx, e.type, e.x, e.y, e.spr, e.fl > 0);
+      for (const e of EN) {
+        const nm = e.art || e.type, fl = e.fl > 0, flipY = e.type === 'turret' && e.up;
+        if (flipY) { ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1, -1); }
+        const ex = flipY ? 0 : e.x, ey = flipY ? 0 : e.y;
+        if (!(Rig.has(nm) && Rig.draw(ctx, nm, ex, ey, e.t + e.ph, { flash: fl }))) SP.draw(ctx, nm, ex, ey, e.spr, fl);
+        if (flipY) ctx.restore();
+      }
       if (bossB) drawBoss(bossB);
       // 自機の弾
       for (const b of PB) { const sp = b.missile ? SP.missile : b.w >= 5 ? SP.pshot : SP.pshotBig; if (b.missile) drawSprite(SP.missile, b.x, b.y); else { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(b.x - b.w / 2), Math.round(b.y) - 1, b.w, 1); ctx.fillStyle = '#6fd0ff'; ctx.fillRect(Math.round(b.x - b.w / 2), Math.round(b.y), b.w, 1); } }
-      // 波動砲
+      // 波動砲(画像を横にのばして描く。画像が無いときは四角)
       for (const m of BEAM) {
         const k = m.t / m.max, w = Math.max(2, Math.round(m.w * (k > .8 ? 1 : .35 + k * .8))), x0 = Math.round(m.x0), y = Math.round(m.y);
-        ctx.fillStyle = '#ffb030'; ctx.fillRect(x0, y - w, W - x0, w * 2); ctx.fillStyle = '#ffe070'; ctx.fillRect(x0, y - (w * .7 | 0), W - x0, ((w * .7) | 0) * 2); ctx.fillStyle = '#ffffff'; ctx.fillRect(x0, y - (w * .35 | 0), W - x0, ((w * .35) | 0) * 2 + 1);
+        const nm = m.ch >= 1 ? 'wave_purple' : m.ch >= .6 ? 'force_beam' : 'wave_cyan', im = SP.ext[nm];
+        if (im) { const ga = ctx.globalAlpha; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ga * Math.min(1, k * 2 + .3); const hh = Math.max(8, w * 2.4); ctx.drawImage(im, x0 - 4, Math.round(y - hh / 2), W - x0 + 8, hh); ctx.drawImage(im, x0 - 4, Math.round(y - hh / 4), W - x0 + 8, hh / 2); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = ga; }
+        else { ctx.fillStyle = '#ffb030'; ctx.fillRect(x0, y - w, W - x0, w * 2); ctx.fillStyle = '#ffe070'; ctx.fillRect(x0, y - (w * .7 | 0), W - x0, ((w * .7) | 0) * 2); ctx.fillStyle = '#ffffff'; ctx.fillRect(x0, y - (w * .35 | 0), W - x0, ((w * .35) | 0) * 2 + 1); }
       }
       if (P && P.dead <= 0) {
         // ビット・フォース・自機
-        for (let i = 0; i < (P.bitN || 0); i++) { const q = bitPos(i, P.bitN); SP.draw(ctx, 'bit', q.x, q.y, SP.bit); }
-        const F = P.F, fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const rr0 = forceR(), sc = rr0 / 6; const sz = Math.round(fr.width * sc);
-        ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz);
-        if (bf('ghost')) ctx.globalAlpha = .55; if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) SP.draw(ctx, 'player', P.x, P.y, SP.player); ctx.globalAlpha = 1;
+        for (let i = 0; i < (P.bitN || 0); i++) { const q = bitPos(i, P.bitN), nm = ['bit_a', 'bit_b', 'bit_g'][i % 3]; if (!(Rig.has(nm) && Rig.draw(ctx, nm, q.x, q.y, P.anim + i, {}))) SP.draw(ctx, 'bit', q.x, q.y, SP.bit); }
+        const F = P.F, rr0 = forceR(), sc = rr0 / 6.6, fl = lvOf('force'), rear = F.mode === 'rear', nm = fl >= 4 ? 'force_cannon' : fl >= 2 ? 'force_impact' : 'force_orb';
+        if (SP.ext[nm]) {
+          if (nm === 'force_cannon') { SP.drawScaled(ctx, 'force_orb', F.x, F.y, Math.round(14 * sc), { rot: P.anim * 4 }); SP.drawScaled(ctx, nm, F.x + (rear ? -10 : 10), F.y, Math.round(24 * sc), { flipX: rear }); }
+          else SP.drawScaled(ctx, nm, F.x, F.y, Math.round((nm === 'force_orb' ? 14 : 18) * sc), { rot: P.anim * (nm === 'force_orb' ? 4 : -3) });
+        } else { const fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const sz = Math.round(fr.width * sc); ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz); }
+        if (bf('ghost')) ctx.globalAlpha = .55;
+        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { if (!(Rig.has('player') && Rig.draw(ctx, 'player', P.x, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
+        ctx.globalAlpha = 1;
+        if (S.fire > .11 * .5 && SP.ext.player_flash) SP.drawScaled(ctx, 'player_flash', P.x + 20, P.y, 18, { alpha: .9 });
+        if (P.charge > .08 && SP.ext.fx_swirl1) SP.drawScaled(ctx, 'fx_swirl1', P.x + 20, P.y, Math.round(10 + P.charge * 26), { rot: time * 10, alpha: .55 + .4 * P.charge });
         if (P.charge > .05) { const n = Math.round(P.charge * 10); ctx.fillStyle = P.charge >= 1 ? '#ffffff' : '#ffe070'; ctx.fillRect(Math.round(P.x - 9), Math.round(P.y + 8), n * 2, 2); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(Math.round(P.x - 9) + n * 2, Math.round(P.y + 8), 20 - n * 2, 2); }
         // 当たり判定の点
         ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(P.x) - 1, Math.round(P.y) - 1, 3, 3); ctx.fillStyle = '#ff2040'; ctx.fillRect(Math.round(P.x), Math.round(P.y), 1, 1);
@@ -777,10 +842,11 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       }
       for (const e of EN) if (e.type === 'sniper' && e.tele && e.ang != null && ((time * 14) | 0) % 2) { ctx.fillStyle = 'rgba(255,220,80,.8)'; for (let k = 8; k < 150; k += 6) ctx.fillRect(Math.round(e.x + Math.cos(e.ang) * k), Math.round(e.y + Math.sin(e.ang) * k), 1, 1); }
       if (bossB && bossB.dash && bossB.dash.s === 'warn' && ((time * 12) | 0) % 2) { ctx.fillStyle = 'rgba(255,90,90,.75)'; for (let x = 0; x < bossB.x; x += 6) ctx.fillRect(x, Math.round(bossB.y), 3, 2); }
-      for (const b of EB) { const sp = SP.bullets[b.col][b.sz]; ctx.drawImage(sp, Math.round(b.x) - b.r, Math.round(b.y) - b.r); }
+      for (const f of FXL) { const k = f.t / f.dur, sc = f.s0 + (f.s1 - f.s0) * k, im = SP.ext[f.nm]; if (im) SP.drawScaled(ctx, f.nm, f.x, f.y, Math.round(im.width * sc), { alpha: 1 - k * k, rot: f.rot ? f.rot * f.t : 0 }); }
+      for (const b of EB) { const sp = SP.bullet(b.col, b.sz), n = sp.width; ctx.drawImage(sp, Math.round(b.x - n / 2), Math.round(b.y - n / 2)); }
     } else {
       // タイトルの背景: 自機が横切る
-      const x = ((time * 60) % (W + 60)) - 30; drawSprite(SP.player, x, 150 + Math.sin(time * 2) * 8); drawSprite(SP.forceFrames[((time * 8) | 0) % 2], x + 22, 150 + Math.sin(time * 2) * 8);
+      const x = ((time * 60) % (W + 60)) - 30; if (!(Rig.has('player') && Rig.draw(ctx, 'player', x, 150 + Math.sin(time * 2) * 8, time, {}))) drawSprite(SP.player, x, 150 + Math.sin(time * 2) * 8); if (SP.ext.force_orb) SP.drawScaled(ctx, 'force_orb', x + 26, 150 + Math.sin(time * 2) * 8, 15, { rot: time * 4 }); else drawSprite(SP.forceFrames[((time * 8) | 0) % 2], x + 22, 150 + Math.sin(time * 2) * 8);
     }
     ctx.restore();
   }
@@ -803,7 +869,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     box(36, H - 11, 70, 6, '#223'); box(36, H - 11, 70 * clamp(R.xp / nx, 0, 1), 6, '#ffd84a');
     T('波動', 112, H - 4, 8, '#cfe', 'left', false); box(132, H - 11, 46, 6, '#223'); box(132, H - 11, 46 * (P ? P.charge : 0), 6, P && P.charge >= 1 ? '#ffffff' : '#7dffea');
     let sx = 190; for (const kk of SK_KEYS) { const L = lvOf(kk); if (!L) continue; box(sx, H - 12, 18, 11, 'rgba(10,20,50,.9)', SK[kk].c); T(SK[kk].ic, sx + 4, H - 3, 8, SK[kk].c); T('' + L, sx + 13, H - 3, 7, '#fff'); sx += 20; }
-    T('♥'.repeat(Math.max(0, R.lives)) || '-', W - 4, H - 4, 9, '#ff7a9a', 'right');
+    { const hi = SP.ext.ui_heart; if (hi) { hx.imageSmoothingEnabled = false; for (let i = 0; i < Math.max(0, R.lives); i++) hx.drawImage(hi, W - 14 - i * 12, H - 13, 10, 10); if (R.lives <= 0) T('-', W - 4, H - 4, 9, '#ff7a9a', 'right'); } else T('♥'.repeat(Math.max(0, R.lives)) || '-', W - 4, H - 4, 9, '#ff7a9a', 'right'); }
     if (S.guard > 0) T('GUARD x' + S.guard, W - 50, H - 4, 8, '#fff', 'right');
     // ボス体力
     if (bossB && !bossB.enter) { const bw = 200, bx = W - bw - 8; box(bx, 16, bw, 5, 'rgba(0,0,0,.6)', '#ff5a7a'); box(bx, 16, bw * clamp(bossB.hp / bossB.max, 0, 1), 5, bossB.phase === 2 ? '#ff4040' : bossB.phase === 1 ? '#ffb030' : '#ff5a7a'); T(bossB.name, bx, 14, 8, '#ff9ab0'); if (bossB.plan.hatch) { const op = bossB.t % 8 <= 3.5; T(op ? 'CORE OPEN!' : 'ARMOR CLOSED', bx + bw, 14, 8, op ? '#ffee80' : '#9ab', 'right'); } }
@@ -812,8 +878,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (S.warn > 0) { const bl = ((time * 4) | 0) % 2; box(0, 100, W, 36, 'rgba(120,0,20,' + (bl ? .5 : .3) + ')'); T('WARNING', W / 2, 124, 22, bl ? '#fff' : '#ff6a6a', 'center'); }
     if (state === 'paused') { box(0, 0, W, H, 'rgba(0,0,10,.7)'); T('PAUSE', W / 2, 96, 22, '#fff', 'center'); ['つづける', 'この面の最初からやり直す', 'タイトルへ'].forEach((s, i) => { box(150, 118 + i * 24, 180, 20, i === menuSel ? 'rgba(60,80,160,.9)' : 'rgba(20,24,60,.9)', i === menuSel ? '#7dffea' : '#456'); T((i + 1) + '  ' + s, W / 2, 132 + i * 24, 10, '#fff', 'center'); }); T('矢印・WASD=移動  Shift=低速  Z/Space=波動(長押し)  X=FORCE  M=音', W / 2, 205, 7.5, '#9ab', 'center', false); }
     if (state === 'levelup') drawPick();
-    if (state === 'clear') { box(0, 70, W, 110, 'rgba(0,0,10,.75)'); T('STAGE ' + S.n + ' CLEAR', W / 2, 105, 24, '#ffe070', 'center'); T('クリアボーナス +' + S.bonus, W / 2, 128, 11, '#fff', 'center'); T(S.n >= STAGES_N ? 'ALL CLEAR!' : 'つぎは STAGE ' + (S.n + 1) + '  ' + STAGE_NAMES[S.n], W / 2, 146, 10, '#7dffea', 'center'); if (S.clearT > 1.2) T('タップ / Enter で つづける', W / 2, 168, 10, '#ccc', 'center'); }
-    if (state === 'gameover') { box(0, 60, W, 150, 'rgba(10,0,0,.82)'); T('GAME OVER', W / 2, 96, 26, '#ff6a6a', 'center'); T('STAGE ' + S.n + '  SCORE ' + R.score, W / 2, 118, 11, '#fff', 'center'); T('撃破 ' + R.kills + '   かすり ' + R.graze + '   到達LV ' + R.lv, W / 2, 134, 10, '#cfe', 'center'); if (S.goT > 1) { ['この面の最初から', 'タイトルへ'].forEach((s, i) => { box(60 + i * 180, 150, 160, 24, i === menuSel ? 'rgba(60,80,160,.9)' : 'rgba(20,24,60,.9)', i === menuSel ? '#7dffea' : '#456'); T((i + 1) + '  ' + s, 140 + i * 180, 166, 10, '#fff', 'center'); }); } }
+    if (state === 'clear') { box(0, 70, W, 110, 'rgba(0,0,10,.75)'); { const ci = SP.ext.ui_clear; T('STAGE ' + S.n, W / 2, 92, 14, '#ffe070', 'center'); if (ci) { hx.imageSmoothingEnabled = false; hx.drawImage(ci, W / 2 - 48, 96, 96, Math.round(ci.height * 96 / ci.width)); } else T('CLEAR', W / 2, 112, 24, '#ffe070', 'center'); } T('クリアボーナス +' + S.bonus, W / 2, 128, 11, '#fff', 'center'); T(S.n >= STAGES_N ? 'ALL CLEAR!' : 'つぎは STAGE ' + (S.n + 1) + '  ' + STAGE_NAMES[S.n], W / 2, 146, 10, '#7dffea', 'center'); if (S.clearT > 1.2) T('タップ / Enter で つづける', W / 2, 168, 10, '#ccc', 'center'); }
+    if (state === 'gameover') { box(0, 60, W, 150, 'rgba(10,0,0,.82)'); { const gi = SP.ext.ui_gameover; if (gi) { hx.imageSmoothingEnabled = false; hx.drawImage(gi, W / 2 - 48, 64, 96, Math.round(gi.height * 96 / gi.width)); } else T('GAME OVER', W / 2, 96, 26, '#ff6a6a', 'center'); } T('STAGE ' + S.n + '  SCORE ' + R.score, W / 2, 118, 11, '#fff', 'center'); T('撃破 ' + R.kills + '   かすり ' + R.graze + '   到達LV ' + R.lv, W / 2, 134, 10, '#cfe', 'center'); if (S.goT > 1) { ['この面の最初から', 'タイトルへ'].forEach((s, i) => { box(60 + i * 180, 150, 160, 24, i === menuSel ? 'rgba(60,80,160,.9)' : 'rgba(20,24,60,.9)', i === menuSel ? '#7dffea' : '#456'); T((i + 1) + '  ' + s, 140 + i * 180, 166, 10, '#fff', 'center'); }); } }
     if (state === 'ending') { box(0, 0, W, H, 'rgba(0,0,20,.9)'); T('ALL CLEAR!!', W / 2, 110, 28, '#ffe070', 'center'); T('全20面クリア  SCORE ' + R.score, W / 2, 136, 12, '#fff', 'center'); T('タップ / Enter でタイトルへ', W / 2, 170, 10, '#ccc', 'center'); }
   }
   function drawPick() {
@@ -822,7 +888,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       const x = 28 + i * 148, y = 70, sel = i === S.sel, def = SK[p.k] || { n: p.k === '_life' ? '1UP' : 'スコア', ic: p.k === '_life' ? '♥' : '★', c: p.k === '_life' ? '#ff7a9a' : '#ffe070', d: () => p.k === '_life' ? '残機+1(最大5)' : '+10,000点' };
       const L = SK[p.k] ? lvOf(p.k) : 0, e = clamp((S.luT - i * .06) / .2, 0, 1), yy = y + (1 - e) * 30; hx.globalAlpha = e;
       box(x, yy, 136, 150, 'rgba(12,16,44,.95)', def.c, sel ? 3 : 1);
-      T(def.ic, x + 68, yy + 46, 34, def.c, 'center'); T(def.n, x + 68, yy + 68, 12, '#fff', 'center');
+      { const icn = { shot: 'ui_laser', bit: 'ui_drones', guard: 'ui_shield' }[p.k], ii = icn && SP.ext[icn]; if (ii) { hx.imageSmoothingEnabled = false; hx.drawImage(ii, x + 38, yy + 16, 60, Math.round(ii.height * 60 / ii.width)); } else T(def.ic, x + 68, yy + 46, 34, def.c, 'center'); } T(def.n, x + 68, yy + 68, 12, '#fff', 'center');
       if (SK[p.k]) { T(L ? 'Lv ' + L + ' → ' + (L + 1) : 'NEW!', x + 68, yy + 84, 10, L ? '#ffe070' : '#7dffb0', 'center'); wrapT(def.d(L + 1), x + 68, yy + 102, 15, 8.5, '#cfd8ff'); }
       else wrapT(def.d(), x + 68, yy + 102, 15, 8.5, '#cfd8ff');
       T('' + (i + 1), x + 6, yy + 12, 10, def.c); hx.globalAlpha = 1;
@@ -865,7 +931,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     start(n) { newRun(n || 1); startStage(R.stage); }, start2(n) { startStage(n); },
     step(n) { for (let i = 0; i < n; i++) update(1 / 60); },
     setState(s) { state = s; }, giveSkill(k, L) { R.skills[k] = L; }, setBot(v) { window.__bot = v; },
-    god(v) { window.__god = v; }, DR, FX, RAR, rollLoot, pickLoot, bf, bm, killEnemy, giveStarter, newRun,
+    god(v) { window.__god = v; }, DR, FXL, FX, RAR, rollLoot, pickLoot, bf, bm, killEnemy, giveStarter, newRun,
   };
   const _hit = playerHit; playerHit = function () { if (window.__god) { if (P.inv <= 0) { window.__hits = (window.__hits || 0) + 1; P.inv = .6; } return; } _hit(); };
 })();

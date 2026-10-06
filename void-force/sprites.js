@@ -157,3 +157,35 @@
   ], { o: '#2a0a18', r: '#d8a020', R: '#fff0a0' });
   SP.splitter = comp(15, 15, x => { x.drawImage(SP.disc(6, ['#ffffff', '#d8ff7a', '#80c020', '#304a08']), 1, 1); x.fillStyle = '#10200a'; x.fillRect(7, 2, 1, 11); x.fillRect(2, 7, 11, 1); });
 })();
+
+// ---- 画像素材の便利関数(拡大縮小・反転・光る描き方・弾の色ちがい) ----
+(function () {
+  const SP = window.SP;
+  // 横幅 w で描く。o={flipX, flipY, rot(ラジアン), glow(加算), alpha}
+  SP.drawScaled = function (ctx, name, x, y, w, o) {
+    const im = SP.ext[name]; if (!im) return false; o = o || {};
+    const h = Math.round(im.height * w / im.width), cfg = SP.cfg[name], ga = ctx.globalAlpha;
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); if (o.rot) ctx.rotate(o.rot); if (o.flipX || o.flipY) ctx.scale(o.flipX ? -1 : 1, o.flipY ? -1 : 1);
+    if (o.alpha != null) ctx.globalAlpha = ga * o.alpha; if (o.glow || (cfg && cfg.glow && o.glow !== false)) ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(im, -Math.round(w / 2), -Math.round(h / 2), w, h); ctx.restore(); return true;
+  };
+  // 敵の弾: pink/yellow/green は画像、ほかは pink の色相をずらして作る。画像が無いときは仮の丸
+  const bcache = {}, HUE = { pink: 0, red: 40, orange: 70, cyan: 230, violet: 290 }, SIZE = [5, 7, 11];
+  function recolor(img, deg) {
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data, k = deg * Math.PI / 180, cs = Math.cos(k), sn = Math.sin(k);
+    for (let i = 0; i < p.length; i += 4) {      // 色相を回す(YIQ回転)
+      const r = p[i], g = p[i + 1], b = p[i + 2], y = .299 * r + .587 * g + .114 * b, I = .596 * r - .274 * g - .322 * b, Q = .211 * r - .523 * g + .312 * b;
+      const I2 = I * cs - Q * sn, Q2 = I * sn + Q * cs;
+      p[i] = Math.max(0, Math.min(255, y + .956 * I2 + .621 * Q2)); p[i + 1] = Math.max(0, Math.min(255, y - .272 * I2 - .647 * Q2)); p[i + 2] = Math.max(0, Math.min(255, y - 1.106 * I2 + 1.703 * Q2));
+    }
+    x.putImageData(d, 0, 0); return c;
+  }
+  SP.bullet = function (col, sz) {
+    const key = col + sz; if (bcache[key]) return bcache[key];
+    const base = col === 'yellow' ? SP.ext.bul_yellow : col === 'green' ? SP.ext.bul_green : SP.ext.bul_pink;
+    if (!base) return SP.bullets[col][sz];
+    const src = (col in HUE && col !== 'pink') ? recolor(base, HUE[col]) : base, n = SIZE[sz];
+    const c = document.createElement('canvas'); c.width = c.height = n; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0, n, n); return bcache[key] = c;
+  };
+})();

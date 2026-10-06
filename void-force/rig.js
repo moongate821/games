@@ -54,8 +54,9 @@
   // 描く: (x,y)=絵の中心 / t=時間 / o={flash, phase(ボスの形態), dead(やられてからの秒), scale(絵の拡大率)}
   Rig.draw = function (ctx, name, x, y, t, o) {
     o = o || {}; const B = Rig.built[name]; if (!B) return false;
-    const k = 1 + .35 * (o.phase || 0), dead = o.dead || 0, ox = Math.round(x - B.w / 2), oy = Math.round(y - B.h / 2), fl = o.flash;
+    const k = 1 + .35 * (o.phase || 0), dead = o.dead || 0, fl = o.flash; let ox = Math.round(x - B.w / 2), oy = Math.round(y - B.h / 2);
     const fade = dead > 0 ? Math.max(0, 1 - dead / 2.1) : 1; const ga = ctx.globalAlpha; ctx.globalAlpha = ga * fade;
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ox = -Math.round(B.w / 2); oy = -Math.round(B.h / 2); if (o.rot) ctx.rotate(o.rot); if (o.flipX || o.flipY) ctx.scale(o.flipX ? -1 : 1, o.flipY ? -1 : 1); if (o.sc) ctx.scale(o.sc, o.sc); x = 0; y = 0;
     const shakeX = dead > 0 ? Math.round(Math.sin(dead * 60) * 1.5) : 0;
     ctx.drawImage(fl ? B.bodyF : B.body, ox + shakeX, oy);
     for (let i = 0; i < B.parts.length; i++) {
@@ -76,6 +77,6 @@
       }
       ctx.save(); ctx.translate(ox + p.px + dx + shakeX, oy + p.py + dy); if (ang) ctx.rotate(ang); if (sc !== 1) ctx.scale(sc, sc); ctx.drawImage(cv, -p.px, -p.py); ctx.restore();
     }
-    ctx.globalAlpha = ga; return true;
+    ctx.restore(); ctx.globalAlpha = ga; return true;
   };
 })();

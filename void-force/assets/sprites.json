@@ -78,5 +78,757 @@
  "boss_9": {
   "file": "assets/boss_9.png",
   "w": 150
+ },
+ "player": {
+  "file": "assets/player.png",
+  "w": 30
+ },
+ "player_fire": {
+  "file": "assets/player_fire.png",
+  "w": 50
+ },
+ "force_orb": {
+  "file": "assets/force_orb.png",
+  "w": 14
+ },
+ "force_spread": {
+  "file": "assets/force_spread.png",
+  "w": 40
+ },
+ "force_impact": {
+  "file": "assets/force_impact.png",
+  "w": 18
+ },
+ "force_beam": {
+  "file": "assets/force_beam.png",
+  "w": 64,
+  "glow": 1
+ },
+ "bit_a": {
+  "file": "assets/bit_a.png",
+  "w": 11
+ },
+ "bit_b": {
+  "file": "assets/bit_b.png",
+  "w": 11
+ },
+ "bit_g": {
+  "file": "assets/bit_g.png",
+  "w": 11
+ },
+ "wave_cyan": {
+  "file": "assets/wave_cyan.png",
+  "w": 96,
+  "glow": 1
+ },
+ "wave_purple": {
+  "file": "assets/wave_purple.png",
+  "w": 150,
+  "glow": 1
+ },
+ "fx_fire": {
+  "file": "assets/fx_fire.png",
+  "w": 30,
+  "glow": 1
+ },
+ "fx_swirl1": {
+  "file": "assets/fx_swirl1.png",
+  "w": 30,
+  "glow": 1
+ },
+ "fx_swirl2": {
+  "file": "assets/fx_swirl2.png",
+  "w": 30,
+  "glow": 1
+ },
+ "fx_boom1": {
+  "file": "assets/fx_boom1.png",
+  "w": 30,
+  "glow": 1
+ },
+ "fx_boom2": {
+  "file": "assets/fx_boom2.png",
+  "w": 40,
+  "glow": 1
+ },
+ "en_g1_01": {
+  "file": "assets/en_g1_01.png",
+  "w": 20
+ },
+ "en_g1_02": {
+  "file": "assets/en_g1_02.png",
+  "w": 20
+ },
+ "en_g1_03": {
+  "file": "assets/en_g1_03.png",
+  "w": 20
+ },
+ "en_g1_04": {
+  "file": "assets/en_g1_04.png",
+  "w": 20
+ },
+ "en_g1_05": {
+  "file": "assets/en_g1_05.png",
+  "w": 20
+ },
+ "en_g1_06": {
+  "file": "assets/en_g1_06.png",
+  "w": 20
+ },
+ "en_g1_07": {
+  "file": "assets/en_g1_07.png",
+  "w": 24
+ },
+ "en_g1_08": {
+  "file": "assets/en_g1_08.png",
+  "w": 18
+ },
+ "en_g1_09": {
+  "file": "assets/en_g1_09.png",
+  "w": 20
+ },
+ "en_g1_10": {
+  "file": "assets/en_g1_10.png",
+  "w": 18
+ },
+ "en_g1_11": {
+  "file": "assets/en_g1_11.png",
+  "w": 22
+ },
+ "en_g1_12": {
+  "file": "assets/en_g1_12.png",
+  "w": 22
+ },
+ "en_g1_13": {
+  "file": "assets/en_g1_13.png",
+  "w": 22
+ },
+ "en_g1_14": {
+  "file": "assets/en_g1_14.png",
+  "w": 24
+ },
+ "en_g1_15": {
+  "file": "assets/en_g1_15.png",
+  "w": 14
+ },
+ "en_g1_16": {
+  "file": "assets/en_g1_16.png",
+  "w": 16
+ },
+ "en_g1_17": {
+  "file": "assets/en_g1_17.png",
+  "w": 18
+ },
+ "en_g1_18": {
+  "file": "assets/en_g1_18.png",
+  "w": 16
+ },
+ "en_g1_19": {
+  "file": "assets/en_g1_19.png",
+  "w": 16
+ },
+ "en_g1_20": {
+  "file": "assets/en_g1_20.png",
+  "w": 18
+ },
+ "cruiser_a": {
+  "file": "assets/cruiser_a.png",
+  "w": 64
+ },
+ "cruiser_b": {
+  "file": "assets/cruiser_b.png",
+  "w": 82
+ },
+ "bul_pink": {
+  "file": "assets/bul_pink.png",
+  "w": 11,
+  "glow": 1
+ },
+ "bul_yellow": {
+  "file": "assets/bul_yellow.png",
+  "w": 11,
+  "glow": 1
+ },
+ "bul_green": {
+  "file": "assets/bul_green.png",
+  "w": 11,
+  "glow": 1
+ },
+ "ui_gameover": {
+  "file": "assets/ui_gameover.png",
+  "w": 96
+ },
+ "ui_clear": {
+  "file": "assets/ui_clear.png",
+  "w": 96
+ },
+ "ui_laser": {
+  "file": "assets/ui_laser.png",
+  "w": 30
+ },
+ "ui_drones": {
+  "file": "assets/ui_drones.png",
+  "w": 30
+ },
+ "ui_shield": {
+  "file": "assets/ui_shield.png",
+  "w": 30
+ },
+ "ui_heart": {
+  "file": "assets/ui_heart.png",
+  "w": 10
+ },
+ "force_cannon": {
+  "file": "assets/force_cannon.png",
+  "w": 24
+ },
+ "player_flash": {
+  "file": "assets/player_flash.png",
+  "w": 22,
+  "glow": 1
+ },
+ "tm_fill": {
+  "file": "assets/tm_fill.png",
+  "w": 24
+ },
+ "tm_lip": {
+  "file": "assets/tm_lip.png",
+  "w": 24
+ },
+ "tm_grate": {
+  "file": "assets/tm_grate.png",
+  "w": 24
+ },
+ "tm_turret1": {
+  "file": "assets/tm_turret1.png",
+  "w": 22
+ },
+ "tm_turret2": {
+  "file": "assets/tm_turret2.png",
+  "w": 22
+ },
+ "tm_pipe": {
+  "file": "assets/tm_pipe.png",
+  "w": 22
+ },
+ "tm_panel1": {
+  "file": "assets/tm_panel1.png",
+  "w": 40
+ },
+ "tm_panel2": {
+  "file": "assets/tm_panel2.png",
+  "w": 36
+ },
+ "tm_hatch": {
+  "file": "assets/tm_hatch.png",
+  "w": 20
+ },
+ "tm_door1": {
+  "file": "assets/tm_door1.png",
+  "w": 20
+ },
+ "tm_door2": {
+  "file": "assets/tm_door2.png",
+  "w": 20
+ },
+ "tm_term1": {
+  "file": "assets/tm_term1.png",
+  "w": 16
+ },
+ "tm_term2": {
+  "file": "assets/tm_term2.png",
+  "w": 14
+ },
+ "tm_term3": {
+  "file": "assets/tm_term3.png",
+  "w": 10
+ },
+ "to_fill": {
+  "file": "assets/to_fill.png",
+  "w": 24
+ },
+ "to_cap": {
+  "file": "assets/to_cap.png",
+  "w": 24
+ },
+ "to_vein": {
+  "file": "assets/to_vein.png",
+  "w": 24
+ },
+ "to_vein2": {
+  "file": "assets/to_vein2.png",
+  "w": 24
+ },
+ "to_teeth": {
+  "file": "assets/to_teeth.png",
+  "w": 24
+ },
+ "to_spike_up": {
+  "file": "assets/to_spike_up.png",
+  "w": 26
+ },
+ "to_spike_dn": {
+  "file": "assets/to_spike_dn.png",
+  "w": 26
+ },
+ "to_flat1": {
+  "file": "assets/to_flat1.png",
+  "w": 24
+ },
+ "to_flat2": {
+  "file": "assets/to_flat2.png",
+  "w": 24
+ },
+ "to_blob1": {
+  "file": "assets/to_blob1.png",
+  "w": 18
+ },
+ "to_rock1": {
+  "file": "assets/to_rock1.png",
+  "w": 18
+ },
+ "to_brain": {
+  "file": "assets/to_brain.png",
+  "w": 22
+ },
+ "to_heart": {
+  "file": "assets/to_heart.png",
+  "w": 16
+ },
+ "to_rock2": {
+  "file": "assets/to_rock2.png",
+  "w": 20
+ },
+ "to_mass": {
+  "file": "assets/to_mass.png",
+  "w": 24
+ },
+ "ta_wall1": {
+  "file": "assets/ta_wall1.png",
+  "w": 24
+ },
+ "ta_wall2": {
+  "file": "assets/ta_wall2.png",
+  "w": 24
+ },
+ "ta_big1": {
+  "file": "assets/ta_big1.png",
+  "w": 30
+ },
+ "ta_big2": {
+  "file": "assets/ta_big2.png",
+  "w": 34
+ },
+ "rock_a": {
+  "file": "assets/rock_a.png",
+  "w": 9
+ },
+ "rock_b": {
+  "file": "assets/rock_b.png",
+  "w": 10
+ },
+ "rock_c": {
+  "file": "assets/rock_c.png",
+  "w": 14
+ },
+ "rock_d": {
+  "file": "assets/rock_d.png",
+  "w": 12
+ },
+ "rock_e": {
+  "file": "assets/rock_e.png",
+  "w": 12
+ },
+ "rock_f": {
+  "file": "assets/rock_f.png",
+  "w": 14
+ },
+ "ta_cry1": {
+  "file": "assets/ta_cry1.png",
+  "w": 22
+ },
+ "ta_cry2": {
+  "file": "assets/ta_cry2.png",
+  "w": 14
+ },
+ "ta_cry3": {
+  "file": "assets/ta_cry3.png",
+  "w": 12
+ },
+ "en_o01": {
+  "file": "assets/en_o01.png",
+  "w": 18
+ },
+ "en_o02": {
+  "file": "assets/en_o02.png",
+  "w": 18
+ },
+ "en_o03": {
+  "file": "assets/en_o03.png",
+  "w": 18
+ },
+ "en_o04": {
+  "file": "assets/en_o04.png",
+  "w": 18
+ },
+ "en_o05": {
+  "file": "assets/en_o05.png",
+  "w": 18
+ },
+ "en_o06": {
+  "file": "assets/en_o06.png",
+  "w": 18
+ },
+ "en_o07": {
+  "file": "assets/en_o07.png",
+  "w": 18
+ },
+ "en_o08": {
+  "file": "assets/en_o08.png",
+  "w": 18
+ },
+ "en_o09": {
+  "file": "assets/en_o09.png",
+  "w": 18
+ },
+ "en_o10": {
+  "file": "assets/en_o10.png",
+  "w": 18
+ },
+ "en_m01": {
+  "file": "assets/en_m01.png",
+  "w": 18
+ },
+ "en_m02": {
+  "file": "assets/en_m02.png",
+  "w": 18
+ },
+ "en_m03": {
+  "file": "assets/en_m03.png",
+  "w": 18
+ },
+ "en_m04": {
+  "file": "assets/en_m04.png",
+  "w": 18
+ },
+ "en_m05": {
+  "file": "assets/en_m05.png",
+  "w": 18
+ },
+ "en_m06": {
+  "file": "assets/en_m06.png",
+  "w": 18
+ },
+ "en_m07": {
+  "file": "assets/en_m07.png",
+  "w": 18
+ },
+ "en_m08": {
+  "file": "assets/en_m08.png",
+  "w": 18
+ },
+ "en_m09": {
+  "file": "assets/en_m09.png",
+  "w": 18
+ },
+ "en_m10": {
+  "file": "assets/en_m10.png",
+  "w": 18
+ },
+ "en_c01": {
+  "file": "assets/en_c01.png",
+  "w": 16
+ },
+ "en_c02": {
+  "file": "assets/en_c02.png",
+  "w": 16
+ },
+ "en_c03": {
+  "file": "assets/en_c03.png",
+  "w": 16
+ },
+ "en_c04": {
+  "file": "assets/en_c04.png",
+  "w": 16
+ },
+ "en_c05": {
+  "file": "assets/en_c05.png",
+  "w": 16
+ },
+ "en_c06": {
+  "file": "assets/en_c06.png",
+  "w": 16
+ },
+ "en_c07": {
+  "file": "assets/en_c07.png",
+  "w": 16
+ },
+ "en_c08": {
+  "file": "assets/en_c08.png",
+  "w": 16
+ },
+ "en_c09": {
+  "file": "assets/en_c09.png",
+  "w": 16
+ },
+ "en_c10": {
+  "file": "assets/en_c10.png",
+  "w": 16
+ },
+ "en_c11": {
+  "file": "assets/en_c11.png",
+  "w": 16
+ },
+ "en_c12": {
+  "file": "assets/en_c12.png",
+  "w": 16
+ },
+ "mid_shark": {
+  "file": "assets/mid_shark.png",
+  "w": 54
+ },
+ "mid_fish": {
+  "file": "assets/mid_fish.png",
+  "w": 48
+ },
+ "mid_dragon": {
+  "file": "assets/mid_dragon.png",
+  "w": 62
+ },
+ "mid_crys1": {
+  "file": "assets/mid_crys1.png",
+  "w": 44
+ },
+ "mid_crys2": {
+  "file": "assets/mid_crys2.png",
+  "w": 44
+ },
+ "mid_crys3": {
+  "file": "assets/mid_crys3.png",
+  "w": 44
+ },
+ "mid_swarm1": {
+  "file": "assets/mid_swarm1.png",
+  "w": 36
+ },
+ "mid_swarm2": {
+  "file": "assets/mid_swarm2.png",
+  "w": 34
+ },
+ "mid_swarm3": {
+  "file": "assets/mid_swarm3.png",
+  "w": 34
+ },
+ "mid_mind": {
+  "file": "assets/mid_mind.png",
+  "w": 46
+ },
+ "part_armor": {
+  "file": "assets/part_armor.png",
+  "w": 40
+ },
+ "part_organ1": {
+  "file": "assets/part_organ1.png",
+  "w": 24
+ },
+ "part_organ2": {
+  "file": "assets/part_organ2.png",
+  "w": 36
+ },
+ "part_gun": {
+  "file": "assets/part_gun.png",
+  "w": 54
+ },
+ "part_core_b": {
+  "file": "assets/part_core_b.png",
+  "w": 28
+ },
+ "part_module": {
+  "file": "assets/part_module.png",
+  "w": 40
+ },
+ "part_cannon": {
+  "file": "assets/part_cannon.png",
+  "w": 28
+ },
+ "part_turret": {
+  "file": "assets/part_turret.png",
+  "w": 28
+ },
+ "part_arms": {
+  "file": "assets/part_arms.png",
+  "w": 34
+ },
+ "part_wings_l": {
+  "file": "assets/part_wings_l.png",
+  "w": 36
+ },
+ "part_wings_r": {
+  "file": "assets/part_wings_r.png",
+  "w": 36
+ },
+ "part_body1": {
+  "file": "assets/part_body1.png",
+  "w": 42
+ },
+ "part_body2": {
+  "file": "assets/part_body2.png",
+  "w": 42
+ },
+ "part_body3": {
+  "file": "assets/part_body3.png",
+  "w": 42
+ },
+ "part_chaos": {
+  "file": "assets/part_chaos.png",
+  "w": 44
+ },
+ "core_b": {
+  "file": "assets/core_b.png",
+  "w": 22
+ },
+ "core_g": {
+  "file": "assets/core_g.png",
+  "w": 22
+ },
+ "core_c": {
+  "file": "assets/core_c.png",
+  "w": 22
+ },
+ "core_crystal": {
+  "file": "assets/core_crystal.png",
+  "w": 22
+ },
+ "core_chaos": {
+  "file": "assets/core_chaos.png",
+  "w": 22
+ },
+ "form_1": {
+  "file": "assets/form_1.png",
+  "w": 12
+ },
+ "form_2": {
+  "file": "assets/form_2.png",
+  "w": 12
+ },
+ "tr_fill": {
+  "file": "assets/tr_fill.png",
+  "w": 24
+ },
+ "tr_fill2": {
+  "file": "assets/tr_fill2.png",
+  "w": 24
+ },
+ "tr_fill3": {
+  "file": "assets/tr_fill3.png",
+  "w": 24
+ },
+ "tr_stairs": {
+  "file": "assets/tr_stairs.png",
+  "w": 30
+ },
+ "tr_wall": {
+  "file": "assets/tr_wall.png",
+  "w": 34
+ },
+ "tr_pil1": {
+  "file": "assets/tr_pil1.png",
+  "w": 12
+ },
+ "tr_pil2": {
+  "file": "assets/tr_pil2.png",
+  "w": 12
+ },
+ "tr_pil3": {
+  "file": "assets/tr_pil3.png",
+  "w": 14
+ },
+ "tr_pil4": {
+  "file": "assets/tr_pil4.png",
+  "w": 14
+ },
+ "tr_slab": {
+  "file": "assets/tr_slab.png",
+  "w": 40
+ },
+ "tr_moss": {
+  "file": "assets/tr_moss.png",
+  "w": 28
+ },
+ "tr_face": {
+  "file": "assets/tr_face.png",
+  "w": 24
+ },
+ "tc_fill": {
+  "file": "assets/tc_fill.png",
+  "w": 24
+ },
+ "tc_ice": {
+  "file": "assets/tc_ice.png",
+  "w": 30
+ },
+ "tc_cry1": {
+  "file": "assets/tc_cry1.png",
+  "w": 18
+ },
+ "tc_cry2": {
+  "file": "assets/tc_cry2.png",
+  "w": 22
+ },
+ "tc_cry3": {
+  "file": "assets/tc_cry3.png",
+  "w": 12
+ },
+ "tc_cry4": {
+  "file": "assets/tc_cry4.png",
+  "w": 12
+ },
+ "tc_big": {
+  "file": "assets/tc_big.png",
+  "w": 26
+ },
+ "tc_pillar": {
+  "file": "assets/tc_pillar.png",
+  "w": 14
+ },
+ "tc_mirror": {
+  "file": "assets/tc_mirror.png",
+  "w": 20
+ },
+ "ice_a": {
+  "file": "assets/ice_a.png",
+  "w": 14
+ },
+ "ice_b": {
+  "file": "assets/ice_b.png",
+  "w": 16
+ },
+ "ice_c": {
+  "file": "assets/ice_c.png",
+  "w": 12
+ },
+ "ice_d": {
+  "file": "assets/ice_d.png",
+  "w": 14
+ },
+ "ice_e": {
+  "file": "assets/ice_e.png",
+  "w": 14
+ },
+ "mid_station": {
+  "file": "assets/mid_station.png",
+  "w": 54
+ },
+ "mid_gunshark": {
+  "file": "assets/mid_gunshark.png",
+  "w": 52
+ },
+ "mid_sub": {
+  "file": "assets/mid_sub.png",
+  "w": 52
+ },
+ "mid_gunboat": {
+  "file": "assets/mid_gunboat.png",
+  "w": 52
  }
 }
