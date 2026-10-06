@@ -50,7 +50,7 @@
     speed: { n: '機動力', ic: '➤', c: '#ff9a70', d: L => '移動が速く、低速時の当たりが小さい(Lv' + L + ')' },
   };
   const SK_KEYS = Object.keys(SK);
-  // ---------- ルート(ドロップ品): 一時的な強化。ノーマル8秒・レア10秒・エピック12秒・レジェンド15秒 ----------
+  // ---------- ルート(ドロップ品): 一時的な強化。ノーマル6秒・レア8秒・エピック10秒・レジェンド12秒 ----------
   const FX = {
     rate: { n: '連射', ic: '≫', c: '#6fd0ff', m: [1.4, 1.6, 1.8, 2.1] },
     dmg: { n: '威力', ic: '✹', c: '#ff9a70', m: [1.3, 1.5, 1.7, 2] },
@@ -66,7 +66,7 @@
     ghost: { n: 'ゴースト', ic: '☆', c: '#ffffff', minRar: 2 },
   };
   const FX_KEYS = Object.keys(FX);
-  const RAR = [{ n: 'NORMAL', c: '#e8e8e8', t: 8, k: 1, w: .58 }, { n: 'RARE', c: '#5ab4ff', t: 10, k: 1, w: .28 }, { n: 'EPIC', c: '#c070ff', t: 12, k: 2, w: .11 }, { n: 'LEGEND', c: '#ffc040', t: 15, k: 3, w: .03 }];
+  const RAR = [{ n: 'NORMAL', c: '#e8e8e8', t: 6, k: 1, w: .58 }, { n: 'RARE', c: '#5ab4ff', t: 8, k: 1, w: .28 }, { n: 'EPIC', c: '#c070ff', t: 10, k: 2, w: .11 }, { n: 'LEGEND', c: '#ffc040', t: 12, k: 3, w: .03 }];
   const DR = [];
   const lvOf = k => (R && R.skills[k]) || 0;
 
