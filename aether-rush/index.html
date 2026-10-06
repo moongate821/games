@@ -46,24 +46,27 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #touch{padding:env(safe-area-inset-bottom) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .tb{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid var(--c1);background:rgba(0,20,40,.45);color:var(--c1);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;letter-spacing:1px;box-shadow:0 0 12px rgba(0,240,255,.35)}
 .tb.on{background:rgba(0,240,255,.4);color:#fff}
-#tL{left:12px;bottom:calc(30px + env(safe-area-inset-bottom));width:84px;height:84px}
-#tR{left:108px;bottom:calc(30px + env(safe-area-inset-bottom));width:84px;height:84px}
-#tBoost{right:16px;bottom:calc(206px + env(safe-area-inset-bottom));width:92px;height:92px;border-color:var(--c3);color:var(--c3)}
-#tDrift{right:20px;bottom:calc(120px + env(safe-area-inset-bottom));width:76px;height:76px;border-color:var(--c2);color:var(--c2)}
-#tBrake{right:24px;bottom:calc(40px + env(safe-area-inset-bottom));width:68px;height:68px;border-color:#9aa;color:#9aa}
-#tPause{left:14px;top:calc(96px + env(safe-area-inset-top));width:40px;height:40px;font-size:16px}
+#stickZone{position:absolute;left:0;bottom:0;width:54%;height:64%;pointer-events:auto;touch-action:none}
+#stickBase{position:absolute;left:calc(18px + env(safe-area-inset-left));bottom:calc(36px + env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;border:2px solid rgba(0,240,255,.55);background:radial-gradient(circle,rgba(0,40,70,.35),rgba(0,20,40,.55));box-shadow:0 0 14px rgba(0,240,255,.3);opacity:.55;pointer-events:none;transition:opacity .1s}
+#stickBase.active{opacity:.95;bottom:auto}
+#stickBase i{position:absolute;font-style:normal;font-size:12px;color:rgba(0,240,255,.8);line-height:1}
+#stickBase .up{top:7px;left:50%;transform:translateX(-50%)}#stickBase .dn{bottom:7px;left:50%;transform:translateX(-50%)}
+#stickBase .lf{left:8px;top:50%;transform:translateY(-50%)}#stickBase .rt{right:8px;top:50%;transform:translateY(-50%)}
+#stickKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#bff8ff,#00b8d8 60%,#006a88);box-shadow:0 0 14px rgba(0,240,255,.7)}
+#tBoost{right:calc(18px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));width:96px;height:96px;border-color:var(--c3);color:var(--c3)}
+#tDrift{right:calc(26px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));width:84px;height:84px;border-color:var(--c2);color:var(--c2)}
+#tPause{left:14px;top:calc(112px + env(safe-area-inset-top));width:40px;height:40px;font-size:16px}
 @media (orientation:portrait){
-#tL,#tR{bottom:calc(62px + env(safe-area-inset-bottom))}
-#tBoost{bottom:calc(236px + env(safe-area-inset-bottom))}#tDrift{bottom:calc(150px + env(safe-area-inset-bottom))}#tBrake{bottom:calc(70px + env(safe-area-inset-bottom))}
-body.touch #hud .br{left:14px;right:auto;bottom:calc(160px + env(safe-area-inset-bottom));text-align:left}
+#stickBase{bottom:calc(56px + env(safe-area-inset-bottom))}
+body.touch #hud .br{right:16px;left:auto;bottom:calc(268px + env(safe-area-inset-bottom));text-align:right}
+body.touch #hud .bl{left:50%;transform:translateX(-50%);width:56vw;bottom:calc(10px + env(safe-area-inset-bottom))}
 }
 @media (orientation:landscape){
-#tL{bottom:calc(16px + env(safe-area-inset-bottom))}#tR{bottom:calc(16px + env(safe-area-inset-bottom))}
-#tBoost{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:88px;height:88px}
-#tDrift{right:116px;bottom:calc(16px + env(safe-area-inset-bottom))}
-#tBrake{right:206px;bottom:calc(16px + env(safe-area-inset-bottom))}
+#stickBase{bottom:calc(22px + env(safe-area-inset-bottom))}
+#tBoost{bottom:calc(20px + env(safe-area-inset-bottom));width:88px;height:88px}
+#tDrift{right:calc(122px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));width:76px;height:76px}
 #hud .br{bottom:calc(112px + env(safe-area-inset-bottom))}
-#hud .bl{bottom:calc(118px + env(safe-area-inset-bottom))}
+body.touch #hud .bl{left:50%;transform:translateX(-50%);width:min(30vw,260px);bottom:calc(14px + env(safe-area-inset-bottom))}
 }
 /* ---- menus ---- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));text-align:center}
@@ -122,8 +125,8 @@ tr.me td{color:var(--c3);background:rgba(255,225,74,.12)}
   <div id="center"></div><div id="warn" class="hidden">WRONG WAY</div><div id="flash" class="layer"></div>
 </div>
 <div id="touch" class="layer hidden">
-  <div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div>
-  <div class="tb" id="tBoost">BOOST</div><div class="tb" id="tDrift">DRIFT</div><div class="tb" id="tBrake">BRAKE</div>
+  <div id="stickZone"></div><div id="stickBase"><i class="up">▲</i><i class="dn">▼</i><i class="lf">◀</i><i class="rt">▶</i><div id="stickKnob"></div></div>
+  <div class="tb" id="tBoost">BOOST</div><div class="tb" id="tDrift">DRIFT</div>
   <div class="tb" id="tPause">Ⅱ</div>
 </div>
 <button id="muteBtn">♪ ON</button>

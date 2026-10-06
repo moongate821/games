@@ -30,7 +30,7 @@ const store = {
 
 // ---------- 入力 ----------
 const keys = {};
-const touch = { L: false, R: false, boost: false, drift: false, brake: false };
+const touch = { steer: 0, accel: 0, brake: 0, boost: false, drift: false };   // steer=-1..1(スティックの左右)、accel/brake=0..1(前/後ろ)
 const pad = { steer: 0, accel: 0, brake: 0, boost: false, drift: false, connected: false };
 const menuEdge = {};
 addEventListener('keydown', (e) => {
@@ -47,7 +47,29 @@ function bindTouch(id, key) {
   const off = (e) => { touch[key] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
 }
-bindTouch('tL', 'L'); bindTouch('tR', 'R'); bindTouch('tBoost', 'boost'); bindTouch('tDrift', 'drift'); bindTouch('tBrake', 'brake');
+bindTouch('tBoost', 'boost'); bindTouch('tDrift', 'drift');
+// 仮想スティック(画面の左側のどこを触ってもそこが中心になる)。左右=ハンドル、前(上)=アクセル、後ろ(下)=ブレーキ
+(() => {
+  const zone = $('stickZone'), base = $('stickBase'), knob = $('stickKnob');
+  const RAD = 58; let sid = null, cx = 0, cy = 0;
+  const reset = () => { touch.steer = touch.accel = touch.brake = 0; knob.style.transform = 'translate(-50%,-50%)'; base.classList.remove('active'); base.style.left = base.style.top = ''; sid = null; };
+  const move = (e) => {
+    let dx = e.clientX - cx, dy = e.clientY - cy; const len = Math.hypot(dx, dy);
+    if (len > RAD) { dx *= RAD / len; dy *= RAD / len; }
+    knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    const nx = dx / RAD, ny = dy / RAD, dz = 0.08;
+    touch.steer = Math.sign(nx) * Math.pow(Math.max(0, (Math.abs(nx) - dz) / (1 - dz)), 1.15);
+    touch.accel = ny < -0.14 ? Math.min(1, (-ny - 0.14) / 0.45) : 0;      // 少し前に倒せばアクセル全開に近づく
+    touch.brake = ny > 0.3 ? Math.min(1, (ny - 0.3) / 0.5) : 0;
+  };
+  zone.addEventListener('pointerdown', (e) => {
+    if (sid !== null) return; e.preventDefault(); Snd.init();
+    sid = e.pointerId; try { zone.setPointerCapture(sid); } catch (x) { /* */ }
+    cx = e.clientX; cy = e.clientY; base.style.left = (cx - 66) + 'px'; base.style.top = (cy - 66) + 'px'; base.classList.add('active'); move(e);
+  });
+  zone.addEventListener('pointermove', (e) => { if (e.pointerId === sid) { e.preventDefault(); move(e); } });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) zone.addEventListener(ev, (e) => { if (e.pointerId === sid || ev === 'lostpointercapture') reset(); });
+})();
 $('tPause').addEventListener('pointerdown', (e) => { e.preventDefault(); if (mode === 'race') pause(!paused); });
 $('muteBtn').addEventListener('click', () => { Snd.init(); const m = Snd.toggleMute(); $('muteBtn').textContent = m ? '♪ OFF' : '♪ ON'; store.set('mute', m); });
 if (store.get('mute', false)) { Snd.setMuted(true); $('muteBtn').textContent = '♪ OFF'; }
@@ -77,12 +99,11 @@ function pollPad() {
 function playerInput() {
   const k = keys;
   let steer = (k.ArrowRight || k.KeyD ? 1 : 0) - (k.ArrowLeft || k.KeyA ? 1 : 0);
-  steer += (touch.R ? 1 : 0) - (touch.L ? 1 : 0);
+  if (Math.abs(touch.steer) > Math.abs(steer)) steer = touch.steer;
   if (Math.abs(pad.steer) > Math.abs(steer)) steer = pad.steer;
   steer = Math.max(-1, Math.min(1, steer));
   let accel = (k.ArrowUp || k.KeyW ? 1 : 0), brake = (k.ArrowDown || k.KeyS ? 1 : 0);
-  if (isTouch && !pad.connected) accel = Math.max(accel, touch.brake ? 0 : 1); // タッチは自動アクセル
-  if (touch.brake) brake = 1;
+  accel = Math.max(accel, touch.accel); brake = Math.max(brake, touch.brake);
   accel = Math.max(accel, pad.accel); brake = Math.max(brake, pad.brake);
   return {
     steer, accel, brake,
@@ -105,7 +126,7 @@ function showTitle() {
   useMenuScene(0);
   screen(`<div class="logo">AETHER<br>RUSH</div><div class="sub">反重力ポリゴンレース</div>
     <div class="press" id="go">${isTouch ? 'TAP TO START' : 'PRESS ENTER'}</div>
-    <div class="hint">${isTouch ? '<b>◀ ▶</b> ハンドル　アクセルは自動　<b>BRAKE</b> ブレーキ<br><b>BOOST</b> ブースト(パワーを消費)　<b>DRIFT</b> ドリフト<br>' : '<b>←→</b> ハンドル　<b>↑</b> アクセル　<b>↓</b> ブレーキ　<b>Space</b> ブースト(パワーを消費)　<b>Shift</b> ドリフト<br>パッドも使えます(スティック/A=アクセル、B=ブレーキ、X=ブースト、LB・RB=ドリフト)。<br>'}
+    <div class="hint">${isTouch ? '画面の左側を押さえてスティック: <b>左右</b> ハンドル　<b>前(上)</b> アクセル　<b>後ろ(下)</b> ブレーキ<br>右側: <b>BOOST</b> ブースト(パワーを消費)　<b>DRIFT</b> ドリフト<br>' : '<b>←→</b> ハンドル　<b>↑</b> アクセル　<b>↓</b> ブレーキ　<b>Space</b> ブースト(パワーを消費)　<b>Shift</b> ドリフト<br>パッドも使えます(スティック/A=アクセル、B=ブレーキ、X=ブースト、LB・RB=ドリフト)。<br>'}
     壁にぶつかるとパワーが減り、0で大破。緑の回復ゾーンで補給。ピンクのジャンプ台でギャップを飛び越えよう。</div>`, 'side');
   $('go').addEventListener('click', () => { Snd.init(); Snd.decide(); showMachineSelect(); });
 }
