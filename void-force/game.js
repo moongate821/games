@@ -332,8 +332,32 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       const parts = kind.split(':'), mk = { dash: () => ({ t: 'dash', every: 7 - d * 2 }), summon: () => ({ t: 'summon', k: parts[1], n: 3, every: 6 - d * 1.5 }), rain: () => ({ t: 'rain', every: .11, sp: 62 * sp, col: C() }), laser: () => ({ t: 'laser', every: 5.5 - d * 1.5 }) }[parts[0]];
       for (let ph = minPh; ph < 3; ph++) plan[ph].push(mk());
     }
+    for (const [ph, mk] of (SIGS[n] || [])) plan[ph].push(mk({ d, sp, C }));   // 面ごとの得意技(手作り)
     return plan;
   }
+  // 面ごとの得意技。[出すフェーズ, ({d,sp,C})=>設定]。型は updBoss の switch を見る
+  const SIGS = {
+    1: [[2, ({ d, sp }) => ({ t: 'flower', arms: 2, rate: 9, rot: .09, sp: 52 * sp, col: 'cyan' })]],
+    2: [[1, ({ d, sp }) => ({ t: 'aimburst', n: 3, shots: 3, every: 3.2, sp: 96 * sp, col: 'green' })], [2, ({ d, sp }) => ({ t: 'curtain', every: 3.4, sp: 52 * sp, gap: 56, col: 'pink', side: 0 })]],
+    3: [[1, ({ d, sp }) => ({ t: 'pincer', n: 5, every: 3, sp: 84 * sp, col: 'orange' })], [2, ({ d, sp }) => ({ t: 'ring2', n: 16, every: 2.2, sp: 50 * sp, col: 'violet' })]],
+    4: [[1, ({ d, sp }) => ({ t: 'snake', rate: 16, sp: 88 * sp, col: 'yellow', amp: .5 })], [2, ({ d, sp }) => ({ t: 'curtain', every: 3, sp: 56 * sp, gap: 50, col: 'cyan', side: 1 })]],
+    5: [[1, ({ d, sp }) => ({ t: 'flower', arms: 3, rate: 10, rot: .08, sp: 54 * sp, col: 'pink' })], [2, ({ d, sp }) => ({ t: 'aimburst', n: 5, shots: 3, every: 3.4, sp: 100 * sp, col: 'red' })]],
+    6: [[1, ({ d, sp }) => ({ t: 'pincer', n: 6, every: 2.8, sp: 90 * sp, col: 'cyan' })], [2, ({ d, sp }) => ({ t: 'snake', rate: 18, sp: 94 * sp, col: 'orange', amp: .6 })]],
+    7: [[1, ({ d, sp }) => ({ t: 'ring2', n: 18, every: 2.3, sp: 52 * sp, col: 'violet' })], [2, ({ d, sp }) => ({ t: 'flower', arms: 4, rate: 11, rot: .07, sp: 56 * sp, col: 'yellow' })]],
+    8: [[1, ({ d, sp }) => ({ t: 'aimburst', n: 4, shots: 4, every: 3, sp: 104 * sp, col: 'cyan' })], [2, ({ d, sp }) => ({ t: 'curtain', every: 2.8, sp: 60 * sp, gap: 48, col: 'pink', side: 2 })]],
+    9: [[1, ({ d, sp }) => ({ t: 'snake', rate: 18, sp: 92 * sp, col: 'red', amp: .45 })], [2, ({ d, sp }) => ({ t: 'pincer', n: 7, every: 2.6, sp: 92 * sp, col: 'yellow' })]],
+    10: [[1, ({ d, sp }) => ({ t: 'ring2', n: 18, every: 2, sp: 54 * sp, col: 'green' })], [2, ({ d, sp }) => ({ t: 'aimburst', n: 5, shots: 4, every: 2.8, sp: 106 * sp, col: 'orange' })]],
+    11: [[1, ({ d, sp }) => ({ t: 'curtain', every: 3, sp: 58 * sp, gap: 50, col: 'violet', side: 0 })], [2, ({ d, sp }) => ({ t: 'flower', arms: 3, rate: 12, rot: .08, sp: 58 * sp, col: 'cyan' })]],
+    12: [[1, ({ d, sp }) => ({ t: 'snake', rate: 20, sp: 96 * sp, col: 'pink', amp: .55 })], [2, ({ d, sp }) => ({ t: 'ring2', n: 20, every: 2, sp: 56 * sp, col: 'yellow' })]],
+    13: [[1, ({ d, sp }) => ({ t: 'pincer', n: 7, every: 2.6, sp: 96 * sp, col: 'red' })], [2, ({ d, sp }) => ({ t: 'aimburst', n: 6, shots: 4, every: 2.7, sp: 108 * sp, col: 'orange' })]],
+    14: [[1, ({ d, sp }) => ({ t: 'flower', arms: 3, rate: 12, rot: .075, sp: 56 * sp, col: 'green' })], [2, ({ d, sp }) => ({ t: 'curtain', every: 2.6, sp: 62 * sp, gap: 46, col: 'cyan', side: 1 })]],
+    15: [[1, ({ d, sp }) => ({ t: 'ring2', n: 20, every: 2, sp: 56 * sp, col: 'pink' })], [2, ({ d, sp }) => ({ t: 'snake', rate: 22, sp: 100 * sp, col: 'yellow', amp: .6 })]],
+    16: [[1, ({ d, sp }) => ({ t: 'aimburst', n: 5, shots: 4, every: 2.6, sp: 110 * sp, col: 'red' })], [2, ({ d, sp }) => ({ t: 'pincer', n: 8, every: 2.4, sp: 98 * sp, col: 'orange' })]],
+    17: [[1, ({ d, sp }) => ({ t: 'curtain', every: 2.8, sp: 62 * sp, gap: 46, col: 'violet', side: 2 })], [2, ({ d, sp }) => ({ t: 'flower', arms: 4, rate: 12, rot: .07, sp: 60 * sp, col: 'pink' })]],
+    18: [[1, ({ d, sp }) => ({ t: 'snake', rate: 22, sp: 100 * sp, col: 'cyan', amp: .5 })], [2, ({ d, sp }) => ({ t: 'ring2', n: 22, every: 1.9, sp: 58 * sp, col: 'violet' })]],
+    19: [[1, ({ d, sp }) => ({ t: 'pincer', n: 8, every: 2.4, sp: 100 * sp, col: 'yellow' })], [2, ({ d, sp }) => ({ t: 'aimburst', n: 6, shots: 5, every: 2.6, sp: 112 * sp, col: 'red' })]],
+    20: [[1, ({ d, sp }) => ({ t: 'flower', arms: 4, rate: 13, rot: .07, sp: 60 * sp, col: 'violet' })], [1, ({ d, sp }) => ({ t: 'curtain', every: 2.6, sp: 64 * sp, gap: 44, col: 'cyan', side: 2 })], [2, ({ d, sp }) => ({ t: 'aimburst', n: 7, shots: 5, every: 2.4, sp: 114 * sp, col: 'pink' })], [2, ({ d, sp }) => ({ t: 'ring2', n: 24, every: 1.8, sp: 60 * sp, col: 'orange' })]],
+  };
   function startBoss() {
     const n = S.n, plan0 = bossPlan(n), hp = (760 + 85 * (n - 1)) * (DF().h * .9 + .1) * (plan0.hatch ? .7 : 1);
     bossB = { x: W + 70, y: H / 2, hp, max: hp, phase: 0, t: 0, fl: 0, a: 0, r: 34, plan: plan0, dash: { s: 'idle', t: 0 }, timers: [], enter: true, brk: 0, name: BOSS_NAMES[n - 1], arch: STAGE_DEF[n - 1].arch };
@@ -375,6 +399,12 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         case 'fan': if (tm.c >= c.every) { tm.c = 0; fan(b.x - 20, b.y, c.n, c.spread, c.sp, c.col, c.sz); } break;
         case 'wall': if (tm.c >= c.every) { tm.c = 0; tm.a += 1; const gy = H / 2 + Math.sin(tm.a * 1.3) * (H / 2 - 50); for (let y = 16; y < H - 10; y += 11) { if (Math.abs(y - gy) < c.gap / 2) continue; ebul(W + 4, y, Math.PI, c.sp, c.col, 0); } } break;
         case 'petal': if (tm.c >= c.every) { tm.c = 0; const n = cn(c.n), off = rr() * TAU; for (let k = 0; k < n; k++) ebul(b.x - 20, b.y, off + k * TAU / n, 90, c.col, 1, { dec: 110, turn: 1.1, tsp: c.sp * 1.1 }); } break;
+        case 'flower': { const step = 1 / (c.rate * DF().b * 1.2); while (tm.c >= step) { tm.c -= step; tm.a += c.rot; for (let k = 0; k < c.arms; k++) { ebul(b.x - 20, b.y, tm.a + k * TAU / c.arms + Math.PI, c.sp, c.col, 0); ebul(b.x - 20, b.y, -tm.a + k * TAU / c.arms + Math.PI, c.sp, c.col, 0); } } break; }
+        case 'aimburst': if (tm.c >= c.every) { tm.c = 0; for (let k = 0; k < c.shots; k++) S.later.push({ t: S.time + k * .22, f: () => { if (!bossB || bossB.dead || P.dead > 0) return; fan(bossB.x - 20, bossB.y, c.n, .5, c.sp, c.col, 0); Snd.se('hit'); } }); } break;
+        case 'curtain': if (tm.c >= c.every) { tm.c = 0; tm.a += 1; const fromTop = c.side === 2 ? tm.a % 2 === 0 : c.side === 0, gx = clamp(P.x + (rr() - .5) * 60, 40, W - 40), n = Math.ceil(W / 12); for (let k = 0; k < n; k++) { const x = 8 + k * 12; if (Math.abs(x - gx) < c.gap / 2) continue; ebul(x, fromTop ? -4 : H + 4, fromTop ? Math.PI / 2 : -Math.PI / 2, c.sp * .8, c.col, 0); } } break;
+        case 'pincer': if (tm.c >= c.every) { tm.c = 0; const n = cn(c.n); for (let k = 0; k < n; k++) { const x = W * .3 + rr() * W * .6, top = k % 2 === 0, y = top ? -4 : H + 4; ebul(x, y, Math.atan2(P.y - y, P.x - x), c.sp, c.col, 0); } } break;
+        case 'snake': { const step = 1 / (c.rate * DF().b * 1.1); while (tm.c >= step) { tm.c -= step; tm.a += .17; ebul(b.x - 20, b.y, aimAt(b.x - 20, b.y) + Math.sin(tm.a * 1.6) * c.amp, c.sp, c.col, 0); } break; }
+        case 'ring2': if (tm.c >= c.every) { tm.c = 0; tm.a += .26; ring(b.x - 20, b.y, c.n, c.sp, c.col, 1, tm.a); const x0 = b.x - 20, y0 = b.y, a0 = tm.a; S.later.push({ t: S.time + .35, f: () => { if (!bossB || bossB.dead) return; ring(x0, y0, c.n, c.sp * 1.6, c.col, 0, a0 + Math.PI / c.n); } }); } break;
         case 'sweep': { const step = 1 / (c.rate * DF().b * 1.2); while (tm.c >= step) { tm.c -= step; const a = Math.PI + Math.sin(b.t * 1.1) * c.w; ebul(b.x - 20, b.y, a, c.sp, c.col, 0); if (cn(1) > 1) ebul(b.x - 20, b.y, a + .12, c.sp, c.col, 0); } break; }
       }
     }
