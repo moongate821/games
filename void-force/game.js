@@ -728,7 +728,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function drawBoss(b) {
     const hue = hueOf(S.n);
-    if (!SP.draw(ctx, 'boss_' + S.n, b.x, b.y, null, b.fl > 0)) BossArt.draw(ctx, b, b.arch, hue + 300, b.fl > 0);
+    const nm = 'boss_' + S.n;
+    if (!(Rig.has(nm) && Rig.draw(ctx, nm, b.x, b.y, b.t, { flash: b.fl > 0, phase: b.phase, dead: b.dead ? Math.max(0, 2.2 - b.dying) : 0 })) && !SP.draw(ctx, nm, b.x, b.y, null, b.fl > 0)) BossArt.draw(ctx, b, b.arch, hue + 300, b.fl > 0);
     if (b.plan.hatch && !b.enter) {   // 装甲: 閉じている間はコアが隠れる
       const open = b.t % 8 <= 3.5, x = Math.round(b.x), y = Math.round(b.y);
       if (!open) { ctx.fillStyle = 'rgba(150,170,230,.55)'; ctx.fillRect(x - 15, y - 15, 30, 30); ctx.strokeStyle = '#cfe0ff'; ctx.strokeRect(x - 14.5, y - 14.5, 29, 29); }

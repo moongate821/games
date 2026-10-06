@@ -1,82 +1,82 @@
 {
  "boss_1": {
   "file": "assets/boss_1.png",
-  "w": 112
+  "w": 150
  },
  "boss_10": {
   "file": "assets/boss_10.png",
-  "w": 112
+  "w": 150
  },
  "boss_11": {
   "file": "assets/boss_11.png",
-  "w": 112
+  "w": 150
  },
  "boss_12": {
   "file": "assets/boss_12.png",
-  "w": 112
+  "w": 150
  },
  "boss_13": {
   "file": "assets/boss_13.png",
-  "w": 112
+  "w": 150
  },
  "boss_14": {
   "file": "assets/boss_14.png",
-  "w": 99
+  "w": 123
  },
  "boss_15": {
   "file": "assets/boss_15.png",
-  "w": 112
+  "w": 150
  },
  "boss_16": {
   "file": "assets/boss_16.png",
-  "w": 108
+  "w": 134
  },
  "boss_17": {
   "file": "assets/boss_17.png",
-  "w": 66
+  "w": 81
  },
  "boss_18": {
   "file": "assets/boss_18.png",
-  "w": 90
+  "w": 111
  },
  "boss_19": {
   "file": "assets/boss_19.png",
-  "w": 86
+  "w": 106
  },
  "boss_2": {
   "file": "assets/boss_2.png",
-  "w": 112
+  "w": 150
  },
  "boss_20": {
   "file": "assets/boss_20.png",
-  "w": 83
+  "w": 104
  },
  "boss_3": {
   "file": "assets/boss_3.png",
-  "w": 112
+  "w": 150
  },
  "boss_4": {
   "file": "assets/boss_4.png",
-  "w": 112
+  "w": 150
  },
  "boss_5": {
   "file": "assets/boss_5.png",
-  "w": 112
+  "w": 150
  },
  "boss_6": {
   "file": "assets/boss_6.png",
-  "w": 112
+  "w": 150
  },
  "boss_7": {
   "file": "assets/boss_7.png",
-  "w": 112
+  "w": 150
  },
  "boss_8": {
   "file": "assets/boss_8.png",
-  "w": 112
+  "w": 150
  },
  "boss_9": {
   "file": "assets/boss_9.png",
-  "w": 112
+  "w": 150
  }
 }
