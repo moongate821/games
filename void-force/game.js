@@ -95,11 +95,69 @@
     return { top, bot };
   }
   const col8 = x => Math.floor((S.scroll + x) / 8);
-  function topH(x) { const i = col8(x); return i < 0 || i >= S.ter.top.length ? 8 : S.ter.top[i] * S.tf; }
-  function botH(x) { const i = col8(x); return i < 0 || i >= S.ter.bot.length ? 8 : S.ter.bot[i] * S.tf; }
+  function colH(i, top) {   // 列 i の地形の高さ(しかけ込み)
+    const a = top ? S.ter.top : S.ter.bot; if (i < 0 || i >= a.length) return 8;
+    let h = a[i] * S.tf;
+    if (S.gim === 'pulse') h *= 1 + .28 * Math.sin(time * 1.4 + i * .13);
+    else if (S.gim === 'shutter') for (const s of S.shut) if (i >= s.i0 && i < s.i0 + s.w && s.top === top) h += 58 * (.5 + .5 * Math.sin(time * 1.1 + s.ph));
+    return h;
+  }
+  function topH(x) { return colH(col8(x), true); }
+  function botH(x) { return colH(col8(x), false); }
 
   // ---------- 面の台本(出現のタイミング) ----------
+  // 面ごとの台本。pal=その面に出る敵 / set=時間つきの見せ場 / gim=地形のしかけ(pulse=脈打つ, shutter=閉じるシャッター)
+  const RECIPES = {
+    2: { pal: ['drone', 'swoop', 'mine', 'splitter'], set: [[26, 'worm'], [44, 'carrier']], gim: 'pulse' },
+    3: { pal: ['rock', 'drone', 'sniper', 'swoop'], set: [[22, 'rockstorm'], [46, 'carrier']] },
+    4: { pal: ['drone', 'turret', 'sniper', 'ringer'], set: [[22, 'spinner'], [40, 'spinner2'], [54, 'carrier']], gim: 'shutter' },
+    5: { pal: ['swoop', 'mine', 'splitter', 'spinner'], set: [[20, 'worm'], [38, 'worm'], [54, 'carrier']], gim: 'pulse' },
+    6: { pal: ['drone', 'sniper', 'turret', 'spinner'], set: [[30, 'carrier'], [48, 'spinner2']], gim: 'shutter' },
+    7: { pal: ['rock', 'sniper', 'splitter', 'ringer'], set: [[20, 'rockstorm'], [40, 'rockstorm'], [56, 'carrier']] },
+    8: { pal: ['swoop', 'turret', 'ringer', 'splitter'], set: [[24, 'carrier'], [50, 'carrier']], gim: 'shutter' },
+    9: { pal: ['spinner', 'sniper', 'drone', 'ringer'], set: [[22, 'spinner2'], [40, 'carrier']], gim: 'shutter' },
+    10: { pal: ['mine', 'splitter', 'swoop', 'ringer'], set: [[18, 'worm'], [32, 'worm'], [50, 'carrier']], gim: 'pulse' },
+    11: { pal: ['drone', 'mine', 'spinner', 'sniper'], set: [[20, 'worm'], [38, 'spinner2'], [54, 'carrier']], gim: 'pulse' },
+    12: { pal: ['swoop', 'splitter', 'sniper', 'ringer'], set: [[18, 'worm'], [34, 'worm'], [52, 'carrier']], gim: 'pulse' },
+    13: { pal: ['rock', 'sniper', 'spinner', 'drone'], set: [[16, 'rockstorm'], [34, 'rockstorm'], [52, 'carrier']] },
+    14: { pal: ['mine', 'splitter', 'spinner', 'swoop'], set: [[22, 'worm'], [40, 'spinner2'], [56, 'carrier']], gim: 'pulse' },
+    15: { pal: ['rock', 'splitter', 'sniper', 'ringer'], set: [[18, 'rockstorm'], [36, 'rockstorm'], [54, 'carrier']] },
+    16: { pal: ['drone', 'sniper', 'turret', 'spinner', 'ringer'], set: [[20, 'spinner2'], [34, 'carrier'], [52, 'carrier']], gim: 'shutter' },
+    17: { pal: ['mine', 'splitter', 'swoop', 'spinner', 'sniper'], set: [[16, 'worm'], [30, 'worm'], [44, 'spinner2'], [56, 'carrier']], gim: 'pulse' },
+    18: { pal: ['rock', 'sniper', 'spinner', 'splitter', 'ringer'], set: [[14, 'rockstorm'], [30, 'rockstorm'], [46, 'carrier'], [58, 'spinner2']] },
+    19: { pal: ['turret', 'sniper', 'spinner', 'ringer', 'splitter'], set: [[18, 'spinner2'], [32, 'carrier'], [46, 'spinner2'], [58, 'carrier']], gim: 'shutter' },
+    20: { pal: ['mine', 'splitter', 'spinner', 'sniper', 'ringer', 'rock'], set: [[14, 'worm'], [28, 'rockstorm'], [40, 'spinner2'], [52, 'carrier'], [60, 'worm']], gim: 'pulse' },
+  };
+  function buildScript2(n) {
+    const rc = RECIPES[n], r = rngOf(n * 211 + 5), sc = [], gap = Math.max(2.4, 4.4 - n * .09);
+    const near = t => rc.set.some(s => Math.abs(s[0] - t) < 3);
+    for (const [t, k] of rc.set) {
+      if (k === 'worm') sc.push({ t, k, n: 8 + (n > 10 ? 2 : 0), y: 60 + r() * 150, amp: 40 + r() * 30 });
+      else if (k === 'rockstorm') sc.push({ t, k: 'rocks', n: 12 + Math.floor(n / 2), dur: 6 });
+      else sc.push({ t, k, y: 50 + r() * 170 });
+    }
+    let t = 3;
+    while (t < 66) {
+      if (near(t)) { t += 2; continue; }
+      const k = rc.pal[Math.floor(r() * rc.pal.length)], y = 50 + r() * 170;
+      switch (k) {
+        case 'drone': sc.push({ t, k: 'drones', n: 5 + Math.floor(r() * 3), y, amp: 20 + r() * 40 }); break;
+        case 'swoop': sc.push({ t, k: 'swoop', n: 4, top: r() < .5 }); break;
+        case 'turret': sc.push({ t, k: 'turrets', n: n > 6 ? 3 : 2 }); break;
+        case 'ringer': sc.push({ t, k: 'ringer', y }); break;
+        case 'spinner': sc.push({ t, k: 'spinner', y }); break;
+        case 'mine': sc.push({ t, k: 'mines', n: 4, y }); break;
+        case 'sniper': sc.push({ t, k: 'snipers', n: 2 }); break;
+        case 'splitter': sc.push({ t, k: 'splitter', n: 2 }); break;
+        case 'rock': sc.push({ t, k: 'rocks', n: 5, dur: 3 }); break;
+      }
+      t += gap + r() * 1.2;
+    }
+    sc.sort((a, b) => a.t - b.t);
+    return sc;
+  }
   function buildScript(n) {
+    if (RECIPES[n]) return buildScript2(n);
     const r = rngOf(n * 131 + 7), sc = [];
     let t = 3;
     while (t < 66) {
@@ -137,8 +195,15 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       turret: { hp: 10, r: 5, sc: 250, xp: 2, spr: SP.turret },
       ringer: { hp: 16, r: 6, sc: 400, xp: 3, spr: SP.ringer },
       carrier: { hp: 90, r: 11, sc: 3000, xp: 14, spr: SP.carrier },
+      spinner: { hp: 18, r: 7, sc: 450, xp: 3, spr: SP.spinner },
+      seg: { hp: 5, r: 4, sc: 90, xp: 1, spr: SP.seg },
+      rock: { hp: 6, r: 4, sc: 60, xp: 1, spr: SP.rockS },
+      mine: { hp: 3, r: 4, sc: 80, xp: 1, spr: SP.mine },
+      sniper: { hp: 7, r: 5, sc: 200, xp: 2, spr: SP.sniper },
+      splitter: { hp: 10, r: 6, sc: 220, xp: 2, spr: SP.splitter },
     }[type];
-    const e = Object.assign({ type, x, y, hp: T.hp * DF().h * (1 + (S.n - 1) * .1), r: T.r, sc: T.sc, xp: T.xp, spr: T.spr, t: 0, fl: 0, cd: 1 + rr() * 1.2, y0: y, ph: rr() * 6 }, o || {});
+    if (type === 'rock' && o && o.big) { T.hp = 14; T.r = 7; T.spr = SP.rock; T.xp = 2; }
+    const e = Object.assign({ type, x, y, hp: T.hp * (o && o.hpm || 1) * DF().h * (1 + (S.n - 1) * .1), r: T.r, sc: T.sc, xp: T.xp, spr: T.spr, t: 0, fl: 0, cd: 1 + rr() * 1.2, y0: y, ph: rr() * 6 }, o || {});
     EN.push(e); return e;
   }
   function runScript(it) {
@@ -149,6 +214,13 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       case 'turrets': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * .9, f: () => { const up = (i + (rr() < .5 ? 1 : 0)) % 2 === 0, x = W + 12, wx = S.scroll + x; const idx = Math.floor(wx / 8); const e = enemy('turret', x, 0, { stick: true, wx, up }); e.y = up ? S.ter.top[idx] * S.tf + 3 : H - S.ter.bot[idx] * S.tf - 3; } }); break;
       case 'ringer': enemy('ringer', W + 12, it.y, { vx: -50, stopX: W - 70 - rr() * 100 }); break;
       case 'carrier': enemy('carrier', W + 20, H / 2, { vx: -30, stopX: W - 90, mid: true }); break;
+      case 'spinner': enemy('spinner', W + 12, it.y, { vx: -50, stopX: W - 110 - rr() * 60 }); break;
+      case 'spinner2': enemy('spinner', W + 12, 70, { vx: -50, stopX: W - 100 }); enemy('spinner', W + 12, H - 70, { vx: -50, stopX: W - 150, rot: -1 }); break;
+      case 'worm': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * .22, f: () => enemy('seg', W + 10, it.y, { amp: it.amp, vx: -75 }) }); break;
+      case 'rocks': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * (it.dur || 3) / it.n, f: () => enemy('rock', W + 14, 20 + rr() * (H - 40), { vx: -(35 + rr() * 40), vy: (rr() - .5) * 14, big: rr() < .35 }) }); break;
+      case 'mines': for (let i = 0; i < it.n; i++) enemy('mine', W + 10 + i * 30, clamp(it.y + (i - 1.5) * 34, 24, H - 24), { vx: -42 }); break;
+      case 'snipers': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * 1.2, f: () => enemy('sniper', W + 10, 40 + rr() * (H - 80), { vx: -90, stopX: W - 60 - rr() * 120 }) }); break;
+      case 'splitter': for (let i = 0; i < it.n; i++) S.later.push({ t: S.time + i * 1.0, f: () => enemy('splitter', W + 10, 60 + rr() * 150, { vx: -52, amp: 30 }) }); break;
     }
   }
   function updEnemy(e, dt) {
@@ -163,10 +235,32 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         e.x -= 78 * dt; e.y = e.y0 + e.dir * (e.t < 1.6 ? 0 : (e.t - 1.6) * 0) + e.dir * 74 * (1 - Math.cos(Math.min(e.t, 3.1) * 1.0)) * .9;
         if (e.cd <= 0 && e.x < W - 20) { e.cd = 1.6 + rr(); fan(e.x, e.y, 3, .6, 75, 'yellow', 0); }
         break;
-      case 'turret': e.x = e.wx - S.scroll; if (e.cd <= 0 && e.x < W - 10 && e.x > 40) { e.cd = 2 + rr() * .8; fan(e.x, e.y + (e.up ? 4 : -4), 5, .9, 66, 'green', 1); } break;
+      case 'turret': e.x = e.wx - S.scroll; { const ci = Math.floor((S.scroll + e.x) / 8); e.y = e.up ? colH(ci, true) + 3 : H - colH(ci, false) - 3; } if (e.cd <= 0 && e.x < W - 10 && e.x > 40) { e.cd = 2 + rr() * .8; fan(e.x, e.y + (e.up ? 4 : -4), 5, .9, 66, 'green', 1); } break;
       case 'ringer':
         if (e.x > e.stopX) e.x += e.vx * dt; else e.x -= 6 * dt; e.y = e.y0 + 14 * Math.sin(e.t * 1.2);
         if (e.cd <= 0 && e.x < W - 20) { e.cd = 1.3; ring(e.x, e.y, 10, 56, 'pink', 1, e.t * .7); if (n >= 4) fan(e.x, e.y, 3, .4, 80, 'red', 0); }
+        break;
+      case 'spinner':
+        if (e.x > e.stopX) e.x += e.vx * dt;
+        else { e.hold = (e.hold || 0) + dt; if (e.hold < 5.5) { e.cd2 = (e.cd2 || 0) - dt; if (e.cd2 <= 0) { e.cd2 = .09 / (DF().b * 1.2); e.a = (e.a || 0) + .33 * (e.rot || 1); ebul(e.x, e.y, e.a, 52, 'violet', 0); ebul(e.x, e.y, e.a + Math.PI, 52, 'pink', 0); if (n >= 6) ebul(e.x, e.y, e.a + 1.57, 50, 'cyan', 0); } } else e.x -= 60 * dt; }
+        break;
+      case 'seg':
+        e.x += e.vx * dt; e.y = e.y0 + (e.amp || 40) * Math.sin(e.t * 2.6);
+        if (e.cd <= 0) { e.cd = 3 + rr() * 3; if (e.x < W - 20) fan(e.x, e.y, 1, 0, 70, 'green', 0); }
+        break;
+      case 'rock': e.x += e.vx * dt; e.y += e.vy * dt; if (e.y < 12 || e.y > H - 12) e.vy = -e.vy; break;
+      case 'mine':
+        e.x += e.vx * dt; if (!e.arm && Math.hypot(P.x - e.x, P.y - e.y) < 46) e.arm = .55;
+        if (e.arm) { e.arm -= dt; e.fl = ((e.arm * 14) | 0) % 2; if (e.arm <= 0) { ring(e.x, e.y, 10, 50, 'red', 1, 0); boom(e.x, e.y, 10, 1); e.dead = 1; Snd.se('kill'); } }
+        break;
+      case 'sniper':
+        if (e.x > e.stopX) e.x += e.vx * dt; else e.y += clamp(P.y - e.y, -1, 1) * 16 * dt;
+        if (e.cd < .7 && !e.tele) { e.tele = true; e.ang = aimAt(e.x, e.y); }
+        if (e.cd <= 0) { e.cd = 2.6; e.tele = false; if (e.x < W - 10) fan(e.x, e.y, 3, .14, 130, 'yellow', 1, e.ang); }
+        break;
+      case 'splitter':
+        e.x -= 52 * dt; e.y = e.y0 + (e.amp || 30) * Math.sin(e.t * 2);
+        if (e.cd <= 0) { e.cd = 2.4 + rr(); if (e.x < W - 20) fan(e.x, e.y, 1, 0, 70, 'orange', 0); }
         break;
       case 'carrier':
         if (e.x > e.stopX) e.x += e.vx * dt; e.y = H / 2 + 60 * Math.sin(e.t * .7);
@@ -181,7 +275,10 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     boom(e.x, e.y, e.type === 'carrier' ? 40 : 10, e.type === 'carrier' ? 2 : 1);
     for (let i = 0, n = Math.ceil(e.xp); i < n; i++) GM.push({ x: e.x + (rr() - .5) * 8, y: e.y + (rr() - .5) * 8, vx: -20 + rr() * 30, vy: (rr() - .5) * 40, v: 1 });
     Snd.se(e.type === 'carrier' ? 'big' : 'kill'); if (e.type === 'carrier') shake = 12;
-    const ch = { drone: .05, swoop: .05, turret: .14, ringer: .32, carrier: 2 }[e.type] || 0, boost = e.type === 'carrier' ? .12 : e.type === 'ringer' ? .05 : 0;
+    if (e.type === 'splitter') for (let k = 0; k < 3; k++) enemy('drone', e.x, e.y + (k - 1) * 9, { y0: e.y + (k - 1) * 12, amp: 14, vx: -75 - k * 12, hpm: .6 });
+    if (e.type === 'rock' && e.big) for (let k = 0; k < 2; k++) enemy('rock', e.x, e.y + (k ? 6 : -6), { vx: e.vx - 10, vy: (k ? 22 : -22) });
+    if (e.type === 'mine') ring(e.x, e.y, 10, 50, 'red', 1, 0);
+    const ch = { drone: .05, swoop: .05, turret: .14, ringer: .32, carrier: 2, spinner: .3, seg: .02, rock: .03, mine: .05, sniper: .12, splitter: .1 }[e.type] || 0, boost = e.type === 'carrier' ? .12 : e.type === 'ringer' ? .05 : 0;
     for (let i = 0; i < Math.floor(ch) + (rr() < ch % 1 ? 1 : 0); i++) rollLoot(e.x + i * 8, e.y + (i % 2 ? 8 : -8), boost);
   }
   function hurt(e, d) { e.hp -= d; e.fl = 3; if (e.hp <= 0 && !e.dead) killEnemy(e); }
@@ -206,17 +303,24 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     ];
     const pick = (cnt, ban) => { const out = [], used = new Set(ban || []); while (out.length < cnt) { const i = Math.floor(r() * lib.length); if (used.has(i)) continue; used.add(i); out.push(lib[i]()); } return out; };
     const p1 = pick(2), p2 = pick(2 + (n >= 4 ? 1 : 0)), p3 = pick(3 + (n >= 8 ? 1 : 0));
-    return [p1, p2, p3];
+    const plan = [p1, p2, p3], arch = STAGE_DEF[n - 1].arch;
+    const SPX = { spider: [['dash', 1]], insect: [['summon:drone', 1]], squid: [['rain', 1], ['summon:mine', 2]], serpent: [['dash', 1]], fortress: [['laser', 1], ['hatch']], cruiser: [['laser', 0], ['hatch']], carrier: [['summon:splitter', 1], ['hatch']], ring: [['rain', 1], ['hatch']], shark: [['dash', 1]], jelly: [['summon:drone', 1], ['rain', 2]], crab: [['dash', 1], ['laser', 2]], destroyer: [['dash', 1], ['laser', 2]], octa: [['laser', 2]] }[arch] || [];
+    if (n > 1) for (const [kind, minPh] of SPX) {
+      if (kind === 'hatch') { plan.hatch = true; continue; }
+      const parts = kind.split(':'), mk = { dash: () => ({ t: 'dash', every: 7 - d * 2 }), summon: () => ({ t: 'summon', k: parts[1], n: 3, every: 6 - d * 1.5 }), rain: () => ({ t: 'rain', every: .11, sp: 62 * sp, col: C() }), laser: () => ({ t: 'laser', every: 5.5 - d * 1.5 }) }[parts[0]];
+      for (let ph = minPh; ph < 3; ph++) plan[ph].push(mk());
+    }
+    return plan;
   }
   function startBoss() {
-    const n = S.n, hp = (760 + 300 * (n - 1)) * (DF().h * .9 + .1);
-    bossB = { x: W + 70, y: H / 2, hp, max: hp, phase: 0, t: 0, fl: 0, a: 0, r: 34, plan: bossPlan(n), timers: [], enter: true, brk: 0, name: BOSS_NAMES[n - 1], arch: STAGE_DEF[n - 1].arch };
+    const n = S.n, plan0 = bossPlan(n), hp = (760 + 85 * (n - 1)) * (DF().h * .9 + .1) * (plan0.hatch ? .7 : 1);
+    bossB = { x: W + 70, y: H / 2, hp, max: hp, phase: 0, t: 0, fl: 0, a: 0, r: 34, plan: plan0, dash: { s: 'idle', t: 0 }, timers: [], enter: true, brk: 0, name: BOSS_NAMES[n - 1], arch: STAGE_DEF[n - 1].arch };
     bossB.r = BOSS_R[bossB.arch] || 32;
-    S.boss = true; S.warn = 3;
+    S.boss = true; S.warn = 3; S.gim = null;
     Snd.se('warn'); Snd.bgm(n + 100, true);
   }
   function bossPhaseStart(b) {
-    b.timers = b.plan[b.phase].map(() => ({ c: 0, a: 0 })); b.brk = 1.4;
+    b.timers = b.plan[b.phase].map(() => ({ c: 0, a: 0 })); b.brk = 1.4; b.dash = { s: 'idle', t: 0 }; b.x = Math.max(b.x, W - 74);
     // 区切り: 画面の弾を経験値の宝石に変える(ごほうび)
     for (const e of EB) { if (GM.length < 300 && rr() < .35) GM.push({ x: e.x, y: e.y, vx: -10, vy: 0, v: 1 }); }
     EB.length = 0;
@@ -225,12 +329,24 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   function updBoss(b, dt) {
     b.t += dt; if (b.fl > 0) b.fl--; if (b.flcd > 0) b.flcd -= dt;
     if (b.enter) { b.x -= 48 * dt; if (b.x <= W - 74) { b.enter = false; b.t = 0; bossPhaseStart(b); } return; }
-    b.x = W - 74 + Math.sin(b.t * .35) * 8; b.y = H / 2 + Math.sin(b.t * (.45 + .12 * b.phase)) * 62;
-    if (b.brk > 0) { b.brk -= dt; return; }
-    const cfgs = b.plan[b.phase];
+    const cfgs = b.plan[b.phase], D = b.dash;
+    if (b.brk > 0) { b.brk -= dt; b.x = W - 74 + Math.sin(b.t * .35) * 8; b.y = H / 2 + Math.sin(b.t * (.45 + .12 * b.phase)) * 62; return; }
+    const dc = cfgs.find(c => c.t === 'dash');
+    if (dc && P.dead <= 0) {   // 突進: 予告線(0.9秒)→まっすぐ突っ込む→戻る
+      const tm = b.timers[cfgs.indexOf(dc)];
+      if (D.s === 'idle') { tm.c += dt; if (tm.c >= dc.every) { D.s = 'warn'; D.t = .9; D.y = P.y; Snd.se('warn'); } }
+      else if (D.s === 'warn') { D.t -= dt; b.y += (D.y - b.y) * Math.min(1, dt * 6); if (D.t <= 0) D.s = 'go'; }
+      else if (D.s === 'go') { b.x -= 270 * dt; if (b.x < 50) D.s = 'back'; }
+      else if (D.s === 'back') { b.x += 130 * dt; if (b.x >= W - 74) { b.x = W - 74; D.s = 'idle'; tm.c = 0; } }
+    }
+    const busy = D.s !== 'idle';
+    if (!busy) { b.x = W - 74 + Math.sin(b.t * .35) * 8; b.y = H / 2 + Math.sin(b.t * (.45 + .12 * b.phase)) * 62; }
     for (let i = 0; i < cfgs.length; i++) {
-      const c = cfgs[i], tm = b.timers[i]; tm.c += dt;
+      const c = cfgs[i], tm = b.timers[i]; if (busy && c.t !== 'dash') continue; tm.c += c.t === 'dash' ? 0 : dt;
       switch (c.t) {
+        case 'laser': if (tm.c >= c.every) { tm.c = 0; S.elaser.push({ y: P.y, h: 12, w: .9, f: .45, x: b.x - 10, t: 0 }); } break;
+        case 'summon': if (tm.c >= c.every) { tm.c = 0; if (EN.length < 14) for (let k = 0; k < c.n; k++) enemy(c.k, b.x - 24, b.y + (k - (c.n - 1) / 2) * 20, c.k === 'drone' ? { amp: 18, vx: -85 } : c.k === 'mine' ? { vx: -46 } : { vx: -60, amp: 20 }); } break;
+        case 'rain': { const step = c.every / (DF().b * 1.1); while (tm.c >= step) { tm.c -= step; const top = rr() < .5; ebul(W * .15 + rr() * W * .85, top ? -4 : H + 4, top ? Math.PI / 2 : -Math.PI / 2, c.sp, c.col, 0); } break; }
         case 'spiral': { const step = 1 / (c.rate * DF().b * 1.2); while (tm.c >= step) { tm.c -= step; tm.a += c.rot; for (let k = 0; k < c.arms; k++) ebul(b.x - 20, b.y, tm.a + k * TAU / c.arms + Math.PI, c.sp, c.col, c.sz); } break; }
         case 'ring': if (tm.c >= c.every) { tm.c = 0; tm.a += .3; ring(b.x - 20, b.y, c.n, c.sp, c.col, c.sz, tm.a); } break;
         case 'fan': if (tm.c >= c.every) { tm.c = 0; fan(b.x - 20, b.y, c.n, c.spread, c.sp, c.col, c.sz); } break;
@@ -242,6 +358,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function hurtBoss(d) {
     const b = bossB; if (!b || b.enter || b.brk > 0.7 || b.dead) return;
+    if (b.plan.hatch && b.t % 8 > 3.5) d *= .3;   // 装甲: コアが開いている間だけ本来のダメージ
     b.hp -= d; if (!(b.flcd > 0)) { b.fl = 2; b.flcd = .2; } R.score += 2;
     const ratio = b.hp / b.max, want = ratio <= .33 ? 2 : ratio <= .66 ? 1 : 0;
     if (b.hp <= 0) { b.dead = 1; b.dying = 2.2; for (const e of EB) if (GM.length < 400) GM.push({ x: e.x, y: e.y, vx: -10, vy: 0, v: 1 }); EB.length = 0; Snd.se('big'); shake = 14; return; }
@@ -251,7 +368,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   // ---------- 面の開始・終了 ----------
   function startStage(n, retry) {
     DR.length = 0; R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
-    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
+    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, elaser: [], gim: (RECIPES[n] || {}).gim || null, shut: [], cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
+    if (S.gim === 'shutter') { const rs = rngOf(n * 17); for (let i0 = 36, k = 0; i0 < 560; i0 += 30 + Math.floor(rs() * 12), k++) S.shut.push({ i0, w: 3, top: k % 2 === 0, ph: rs() * 6 }); }
     P = { x: 56, y: H / 2, inv: 1.5, dead: 0, charge: 0, F: { mode: 'front', x: 72, y: H / 2, vx: 0, vy: 0, cd: 0 }, bitCd: 0, anim: 0 };
     banner = { t: 2.6, a: 'STAGE ' + n, b: STAGE_NAMES[n - 1] };
     state = 'play'; Snd.bgm(n, false);
@@ -345,9 +463,15 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         const b = EB[i]; if (b.x < P.x - 40 && b.vx < 0) continue;
         for (let k = 1; k <= 3; k++) { const tt = k * .09, bx = b.x + b.vx * tt, by = b.y + b.vy * tt, d = Math.hypot(bx - nx, by - ny) - b.r; if (d < 18) danger += (18 - d) * (18 - d) * (4 - k); }
       }
+      if (S) {   // レーザー・突進の予告・体当たりしてくる敵も避ける
+        for (const l of S.elaser) if (l.t > l.w - .6 && Math.abs(ny - l.y) < 15 && nx < l.x) danger += 600;
+        if (bossB && bossB.dash && bossB.dash.s !== 'idle' && Math.abs(ny - (bossB.dash.s === 'warn' ? bossB.dash.y : bossB.y)) < bossB.r + 12) danger += 500;
+        for (const e of EN) for (let k = 1; k <= 3; k++) { const tt = k * .09, ex = e.x + (e.vx || 0) * tt, ey = e.y + (e.vy || 0) * tt, d = Math.hypot(ex - nx, ey - ny) - e.r; if (d < 16) danger += (16 - d) * (16 - d) * (4 - k); }
+        if (bossB && !bossB.enter) { const d = Math.hypot(bossB.x - nx, bossB.y - ny) - bossB.r; if (d < 14) danger += (14 - d) * (14 - d) * 3; }
+      }
       const dist = Math.abs(ny - ty), edge = (ny < 24 ? (24 - ny) * 3 : 0) + (ny > H - 24 ? (ny - (H - 24)) * 3 : 0) + (nx < 30 ? (30 - nx) * 2 : 0);
       const xAim = Math.abs(nx - 90) * .15;
-      const score = danger * 2 + dist * .25 + edge + xAim + (dx === 0 && dy === 0 ? 0 : .5);
+      const score = danger * 2 + dist * .6 + edge + xAim + (dx === 0 && dy === 0 ? 0 : .5);
       if (score < bs) { bs = score; pick = [dx, dy]; }
     }
     return { dx: pick[0], dy: pick[1], wave: P.charge < 1 && state === 'play' && S && !S.warn, slow: false };
@@ -506,6 +630,11 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     for (let i = S.later.length - 1; i >= 0; i--) if (S.later[i].t <= S.time + (S.boss ? 1e9 : 0)) { S.later[i].f(); S.later.splice(i, 1); }
     if (S.warn > 0) S.warn -= dt;
     updPlayer(dt);
+    for (let i = S.elaser.length - 1; i >= 0; i--) {
+      const l = S.elaser[i]; l.t += dt; if (bossB && !bossB.dead) l.x = bossB.x - 10;
+      if (l.t > l.w + l.f) { S.elaser.splice(i, 1); continue; }
+      if (l.t >= l.w) { shake = Math.max(shake, 1.5); if (P.inv <= 0 && P.dead <= 0 && P.x < l.x && Math.abs(P.y - l.y) < l.h / 2 + hitR(IN.slow)) playerHit(); }
+    }
     for (const e of EN) updEnemy(e, dt);
     if (bossB) { if (bossB.dead) { bossB.dying -= dt; if (rr() < .5) boom(bossB.x + (rr() - .5) * 60, bossB.y + (rr() - .5) * 60, 8, 1); if (bossB.dying <= 0) { R.bossKills++; R.score += 10000 * S.n; bossB = null; stageClear(); return; } } else if (S.warn <= 0 || bossB.enter) updBoss(bossB, dt); }
     // 自機の弾
@@ -580,7 +709,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     const H0 = type === 'M' ? 220 : type === 'O' ? 285 : 28, SAT = type === 'A' ? 22 : 30;
     for (let sx = -((S.scroll % 8) | 0); sx < W; sx += 8) {
       const i = Math.floor((S.scroll + sx) / 8); if (i < 0 || i >= t.top.length) continue;
-      const th = Math.round(t.top[i] * S.tf), bh = Math.round(t.bot[i] * S.tf), pulse = type === 'O' ? Math.sin(time * 2 + i * .5) * 6 : 0;
+      const th = Math.round(colH(i, true)), bh = Math.round(colH(i, false)), pulse = type === 'O' ? Math.sin(time * 2 + i * .5) * 6 : 0;
       ctx.fillStyle = hsl(H0, SAT, 21 + pulse * .3); ctx.fillRect(sx, 0, 8, th); ctx.fillRect(sx, H - bh, 8, bh);
       ctx.fillStyle = hsl(H0, SAT, 30 + pulse * .5); ctx.fillRect(sx, th - 3, 8, 3); ctx.fillRect(sx, H - bh, 8, 3);
       ctx.fillStyle = hsl(H0, SAT + 5, 38); ctx.fillRect(sx, th - 1, 8, 1); ctx.fillRect(sx, H - bh, 8, 1);
@@ -598,8 +727,12 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function drawBoss(b) {
     const hue = hueOf(S.n);
-    if (SP.draw(ctx, 'boss_' + S.n, b.x, b.y, null, b.fl > 0)) return;
-    BossArt.draw(ctx, b, b.arch, hue + 300, b.fl > 0);
+    if (!SP.draw(ctx, 'boss_' + S.n, b.x, b.y, null, b.fl > 0)) BossArt.draw(ctx, b, b.arch, hue + 300, b.fl > 0);
+    if (b.plan.hatch && !b.enter) {   // 装甲: 閉じている間はコアが隠れる
+      const open = b.t % 8 <= 3.5, x = Math.round(b.x), y = Math.round(b.y);
+      if (!open) { ctx.fillStyle = 'rgba(150,170,230,.55)'; ctx.fillRect(x - 15, y - 15, 30, 30); ctx.strokeStyle = '#cfe0ff'; ctx.strokeRect(x - 14.5, y - 14.5, 29, 29); }
+      else { ctx.fillStyle = ((time * 8) | 0) % 2 ? '#ffffff' : '#ffee80'; ctx.fillRect(x - 3, y - 3, 6, 6); }
+    }
   }
   function render() {
     ctx.save(); if (shake > 0) ctx.translate(Math.round((rr() - .5) * shake), Math.round((rr() - .5) * shake));
@@ -636,6 +769,12 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         if (d.ri >= 2) { ctx.fillStyle = '#fff'; const s = ((d.t * 8) | 0) % 4; ctx.fillRect(x - 8 + s * 4, y - 8, 1, 1); ctx.fillRect(x + 7 - s * 4, y + 7, 1, 1); }
       }
       for (const p of PT) { ctx.globalAlpha = Math.min(1, p.l / p.m + .2); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); } ctx.globalAlpha = 1;
+      for (const l of S.elaser) {
+        if (l.t < l.w) { if (((l.t * 12) | 0) % 2) { ctx.fillStyle = 'rgba(255,90,90,.7)'; for (let x = 0; x < l.x; x += 6) ctx.fillRect(x, Math.round(l.y), 3, 1); } }
+        else { const y = Math.round(l.y), h = l.h; ctx.fillStyle = '#ff5a5a'; ctx.fillRect(0, y - h / 2, l.x, h); ctx.fillStyle = '#ffd0d0'; ctx.fillRect(0, y - h / 4, l.x, h / 2); ctx.fillStyle = '#fff'; ctx.fillRect(0, y - 1, l.x, 2); }
+      }
+      for (const e of EN) if (e.type === 'sniper' && e.tele && e.ang != null && ((time * 14) | 0) % 2) { ctx.fillStyle = 'rgba(255,220,80,.8)'; for (let k = 8; k < 150; k += 6) ctx.fillRect(Math.round(e.x + Math.cos(e.ang) * k), Math.round(e.y + Math.sin(e.ang) * k), 1, 1); }
+      if (bossB && bossB.dash && bossB.dash.s === 'warn' && ((time * 12) | 0) % 2) { ctx.fillStyle = 'rgba(255,90,90,.75)'; for (let x = 0; x < bossB.x; x += 6) ctx.fillRect(x, Math.round(bossB.y), 3, 2); }
       for (const b of EB) { const sp = SP.bullets[b.col][b.sz]; ctx.drawImage(sp, Math.round(b.x) - b.r, Math.round(b.y) - b.r); }
     } else {
       // タイトルの背景: 自機が横切る
@@ -665,7 +804,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     T('♥'.repeat(Math.max(0, R.lives)) || '-', W - 4, H - 4, 9, '#ff7a9a', 'right');
     if (S.guard > 0) T('GUARD x' + S.guard, W - 50, H - 4, 8, '#fff', 'right');
     // ボス体力
-    if (bossB && !bossB.enter) { const bw = 200, bx = W - bw - 8; box(bx, 16, bw, 5, 'rgba(0,0,0,.6)', '#ff5a7a'); box(bx, 16, bw * clamp(bossB.hp / bossB.max, 0, 1), 5, bossB.phase === 2 ? '#ff4040' : bossB.phase === 1 ? '#ffb030' : '#ff5a7a'); T(bossB.name, bx, 14, 8, '#ff9ab0'); }
+    if (bossB && !bossB.enter) { const bw = 200, bx = W - bw - 8; box(bx, 16, bw, 5, 'rgba(0,0,0,.6)', '#ff5a7a'); box(bx, 16, bw * clamp(bossB.hp / bossB.max, 0, 1), 5, bossB.phase === 2 ? '#ff4040' : bossB.phase === 1 ? '#ffb030' : '#ff5a7a'); T(bossB.name, bx, 14, 8, '#ff9ab0'); if (bossB.plan.hatch) { const op = bossB.t % 8 <= 3.5; T(op ? 'CORE OPEN!' : 'ARMOR CLOSED', bx + bw, 14, 8, op ? '#ffee80' : '#9ab', 'right'); } }
     { let by = 18; for (const k of FX_KEYS) { const b = bf(k); if (!b) continue; const c = RAR[b.r].c; box(3, by, 60, 9, 'rgba(0,0,12,.65)', c); box(4, by + 1, 58 * clamp(b.t / (b.max || 10), 0, 1), 7, 'rgba(255,255,255,.18)'); T(FX[k].ic + ' ' + FX[k].n, 6, by + 7.5, 7, c); T(Math.ceil(b.t) + 's', 61, by + 7.5, 7, '#fff', 'right'); by += 11; } }
     if (banner) { const a = clamp(banner.t * 2, 0, 1); hx.globalAlpha = a; T(banner.a, W / 2, 110, 22, banner.col || '#fff', 'center'); T(banner.b, W / 2, 128, 11, banner.col ? '#fff' : '#7dffea', 'center'); hx.globalAlpha = 1; }
     if (S.warn > 0) { const bl = ((time * 4) | 0) % 2; box(0, 100, W, 36, 'rgba(120,0,20,' + (bl ? .5 : .3) + ')'); T('WARNING', W / 2, 124, 22, bl ? '#fff' : '#ff6a6a', 'center'); }
@@ -721,10 +860,10 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   window.VF = {
     get state() { return state; }, get R() { return R; }, get S() { return S; }, get P() { return P; }, get boss() { return bossB; }, EB, EN, PB, GM, SK, DIFFS, save,
     input, touchActive: () => state === 'play', audioInit: () => Snd.init(),
-    start(n) { newRun(n || 1); startStage(R.stage); },
+    start(n) { newRun(n || 1); startStage(R.stage); }, start2(n) { startStage(n); },
     step(n) { for (let i = 0; i < n; i++) update(1 / 60); },
     setState(s) { state = s; }, giveSkill(k, L) { R.skills[k] = L; }, setBot(v) { window.__bot = v; },
-    god(v) { window.__god = v; }, DR, FX, RAR, rollLoot, pickLoot, bf, bm, killEnemy,
+    god(v) { window.__god = v; }, DR, FX, RAR, rollLoot, pickLoot, bf, bm, killEnemy, giveStarter, newRun,
   };
-  const _hit = playerHit; playerHit = function () { if (window.__god) return; _hit(); };
+  const _hit = playerHit; playerHit = function () { if (window.__god) { if (P.inv <= 0) { window.__hits = (window.__hits || 0) + 1; P.inv = .6; } return; } _hit(); };
 })();

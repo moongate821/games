@@ -126,3 +126,24 @@
     return false;
   };
 })();
+
+// ---- 2面以降の敵(仮の形) ----
+(function () {
+  const SP = window.SP;
+  function comp(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d')); return c; }
+  SP.spinner = comp(17, 17, x => { x.drawImage(SP.disc(5, ['#ffffff', '#d8a0ff', '#8a40d0', '#3a1060']), 3, 3); x.fillStyle = '#ffd84a'; x.fillRect(8, 0, 1, 4); x.fillRect(8, 13, 1, 4); x.fillRect(0, 8, 4, 1); x.fillRect(13, 8, 4, 1); x.fillStyle = '#10081c'; x.fillRect(7, 7, 3, 3); x.fillStyle = '#ff5a7a'; x.fillRect(8, 8, 1, 1); });
+  SP.seg = SP.disc(4, ['#ffffff', '#9aff9a', '#28a050', '#0c4020']);
+  SP.rock = comp(14, 12, x => { const w = [4, 8, 10, 12, 14, 14, 14, 14, 12, 10, 8, 4]; w.forEach((n, j) => { x.fillStyle = j < 4 ? '#8a7a6a' : '#6a5a4a'; x.fillRect(7 - n / 2, j, n, 1); }); x.fillStyle = '#3a2a1e'; x.fillRect(3, 5, 2, 2); x.fillRect(9, 3, 2, 2); x.fillRect(7, 8, 3, 2); x.fillStyle = '#b8a88a'; x.fillRect(4, 1, 4, 1); });
+  SP.rockS = comp(8, 8, x => { const w = [2, 6, 8, 8, 8, 8, 6, 2]; w.forEach((n, j) => { x.fillStyle = j < 3 ? '#8a7a6a' : '#6a5a4a'; x.fillRect(4 - n / 2, j, n, 1); }); x.fillStyle = '#3a2a1e'; x.fillRect(2, 4, 2, 2); });
+  SP.mine = comp(11, 11, x => { x.drawImage(SP.disc(3, ['#ffcccc', '#ff4040', '#701010']), 2, 2); x.fillStyle = '#ffd84a'; x.fillRect(5, 0, 1, 2); x.fillRect(5, 9, 1, 2); x.fillRect(0, 5, 2, 1); x.fillRect(9, 5, 2, 1); });
+  SP.sniper = SP.make([
+    "..oo.....",
+    ".orro....",
+    "orRRroooo",
+    "orrrrrrRo",
+    "orRRroooo",
+    ".orro....",
+    "..oo.....",
+  ], { o: '#2a0a18', r: '#d8a020', R: '#fff0a0' });
+  SP.splitter = comp(15, 15, x => { x.drawImage(SP.disc(6, ['#ffffff', '#d8ff7a', '#80c020', '#304a08']), 1, 1); x.fillStyle = '#10200a'; x.fillRect(7, 2, 1, 11); x.fillRect(2, 7, 11, 1); });
+})();
