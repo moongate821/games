@@ -9,6 +9,13 @@
     return S.scene === 'play' && !S.paused && !S.demo && !!p && p.phase !== 'pick' && p.phase !== 'over';
   };
   let dir = null;
+  const portraitPos = (right, down, top) => (s, W, H) => {
+    if (H <= W) return null;
+    const canvas = document.getElementById('c');
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return { x: W - right * s, y: top ? rect.top / 2 : rect.bottom + down * s };
+  };
   VPad.setup({
     active,
     dir4: {
@@ -20,9 +27,9 @@
       },
     },
     buttons: [
-      { id: 'act', label: 'S旗', sub: '爆発', color: 'yellow', r: 46, x: 70, y: 82, big: true },
-      { id: 'rot', label: '⟳', sub: '回転', color: 'cyan', r: 38, x: 172, y: 62 },
-      { id: 'rotL', label: '⟲', sub: '逆回転', color: 'cyan', r: 34, x: 128, y: 168 },
+      { id: 'act', label: 'S旗', sub: '爆発', color: 'yellow', r: 46, x: 70, y: 82, at: portraitPos(60, 0, true), big: true },
+      { id: 'rot', label: '⟳', sub: '回転', color: 'cyan', r: 38, x: 70, y: 175, at: portraitPos(155, 70, false) },
+      { id: 'rotL', label: '⟲', sub: '逆回転', color: 'cyan', r: 34, x: 70, y: 260, at: portraitPos(60, 70, false) },
     ],
     onPress(id) { const p = me(); if (p) { DG.Audio && DG.Audio.init && DG.Audio.init(); p.press(id); } },
     onRelease(id) { const p = me(); if (p) p.release(id); },

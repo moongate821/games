@@ -1,9 +1,9 @@
 // 作る.py が、落ち物2作・シューティングの sw.js をこれに置きかえる(版名・接頭辞・ファイル一覧は、元の sw.js から引き継ぐ)。
 // 以前の作りは「保存した版を先に使い、新しい版は古い画面がすべて閉じるまで使わない」ため、iPhone では更新が届かず古い版が出続けた。
 // 今の作り: まず最新を取りに行く(取れないとき=電波がないときだけ保存した版を使う)。新しい版はすぐに引き継ぐ。
-const CACHE = 'void-force-v1-20261006-gh620cc6ba';
+const CACHE = 'void-force-v1-20261006-gh6d59c280';
 const PREFIX = 'void-force-';
-const FILES = ["./", "./index.html", "./compat.js", "./sprites.js", "./audio.js", "./bosses.js", "./game.js", "./vpad.js", "./pad.js", "./manifest.webmanifest", "./assets/sprites.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png"];
+const FILES = ["./", "./index.html", "./compat.js", "./sprites.js", "./audio.js", "./bosses.js", "./game.js", "./vpad.js", "./pad.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png", "./assets/sprites.json", "./assets/boss_1.png", "./assets/boss_2.png", "./assets/boss_3.png", "./assets/boss_4.png", "./assets/boss_5.png", "./assets/boss_6.png", "./assets/boss_7.png", "./assets/boss_8.png", "./assets/boss_9.png", "./assets/boss_10.png", "./assets/boss_11.png", "./assets/boss_12.png", "./assets/boss_13.png", "./assets/boss_14.png", "./assets/boss_15.png", "./assets/boss_16.png", "./assets/boss_17.png", "./assets/boss_18.png", "./assets/boss_19.png", "./assets/boss_20.png"];
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => fetch(f, { cache: 'reload' }).then(r => r.ok && c.put(f, r)).catch(() => { })))));   // 1つ欠けても全体が失敗しないように、1つずつ

@@ -198,6 +198,30 @@ function drawCell(ctx, c, x, y, s, scale, t) {
   ctx.restore();
 }
 
+// 落下中の2台だけを「連結したネオンの駒」として見せる。
+// 輪郭の明るさを脈打たせ、着地済みの車や半透明の着地点と区別する。
+function drawPieceGlow(ctx, P, sx, sy, t) {
+  const p = P.piece; if (!p) return;
+  const pulse = .5 + .5 * Math.sin(t * 10), bright = .12 + .88 * pulse;
+  const a = [BX + (p.px + .5) * CELL, BY + (p.py + .5) * CELL];
+  const b = [BX + (sx + .5) * CELL, BY + (sy + .5) * CELL];
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = `rgba(210,245,255,${bright})`;
+  ctx.shadowColor = '#8de9ff'; ctx.shadowBlur = 3 + 18 * pulse;
+  ctx.lineWidth = 1.5 + 2.5 * pulse;
+  for (const [x, y] of [a, b]) {
+    ctx.save(); ctx.translate(x, y); oct(ctx, CELL / 2 - 1.5, CELL * .16); ctx.stroke(); ctx.restore();
+  }
+  const dx = (b[0] - a[0]) / CELL, dy = (b[1] - a[1]) / CELL;
+  ctx.beginPath();
+  ctx.moveTo(a[0] + dx * CELL * .42, a[1] + dy * CELL * .42);
+  ctx.lineTo(b[0] - dx * CELL * .42, b[1] - dy * CELL * .42);
+  ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+}
+
 // 迷路の背景(固定の乱数)
 const WALLS = {};
 function wallsFor(i, w, h) {
@@ -324,10 +348,15 @@ function drawMenu(ctx, t, o) {
   DG.text(ctx, 'RALLY DROP', 480, 140, 76, '#7fd4ff', 'center', { stroke: '#0a1c4a', sw: 14 });
   DG.text(ctx, 'SURVIVORS', 480, 204, 46, '#ff6a8a', 'center', { stroke: '#3a0a1a', sw: 10 });
   DG.text(ctx, '煙幕で固めて、玉突きで焼く。落ち物 × ラリーX', 480, 248, 20, '#fff', 'center', { stroke: '#000', sw: 5 });
-  const how = ['同じ色の車を5つ つなげて消す(ななめもつながる)(連鎖で大ダメージ)。赤い敵の車は、となりを消すと倒せる',
-    '煙幕の駒が落ちると、まわりの敵がスピン。そこから玉突きで連鎖!   Space で S旗の大爆発',
-    '敵を倒して旗を10本あつめると ボス「ギガ・レッド」。レベルアップでスキルを選ぼう'];
-  how.forEach((s, i) => DG.text(ctx, s, 480, 310 + i * 28, 16, '#dfeaff', 'center', { stroke: '#000', sw: 4, maxW: 900 }));
+  ctx.fillStyle = 'rgba(3, 12, 35, .82)'; DG.rr(ctx, 105, 267, 750, 125, 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(100, 205, 255, .65)'; ctx.lineWidth = 2; ctx.stroke();
+  const how = [
+    ['同じ色を5台つなげて消す　斜めもOK', '#b8eaff'],
+    ['消した車のとなりにいる赤い敵を攻撃', '#ffb0b8'],
+    ['煙幕でスピン → 玉突き！　S旗で全体攻撃', '#ead1ff'],
+    ['敵を倒して旗10本 → ボス　レベルアップで強化', '#ffe8a6'],
+  ];
+  how.forEach(([s, color], i) => DG.text(ctx, s, 480, 293 + i * 28, 18, color, 'center', { maxW: 715 }));
   const p = 1 + Math.sin(t * 4) * .03, b = o.STARTBTN;
   ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(p, p); ctx.translate(-b.w / 2, -b.h / 2);
   ctx.shadowColor = '#ffd34d'; ctx.shadowBlur = 24; ctx.fillStyle = '#ffd34d'; DG.rr(ctx, 0, 0, b.w, b.h, 30); ctx.fill(); ctx.shadowBlur = 0;
@@ -377,7 +406,7 @@ const R = DG.smokechain = {
     P.stat = { floor: 1, flags: 0, kills: 0, killsFloor: 0, xp: 0, lv: 1, pendingLv: 0, skills: { lance: 0, smoke: 0, drift: 0, guard: 0 }, fuel: 0, sflags: 1, sblasts: 0, crashes: 0, cleared: 0,
       waveNo: 0, waveT: TUNE.first, lanceT: 0, guardUsed: 0, bossAlive: false, bossQueued: false, bossT: 0, gen: 0, blast: false, chainTurn: 0, pick: null };
   },
-  makePiece, drawCell, drawPanel, drawPick, drawMenu, pickKey, tapPick, updatePick,
+  makePiece, drawCell, drawPieceGlow, drawPanel, drawPick, drawMenu, pickKey, tapPick, updatePick,
   drawBG: (ctx, t, w, h) => { const P = DG.engine && DG.engine.S.players[0], f = P && P.stat ? P.stat.floor : 1; bgNeon(ctx, t, w, h, themeOfFloor(f), (f - 1) % THEMES.length); },
   garbageCell(P) {
     const st = P && P.stat;

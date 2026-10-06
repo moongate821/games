@@ -25,13 +25,13 @@
   // ---------- 面の名前 ----------
   const STAGE_NAMES = ['GLASS CITADEL', 'NEON HARBOR', 'CRYSTAL CAVERN', 'IRON FOREST', 'SOLAR FLARE', 'DROWNED SKY', 'BONE NEBULA', 'MIRROR STATION', 'LAVA CORE', 'STORM BELT',
     'SILENT SEA', 'CLOCKWORK RING', 'VOID GARDEN', 'RED MERIDIAN', 'ICE LABYRINTH', 'STAR FORGE', 'GHOST FLEET', 'BLACK SUN', 'LAST GATE', 'VOID HEART'];
-  const BOSS_NAMES = ['MECH-ARACHNID', 'BIOMECH QUEEN', 'TENTACLE DREADNOUGHT', 'ARMORED SERPENT', 'GIGANTIC BIO-FORTRESS', 'STAR CRUISER X', 'DREADNOUGHT BEHEMOTH', 'PLASMA CARRIER', 'COMMAND STATION', 'DESTROYER X',
-    'KRAKEN MECH', 'LEVIATHAN SERPENT', 'SHARK MECH', 'JELLYFISH TITAN', 'CRAB BOSS', 'IRON ARACHNID', 'QUEEN REBORN', 'ECLIPSE OCTA', 'BIO-FORTRESS MK2', 'VOID HEART'];
+  const BOSS_NAMES = ['MECH-ARACHNID', 'BIOMECH QUEEN', 'TENTACLE DREADNOUGHT', 'ARMORED SERPENT', 'GIGANTIC BIO-FORTRESS', 'MEDUSA DESTROYER', 'ORBITAL RING BASE', 'CYBERNETIC SHARK', 'CRUSTACEAN MECH', 'BIO-CORE',
+    'GIGANTIC CEPHALOPOD', 'BIOMECHANICAL SERPENT', 'MEGA-TURRET FORTRESS', 'CHAOS-MIND ENTITY', 'ARTICULATED EXOSKELETON', 'CRYSTAL DRAGON', 'ORBITAL ION CANNON', 'CYBERNETIC KRAKEN', 'MASSIVE ARMORED BEHEMOTH', 'VOID ENTITY CORE'];
   const hueOf = n => (n * 37 + 200) % 360;
   // 20面の定義: 地形 M=要塞 O=生体洞窟 A=小惑星 / ボスの仮の形(bosses.js)。参考: 20面構成案.md
   const STAGE_DEF = [
-    ['M', 'octa'], ['O', 'insect'], ['A', 'squid'], ['M', 'serpent'], ['O', 'fortress'], ['M', 'cruiser'], ['A', 'cruiser'], ['M', 'carrier'], ['M', 'ring'], ['O', 'destroyer'],
-    ['O', 'squid'], ['O', 'serpent'], ['A', 'shark'], ['O', 'jelly'], ['A', 'crab'], ['M', 'spider'], ['O', 'insect'], ['A', 'octa'], ['M', 'fortress'], ['O', 'octa'],
+    ['M', 'octa'], ['O', 'insect'], ['A', 'squid'], ['M', 'serpent'], ['O', 'fortress'], ['M', 'cruiser'], ['A', 'ring'], ['M', 'shark'], ['M', 'crab'], ['O', 'carrier'],
+    ['O', 'squid'], ['O', 'serpent'], ['A', 'fortress'], ['O', 'jelly'], ['A', 'crab'], ['M', 'destroyer'], ['O', 'cruiser'], ['A', 'squid'], ['M', 'fortress'], ['O', 'octa'],
   ].map(a => ({ terr: a[0], arch: a[1] }));
   const BOSS_R = { octa: 34, spider: 30, insect: 28, squid: 28, serpent: 24, fortress: 36, cruiser: 30, carrier: 30, ring: 32, shark: 28, jelly: 28, crab: 28, destroyer: 28 };
 
@@ -316,6 +316,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     const n = S.n, plan0 = bossPlan(n), hp = (760 + 85 * (n - 1)) * (DF().h * .9 + .1) * (plan0.hatch ? .7 : 1);
     bossB = { x: W + 70, y: H / 2, hp, max: hp, phase: 0, t: 0, fl: 0, a: 0, r: 34, plan: plan0, dash: { s: 'idle', t: 0 }, timers: [], enter: true, brk: 0, name: BOSS_NAMES[n - 1], arch: STAGE_DEF[n - 1].arch };
     bossB.r = BOSS_R[bossB.arch] || 32;
+    const bcf = SP.cfg['boss_' + n]; if (bcf) bossB.r = clamp(Math.round(bcf.w * .28), 22, 36);   // 差し替えた絵の大きさに合わせる
     S.boss = true; S.warn = 3; S.gim = null;
     Snd.se('warn'); Snd.bgm(n + 100, true);
   }
@@ -357,7 +358,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     }
   }
   function hurtBoss(d) {
-    const b = bossB; if (!b || b.enter || b.brk > 0.7 || b.dead) return;
+    const b = bossB; if (!b || b.enter || b.brk > 0.7 || b.dead || S.warn > 0) return;   // WARNING中は無敵
     if (b.plan.hatch && b.t % 8 > 3.5) d *= .3;   // 装甲: コアが開いている間だけ本来のダメージ
     b.hp -= d; if (!(b.flcd > 0)) { b.fl = 2; b.flcd = .2; } R.score += 2;
     const ratio = b.hp / b.max, want = ratio <= .33 ? 2 : ratio <= .66 ? 1 : 0;

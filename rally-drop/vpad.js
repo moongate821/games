@@ -19,9 +19,27 @@
   const held = new Map();                                  // pointerId -> button id
   let curDir = null, wasActive = false, dirty = true, used = force;
 
-  function scale() { return Math.max(0.72, Math.min(1.15, Math.min(W, H) / 430)); }   // 小さい画面では少し縮める
-  function btnPos(b) { const s = scale(); if (b.at) { const p = b.at(s, W, H); return { x: p.x, y: p.y, r: b.r * s }; } return { x: W - b.x * s - safe('right'), y: H - b.y * s - safe('bottom'), r: b.r * s }; }   // at: ゲームの画面に合わせて置き場所を決める(画面座標)
-  function home() { const s = scale(); return { x: 30 + R_BASE * s + safe('left'), y: H - 30 - R_BASE * s - safe('bottom') }; }
+  function scale() {
+    const base = Math.max(0.72, Math.min(1.15, Math.min(W, H) / 430));
+    const game = document.getElementById('c');
+    if (H > W && game) {
+      const gap = H - game.getBoundingClientRect().bottom;
+      return Math.max(0.72, Math.min(base, (gap - 16) / (R_BASE * 2)));
+    }
+    return base;
+  }   // 縦向きは盤の下の余白にスティックが収まる大きさ
+  function btnPos(b) { const s = scale(); if (b.at) { const p = b.at(s, W, H); if (p) return { x: p.x, y: p.y, r: b.r * s }; } return { x: W - b.x * s - safe('right'), y: H - b.y * s - safe('bottom'), r: b.r * s }; }   // at: ゲームの画面に合わせて置き場所を決める(画面座標)
+  function home() {
+    const s = scale(), r = R_BASE * s;
+    let y = H - 30 - r - safe('bottom');
+    // 縦向きでは盤の下に余白がある。スティックの輪が最下段を隠さないようにする。
+    const game = document.getElementById('c');
+    if (H > W && game) {
+      const bottom = game.getBoundingClientRect().bottom;
+      if (H - bottom > r * 2) y = Math.min(H - r - 8 - safe('bottom'), Math.max(y, bottom + r + 8));
+    }
+    return { x: 30 + r + safe('left'), y };
+  }
   let probe = null;
   function safe(side) { if (!probe) return 0; const v = parseFloat(getComputedStyle(probe)['padding' + side[0].toUpperCase() + side.slice(1)]); return isNaN(v) ? 0 : v; }   // iPhone の切り欠き・ホームバーをよける
 

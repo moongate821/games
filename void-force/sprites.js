@@ -114,15 +114,25 @@
   };
   SP.loadManifest();
   // 名前で描く: 外から差し替えた絵があればそれ(横幅 cfg.w に拡大縮小)、なければ仮の形(placeholder は canvas)
+  SP.flashCache = {};
+  function flashed(key, src) {   // 当たったときの白い光は、絵の形のところだけに(四角くならないように)
+    let c = SP.flashCache[key]; if (c && c.src === src) return c.cv;
+    const cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height; const x = cv.getContext('2d');
+    x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(255,255,255,.4)'; x.fillRect(0, 0, cv.width, cv.height);
+    SP.flashCache[key] = { src, cv }; return cv;
+  }
   SP.draw = function (ctx, name, x, y, placeholder, flash) {
     const im = SP.ext[name], cfg = SP.cfg[name];
     if (im) {
       const w = (cfg && cfg.w) || im.width, h = Math.round(im.height * w / im.width);
       ctx.drawImage(im, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
-      if (flash) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(Math.round(x - w / 2), Math.round(y - h / 2), w, h); }
+      if (flash) ctx.drawImage(flashed(name, im), Math.round(x - w / 2), Math.round(y - h / 2), w, h);
       return true;
     }
-    if (placeholder) { ctx.drawImage(placeholder, Math.round(x - placeholder.width / 2), Math.round(y - placeholder.height / 2)); if (flash) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(Math.round(x - placeholder.width / 2), Math.round(y - placeholder.height / 2), placeholder.width, placeholder.height); } }
+    if (placeholder) {
+      ctx.drawImage(placeholder, Math.round(x - placeholder.width / 2), Math.round(y - placeholder.height / 2));
+      if (flash) ctx.drawImage(flashed(name + '_ph', placeholder), Math.round(x - placeholder.width / 2), Math.round(y - placeholder.height / 2));
+    }
     return false;
   };
 })();

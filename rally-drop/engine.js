@@ -244,6 +244,7 @@ class Player {
       R.drawPieceExtra && R.drawPieceExtra(ctx, this, gy, t);
       R.drawCell(ctx, p.b[0], BX + p.px * CELL, BY + p.py * CELL, CELL, 1, t, 0);
       R.drawCell(ctx, p.b[1], BX + sx * CELL, BY + sy * CELL, CELL, 1, t, 1);
+      R.drawPieceGlow && R.drawPieceGlow(ctx, this, sx, sy, t);
       if (p.ent) this.drawThread(ctx, p, sx, sy, t);
     }
     R.drawBoardExtra && R.drawBoardExtra(ctx, this, t);
