@@ -98,6 +98,16 @@ tr.me td{color:var(--c3);background:rgba(255,225,74,.12)}
 #muteBtn{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);opacity:.6;z-index:5;pointer-events:auto;border:1px solid #3a4580;background:rgba(5,2,33,.6);color:var(--dim);border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--c1);letter-spacing:8px;font-size:18px;z-index:20}
 #err{position:fixed;left:8px;bottom:8px;right:8px;color:#ff8a8a;font-size:12px;z-index:30;white-space:pre-wrap}
+.cgrid{pointer-events:auto;width:min(96vw,980px);max-height:46vh;overflow-y:auto;touch-action:pan-y;text-align:left;padding:2px 6px}
+.cgrid *{touch-action:pan-y}
+.cuplabel{color:var(--c3);letter-spacing:4px;font-size:12px;margin:8px 0 4px}
+.crow{display:flex;gap:8px;flex-wrap:wrap}
+.ccard{cursor:pointer;width:calc(20% - 7px);min-width:92px;padding:5px;border:2px solid #2a2f6a;border-radius:8px;background:rgba(10,8,44,.78)}
+.ccard.sel{border-color:var(--c3);box-shadow:0 0 16px rgba(255,225,74,.55)}
+.ccard canvas{width:100%;aspect-ratio:1;display:block;background:#07052a;border-radius:5px}
+.cn{font-size:11px;letter-spacing:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cn b{color:var(--c1)}
+.cb{font-size:10px;color:var(--dim)}
+@media (max-width:600px){.ccard{width:calc(33.3% - 6px)}}
 @media (max-height:520px){.logo{font-size:44px}.sub{margin:4px 0 12px}.card canvas{display:none}.card{width:clamp(110px,22vw,170px)}}
 </style>
 </head>

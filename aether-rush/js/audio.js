@@ -3,10 +3,13 @@ import { rng } from './geo.js';
 
 let ctx = null, master = null, sfxBus = null, bgmBus = null, engine = null, noiseBuf = null;
 let muted = false, bgmTimer = null, bgm = null;
+let silent = false; // 録画用: 先読み(早送り)の間は効果音を出さない
 
 export const Snd = {
   get ready() { return !!ctx; },
   get muted() { return muted; },
+  set silent(v) { silent = v; },
+  get bgmOn() { return !!bgmTimer; },
   init() {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     // iPhone: 消音スイッチが入っていても鳴るよう、音声セッションを再生扱いにする
@@ -63,14 +66,14 @@ export const Snd = {
 
   // ---- 効果音 ----
   tone(freq, dur, type = 'square', vol = 0.2, slide = 0, delay = 0) {
-    if (!ctx) return;
+    if (!ctx || silent) return;
     const t = ctx.currentTime + delay, o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t + dur);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t + dur + 0.02);
   },
   noise(dur, vol = 0.3, freq = 1200, q = 0.8, type = 'bandpass', slide = 0, bus = null) {
-    if (!ctx) return;
+    if (!ctx || silent) return;
     const t = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     s.buffer = noiseBuf; f.type = type; f.frequency.setValueAtTime(freq, t); if (slide) f.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur); f.Q.value = q;
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);

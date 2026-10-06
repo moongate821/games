@@ -1,6 +1,6 @@
 // AETHER RUSH — 全体の進行(メニュー・レース・カメラ・HUD・入力)
 import * as THREE from '../lib/three.module.js';
-import { COURSES, buildTrack, buildTrackMeshes, minimapPath } from './course.js';
+import { COURSES, CUPS, buildTrack, buildTrackMeshes, minimapPath } from './course.js';
 import { MACHINES, RIVALS, makeShipModel, makeShadow } from './machines.js';
 import { makeShip, placeShip, stepShip, updateProgress, aiInput, collideShips, CFG } from './sim.js';
 import { buildScenery, SpeedLines, Particles } from './scenery.js';
@@ -124,23 +124,32 @@ function showMachineSelect() {
 
 function showCourseSelect() {
   mode = 'course'; useMenuScene(selMachine);
-  const cards = COURSES.map((c, i) => {
-    const best = store.get('best.' + c.id, 0);
-    return `<div class="card ${i === selCourse ? 'sel' : ''}" data-i="${i}"><canvas width="180" height="180" data-c="${i}"></canvas><h3>${c.name}</h3><div class="jp">${c.jp}</div>
-    <div class="stat"><span>LAPS</span>${c.laps}</div><div class="stat"><span>BEST</span>${fmt(best)}</div></div>`;
+  const rows = CUPS.map((cup, ci) => {
+    const cards = COURSES.slice(ci * 5, ci * 5 + 5).map((c, k) => {
+      const i = ci * 5 + k, best = store.get('best.' + c.id, 0);
+      return `<div class="ccard ${i === selCourse ? 'sel' : ''}" data-i="${i}"><canvas width="120" height="120" data-c="${i}"></canvas>
+      <div class="cn"><b>${String(i + 1).padStart(2, '0')}</b> ${c.name}</div><div class="cb">${best ? 'BEST ' + fmt(best) : '&nbsp;'}</div></div>`;
+    }).join('');
+    return `<div class="cuplabel">${cup}</div><div class="crow">${cards}</div>`;
   }).join('');
-  screen(`<h2>SELECT COURSE</h2><div class="desc" id="desc">${COURSES[selCourse].desc}</div><div class="row">${cards}</div>
+  const c0 = COURSES[selCourse];
+  screen(`<h2>SELECT COURSE</h2><div class="cgrid" id="cgrid">${rows}</div>
+    <div class="desc" id="desc"><b>${String(selCourse + 1).padStart(2, '0')} ${c0.name}</b> ― ${c0.jp}<br>${c0.desc}</div>
     <div class="btns"><div class="btn sec" id="back">BACK</div><div class="btn" id="ok">START ▶</div></div>`, 'side');
-  ui.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => { Snd.init(); const i = +c.dataset.i; if (i === selCourse) { Snd.decide(); startRace(selCourse, selMachine); } else { selCourse = i; Snd.select(); showCourseSelect(); } }));
-  $('ok').addEventListener('click', () => { Snd.init(); Snd.decide(); startRace(selCourse, selMachine); });
+  ui.querySelectorAll('.ccard').forEach((c) => c.addEventListener('click', () => { Snd.init(); const i = +c.dataset.i; if (i === selCourse) { Snd.decide(); store.set('course', selCourse); startRace(selCourse, selMachine); } else { selCourse = i; Snd.select(); showCourseSelect(); } }));
+  $('ok').addEventListener('click', () => { Snd.init(); Snd.decide(); store.set('course', selCourse); startRace(selCourse, selMachine); });
   $('back').addEventListener('click', () => { Snd.cancel(); showMachineSelect(); });
-  // コースの輪郭を描く(小さな地図)
   ui.querySelectorAll('canvas[data-c]').forEach((cv) => {
-    const tr = trackCache(+cv.dataset.c), g = cv.getContext('2d'), mp = minimapPath(tr, 180);
-    g.clearRect(0, 0, 180, 180); g.lineWidth = 4; g.lineJoin = 'round'; g.strokeStyle = '#' + COURSES[+cv.dataset.c].pal.neon.toString(16).padStart(6, '0'); g.shadowColor = g.strokeStyle; g.shadowBlur = 8;
-    g.beginPath(); mp.pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.stroke();
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(mp.pts[0][0], mp.pts[0][1], 4, 0, 7); g.fill();
+    const i = +cv.dataset.c, tr = trackCache(i), g = cv.getContext('2d'), mp = minimapPath(tr, 120);
+    g.clearRect(0, 0, 120, 120); g.lineWidth = 3; g.lineJoin = 'round'; g.strokeStyle = '#' + COURSES[i].pal.neon.toString(16).padStart(6, '0'); g.shadowColor = g.strokeStyle; g.shadowBlur = 6;
+    g.beginPath(); mp.pts.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.stroke();
+    g.shadowBlur = 0;
+    // 滑る区間は紫の点、ジャンプは赤い点
+    const dot = (idx, col) => { const [x, y] = mp.map(tr.P[idx * 3], tr.P[idx * 3 + 2]); g.fillStyle = col; g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); };
+    tr.pads.forEach((pd) => { if (pd.type === 'slip') dot((pd.i0 + (pd.len >> 1)) % tr.N, '#c07aff'); else if (pd.type === 'jump') dot((pd.i0 + 14) % tr.N, '#ff4a6a'); });
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(mp.pts[0][0], mp.pts[0][1], 3.5, 0, 7); g.fill();
   });
+  const sel = ui.querySelector('.ccard.sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
 }
 const _tc = {};
 function trackCache(i) { return _tc[i] || (_tc[i] = buildTrack(COURSES[i])); }
@@ -157,6 +166,8 @@ function onKey(code) {
   if (mode === 'course') {
     if (code === 'ArrowLeft' || code === 'KeyA') { selCourse = (selCourse + COURSES.length - 1) % COURSES.length; Snd.select(); showCourseSelect(); }
     else if (code === 'ArrowRight' || code === 'KeyD') { selCourse = (selCourse + 1) % COURSES.length; Snd.select(); showCourseSelect(); }
+    else if (code === 'ArrowUp' || code === 'KeyW') { selCourse = (selCourse + COURSES.length - 5) % COURSES.length; Snd.select(); showCourseSelect(); }
+    else if (code === 'ArrowDown' || code === 'KeyS') { selCourse = (selCourse + 5) % COURSES.length; Snd.select(); showCourseSelect(); }
     else if (code === 'Enter' || code === 'Space') { Snd.decide(); store.set('course', selCourse); startRace(selCourse, selMachine); }
     else if (code === 'Escape') { Snd.cancel(); showMachineSelect(); }
     return;
@@ -235,7 +246,7 @@ function startRace(ci, mi) {
   initCamera();
   buildHud();
   mode = 'race'; $('hud').classList.remove('hidden'); if (isTouch) $('touch').classList.remove('hidden'); else $('touch').classList.add('hidden');
-  Snd.init(); Snd.engineStart(); Snd.bgmStart(def.style, def.seed);
+  Snd.init(); Snd.engineStart(); if (!(window.__keepBgm && Snd.bgmOn)) Snd.bgmStart(def.style, def.seed);
   say('', 0);
 }
 
@@ -318,9 +329,10 @@ function showResults() {
   const msg = me.down ? 'MACHINE DOWN' : place === 1 ? '1ST PLACE!' : `${place}${['TH', 'ST', 'ND', 'RD'][place] && place < 4 ? ['', 'ST', 'ND', 'RD'][place] : 'TH'} PLACE`;
   screen(`<div class="big">${msg}</div><table><tr><th>#</th><th>PILOT</th><th>MACHINE</th><th>TIME</th><th>BEST LAP</th></tr>${rows}</table>
     <div class="desc">${newBest ? 'コースレコード更新! ' : ''}ベストラップ ${fmt(me.bestLap)}</div>
-    <div class="btns"><div class="btn" id="r1">RETRY (Enter)</div><div class="btn sec" id="r2">COURSE SELECT (Esc)</div></div>`, 'dark');
+    <div class="btns"><div class="btn" id="r1">RETRY (Enter)</div><div class="btn sec" id="r3">NEXT COURSE</div><div class="btn sec" id="r2">COURSE SELECT (Esc)</div></div>`, 'dark');
   $('r1').addEventListener('click', () => startRace(race.ci, race.mi));
   $('r2').addEventListener('click', () => showCourseSelect());
+  $('r3').addEventListener('click', () => { selCourse = (race.ci + 1) % COURSES.length; store.set('course', selCourse); startRace(selCourse, race.mi); });
   Snd.bgmStop();
 }
 
@@ -478,7 +490,7 @@ function frame(now) {
 
 // ---------- 起動 ----------
 $('loading').classList.add('hidden');
-window.__g = { get menu() { return { scene: menuScene, cam: menuCam, ship: menuShip, useMenuScene }; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) raceUpdate(1 / fps); renderer.render(race.scene, camera); }, get race() { return race; }, get mode() { return mode; }, startRace, showTitle, store, COURSES, MACHINES, trackCache, camera, renderer, keys, touch, pause };
+window.__g = { Snd, showMachineSelect, showCourseSelect, selectMachine(i) { selMachine = i; useMenuScene(i); }, selectCourse(i) { selCourse = i; }, get menu() { return { scene: menuScene, cam: menuCam, ship: menuShip, useMenuScene }; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) raceUpdate(1 / fps); renderer.render(race.scene, camera); }, get race() { return race; }, get mode() { return mode; }, startRace, showTitle, store, COURSES, MACHINES, trackCache, camera, renderer, keys, touch, pause };
 const qc = q.get('c'), qm = q.get('m');
 if (qc != null) { selCourse = +qc; selMachine = +(qm || 0); startRace(selCourse, selMachine); requestAnimationFrame(frame); }
 else { showTitle(); requestAnimationFrame(frame); }
