@@ -35,16 +35,16 @@
   ].map(a => ({ terr: a[0], arch: a[1] }));
   // 敵の種類 → 画像素材の名前(複数ならその面・その場面で選ぶ)。assets/sprites.json に無ければ仮の絵
   const ART = {   // 敵の種類 → {テーマ: 画像素材の名前の候補}
-    drone: { M: ['en_m01', 'en_m02', 'en_m03', 'en_m04', 'en_g1_08', 'en_g1_09'], O: ['en_o01', 'en_o02', 'en_o03', 'en_o04', 'en_o05', 'en_o06'], A: ['en_c01', 'en_c02', 'en_c03', 'en_c04', 'en_c05'] },
-    swoop: { M: ['en_g1_01', 'en_g1_02', 'en_g1_03', 'en_m05', 'en_m06'], O: ['en_o07', 'en_o08', 'en_o09', 'en_o10', 'en_g1_02'], A: ['en_c06', 'en_c07', 'en_c08', 'en_g1_03'] },
+    drone: { M: ['en_m01', 'en_m02', 'en_m03', 'en_m04', 'en_g1_08', 'en_g1_09', 'en_g1_10', 'en_m08'], O: ['en_o01', 'en_o02', 'en_o03', 'en_o04', 'en_o05', 'en_o06'], A: ['en_c01', 'en_c02', 'en_c03', 'en_c04', 'en_c05'] },
+    swoop: { M: ['en_g1_01', 'en_g1_02', 'en_g1_03', 'en_m05', 'en_m06', 'en_g1_05', 'part_wings_l', 'part_wings_r'], O: ['en_o07', 'en_o08', 'en_o09', 'en_o10', 'en_g1_02'], A: ['en_c06', 'en_c07', 'en_c08', 'en_g1_03'] },
     turret: { M: ['tm_turret1', 'tm_turret2'], O: ['tm_turret2', 'tm_turret1'], A: ['tm_turret1', 'tm_turret2'] },
     ringer: { M: ['part_turret', 'part_cannon', 'en_g1_04', 'core_c'], O: ['part_cannon', 'core_chaos', 'en_g1_12', 'part_turret'], A: ['core_crystal', 'part_cannon', 'core_chaos'] },
-    carrier: { M: ['mid_shark', 'cruiser_a', 'cruiser_b', 'part_armor', 'mid_gunshark', 'mid_sub', 'mid_gunboat'], O: ['mid_fish', 'mid_dragon', 'mid_swarm1', 'mid_mind', 'cruiser_b'], A: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_swarm2', 'mid_gunshark'], R: ['mid_station', 'mid_sub', 'mid_gunboat'], C: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_station'] },
-    spinner: { M: ['core_c', 'core_b', 'core_g', 'en_g1_06'], O: ['core_b', 'core_chaos', 'core_g', 'part_core_b'], A: ['core_crystal', 'core_chaos', 'core_c'] },
-    seg: { M: ['en_m07', 'en_m09', 'en_g1_15', 'en_m10'], O: ['to_heart', 'to_blob1', 'en_o07', 'en_o10'], A: ['en_c09', 'en_c10', 'en_c11', 'en_c12'] },
+    carrier: { M: ['mid_shark', 'cruiser_a', 'cruiser_b', 'part_armor', 'mid_gunshark', 'mid_sub', 'mid_gunboat'], O: ['mid_fish', 'mid_dragon', 'mid_swarm1', 'mid_swarm3', 'mid_mind', 'cruiser_b'], A: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_swarm2', 'mid_gunshark'], R: ['mid_station', 'mid_sub', 'mid_gunboat'], C: ['mid_crys1', 'mid_crys2', 'mid_crys3', 'mid_station'] },
+    spinner: { M: ['core_c', 'core_b', 'core_g', 'en_g1_06', 'form_1', 'form_2'], O: ['core_b', 'core_chaos', 'core_g', 'part_core_b'], A: ['core_crystal', 'core_chaos', 'core_c'] },
+    seg: { M: ['en_m07', 'en_m09', 'en_g1_15', 'en_m10', 'en_g1_18', 'part_body1', 'part_body2', 'part_body3'], O: ['to_heart', 'to_blob1', 'en_o07', 'en_o10'], A: ['en_c09', 'en_c10', 'en_c11', 'en_c12'] },
     mine: { M: ['en_g1_16', 'en_g1_19', 'en_g1_20', 'en_g1_17'], O: ['to_blob1', 'to_heart', 'to_rock1'], A: ['to_rock2', 'ta_cry3', 'en_g1_19'] },
     sniper: { M: ['part_gun', 'en_g1_07', 'en_g1_14'], O: ['part_gun', 'en_g1_14', 'en_g1_07'], A: ['part_gun', 'en_g1_07', 'en_g1_14'] },
-    splitter: { M: ['part_module', 'en_g1_11', 'en_g1_13', 'part_organ2'], O: ['to_brain', 'to_mass', 'part_organ1', 'part_organ2'], A: ['part_armor', 'en_g1_13', 'part_chaos'] },
+    splitter: { M: ['part_module', 'en_g1_11', 'en_g1_13', 'part_organ2', 'part_arms'], O: ['to_brain', 'to_mass', 'part_organ1', 'part_organ2'], A: ['part_armor', 'en_g1_13', 'part_chaos'] },
   };
   const ROCKS = ['rock_a', 'rock_b', 'rock_c', 'rock_d', 'rock_e', 'rock_f'];
   const pickArt = (type, o) => {
@@ -759,10 +759,10 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   // ---- 地形(タイルの絵) ----
   const TT = {
-    M: { fill: 'tm_fill', lip: 'tm_lip', deco: ['tm_panel1', 'tm_panel2', 'tm_hatch', 'tm_door1', 'tm_door2', 'tm_term1', 'tm_pipe', 'tm_grate'] },
-    O: { fill: 'to_fill', spike: ['to_spike_up', 'to_spike_dn'], deco: ['to_brain', 'to_blob1', 'to_heart', 'to_rock1', 'to_rock2', 'to_mass'] },
+    M: { fill: 'tm_fill', lip: 'tm_lip', deco: ['tm_panel1', 'tm_panel2', 'tm_hatch', 'tm_door1', 'tm_door2', 'tm_term1', 'tm_term2', 'tm_term3', 'tm_pipe', 'tm_grate'] },
+    O: { fill: 'to_fill', fills: ['to_fill', 'to_cap', 'to_vein', 'to_vein2', 'to_teeth', 'to_flat1', 'to_flat2'], spike: ['to_spike_up', 'to_spike_dn'], deco: ['to_brain', 'to_blob1', 'to_heart', 'to_rock1', 'to_rock2', 'to_mass'] },
     A: { fill: 'ta_wall1', fill2: 'ta_wall2', boulder: ['ta_big1', 'ta_big2', 'rock_c', 'rock_f', 'rock_d', 'ice_a', 'ice_b', 'ice_d'], deco: ['ta_cry1', 'ta_cry2', 'ta_cry3', 'ice_c', 'ice_e'] },
-    R: { fill: 'tr_fill', fill2: 'tr_fill2', deco: ['tr_pil1', 'tr_pil2', 'tr_pil3', 'tr_pil4', 'tr_slab', 'tr_wall', 'tr_moss', 'tr_face', 'tr_stairs'] },
+    R: { fill: 'tr_fill', fill2: 'tr_fill2', fill3: 'tr_fill3', deco: ['tr_pil1', 'tr_pil2', 'tr_pil3', 'tr_pil4', 'tr_slab', 'tr_wall', 'tr_moss', 'tr_face', 'tr_stairs'] },
     C: { fill: 'tc_fill', every: 8, spike: ['tc_ice', 'tc_ice'], deco: ['tc_cry1', 'tc_cry2', 'tc_cry3', 'tc_cry4', 'tc_big', 'tc_pillar', 'tc_mirror'] },
   };
   const thash = i => { let h = (i * 2654435761) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; return (h ^ (h >>> 13)) >>> 0; };
@@ -773,9 +773,9 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   function drawTerrain() {
     if (!S) return; const type = STAGE_DEF[S.n - 1].terr, T = TT[type]; const f1 = SP.ext[T && T.fill];
     if (!T || !f1) return drawTerrainOld();
-    const f2 = T.fill2 && SP.ext[T.fill2], i0 = Math.floor(S.scroll / 8) - 1;
+    const f2 = T.fill2 && SP.ext[T.fill2], f3 = T.fill3 && SP.ext[T.fill3], i0 = Math.floor(S.scroll / 8) - 1;
     for (let i = i0; i < i0 + 62; i++) {
-      if (i < 0 || i >= S.ter.top.length) continue; const sx = Math.round(i * 8 - S.scroll), th = Math.round(colH(i, true)), bh = Math.round(colH(i, false)), fx0 = (f2 && (i % 6) >= 3) ? f2 : f1;
+      if (i < 0 || i >= S.ter.top.length) continue; let fx0; const sx = Math.round(i * 8 - S.scroll), th = Math.round(colH(i, true)), bh = Math.round(colH(i, false)); fx0 = (f2 && (i % 6) >= 3) ? f2 : f1; if (f3 && i % 18 >= 12) fx0 = f3; if (T.fills) { const nm = T.fills[(Math.floor(i / 10) + S.n) % T.fills.length], im2 = SP.ext[nm]; if (im2 && (Math.floor(i / 10) % 3)) fx0 = im2; }
       stripFill(fx0, i, sx, 0, th); stripFill(fx0, i, sx, H - bh, bh);
       if (T.lip) { const lp = SP.ext[T.lip]; if (lp) { const lh = lp.height; ctx.save(); ctx.translate(sx, th); ctx.scale(1, -1); ctx.drawImage(lp, (i * 8) % lp.width, 0, 8, lh, 0, 0, 8, lh); ctx.restore(); ctx.drawImage(lp, (i * 8) % lp.width, 0, 8, lh, sx, H - bh, 8, lh); } }
       const hs = thash(i + S.n * 1000);
@@ -843,13 +843,13 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       if (P && P.dead <= 0) {
         // ビット・フォース・自機
         for (let i = 0; i < (P.bitN || 0); i++) { const q = bitPos(i, P.bitN), nm = ['bit_a', 'bit_b', 'bit_g'][i % 3]; if (!(Rig.has(nm) && Rig.draw(ctx, nm, q.x, q.y, P.anim + i, {}))) SP.draw(ctx, 'bit', q.x, q.y, SP.bit); }
-        const F = P.F, rr0 = forceR(), sc = rr0 / 6.6, fl = lvOf('force'), rear = F.mode === 'rear', nm = fl >= 4 ? 'force_cannon' : fl >= 2 ? 'force_impact' : 'force_orb';
+        const F = P.F, rr0 = forceR(), sc = rr0 / 6.6, fl = lvOf('force'), rear = F.mode === 'rear', nm = fl >= 4 ? 'force_cannon' : fl >= 3 ? 'force_spread' : fl >= 2 ? 'force_impact' : 'force_orb';
         if (SP.ext[nm]) {
-          if (nm === 'force_cannon') { SP.drawScaled(ctx, 'force_orb', F.x, F.y, Math.round(14 * sc), { rot: P.anim * 4 }); SP.drawScaled(ctx, nm, F.x + (rear ? -10 : 10), F.y, Math.round(24 * sc), { flipX: rear }); }
+          if (nm === 'force_cannon' || nm === 'force_spread') { SP.drawScaled(ctx, 'force_orb', F.x, F.y, Math.round(14 * sc), { rot: P.anim * 4 }); SP.drawScaled(ctx, nm, F.x + (rear ? -10 : 10), F.y, Math.round((nm === 'force_cannon' ? 24 : 36) * sc), { flipX: rear }); }
           else SP.drawScaled(ctx, nm, F.x, F.y, Math.round((nm === 'force_orb' ? 14 : 18) * sc), { rot: P.anim * (nm === 'force_orb' ? 4 : -3) });
         } else { const fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const sz = Math.round(fr.width * sc); ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz); }
         if (bf('ghost')) ctx.globalAlpha = .55;
-        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { if (!(Rig.has('player') && Rig.draw(ctx, 'player', P.x, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
+        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { const pnm = (S.fire > .11 * .6 && SP.ext.player_fire) ? 'player_fire' : 'player'; if (!(Rig.has(pnm) && Rig.draw(ctx, pnm, P.x, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
         ctx.globalAlpha = 1;
         if (S.fire > .11 * .5 && SP.ext.player_flash) SP.drawScaled(ctx, 'player_flash', P.x + 20, P.y, 18, { alpha: .9 });
         if (P.charge > .08 && SP.ext.fx_swirl1) SP.drawScaled(ctx, 'fx_swirl1', P.x + 20, P.y, Math.round(10 + P.charge * 26), { rot: time * 10, alpha: .55 + .4 * P.charge });
