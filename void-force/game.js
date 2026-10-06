@@ -50,6 +50,24 @@
     speed: { n: '機動力', ic: '➤', c: '#ff9a70', d: L => '移動が速く、低速時の当たりが小さい(Lv' + L + ')' },
   };
   const SK_KEYS = Object.keys(SK);
+  // ---------- ルート(ドロップ品): 一時的な強化。ノーマル8秒・レア10秒・エピック12秒・レジェンド15秒 ----------
+  const FX = {
+    rate: { n: '連射', ic: '≫', c: '#6fd0ff', m: [1.4, 1.6, 1.8, 2.1] },
+    dmg: { n: '威力', ic: '✹', c: '#ff9a70', m: [1.3, 1.5, 1.7, 2] },
+    pierce: { n: '貫通', ic: '■', c: '#8aff9a' },
+    spread: { n: '拡散', ic: '▲', c: '#ff7ab0' },
+    homing: { n: '誘導', ic: '●', c: '#ffb050' },
+    magnet: { n: '吸引', ic: '✚', c: '#80f0ff' },
+    xp: { n: '経験値x2', ic: '★', c: '#ffe070' },
+    charge: { n: '急速チャージ', ic: '≋', c: '#ffe070' },
+    forceBig: { n: '巨大フォース', ic: '◈', c: '#ffd84a' },
+    slow: { n: '弾スロー', ic: '◷', c: '#c8a0ff' },
+    bits: { n: 'ビット+2', ic: '✦', c: '#7dffb0' },
+    ghost: { n: 'ゴースト', ic: '☆', c: '#ffffff', minRar: 2 },
+  };
+  const FX_KEYS = Object.keys(FX);
+  const RAR = [{ n: 'NORMAL', c: '#e8e8e8', t: 8, k: 1, w: .58 }, { n: 'RARE', c: '#5ab4ff', t: 10, k: 1, w: .28 }, { n: 'EPIC', c: '#c070ff', t: 12, k: 2, w: .11 }, { n: 'LEGEND', c: '#ffc040', t: 15, k: 3, w: .03 }];
+  const DR = [];
   const lvOf = k => (R && R.skills[k]) || 0;
 
   // ---------- 状態 ----------
@@ -163,6 +181,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     boom(e.x, e.y, e.type === 'carrier' ? 40 : 10, e.type === 'carrier' ? 2 : 1);
     for (let i = 0, n = Math.ceil(e.xp); i < n; i++) GM.push({ x: e.x + (rr() - .5) * 8, y: e.y + (rr() - .5) * 8, vx: -20 + rr() * 30, vy: (rr() - .5) * 40, v: 1 });
     Snd.se(e.type === 'carrier' ? 'big' : 'kill'); if (e.type === 'carrier') shake = 12;
+    const ch = { drone: .05, swoop: .05, turret: .14, ringer: .32, carrier: 2 }[e.type] || 0, boost = e.type === 'carrier' ? .12 : e.type === 'ringer' ? .05 : 0;
+    for (let i = 0; i < Math.floor(ch) + (rr() < ch % 1 ? 1 : 0); i++) rollLoot(e.x + i * 8, e.y + (i % 2 ? 8 : -8), boost);
   }
   function hurt(e, d) { e.hp -= d; e.fl = 3; if (e.hp <= 0 && !e.dead) killEnemy(e); }
 
@@ -200,6 +220,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     // 区切り: 画面の弾を経験値の宝石に変える(ごほうび)
     for (const e of EB) { if (GM.length < 300 && rr() < .35) GM.push({ x: e.x, y: e.y, vx: -10, vy: 0, v: 1 }); }
     EB.length = 0;
+    if (b.phase > 0) { rollLoot(b.x - 30, b.y - 20, .1); rollLoot(b.x - 30, b.y + 20, .1); }
   }
   function updBoss(b, dt) {
     b.t += dt; if (b.fl > 0) b.fl--; if (b.flcd > 0) b.flcd -= dt;
@@ -229,8 +250,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
 
   // ---------- 面の開始・終了 ----------
   function startStage(n, retry) {
-    R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
-    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
+    DR.length = 0; R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
+    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
     P = { x: 56, y: H / 2, inv: 1.5, dead: 0, charge: 0, F: { mode: 'front', x: 72, y: H / 2, vx: 0, vy: 0, cd: 0 }, bitCd: 0, anim: 0 };
     banner = { t: 2.6, a: 'STAGE ' + n, b: STAGE_NAMES[n - 1] };
     state = 'play'; Snd.bgm(n, false);
@@ -336,14 +357,14 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   const moveSpeed = slow => (slow ? 46 : 98) * (1 + .07 * lvOf('speed'));
   const hitR = slow => slow ? 1.1 : (lvOf('speed') >= 3 ? 1.3 : 1.6);
   function pdmg() { return [1, 1, 1.3, 1.3, 1.7][lvOf('shot') - 1] || 1; }
-  function pshot(x, y, vx, vy, dmg, o) { if (PB.length > 400) return; PB.push(Object.assign({ x, y, vx, vy, dmg, pierce: lvOf('pierce') >= 5 ? 99 : lvOf('pierce'), life: 1.2, w: 5, h: 2 }, o || {})); }
+  function pshot(x, y, vx, vy, dmg, o) { if (PB.length > 500) return; PB.push(Object.assign({ x, y, vx, vy, dmg: dmg * bm('dmg'), pierce: lvOf('pierce') >= 5 || bf('pierce') ? 99 : lvOf('pierce'), life: 1.2, w: 5, h: 2 }, o || {})); }
   function nearestEnemy(x, y, maxd) {
     let b = null, bd = maxd * maxd; for (const e of EN) { const d = (e.x - x) * (e.x - x) + (e.y - y) * (e.y - y); if (d < bd && e.x > -5 && e.x < W + 5) { bd = d; b = e; } }
     if (bossB && !bossB.dead && !bossB.enter) { const d = (bossB.x - x) * (bossB.x - x) + (bossB.y - y) * (bossB.y - y); if (d < bd) b = bossB; }
     return b;
   }
-  const forceR = () => 6 + .6 * lvOf('force');
-  const chargeTime = () => [1.5, 1.25, 1.0, .8, .6, .45][lvOf('wave')] || 1.5;
+  const forceR = () => (6 + .6 * lvOf('force')) * (bf('forceBig') ? 1.5 : 1);
+  const chargeTime = () => ([1.5, 1.25, 1.0, .8, .6, .45][lvOf('wave')] || 1.5) / (bf('charge') ? 3 : 1);
   function updPlayer(dt) {
     const F = P.F;
     if (P.dead > 0) { P.dead -= dt; if (P.dead <= 0) { if (R.lives < 0) { gameOver(); return; } P.dead = 0; P.x = 56; P.y = H / 2; P.inv = 2.5; F.mode = 'front'; F.x = P.x + 16; F.y = P.y; } return; }
@@ -355,14 +376,14 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     P.y = clamp(P.y, tH + 5, H - bH - 5);
     // 自動連射
     S.fire -= dt; if (S.fire <= 0) {
-      S.fire = .11; const L = lvOf('shot'), n = [1, 2, 2, 3, 3][L - 1], d = pdmg();
+      S.fire = .11 / bm('rate'); const L = lvOf('shot'), n = [1, 2, 2, 3, 3][L - 1], d = pdmg();
       for (let i = 0; i < n; i++) pshot(P.x + 12, P.y + (i - (n - 1) / 2) * 4, 330, 0, d);
-      const sp2 = lvOf('spread'); if (sp2 > 0) { const m = [2, 2, 4, 4, 6][sp2 - 1]; for (let i = 0; i < m; i++) { const a = (i - (m - 1) / 2) * .16 + (i < m / 2 ? -.06 : .06); pshot(P.x + 8, P.y, Math.cos(a) * 300, Math.sin(a) * 300, .55, { w: 3, h: 2 }); } }
+      const sp2 = bf('spread') ? Math.min(5, lvOf('spread') + 3) : lvOf('spread'); if (sp2 > 0) { const m = [2, 2, 4, 4, 6][sp2 - 1]; for (let i = 0; i < m; i++) { const a = (i - (m - 1) / 2) * .16 + (i < m / 2 ? -.06 : .06); pshot(P.x + 8, P.y, Math.cos(a) * 300, Math.sin(a) * 300, .55, { w: 3, h: 2 }); } }
       Snd.se('shot');
     }
-    const hl = lvOf('homing'); S.mfire -= dt; if (hl > 0 && S.mfire <= 0) { S.mfire = .7; for (let i = 0; i < hl; i++) pshot(P.x, P.y + (i % 2 ? 6 : -6), 40, (i % 2 ? 90 : -90), 2, { missile: true, w: 4, h: 3, life: 2.2, pierce: 0 }); }
+    const hl = lvOf('homing') + (bf('homing') ? 2 : 0); S.mfire -= dt; if (hl > 0 && S.mfire <= 0) { S.mfire = bf('homing') ? .4 : .7; for (let i = 0; i < hl; i++) pshot(P.x, P.y + (i % 2 ? 6 : -6), 40, (i % 2 ? 90 : -90), 2, { missile: true, w: 4, h: 3, life: 2.2, pierce: 0 }); }
     // ビット
-    const nb = [0, 1, 2, 2, 3, 4][lvOf('bit')] || 0; P.bitN = nb; P.bitCd -= dt;
+    const nb = ([0, 1, 2, 2, 3, 4][lvOf('bit')] || 0) + (bf('bits') ? 2 : 0); P.bitN = nb; P.bitCd -= dt;
     if (nb > 0 && P.bitCd <= 0) { P.bitCd = .22; for (let i = 0; i < nb; i++) { const q = bitPos(i, nb); pshot(q.x + 4, q.y, 300, 0, .8, { w: 4, h: 2 }); } }
     // 波動砲(ため)
     const ct = chargeTime();
@@ -373,7 +394,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     updForce(dt);
     // ミスと接触
     if (P.inv <= 0) {
-      const hr = hitR(IN.slow);
+      const hr = hitR(IN.slow) * (bf('ghost') ? .5 : 1);
       for (let i = EB.length - 1; i >= 0; i--) {
         const b = EB[i], dx = b.x - P.x, dy = b.y - P.y, d2 = dx * dx + dy * dy, rr2 = hr + b.r * .75;
         if (d2 < rr2 * rr2) { playerHit(); EB.splice(i, 1); break; }
@@ -382,6 +403,20 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       if (P.inv <= 0) for (const e of EN) { const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < e.r + hr + 1) { playerHit(); break; } }
       if (P.inv <= 0 && bossB && !bossB.dead && !bossB.enter && Math.hypot(bossB.x - P.x, bossB.y - P.y) < bossB.r - 2) playerHit();
     }
+  }
+  const bf = k => S && S.buffs && S.buffs[k] && S.buffs[k].t > 0 ? S.buffs[k] : null;
+  const bm = k => { const b = bf(k); return b ? (FX[k].m ? FX[k].m[b.r] : 1) : 1; };
+  function rollLoot(x, y, boost) {
+    let r = rr() - (boost || 0), ri = 0; for (; ri < RAR.length - 1; ri++) { r -= RAR[ri].w; if (r <= 0) break; }
+    const pool = FX_KEYS.filter(k => !FX[k].minRar || ri >= FX[k].minRar), fx = [];
+    while (fx.length < RAR[ri].k && pool.length) fx.push(pool.splice(Math.floor(rr() * pool.length), 1)[0]);
+    DR.push({ x, y, vx: -24 - rr() * 10, vy: (rr() - .5) * 30, ri, fx, t: 0 });
+  }
+  function pickLoot(d) {
+    const R0 = RAR[d.ri];
+    for (const k of d.fx) { const o = S.buffs[k]; const keepT = o && o.t > 0 ? o.t : 0, keepR = o && o.t > 0 ? o.r : 0; S.buffs[k] = { t: Math.max(R0.t, keepT), r: Math.max(d.ri, keepR), max: Math.max(R0.t, keepT) }; }
+    banner = { t: 2.2, a: R0.n, b: d.fx.map(k => FX[k].n).join(' + ') + '  ' + R0.t + '秒', col: R0.c };
+    Snd.se(d.ri >= 2 ? 'level' : 'pick'); R.score += 100 * (d.ri + 1);
   }
   function bitPos(i, n) { const a = P.anim * 2.4 + i * TAU / n; return { x: P.x - 4 + Math.cos(a) * 13, y: P.y + Math.sin(a) * 15 }; }
   function forceToggle() {
@@ -409,12 +444,12 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         EB.splice(i, 1); const L = lvOf('absorb'); if (L) { addXp(.35 * L); P.charge = Math.min(1, P.charge + .006 * L); }
       }
     }
-    const cd = (28 + 12 * fl) * dt;
+    const cd = (28 + 12 * fl) * dt * (bf('forceBig') ? 2 : 1);
     for (const e of EN) if (Math.hypot(e.x - F.x, e.y - F.y) < e.r + r) hurt(e, cd);
     if (bossB && !bossB.dead && Math.hypot(bossB.x - F.x, bossB.y - F.y) < bossB.r + r) hurtBoss(cd * .8);
   }
   function fireWave(ch) {
-    const L = lvOf('wave'), tot = 110 * (.35 + ch) * (1 + .25 * L);
+    const L = lvOf('wave'), tot = 110 * (.35 + ch) * (1 + .25 * L) * bm('dmg');
     BEAM.push({ t: .35, max: .35, w: 5 + ch * 16, y: P.y, x0: P.x + 12, dps: tot / .35, ch });
     Snd.se('wave'); shake = Math.max(shake, 2 + ch * 3);
   }
@@ -428,7 +463,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   function gameOver() { state = 'gameover'; S.goT = 0; menuSel = 0; if (R.score > save.hi) save.hi = R.score; store(); Snd.stop(); }
 
   // ---------- 経験値とレベルアップ ----------
-  function addXp(v) { R.xp += v; while (R.xp >= needXp(R.lv)) { R.xp -= needXp(R.lv); R.lv++; R.pending++; } }
+  function addXp(v) { R.xp += v * (bf('xp') ? 2 : 1); while (R.xp >= needXp(R.lv)) { R.xp -= needXp(R.lv); R.lv++; R.pending++; } }
   function openPick() {
     const pool = []; for (const k of SK_KEYS) { const L = lvOf(k); if (L < 5) pool.push({ k, w: L ? 2 : 1.4 }); }
     const picks = [];
@@ -493,22 +528,29 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       for (let k = EB.length - 1; k >= 0; k--) { const b = EB[k]; if (b.x > m.x0 && Math.abs(b.y - m.y) < m.w / 2 + b.r) { EB.splice(k, 1); if (GM.length < 400 && rr() < .3) GM.push({ x: b.x, y: b.y, vx: -10, vy: 0, v: 1 }); } }
     }
     // 敵の弾
-    const guardT = S.boss ? false : true;
+    const guardT = S.boss ? false : true, bd = bf('slow') ? dt * .55 : dt;
     for (let i = EB.length - 1; i >= 0; i--) {
-      const b = EB[i]; b.t += dt;
-      if (b.dec) { const s = Math.hypot(b.vx, b.vy); if (s > 6) { const ns = Math.max(0, s - b.dec * dt); b.vx *= ns / s; b.vy *= ns / s; } }
+      const b = EB[i]; b.t += bd;
+      if (b.dec) { const s = Math.hypot(b.vx, b.vy); if (s > 6) { const ns = Math.max(0, s - b.dec * bd); b.vx *= ns / s; b.vy *= ns / s; } }
       if (b.turn && b.t >= b.turn) { b.turn = 0; b.dec = 0; const a = aimAt(b.x, b.y); b.vx = Math.cos(a) * b.tsp * DF().s; b.vy = Math.sin(a) * b.tsp * DF().s; }
-      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.x += b.vx * bd; b.y += b.vy * bd;
       if (b.x < -12 || b.x > W + 12 || b.y < -12 || b.y > H + 12) { EB.splice(i, 1); continue; }
       if (guardT && b.t > .15 && b.x > 0 && b.x < W) { if (b.y < topH(b.x) || b.y > H - botH(b.x)) EB.splice(i, 1); }
     }
     // 宝石
-    const mg = [34, 50, 70, 95, 130, 170][lvOf('magnet')] || 34;
+    const mg = bf('magnet') ? 420 : ([34, 50, 70, 95, 130, 170][lvOf('magnet')] || 34);
     for (let i = GM.length - 1; i >= 0; i--) {
       const g = GM[i]; const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
       if (P.dead <= 0 && d < mg) { const s = 190 * dt; g.x += dx / (d || 1) * s; g.y += dy / (d || 1) * s; } else { g.x += g.vx * dt; g.y += g.vy * dt; g.vx += (-28 - g.vx) * dt * 2; g.vy *= (1 - dt * 2); }
       if (P.dead <= 0 && d < 7) { GM.splice(i, 1); addXp(g.v); R.score += 20; Snd.se('gem'); continue; }
       if (g.x < -10) GM.splice(i, 1);
+    }
+    for (const k in S.buffs) if (S.buffs[k].t > 0) S.buffs[k].t -= dt;
+    for (let i = DR.length - 1; i >= 0; i--) {
+      const d = DR[i]; d.t += dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vx += (-22 - d.vx) * dt; d.vy *= (1 - dt * .8);
+      if (d.y < 16 || d.y > H - 18) d.vy = -d.vy;
+      if (P.dead <= 0 && Math.hypot(d.x - P.x, d.y - P.y) < 12) { pickLoot(d); DR.splice(i, 1); continue; }
+      if (d.x < -12) DR.splice(i, 1);
     }
     updFx(dt);
     if (R.pending > 0 && state === 'play' && !(bossB && bossB.dead) && P.dead <= 0) openPick();
@@ -580,11 +622,18 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         for (let i = 0; i < (P.bitN || 0); i++) { const q = bitPos(i, P.bitN); SP.draw(ctx, 'bit', q.x, q.y, SP.bit); }
         const F = P.F, fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const rr0 = forceR(), sc = rr0 / 6; const sz = Math.round(fr.width * sc);
         ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz);
-        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) SP.draw(ctx, 'player', P.x, P.y, SP.player);
+        if (bf('ghost')) ctx.globalAlpha = .55; if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) SP.draw(ctx, 'player', P.x, P.y, SP.player); ctx.globalAlpha = 1;
         if (P.charge > .05) { const n = Math.round(P.charge * 10); ctx.fillStyle = P.charge >= 1 ? '#ffffff' : '#ffe070'; ctx.fillRect(Math.round(P.x - 9), Math.round(P.y + 8), n * 2, 2); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(Math.round(P.x - 9) + n * 2, Math.round(P.y + 8), 20 - n * 2, 2); }
         // 当たり判定の点
         ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(P.x) - 1, Math.round(P.y) - 1, 3, 3); ctx.fillStyle = '#ff2040'; ctx.fillRect(Math.round(P.x), Math.round(P.y), 1, 1);
         if (S.guard > 0) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.strokeRect(Math.round(P.x) - 12.5, Math.round(P.y) - 9.5, 24, 18); }
+      }
+      for (const d of DR) {
+        const R0 = RAR[d.ri], bob = Math.round(Math.sin(d.t * 5) * 1.5), x = Math.round(d.x), y = Math.round(d.y) + bob, f = ((d.t * 6) | 0) % 2;
+        ctx.fillStyle = R0.c; ctx.globalAlpha = .25 + .15 * f; ctx.fillRect(x - 7, y - 7, 14, 14); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#10081c'; ctx.fillRect(x - 5, y - 5, 10, 10); ctx.fillStyle = R0.c; ctx.fillRect(x - 4, y - 4, 8, 8); ctx.fillStyle = '#10081c'; ctx.fillRect(x - 2, y - 2, 4, 4);
+        ctx.fillStyle = d.ri >= 3 ? '#ffffff' : R0.c; ctx.fillRect(x - 1, y - 1, 2, 2);
+        if (d.ri >= 2) { ctx.fillStyle = '#fff'; const s = ((d.t * 8) | 0) % 4; ctx.fillRect(x - 8 + s * 4, y - 8, 1, 1); ctx.fillRect(x + 7 - s * 4, y + 7, 1, 1); }
       }
       for (const p of PT) { ctx.globalAlpha = Math.min(1, p.l / p.m + .2); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); } ctx.globalAlpha = 1;
       for (const b of EB) { const sp = SP.bullets[b.col][b.sz]; ctx.drawImage(sp, Math.round(b.x) - b.r, Math.round(b.y) - b.r); }
@@ -617,7 +666,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (S.guard > 0) T('GUARD x' + S.guard, W - 50, H - 4, 8, '#fff', 'right');
     // ボス体力
     if (bossB && !bossB.enter) { const bw = 200, bx = W - bw - 8; box(bx, 16, bw, 5, 'rgba(0,0,0,.6)', '#ff5a7a'); box(bx, 16, bw * clamp(bossB.hp / bossB.max, 0, 1), 5, bossB.phase === 2 ? '#ff4040' : bossB.phase === 1 ? '#ffb030' : '#ff5a7a'); T(bossB.name, bx, 14, 8, '#ff9ab0'); }
-    if (banner) { const a = clamp(banner.t * 2, 0, 1); hx.globalAlpha = a; T(banner.a, W / 2, 110, 22, '#fff', 'center'); T(banner.b, W / 2, 128, 11, '#7dffea', 'center'); hx.globalAlpha = 1; }
+    { let by = 18; for (const k of FX_KEYS) { const b = bf(k); if (!b) continue; const c = RAR[b.r].c; box(3, by, 60, 9, 'rgba(0,0,12,.65)', c); box(4, by + 1, 58 * clamp(b.t / (b.max || 10), 0, 1), 7, 'rgba(255,255,255,.18)'); T(FX[k].ic + ' ' + FX[k].n, 6, by + 7.5, 7, c); T(Math.ceil(b.t) + 's', 61, by + 7.5, 7, '#fff', 'right'); by += 11; } }
+    if (banner) { const a = clamp(banner.t * 2, 0, 1); hx.globalAlpha = a; T(banner.a, W / 2, 110, 22, banner.col || '#fff', 'center'); T(banner.b, W / 2, 128, 11, banner.col ? '#fff' : '#7dffea', 'center'); hx.globalAlpha = 1; }
     if (S.warn > 0) { const bl = ((time * 4) | 0) % 2; box(0, 100, W, 36, 'rgba(120,0,20,' + (bl ? .5 : .3) + ')'); T('WARNING', W / 2, 124, 22, bl ? '#fff' : '#ff6a6a', 'center'); }
     if (state === 'paused') { box(0, 0, W, H, 'rgba(0,0,10,.7)'); T('PAUSE', W / 2, 96, 22, '#fff', 'center'); ['つづける', 'この面の最初からやり直す', 'タイトルへ'].forEach((s, i) => { box(150, 118 + i * 24, 180, 20, i === menuSel ? 'rgba(60,80,160,.9)' : 'rgba(20,24,60,.9)', i === menuSel ? '#7dffea' : '#456'); T((i + 1) + '  ' + s, W / 2, 132 + i * 24, 10, '#fff', 'center'); }); T('矢印・WASD=移動  Shift=低速  Z/Space=波動(長押し)  X=FORCE  M=音', W / 2, 205, 7.5, '#9ab', 'center', false); }
     if (state === 'levelup') drawPick();
@@ -674,7 +724,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     start(n) { newRun(n || 1); startStage(R.stage); },
     step(n) { for (let i = 0; i < n; i++) update(1 / 60); },
     setState(s) { state = s; }, giveSkill(k, L) { R.skills[k] = L; }, setBot(v) { window.__bot = v; },
-    god(v) { window.__god = v; },
+    god(v) { window.__god = v; }, DR, FX, RAR, rollLoot, pickLoot, bf, bm, killEnemy,
   };
   const _hit = playerHit; playerHit = function () { if (window.__god) return; _hit(); };
 })();

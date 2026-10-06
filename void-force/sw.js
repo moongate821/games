@@ -1,7 +1,7 @@
 // 作る.py が、落ち物2作・シューティングの sw.js をこれに置きかえる(版名・接頭辞・ファイル一覧は、元の sw.js から引き継ぐ)。
 // 以前の作りは「保存した版を先に使い、新しい版は古い画面がすべて閉じるまで使わない」ため、iPhone では更新が届かず古い版が出続けた。
 // 今の作り: まず最新を取りに行く(取れないとき=電波がないときだけ保存した版を使う)。新しい版はすぐに引き継ぐ。
-const CACHE = 'void-force-v1-20261006-ghc64cbad7';
+const CACHE = 'void-force-v1-20261006-gh702d4100';
 const PREFIX = 'void-force-';
 const FILES = ["./", "./index.html", "./compat.js", "./sprites.js", "./audio.js", "./bosses.js", "./game.js", "./vpad.js", "./pad.js", "./manifest.webmanifest", "./assets/sprites.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener('install', e => {
