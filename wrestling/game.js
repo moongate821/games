@@ -422,12 +422,16 @@ function drawLock() {
 }
 
 // ---------- 画面: 選択・結果 ----------
-let state = 'loading', sel = 0, selCpu = 0, titleT = 0;
+let state = 'loading', sel = 0, selCpu = 0, titleT = 0, helpOn = false, helpNo = 1;
+const hbRect = () => ({ x: W - 168, y: state === 'match' ? H - 40 : 12, w: 152, h: 30 });
 function handleTap(x, y) {
+  if (helpOn) { if (y > 486) { if (x < 330) helpNo = (helpNo + 18) % 20 + 1; else if (x > 630) helpNo = helpNo % 20 + 1; else helpOn = false; Snd.menu(); } else if (x > W - 120 && y < 40) helpOn = false; return; }
+  const hb = hbRect(); if ((state === 'select' || state === 'match') && x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) { openHelp(); return; }
   if (state === 'select') { const cols = 5, cw = 150, ch = 98, ox = (W - cols * cw) / 2, oy = 84; const c = Math.floor((x - ox) / cw), r = Math.floor((y - oy) / ch); if (c >= 0 && c < cols && r >= 0 && r < 4) { const i = r * cols + c; if (i === sel) startFromSelect(); else { sel = i; Snd.menu(); } } else if (y > 480) startFromSelect(); }
   else if (state === 'result') { state = 'select'; M = null; }
   else if (state === 'title') { state = 'select'; Snd.menu(); }
 }
+function openHelp() { helpOn = true; helpNo = state === 'match' && M ? M.p[0].no : sel + 1; Snd.menu(); }
 function startFromSelect() { let c; do { c = 1 + Math.floor(rnd() * 20); } while (c === sel + 1); newMatch(sel + 1, c, false); }
 function drawSelect() {
   ctx.fillStyle = '#0c0c24'; ctx.fillRect(0, 0, W, H);
@@ -491,6 +495,12 @@ function frame(ts) {
 }
 function update(dt) {
   titleT += dt;
+  if (helpOn) {
+    if (wasPressed('ArrowRight')) { helpNo = helpNo % 20 + 1; Snd.menu(); } if (wasPressed('ArrowLeft')) { helpNo = (helpNo + 18) % 20 + 1; Snd.menu(); }
+    if (wasPressed('KeyH', 'Escape', 'KeyZ', 'Enter', 'Space')) { helpOn = false; if (state === 'select') sel = helpNo - 1; Snd.menu(); }
+    return;
+  }
+  if (wasPressed('KeyH') && (state === 'select' || state === 'match')) { openHelp(); return; }
   if (state === 'select') {
     if (wasPressed('ArrowRight')) { sel = (sel + 1) % 20; Snd.menu(); } if (wasPressed('ArrowLeft')) { sel = (sel + 19) % 20; Snd.menu(); }
     if (wasPressed('ArrowDown')) { sel = (sel + 5) % 20; Snd.menu(); } if (wasPressed('ArrowUp')) { sel = (sel + 15) % 20; Snd.menu(); }
@@ -498,7 +508,7 @@ function update(dt) {
   } else if (state === 'match') { stepMatch(dt); stepFx(dt); }
   else if (state === 'result') { stepFx(dt); if (wasPressed('KeyZ', 'Enter', 'Space')) { state = 'select'; M = null; } }
 }
-function render() {
+function render0() {
   if (state === 'loading') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('読み込み中…', W / 2, H / 2); return; }
   if (state === 'select') drawSelect(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
 }
@@ -520,3 +530,33 @@ loadAll().then(() => {
   else if (auto) { newMatch(+(hp('a') || 1), +(hp('b') || 5), true); M.p[0].human = false; }
   requestAnimationFrame(frame);
 });
+
+function render() { render0(); if (helpOn) drawHelp(); else if (state === 'select' || state === 'match') drawHelpBtn(); }
+function drawHelpBtn() { const b = hbRect(); ctx.fillStyle = 'rgba(20,30,90,.85)'; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.strokeStyle = '#ffe070'; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('H: 操作・技表', b.x + b.w / 2, b.y + 21); }
+const _hc = {};
+function helpFighter(no) { return _hc[no] || (_hc[no] = new Fighter(no, -1, false)); }
+function drawHelp() {
+  const f = helpFighter(helpNo), w = DATA.wrestlers[String(helpNo)];
+  ctx.fillStyle = 'rgba(6,8,30,.96)'; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'left'; ctx.fillStyle = '#ffe070'; ctx.font = 'bold 26px sans-serif'; ctx.fillText('操作・技表', 24, 38);
+  ctx.fillStyle = '#9bf'; ctx.font = '14px sans-serif'; ctx.fillText('←→ レスラー切替   H / Z / Esc で閉じる', 190, 36);
+  // 左: 操作
+  const rows = [['←  →', '移動(相手に近づく/離れる)'], ['Z', '弱打 ― 立ち技の打撃(倒れた相手には 地上技)'], ['X', '強打 ― 重い打撃(倒れた相手には 飛び技)'], ['C', '組み付き → 技を選ぶ(倒れた相手には カバー=3カウント)'], ['↑ + X', 'ロープ反動技(ロープ際で)'], ['V', '必殺技(ゲージがたまっていれば組みで出せる)'], ['連打', 'カバーされたら ボタン連打で返す / 倒れたとき 連打で早く起きる'], ['組み中', '↑↓ + Z か 数字 1〜6 で技を選ぶ(3秒で自動)']];
+  ctx.font = 'bold 15px sans-serif'; let y = 72;
+  for (const [k, t] of rows) { ctx.fillStyle = '#ff9040'; ctx.fillRect(24, y - 15, 70, 22); ctx.fillStyle = '#10102a'; ctx.textAlign = 'center'; ctx.fillText(k, 59, y + 1); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = '14px sans-serif'; wrapText(t, 102, y, 270, 17); ctx.font = 'bold 15px sans-serif'; y += (t.length > 19 ? 40 : 28); }
+  ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('iPhone: 画面の ◀▲▼▶ と 弱・強・組・必 のボタン', 24, y + 14); ctx.fillText('勝ち方: 3カウント / K.O.(体力0) / 時間切れ判定', 24, y + 34); ctx.fillText('青いバー=気力(技を出すと減る) ピンクの3つ=必殺ゲージ', 24, y + 54);
+  // 右: そのレスラーの技表
+  const X = 404; ctx.fillStyle = '#16163a'; ctx.fillRect(X - 8, 50, W - X - 8, 428); ctx.strokeStyle = '#445'; ctx.strokeRect(X - 8, 50, W - X - 8, 428);
+  const fi = IMG.face[helpNo]; if (fi) ctx.drawImage(fi, X, 56, 56, 56);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.fillText(w.name + '  (' + w.type + ')', X + 66, 80); ctx.font = '14px sans-serif'; ctx.fillStyle = '#ccd'; const st = w.stats; ctx.fillText(`力${st['力']} 速${st['速']} 技${st['技']} 耐${st['耐']} 気${st['気']}`, X + 66, 102);
+  let yy = 132; const sec = (title, col, list, tag) => { ctx.fillStyle = col; ctx.font = 'bold 15px sans-serif'; ctx.fillText(title, X, yy); yy += 6; ctx.font = '13px sans-serif'; ctx.fillStyle = '#fff'; let x = X, line = ''; const items = list.map((m) => m.name + (tag === 'sp' ? '(ゲージ' + m.gauge + ')' : '')); let cx = X, cy = yy + 14; for (const n of items) { const wd = ctx.measureText(n).width + 18; if (cx + wd > W - 22) { cx = X; cy += 17; } ctx.fillText(n, cx, cy); cx += wd; } yy = cy + 20; };
+  sec('Z 弱打(立ち)', '#ffd060', f.light); sec('X 強打(立ち)', '#ff9040', f.heavy);
+  sec('C 組み付き → 選ぶ技(投げ・関節)', '#80d0ff', f.lock);
+  const g = f.ground.concat(f.dive.length ? [] : []); sec('倒れた相手: Z 地上技', '#a0e0a0', f.ground); sec('倒れた相手: X 飛び技', '#a0e0a0', f.dive);
+  sec('↑+X ロープ反動', '#c0a0ff', f.rope); sec('★ 必殺技(V / 組みで)', '#ff80f0', f.specials, 'sp');
+  ctx.fillStyle = '#6a7'; ctx.font = '12px sans-serif'; ctx.fillText('※ コーナー技・タッグ技はまだ出せません(作成中)', X, 470);
+  // 下: 切替ボタン
+  ctx.fillStyle = 'rgba(40,50,120,.9)'; ctx.fillRect(0, 486, 330, 54); ctx.fillRect(630, 486, 330, 54); ctx.fillStyle = 'rgba(70,40,40,.9)'; ctx.fillRect(330, 486, 300, 54);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('◀ 前のレスラー', 165, 520); ctx.fillText('次のレスラー ▶', 795, 520); ctx.fillText('閉じる', 480, 520);
+}
+function wrapText(t, x, y, mw, lh) { let line = '', yy = y; for (const ch of t) { if (ctx.measureText(line + ch).width > mw) { ctx.fillText(line, x, yy); line = ch; yy += lh; } else line += ch; } ctx.fillText(line, x, yy); }
