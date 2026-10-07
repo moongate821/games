@@ -744,6 +744,39 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   // ---------- 描画(ドット) ----------
   const hsl = (h, s, l) => 'hsl(' + h + ',' + s + '%,' + l + '%)';
   function drawSprite(sp, x, y, flip) { const w = sp.width, h = sp.height; ctx.drawImage(sp, Math.round(x - w / 2), Math.round(y - h / 2)); }
+  // 自機: 小さい画面でも機首・主翼・操縦席が読める一体型の戦闘機。
+  function drawFighter(x, y, t) {
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y));
+    const poly = (points, color) => { ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(points[0], points[1]); for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]); ctx.closePath(); ctx.fill(); };
+    // 推進炎は機体の後ろから出し、機首の常時発光をなくす。
+    const jet = (Math.floor(t * 18) % 3);
+    poly([-15,-3,-23-jet,0,-15,3], '#1476c4');
+    poly([-16,-1,-20-jet,0,-16,1], '#b7f5ff');
+    poly([-17,-7,-11,-7,-10,-3,-16,-2], '#11213f');
+    poly([-17,7,-11,7,-10,3,-16,2], '#11213f');
+    // 後退翼と翼端。上下一対を独立したシルエットにする。
+    poly([-11,-3,-15,-12,-7,-11,3,-5,9,-3], '#0b1730');
+    poly([-11,3,-15,12,-7,11,3,5,9,3], '#0b1730');
+    poly([-10,-4,-13,-10,-7,-9,4,-4], '#448ed1');
+    poly([-10,4,-13,10,-7,9,4,4], '#448ed1');
+    poly([-13,-10,-8,-10,-5,-8,-12,-8], '#b8eaff');
+    poly([-13,10,-8,10,-5,8,-12,8], '#b8eaff');
+    poly([-14,-4,-8,-6,5,-4,18,0,5,4,-8,6,-14,4], '#111d39');
+    poly([-11,-3,-5,-4,6,-3,15,0,6,3,-5,4,-11,3], '#d8edff');
+    poly([-8,-1,9,-1,16,0,9,1,-8,1], '#6aaee5');
+    poly([-4,-3,3,-2,7,0,3,2,-4,3,-7,0], '#163b66');
+    poly([-3,-2,3,-1,5,0,3,1,-3,2], '#69e9ff');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,-1,2,1);
+    ctx.fillStyle = '#f5c76b'; ctx.fillRect(15,0,3,1);
+    ctx.restore();
+  }
+  function drawDockedForce(x, y, level) {
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y));
+    ctx.fillStyle = '#0b1730'; ctx.beginPath(); ctx.moveTo(-4,-5); ctx.lineTo(5,-4); ctx.lineTo(10,0); ctx.lineTo(5,4); ctx.lineTo(-4,5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = level >= 3 ? '#efb35b' : '#91c9ed'; ctx.beginPath(); ctx.moveTo(-3,-3); ctx.lineTo(4,-3); ctx.lineTo(8,0); ctx.lineTo(4,3); ctx.lineTo(-3,3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#dff8ff'; ctx.fillRect(1,-1,5,2);
+    ctx.restore();
+  }
   function pxOct(cx, cy, r, col) {
     const c = Math.round(r * .41); ctx.fillStyle = col;
     for (let j = -r; j <= r; j++) { const aj = Math.abs(j), hw = aj <= r - c ? r : r - (aj - (r - c)); ctx.fillRect(Math.round(cx - hw), Math.round(cy + j), hw * 2 + 1, 1); }
@@ -844,14 +877,14 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         // ビット・フォース・自機
         for (let i = 0; i < (P.bitN || 0); i++) { const q = bitPos(i, P.bitN), nm = ['bit_a', 'bit_b', 'bit_g'][i % 3]; if (!(Rig.has(nm) && Rig.draw(ctx, nm, q.x, q.y, P.anim + i, {}))) SP.draw(ctx, 'bit', q.x, q.y, SP.bit); }
         const F = P.F, rr0 = forceR(), sc = rr0 / 6.6, fl = lvOf('force'), rear = F.mode === 'rear', nm = fl >= 4 ? 'force_cannon' : fl >= 3 ? 'force_spread' : fl >= 2 ? 'force_impact' : 'force_orb';
-        if (SP.ext[nm]) {
+        if (F.mode === 'front') drawDockedForce(F.x, F.y, fl);
+        else if (SP.ext[nm]) {
           if (nm === 'force_cannon' || nm === 'force_spread') { SP.drawScaled(ctx, 'force_orb', F.x, F.y, Math.round(14 * sc), { rot: P.anim * 4 }); SP.drawScaled(ctx, nm, F.x + (rear ? -10 : 10), F.y, Math.round((nm === 'force_cannon' ? 24 : 36) * sc), { flipX: rear }); }
           else SP.drawScaled(ctx, nm, F.x, F.y, Math.round((nm === 'force_orb' ? 14 : 18) * sc), { rot: P.anim * (nm === 'force_orb' ? 4 : -3) });
         } else { const fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const sz = Math.round(fr.width * sc); ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz); }
         if (bf('ghost')) ctx.globalAlpha = .55;
-        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { const pnm = (S.fire > .11 * .6 && SP.ext.player_fire) ? 'player_fire' : 'player'; const fox = pnm === 'player_fire' && SP.ext.player ? (SP.ext.player_fire.width - SP.ext.player.width) / 2 : 0;   /* 発射ポーズの絵は右に銃口の炎の分だけ長い → 機体の位置がずれて二重に見えないよう、機体の左端をそろえる */ if (!(Rig.has(pnm) && Rig.draw(ctx, pnm, P.x + fox, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
+        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) drawFighter(P.x, P.y, P.anim);
         ctx.globalAlpha = 1;
-        if (S.fire > .11 * .5 && SP.ext.player_flash) SP.drawScaled(ctx, 'player_flash', P.x + 20, P.y, 18, { alpha: .9 });
         if (P.charge > .08 && SP.ext.fx_swirl1) SP.drawScaled(ctx, 'fx_swirl1', P.x + 20, P.y, Math.round(10 + P.charge * 26), { rot: time * 10, alpha: .55 + .4 * P.charge });
         if (P.charge > .05) { const n = Math.round(P.charge * 10); ctx.fillStyle = P.charge >= 1 ? '#ffffff' : '#ffe070'; ctx.fillRect(Math.round(P.x - 9), Math.round(P.y + 8), n * 2, 2); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(Math.round(P.x - 9) + n * 2, Math.round(P.y + 8), 20 - n * 2, 2); }
         // 当たり判定の点
@@ -876,7 +909,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
       for (const b of EB) { const sp = SP.bullet(b.col, b.sz), n = sp.width; ctx.drawImage(sp, Math.round(b.x - n / 2), Math.round(b.y - n / 2)); }
     } else {
       // タイトルの背景: 自機が横切る
-      const x = ((time * 60) % (W + 60)) - 30; if (!(Rig.has('player') && Rig.draw(ctx, 'player', x, 150 + Math.sin(time * 2) * 8, time, {}))) drawSprite(SP.player, x, 150 + Math.sin(time * 2) * 8); if (SP.ext.force_orb) SP.drawScaled(ctx, 'force_orb', x + 26, 150 + Math.sin(time * 2) * 8, 15, { rot: time * 4 }); else drawSprite(SP.forceFrames[((time * 8) | 0) % 2], x + 22, 150 + Math.sin(time * 2) * 8);
+      const x = ((time * 60) % (W + 60)) - 30, y = 150 + Math.sin(time * 2) * 8; drawFighter(x, y, time); drawDockedForce(x + 16, y, 0);
     }
     ctx.restore();
   }
