@@ -16,19 +16,29 @@
   body { display: flex; align-items: center; justify-content: center; }
   #wrap { position: relative; width: 100vw; height: 100vh; max-width: calc(100vh * 16 / 9); max-height: calc(100vw * 9 / 16); }
   canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; background: #000; }
-  .pad { position: absolute; bottom: 4%; display: none; gap: 2%; }
-  .touch .pad { display: flex; }
-  #pl { left: 3%; } #pr { right: 3%; }
-  .b { width: 9vmin; height: 9vmin; min-width: 52px; min-height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(20,20,40,.55); color: #fff; font: bold 3.2vmin sans-serif; display: flex; align-items: center; justify-content: center; }
+  .pad { position: absolute; bottom: 3%; display: none; gap: 2vmin; align-items: flex-end; }
+  .touch.inmatch .pad { display: flex; }
+  #pl { left: 2.5%; } #pr { right: 2.5%; flex-direction: column; align-items: flex-end; }
+  .row { display: flex; gap: 2vmin; align-items: flex-end; } .col { display: flex; flex-direction: column; gap: 2vmin; }
+  .b { width: 10vmin; height: 10vmin; min-width: 54px; min-height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(20,20,40,.55); color: #fff; font: bold 3.4vmin sans-serif; display: flex; align-items: center; justify-content: center; }
+  .b.big { width: 14vmin; height: 14vmin; min-width: 70px; min-height: 70px; font-size: 4.6vmin; }
+  .b.sm { width: 8vmin; height: 8vmin; min-width: 46px; min-height: 46px; font-size: 2.6vmin; }
   .b.on { background: rgba(255,200,60,.65); }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="c" width="960" height="540"></canvas>
-  <div class="pad" id="pl"><div class="b" data-k="ArrowLeft">◀</div><div class="b" data-k="ArrowUp">▲</div><div class="b" data-k="ArrowDown">▼</div><div class="b" data-k="ArrowRight">▶</div></div>
-  <div class="pad" id="pr"><div class="b" data-k="KeyZ">弱</div><div class="b" data-k="KeyX">強</div><div class="b" data-k="KeyC">組</div><div class="b" data-k="KeyV">必</div></div>
+  <div class="pad" id="pl">
+    <div class="b big" data-k="ArrowLeft">◀</div><div class="b big" data-k="ArrowRight">▶</div>
+    <div class="col"><div class="b sm" data-k="ArrowUp">▲</div><div class="b sm" data-k="ArrowDown">▼</div></div>
+  </div>
+  <div class="pad" id="pr">
+    <div class="row"><div class="b sm" data-k="ArrowUp,KeyX">ﾛｰﾌﾟ</div><div class="b sm" data-k="ArrowUp,KeyC">椅子</div><div class="b" data-k="KeyV">必</div></div>
+    <div class="row"><div class="b big" data-k="KeyZ">弱</div><div class="b big" data-k="KeyX">強</div><div class="b big" data-k="KeyC">組</div></div>
+  </div>
 </div>
+<script src="puppet.js"></script>
 <script src="game.js"></script>
 <script src="shell.js"></script>
 </body>
