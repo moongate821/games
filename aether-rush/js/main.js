@@ -1,9 +1,9 @@
 // AETHER RUSH — 全体の進行(メニュー・レース・カメラ・HUD・入力)
 import * as THREE from '../lib/three.module.js';
 import { COURSES, CUPS, buildTrack, buildTrackMeshes, minimapPath } from './course.js';
-import { MACHINES, RIVALS, makeShipModel, makeShadow } from './machines.js';
+import { MACHINES, RIVALS, makeShipModel, makeShadow, machineAssetsReady, PLAYER_LOD, RIVAL_LOD } from './machines.js';
 import { makeShip, placeShip, stepShip, updateProgress, aiInput, collideShips, CFG } from './sim.js';
-import { buildScenery, SpeedLines, Particles } from './scenery.js';
+import { buildScenery, SpeedLines, Particles, sceneryKitReady } from './scenery.js';
 import { Snd } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -254,7 +254,7 @@ function startRace(ci, mi) {
   const playerSlot = 5, aiSlots = [0, 1, 2, 3, 4, 6, 7];
   const mk = (mach, name, isPlayer, paint, skill, lane, slot) => {
     const s = makeShip(mach, { name, isPlayer, skill, lane });
-    s.model = makeShipModel(mach, paint); s.model.scale.setScalar(1.4); scene.add(s.model);
+    s.model = makeShipModel(mach, paint, isPlayer ? PLAYER_LOD : RIVAL_LOD); s.model.scale.setScalar(1.4); scene.add(s.model);
     s.shadow = makeShadow(); scene.add(s.shadow);
     placeShip(tr, s, (tr.N + slots[slot].i) % tr.N, slots[slot].lat, 0);
     s.cum = slots[slot].i; s.prevIdx = s.idx; s.lap = -1; s.lapStart = 0; s.lastSafe = s.idx; s.slot = slot;
@@ -513,5 +513,8 @@ function frame(now) {
 $('loading').classList.add('hidden');
 window.__g = { Snd, showMachineSelect, showCourseSelect, selectMachine(i) { selMachine = i; useMenuScene(i); }, selectCourse(i) { selCourse = i; }, get menu() { return { scene: menuScene, cam: menuCam, ship: menuShip, useMenuScene }; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) raceUpdate(1 / fps); renderer.render(race.scene, camera); }, get race() { return race; }, get mode() { return mode; }, startRace, showTitle, store, COURSES, MACHINES, trackCache, camera, renderer, keys, touch, pause };
 const qc = q.get('c'), qm = q.get('m');
-if (qc != null) { selCourse = +qc; selMachine = +(qm || 0); startRace(selCourse, selMachine); requestAnimationFrame(frame); }
-else { showTitle(); requestAnimationFrame(frame); }
+(async () => {   // 古い iOS でも動くよう、トップレベル await は使わず即時関数で包む
+  await Promise.race([Promise.all([machineAssetsReady, sceneryKitReady]), new Promise((r) => setTimeout(r, 8000))]);   // 機体モデル(GLB)の読み込みを待つ(8秒で諦めて従来の機体を使う)
+  if (qc != null) { selCourse = +qc; selMachine = +(qm || 0); startRace(selCourse, selMachine); requestAnimationFrame(frame); }
+  else { showTitle(); requestAnimationFrame(frame); }
+})();

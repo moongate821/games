@@ -2,6 +2,26 @@
 import * as THREE from '../lib/three.module.js';
 import { GeoB, rgb, mul, mix, rng } from './geo.js';
 import { at } from './course.js';
+import { parseGLB, HIGH_QUALITY } from './machines.js';
+
+// ---- 無料の建物モデル(Kenney City Kit (Commercial)、CC0) ----
+// assets/scenery/*.glb(素材制作\make_scenery_kit.py で、色を頂点色に焼き込み、高さ=1にしたもの)。読めなければ従来の箱の建物だけになる。
+const KIT = {}; const KIT_SKY = ['building-skyscraper-a', 'building-skyscraper-b', 'building-skyscraper-c', 'building-skyscraper-d', 'building-skyscraper-e', 'building-m'];
+const KIT_LOW = ['low-detail-building-a', 'low-detail-building-b', 'low-detail-building-c', 'low-detail-building-d', 'low-detail-building-e', 'low-detail-building-wide-a', 'low-detail-building-wide-b'];
+export const sceneryKitReady = (async () => {
+  await Promise.all(KIT_SKY.concat(KIT_LOW).map((n) => fetch(`assets/scenery/${n}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then((b) => { KIT[n] = parseGLB(b); }).catch((e) => { console.warn('建物モデルを読めない', n, e); })));
+})();
+function kitDims(g) { if (!g.wx) { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (let i = 0; i < g.n; i++) { const x = g.pos[i * 3], z = g.pos[i * 3 + 2]; if (x < a) a = x; if (x > b) b = x; if (z < c) c = z; if (z > d) d = z; } g.wx = Math.max(0.05, b - a); g.wz = Math.max(0.05, d - c); } return g; }
+function kitAdd(out, g, x, y, z, sx, sy, sz, rot, tint) {
+  const c = Math.cos(rot), s = Math.sin(rot), base = out.pos.length / 3, nc = g.colNC;
+  for (let i = 0; i < g.n; i++) {
+    const px = g.pos[i * 3] * sx, py = g.pos[i * 3 + 1] * sy, pz = g.pos[i * 3 + 2] * sz;
+    out.pos.push(x + px * c + pz * s, y + py, z - px * s + pz * c);
+    out.col.push(g.col[i * nc] / 255 * tint[0], g.col[i * nc + 1] / 255 * tint[1], g.col[i * nc + 2] / 255 * tint[2]);
+  }
+  for (let i = 0; i < g.idx.length; i++) out.idx.push(base + g.idx[i]);
+}
 
 function windowTexture(pal) {
   const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -68,6 +88,9 @@ export function buildScenery(scene, tr, quality = 1) {
   const bld = pal.bld.map(rgb);
   const N = tr.N;
 
+  const KO = { pos: [], col: [], idx: [] };   // 建物モデルをまとめる入れ物
+  const kitTint = (c) => [Math.min(0.9, 0.14 + c[0] * 1.3), Math.min(0.9, 0.14 + c[1] * 1.3), Math.min(0.95, 0.2 + c[2] * 1.3)];   // 夜の街に合うよう暗くして、パレットの色を乗せる
+  let kitN = Math.round((HIGH_QUALITY ? 80 : 28) * quality), kitLowN = Math.round((HIGH_QUALITY ? 90 : 50) * quality);
   if (style === 'city') {
     const n = Math.round(300 * quality);
     for (let k = 0; k < n; k++) {
@@ -76,6 +99,10 @@ export function buildScenery(scene, tr, quality = 1) {
       if (!farFromTrack(x, z, 105)) continue;
       const w = 28 + R() * 70, dd = 28 + R() * 70, h = 50 + R() * 300 * (0.5 + d / 900);
       const c = mul(bld[Math.floor(R() * bld.length)], 0.55 + R() * 0.7);
+      if (kitN > 0 && KIT[KIT_SKY[0]] && R() < 0.3) {   // 一部を、無料の高層ビルモデルに差し替える
+        const g = KIT[KIT_SKY[Math.floor(R() * KIT_SKY.length)]] || KIT[KIT_SKY[0]], hh = h + (tr.P[i * 3 + 1] - groundY) * 0.5;
+        kitDims(g); kitAdd(KO, g, x, groundY, z, w * (0.8 + R() * 0.5) / g.wx, hh, dd * (0.8 + R() * 0.5) / g.wz, Math.floor(R() * 4) * Math.PI / 2, kitTint(c)); kitN--; continue;
+      }
       B.box(x, groundY, z, w, h + (tr.P[i * 3 + 1] - groundY) * 0.5, dd, c, { tile: 14 });
       if (R() < 0.35) B.box(x, groundY + h + (tr.P[i * 3 + 1] - groundY) * 0.5, z, w * 0.5, 22 + R() * 30, dd * 0.5, mul(c, 1.3), { tile: 14 }); // 屋上
     }
@@ -83,6 +110,10 @@ export function buildScenery(scene, tr, quality = 1) {
       const a = R() * Math.PI * 2, d = 2600 + R() * 3600;
       const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
       const w = 70 + R() * 160, h = 200 + R() * 900;
+      if (kitLowN > 0 && KIT[KIT_LOW[0]] && R() < 0.5) {   // 遠景の一部も、低詳細の建物モデルに
+        const g = KIT[KIT_LOW[Math.floor(R() * KIT_LOW.length)]] || KIT[KIT_LOW[0]]; const cc = mul(bld[Math.floor(R() * bld.length)], 0.5 + R() * 0.5);
+        kitDims(g); kitAdd(KO, g, x, groundY, z, w * (0.8 + R() * 0.5) / g.wx, h, w * (0.7 + R() * 0.5) / g.wz, R() * 6.28, kitTint(cc)); kitLowN--; continue;
+      }
       B.box(x, groundY, z, w, h, w * (0.7 + R() * 0.6), mul(bld[Math.floor(R() * bld.length)], 0.5 + R() * 0.5), { tile: 24 });
     }
   } else if (style === 'canyon') {
@@ -140,6 +171,10 @@ export function buildScenery(scene, tr, quality = 1) {
   const bm = new THREE.MeshBasicMaterial({ vertexColors: true });
   if (style === 'city') bm.map = windowTexture(pal);
   const mesh = new THREE.Mesh(geo, bm); group.add(mesh);
+  if (KO.idx.length) {   // 建物モデル(光なし・頂点色。霧は効く)
+    const kg = new THREE.BufferGeometry(); kg.setAttribute('position', new THREE.Float32BufferAttribute(KO.pos, 3)); kg.setAttribute('color', new THREE.Float32BufferAttribute(KO.col, 3)); kg.setIndex(KO.idx);
+    group.add(new THREE.Mesh(kg, new THREE.MeshBasicMaterial({ vertexColors: true })));
+  }
 
   // 門(コースの上の発光アーチ)
   {

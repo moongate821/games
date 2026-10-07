@@ -129,6 +129,7 @@ function cloneBike(src) {
 }
 function rivalVersion(src, id) {
   const m = cloneBike(src);
+  if (src.meshy) return m;   // Meshy版は形がちがうので、旧モデル用の後付けフィンは付けない
   for (const side of [-1, 1]) {
     const z = id === 'ngt' ? -394 : -330, y = id === 'nst' ? 252 : 203;
     bikePanel(m, side, [[89, y, z + 100], [142, y + 45, z - 14], [95, y + 4, z - 43]], 'fin');
@@ -155,10 +156,13 @@ function initRedesignMeshes() {
   // Blenderで作成した4台の軽量メッシュを、ゲームの描画座標に変換して組み込む。
   // データが読み込めない環境でも、元の手描きモデルでプレイ可能にする。
   const B = typeof BLENDER_GAME_MESHES === 'undefined' ? null : BLENDER_GAME_MESHES;
-  MESH.kai = B && B.kai && B.kai.v.length ? B.kai : sculptKAI(); MESH.player = MESH.kai;
-  MESH.arc = B && B.arc && B.arc.v.length ? B.arc : sculptARC();
-  MESH.nst = B && B.nst && B.nst.v.length ? B.nst : sculptNST();
-  MESH.ngt = B && B.ngt && B.ngt.v.length ? B.ngt : sculptNGT();
+  // 2026-10-07: Meshy の3Dモデルから作った軽量メッシュ(meshy_bike_meshes.js)。**標準では使わない**(1,800面への間引きだけでは、Blender版より形が荒れるため)。?meshy=1 を付けたときだけ使う
+  const M = typeof MESHY_BIKE_MESHES === 'undefined' || !/[?&]meshy=1/.test(location.search) ? null : MESHY_BIKE_MESHES;
+  const pick = (id, sculpt) => { if (M && M[id] && M[id].v.length) { M[id].meshy = true; return M[id]; } return B && B[id] && B[id].v.length ? B[id] : sculpt(); };
+  MESH.kai = pick('kai', sculptKAI); MESH.player = MESH.kai;
+  MESH.arc = pick('arc', sculptARC);
+  MESH.nst = pick('nst', sculptNST);
+  MESH.ngt = pick('ngt', sculptNGT);
   MESH.kmi = cloneBike(MESH.kai);
   for (const side of [-1, 1]) {
     bikePanel(MESH.kmi, side, [[95, 199, -265], [179, 278, -381], [111, 168, -355]], 'fin');

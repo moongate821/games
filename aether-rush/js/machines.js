@@ -39,7 +39,86 @@ function numberPlate(txt, color) {
   return t;
 }
 
-export function makeShipModel(m, paint) {
+// ================= Meshy の機体モデル(GLB) =================
+// assets/machines/<id>_hi.glb(プレイヤー・メニュー用 約1.4万三角形)と _lo.glb(ライバル用 約4500三角形)。
+// 作り方は 素材制作\make_machine_glb.py。頂点色 RGBA: RGB=もとの色 / A=アクセント塗りの場所。読み込めなければ従来のポリゴンの機体を使う。
+const ASSETS = {};
+export function parseGLB(buf) {
+  const dv = new DataView(buf);
+  if (dv.getUint32(0, true) !== 0x46546c67) throw new Error('not glb');
+  const jl = dv.getUint32(12, true); const json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl)));
+  const bo = 20 + jl + 8; // BINチャンクの中身
+  const prim = json.meshes[0].primitives[0];
+  const read = (ai) => {
+    const a = json.accessors[ai], bv = json.bufferViews[a.bufferView], off = bo + (bv.byteOffset || 0) + (a.byteOffset || 0);
+    const nc = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 }[a.type], n = a.count * nc;
+    if (a.componentType === 5126) return { data: new Float32Array(buf.slice(off, off + n * 4)), nc, count: a.count };
+    if (a.componentType === 5125) return { data: new Uint32Array(buf.slice(off, off + n * 4)), nc, count: a.count };
+    if (a.componentType === 5123) return { data: new Uint16Array(buf.slice(off, off + n * 2)), nc, count: a.count };
+    if (a.componentType === 5121) { const u = new Uint8Array(buf.slice(off, off + n)); return { data: u, nc, count: a.count, norm: true }; }
+    throw new Error('component ' + a.componentType);
+  };
+  const pos = read(prim.attributes.POSITION), col = read(prim.attributes.COLOR_0), idx = read(prim.indices);
+  return { pos: pos.data, col: col.data, colNC: col.nc, idx: idx.data, n: pos.count };
+}
+// PC は大きくてもきれいな版(xl 約5〜6万三角形)を使う。スマホ・タブレットは軽い版(hi/lo)。?q=high / ?q=low で切り替えて確かめられる
+const TOUCH_DEV = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+export const HIGH_QUALITY = /[?&]q=high/.test(location.search) || (!TOUCH_DEV && !/[?&]q=low/.test(location.search));
+export const PLAYER_LOD = HIGH_QUALITY ? 'xl' : 'hi', RIVAL_LOD = HIGH_QUALITY ? 'hi' : 'lo';
+export const machineAssetsReady = (async () => {
+  const jobs = [];
+  for (const m of MACHINES) for (const lod of (HIGH_QUALITY ? ['xl', 'hi'] : ['hi', 'lo'])) {
+    jobs.push(fetch(`assets/machines/${m.id}_${lod}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then((b) => { (ASSETS[m.id] = ASSETS[m.id] || {})[lod] = prepareAsset(parseGLB(b)); }).catch((e) => { console.warn('機体モデルを読めない', m.id, lod, e); }));
+  }
+  await Promise.all(jobs);
+})();
+// 後ろのエンジン位置・上面の高さを、形から自動で出す(炎・ゼッケン用)
+function prepareAsset(g) {
+  const p = g.pos, n = g.n; let zmin = 1e9, zmax = -1e9, xmax = 0;
+  for (let i = 0; i < n; i++) { const z = p[i * 3 + 2], x = Math.abs(p[i * 3]); if (z < zmin) zmin = z; if (z > zmax) zmax = z; if (x > xmax) xmax = x; }
+  const L = zmax - zmin, rear = zmax - L * 0.05;
+  const left = { x: 0, y: 0, c: 0, ymin: 1e9, ymax: -1e9 }, right = { x: 0, y: 0, c: 0, ymin: 1e9, ymax: -1e9 }, mid = { x: 0, y: 0, c: 0, ymin: 1e9, ymax: -1e9 };
+  for (let i = 0; i < n; i++) {
+    if (p[i * 3 + 2] < rear) continue; const x = p[i * 3], y = p[i * 3 + 1];
+    const t = x < -xmax * 0.2 ? left : x > xmax * 0.2 ? right : mid; t.x += x; t.y += y; t.c++; t.ymin = Math.min(t.ymin, y); t.ymax = Math.max(t.ymax, y);
+  }
+  const flames = [];
+  const add = (t) => { if (t.c > 15) flames.push({ x: t.x / t.c, y: t.y / t.c, r: Math.max(0.25, (t.ymax - t.ymin) / 2) }); };
+  if (left.c > 15 && right.c > 15) { add(left); add(right); } else add({ x: left.x + right.x + mid.x, y: left.y + right.y + mid.y, c: left.c + right.c + mid.c, ymin: Math.min(left.ymin, right.ymin, mid.ymin), ymax: Math.max(left.ymax, right.ymax, mid.ymax) });
+  let top = -1e9; for (let i = 0; i < n; i++) { const x = Math.abs(p[i * 3]), z = p[i * 3 + 2], u = (z - zmin) / L; if (x < xmax * 0.18 && u > 0.3 && u < 0.5) top = Math.max(top, p[i * 3 + 1]); }
+  g.info = { zmin, zmax, L, flames, top, topZ: zmin + L * 0.4 };
+  return g;
+}
+function makeGlbShip(m, paint, lod) {
+  const A = ASSETS[m.id]; const a = A && (A[lod] || A.hi || A.xl || A.lo); if (!a) return null;
+  const body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
+  const useBaked = !paint && m.id === 'viper';   // 緑のVIPER-9は、元の塗り(テクスチャを焼き込んだ頂点色)をそのまま使う
+  const col = new Float32Array(a.n * 3), nc = a.colNC;
+  for (let i = 0; i < a.n; i++) {
+    const mk = a.col[i * nc + 3] / 255, br = a.col[i * nc] / 255, bg = a.col[i * nc + 1] / 255, bb = a.col[i * nc + 2] / 255;
+    if (useBaked) { col[i * 3] = br; col[i * 3 + 1] = bg; col[i * 3 + 2] = bb; }
+    else { col[i * 3] = (body[0] * (1 - mk) + acc[0] * mk) * br; col[i * 3 + 1] = (body[1] * (1 - mk) + acc[1] * mk) * bg; col[i * 3 + 2] = (body[2] * (1 - mk) + acc[2] * mk) * bb; }
+  }
+  if (!a.geo) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a.pos, 3)); g.setIndex(new THREE.BufferAttribute(a.idx, 1)); g.computeVertexNormals(); a.geo = g; }
+  const g = a.geo.clone(); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: a.n < 15000, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide })));   // 高品質版(xl)はなめらかに、軽い版はフラットに
+  const I = a.info;
+  // ゼッケン
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.9), new THREE.MeshBasicMaterial({ map: numberPlate(m.num, '#ffffff'), transparent: true, depthWrite: false }));
+  pl.rotation.x = -Math.PI / 2; pl.position.set(0, I.top + 0.06, I.topZ); pl.scale.set(0.9, 0.9, 1); group.add(pl);
+  // 炎
+  const flames = [], fm = new THREE.MeshBasicMaterial({ color: m.glow, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+  const fg = new THREE.ConeGeometry(0.5, 1.0, 6, 1, true); fg.rotateX(Math.PI / 2); fg.translate(0, 0, 0.5);
+  let fb = 0.9;
+  for (const e of I.flames) { const fs = Math.min(0.95, Math.max(0.5, e.r / 0.5 * 0.7)); fb = fs; const f = new THREE.Mesh(fg, fm); f.position.set(e.x, e.y, I.zmax + 0.05); f.scale.set(fs, fs, 1); group.add(f); flames.push(f); }
+  group.userData.flames = flames; group.userData.len = I.L; group.userData.flameBase = fb; group.userData.glb = true;
+  return group;
+}
+export function makeShipModel(m, paint, lod = PLAYER_LOD) { return makeGlbShip(m, paint, lod) || makeShipModelProc(m, paint); }
+
+export function makeShipModelProc(m, paint) {
   const s = m.shape, body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
   const G = new GeoB(), E = new GeoB();
   const L = s.L, zN = -L / 2, zR = L / 2;
