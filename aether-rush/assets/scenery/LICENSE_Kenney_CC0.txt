@@ -1,3 +1,8 @@
-Kenney City Kit (Commercial) — Creative Commons CC0 1.0
+Kenney City Kit (Commercial) - Creative Commons CC0 1.0   (building-*.glb, low-detail-*.glb)
 https://kenney.nl/assets/city-kit-commercial
+Kenney City Kit (Industrial) - Creative Commons CC0 1.0   (ind_*.glb)
+https://kenney.nl/assets/city-kit-industrial
+Kenney Nature Kit - Creative Commons CC0 1.0   (nat_*.glb)
+https://kenney.nl/assets/nature-kit
 https://creativecommons.org/publicdomain/zero/1.0/
+Converted to height=1 / vertex colors / baked shading by make_scenery_kit.py.

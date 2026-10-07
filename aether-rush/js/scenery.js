@@ -8,8 +8,14 @@ import { parseGLB, HIGH_QUALITY } from './machines.js';
 // assets/scenery/*.glb(素材制作\make_scenery_kit.py で、色を頂点色に焼き込み、高さ=1にしたもの)。読めなければ従来の箱の建物だけになる。
 const KIT = {}; const KIT_SKY = ['building-skyscraper-a', 'building-skyscraper-b', 'building-skyscraper-c', 'building-skyscraper-d', 'building-skyscraper-e', 'building-m'];
 const KIT_LOW = ['low-detail-building-a', 'low-detail-building-b', 'low-detail-building-c', 'low-detail-building-d', 'low-detail-building-e', 'low-detail-building-wide-a', 'low-detail-building-wide-b'];
+// 追加の無料モデル(Kenney City Kit (Industrial) / Nature Kit、CC0)。名前の接頭辞 ind_ / nat_
+const KIT_IND_BIG = ['ind_building-a', 'ind_building-b', 'ind_building-c', 'ind_building-d', 'ind_building-e', 'ind_building-f', 'ind_building-g', 'ind_building-h', 'ind_building-l', 'ind_building-m', 'ind_building-q', 'ind_water-tower', 'ind_windmill'];
+const KIT_IND_SMALL = ['ind_chimney-large', 'ind_chimney-medium', 'ind_detail-tank-large', 'ind_detail-tank', 'ind_shipping-container-a', 'ind_shipping-container-b', 'ind_shipping-container-c', 'ind_solar-panel-landscape-group'];
+const KIT_NAT_ROCK = ['nat_rock_tallA', 'nat_rock_tallB', 'nat_rock_tallC', 'nat_rock_tallD', 'nat_rock_tallE', 'nat_rock_largeA', 'nat_rock_largeB', 'nat_rock_largeC', 'nat_stone_tallA', 'nat_stone_largeA', 'nat_cliff_large_rock'];
+const KIT_NAT_CACTUS = ['nat_cactus_tall', 'nat_cactus_short'];
+const KIT_NAT_PINE = ['nat_tree_pineTallA', 'nat_tree_pineTallB', 'nat_tree_pineTallC', 'nat_tree_pineRoundA', 'nat_tree_pineRoundB'];
 export const sceneryKitReady = (async () => {
-  await Promise.all(KIT_SKY.concat(KIT_LOW).map((n) => fetch(`assets/scenery/${n}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+  await Promise.all(KIT_SKY.concat(KIT_LOW, KIT_IND_BIG, KIT_IND_SMALL, KIT_NAT_ROCK, KIT_NAT_CACTUS, KIT_NAT_PINE).map((n) => fetch(`assets/scenery/${n}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
     .then((b) => { KIT[n] = parseGLB(b); }).catch((e) => { console.warn('建物モデルを読めない', n, e); })));
 })();
 function kitDims(g) { if (!g.wx) { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (let i = 0; i < g.n; i++) { const x = g.pos[i * 3], z = g.pos[i * 3 + 2]; if (x < a) a = x; if (x > b) b = x; if (z < c) c = z; if (z > d) d = z; } g.wx = Math.max(0.05, b - a); g.wz = Math.max(0.05, d - c); } return g; }
@@ -88,6 +94,7 @@ export function buildScenery(scene, tr, quality = 1) {
   const bld = pal.bld.map(rgb);
   const N = tr.N;
 
+  const rock0 = pal.bld.map(rgb);
   const KO = { pos: [], col: [], idx: [] };   // 建物モデルをまとめる入れ物
   const kitTint = (c) => [Math.min(0.9, 0.14 + c[0] * 1.3), Math.min(0.9, 0.14 + c[1] * 1.3), Math.min(0.95, 0.2 + c[2] * 1.3)];   // 夜の街に合うよう暗くして、パレットの色を乗せる
   let kitN = Math.round((HIGH_QUALITY ? 80 : 28) * quality), kitLowN = Math.round((HIGH_QUALITY ? 90 : 50) * quality);
@@ -165,6 +172,35 @@ export function buildScenery(scene, tr, quality = 1) {
       }
       const am = new THREE.Mesh(AG.build(), new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false }));
       am.userData.sky = true; group.add(am);
+    }
+  }
+  // ---- 追加の街・自然モデル(描画専用。コース・当たり判定・上の乱数列には触れない別の乱数) ----
+  {
+    const R2 = rng(tr.def.seed * 13 + 101), have = (l) => l.filter((n) => KIT[n]);
+    const place = (list, count, dmin, dmax, hFn, tintFn, footMax, rotFree) => {
+      list = have(list); if (!list.length) return;
+      for (let k = 0, tries = 0; k < count && tries < count * 6; tries++) {
+        const i = Math.floor(R2() * N), side = R2() < 0.5 ? -1 : 1, d = dmin + Math.pow(R2(), 1.3) * (dmax - dmin);
+        const x = tr.P[i * 3] + tr.R[i * 3] * side * d + (R2() - 0.5) * 60, z = tr.P[i * 3 + 2] + tr.R[i * 3 + 2] * side * d + (R2() - 0.5) * 60;
+        const g = kitDims(KIT[list[Math.floor(R2() * list.length)]]);
+        let h = hFn(d, tr.P[i * 3 + 1] - groundY); const dim = Math.max(g.wx, g.wz); if (dim * h > footMax) h = footMax / dim;
+        if (!farFromTrack(x, z, 62 + dim * h * 0.5)) continue;
+        kitAdd(KO, g, x, groundY, z, h, h, h, rotFree ? R2() * 6.28 : Math.floor(R2() * 4) * Math.PI / 2, tintFn()); k++;
+      }
+    };
+    const H = HIGH_QUALITY, qn = (a, b) => Math.round((H ? a : b) * quality);
+    if (style === 'city') {
+      const bt = () => kitTint(mul(bld[Math.floor(R2() * bld.length)], 0.6 + R2() * 0.6));
+      place(KIT_IND_BIG, qn(46, 16), 130, 900, (d, e) => 28 + R2() * 45 + e * 0.25, bt, 110, false);       // 工業ビル・給水塔・風車
+      place(KIT_IND_SMALL, qn(70, 26), 110, 520, () => 12 + R2() * 42, bt, 80, false);                       // 煙突・タンク・コンテナ(低い所)
+    } else if (style === 'canyon') {
+      const rt = () => { const c = mul(rock0[Math.floor(R2() * rock0.length)], 0.8 + R2() * 0.5); return [Math.min(1, 0.55 + c[0] * 0.6), Math.min(1, 0.5 + c[1] * 0.6), Math.min(1, 0.45 + c[2] * 0.6)]; };
+      place(KIT_NAT_ROCK, qn(90, 36), 130, 1500, (d, e) => 40 + R2() * 130 * (0.5 + d / 1200) + e * 0.2, rt, 190, true);
+      place(KIT_NAT_CACTUS, qn(60, 24), 105, 700, () => 14 + R2() * 30, () => [0.75 + R2() * 0.2, 1, 0.7], 60, true);
+    } else {
+      const it = () => { const v = 0.85 + R2() * 0.3; return [Math.min(1, 0.78 * v), Math.min(1, 0.9 * v), Math.min(1, 1.05 * v)]; };
+      place(KIT_NAT_ROCK, qn(50, 20), 130, 1500, (d, e) => 40 + R2() * 110 * (0.5 + d / 1200) + e * 0.15, it, 170, true);
+      place(KIT_NAT_PINE, qn(110, 40), 100, 1100, (d) => 30 + R2() * 70, () => { const v = 0.8 + R2() * 0.3; return [0.75 * v, 0.95 * v, 0.95 * v]; }, 60, true);
     }
   }
   const geo = B.build();

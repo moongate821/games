@@ -117,7 +117,7 @@ function drawBikeSprite(r, bk, x, hov, rot, flash) {
 function drawRacer(r, t) {
   if (r !== P && relZ(r.z, cam.z) < 820) return;   // カメラの横や後ろにいるマシンは描かない(巨大に映るため)
   const bk = r.bk, x = r.x * ROAD_W, hov = bk.hover ? 40 + Math.sin(t * 5 + r.idx) * 12 : 0;
-  const rot = { yaw: r.yaw + r.vx * 0.06, roll: r.lean + (r.slideT > 0 ? -r.slideDir * 0.35 : 0), pitch: r.air ? clamp(-r.vy * 0.00012, -0.25, 0.25) : 0 };
+  const rot = { yaw: r.yaw + r.vx * 0.13, roll: r.lean + (r.slideT > 0 ? -r.slideDir * 0.35 : 0), pitch: r.air ? clamp(-r.vy * 0.00012, -0.25, 0.25) : 0 };
   const lim = r.limT > 0 && Math.sin(t * 50) > 0;
   const sh = proj(r.z, x, 0, Q1);
   if (sh && sh[2] < 0.16 && r !== P) {   // 遠景でも機種固有の車輪・装甲・浮上船体を残す
@@ -342,24 +342,20 @@ const GAR_ART_MASKED = {};
 for (const id of ['kai', 'arc', 'nst', 'ngt']) {
   const im = new Image(); im.src = 'assets/garage/' + id + '.png'; GAR_ART[id] = im;
 }
+const GAR_TT = {};   // 車体の回転画像(Meshy のCGバイクを36方向から描いたもの。素材制作フォルダの render_garage_turntable.py)
+if (!/[?&]sprite=0/.test(location.search)) for (const id of ['kai', 'arc', 'nst', 'ngt']) {
+  fetch('assets/garage/' + id + '.json').then(r => r.json()).then(meta => { const img = new Image(); img.onload = () => { GAR_TT[id] = { img, m: meta }; }; img.src = 'assets/garage/' + meta.file; }).catch(() => {});
+}
 function drawGarageArt(bk) {
-  const key = bk.id === 'kmi' ? 'kai' : bk.id, im = GAR_ART[key];
-  if (!im || !im.complete || !im.naturalWidth) return false;
-  if (!GAR_ART_MASKED[key]) {
-    const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
-    const cc = c.getContext('2d'); cc.drawImage(im, 0, 0); cc.globalCompositeOperation = 'destination-in';
-    const gx = cc.createLinearGradient(0, 0, c.width, 0);
-    gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(0.08, '#000'); gx.addColorStop(0.92, '#000'); gx.addColorStop(1, 'rgba(0,0,0,0)');
-    cc.fillStyle = gx; cc.fillRect(0, 0, c.width, c.height);
-    const gy = cc.createLinearGradient(0, 0, 0, c.height);
-    gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(0.13, '#000'); gy.addColorStop(0.67, '#000'); gy.addColorStop(1, 'rgba(0,0,0,0)');
-    cc.fillStyle = gy; cc.fillRect(0, 0, c.width, c.height); GAR_ART_MASKED[key] = c;
-  }
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = 0.96;
+  const key = bk.id === 'kmi' ? 'kai' : bk.id, T = GAR_TT[key];
+  if (!T) return false;
+  const m = T.m, n = m.yaws.length, u = (((GAR.A / (Math.PI * 2)) % 1) + 1) % 1, f = u * n, i0 = Math.floor(f) % n, i1 = (i0 + 1) % n, fr = f - Math.floor(f);
+  const dw = m.fw * 1.5, dh = m.fh * 1.5, dx = 825 - dw / 2, dy = 430 - dh / 2;
+  const fx = i => [(i % m.cols) * m.fw, Math.floor(i / m.cols) * m.fh];
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   if (bk.id === 'kmi') ctx.filter = 'hue-rotate(40deg) saturate(0.85) brightness(1.1)';
-  ctx.drawImage(GAR_ART_MASKED[key], 410, 154, 830, 554);
+  let [sx, sy] = fx(i0); ctx.globalAlpha = 1; ctx.drawImage(T.img, sx, sy, m.fw, m.fh, dx, dy, dw, dh);
+  if (fr > 0.02) { [sx, sy] = fx(i1); ctx.globalAlpha = fr; ctx.drawImage(T.img, sx, sy, m.fw, m.fh, dx, dy, dw, dh); }
   ctx.restore();
   return true;
 }
@@ -415,7 +411,7 @@ function drawGarage(t, caption) {   // 紹介動画の最初の車体紹介(NR-0
 function wrapText(s, x, y, w, lh, size, col) { ctx.font = 'bold ' + size + 'px "Yu Gothic","Meiryo",sans-serif'; let line = ''; for (const ch of s) { if (ctx.measureText(line + ch).width > w) { jtxt(line, x, y, size, col); ctx.font = 'bold ' + size + 'px "Yu Gothic","Meiryo",sans-serif'; line = ''; y += lh; } line += ch; } if (line) jtxt(line, x, y, size, col); return y; }
 function drawSelect(t) {   // 車体を選ぶ画面(資料の仕様書の数値つき)
   const list = bikeList(), bk = list[SEL.idx[SEL.who] % list.length], two = SEL.mode === '2p';
-  drawStage(); if (!GAR.auto || !drawGarageArt(bk)) drawBikeModel(bk);
+  drawStage(); if (!drawGarageArt(bk)) drawBikeModel(bk);
   if (bk.hidden) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(CX, SH * 0.55, 20, CX, SH * 0.55, 420); g.addColorStop(0, 'rgba(255,210,110,0.18)'); g.addColorStop(1, 'rgba(255,200,80,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, SW, SH); ctx.globalCompositeOperation = 'source-over'; }
   const head = SEL.mode === 'view' ? 'GARAGE — 車体を見る' : two ? 'PLAYER ' + (SEL.who + 1) + ' — 車体を選ぶ' : '車体を選ぶ';
   jtxt(head, 50, 40, 18, two ? (SEL.who ? [120, 220, 255] : [255, 120, 130]) : [200, 230, 255]);

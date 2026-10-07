@@ -181,7 +181,7 @@ function latCoef(B, kmh, air, drift) {
   return { A: 4.6 * gr * Math.min(1, 0.25 + spd) * (air ? 0.45 : 1) * (drift ? 1.25 : 1),                       // 舵が横の速度を増やす強さ
            damp: (air ? 0.9 : drift ? 1.25 : SLIDE_DAMP) * Math.min(1.25, Math.max(0.8, gr)) };                   // 横の速度が収まる速さ(小さいほど滑る)
 }
-const SLIDE_DAMP = +((/[?&]slide=([\d.]+)/.exec(location.search) || [0, 1.9])[1]);   // 横の速度の収まりやすさ。小さいほど滑る(標準 1.9。?slide=1.2 でよく滑り、?slide=7 で従来に近い)
+const SLIDE_DAMP = +((/[?&]slide=([\d.]+)/.exec(location.search) || [0, 1.15])[1]);   // 横の速度の収まりやすさ。小さいほど滑る(標準 1.15。?slide=1.2 でよく滑り、?slide=7 で従来に近い)
 // ---------- マシン: 移動・ドリフト・ジャンプ ----------
 function stepBike(dt, inp) {
   const spd = P.kmh / 300, s = segAt(P.z), gr = P.bk.stat.grip;
@@ -200,11 +200,12 @@ function stepBike(dt, inp) {
   }
   const drift = P.drifting ? 1 : 0;
   const lc = latCoef(P.bk, P.kmh, P.air, drift);
-  const cf = P.air ? 0 : s.curve * spd * spd * 0.22 / gr * (drift ? 0.3 : 1);                    // カーブの遠心力(ドリフト中は弱い)
+  const cf = P.air ? 0 : s.curve * spd * spd * 0.34 / gr * (drift ? 0.3 : 1);                    // カーブの遠心力(ドリフト中は弱い)
   const driftPush = drift ? P.driftDir * 0.35 * lc.A / 1.25 : 0;
   P.vx += (lc.A * steer + driftPush - cf * lc.damp - P.vx * lc.damp) * dt;                        // 舵=加速度、遠心力=外向きの力、減衰=摩擦
   P.vx = clamp(P.vx, -3.2, 3.2);
   P.x += P.vx * dt;
+  if (!P.air && !drift && P.human !== undefined && Math.abs(P.vx) > 1.0 && Math.random() < 0.5) { sparks(P.z - 200, P.x * ROAD_W - Math.sign(P.vx) * 70, 3, 1, [200, 200, 230], 0.25); }   // 横滑りの白い煙
   if (!P.air && !drift && Math.abs(P.vx) > 1.3) P.kmh -= (Math.abs(P.vx) - 1.3) * 8 * dt;      // 大きく滑ると少し減速
   const yawT = drift ? P.driftDir * (0.45 + 0.2 * Math.min(1, P.driftT)) : clamp(steer * 0.2 + P.vx * 0.06, -0.3, 0.3) * Math.min(1, spd * 2);   // 車体の向きが、進行方向より先に向く(滑って見える)
   if (P.slideT > 0) {   // 決勝線を越えた後の、金田のスライド停止

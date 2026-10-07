@@ -117,6 +117,32 @@ function decorate(sec, R) {
       if (i % 8 === 0) for (const side of [-1, 1]) D.push({ t: 'buoy', x: side * 1.2, col: sec.lane });
     }
   }
+  decorateKenney(sec);
+}
+// Kenney(CC0)の3Dモデル(kenney_meshes.js)を道路脇に足す。元の乱数 R は使わない(コースの形・既存の景色を変えないため)。?nokenney で外せる
+const KENNEY_ON = !/[?&]nokenney/.test(location.search);
+function decorateKenney(sec) {
+  if (!KENNEY_ON || typeof KENNEY_MESHES === 'undefined') return;
+  const kit = sec.kit, N = track.length, K = mulberry(90210 + N * 7 + (sec.road[0] | 0));
+  const tbl = {
+    industrial: { every: 7, p: 0.7, set: ['container', 'container', 'tankL', 'chimney', 'chimneyM', 'wtower', 'windmill', 'indBld'], near: 1.7, spread: 2.6, col: [255, 150, 70] },
+    city: { every: 9, p: 0.6, set: ['towerA', 'towerB', 'towerC', 'skyA', 'indBld'], near: 2.6, spread: 3.2, col: null },
+    waste: { every: 8, p: 0.6, set: ['container', 'rockTall', 'rockLarge', 'cactus', 'rockTallB', 'stone', 'stone'], near: 1.5, spread: 4, col: [255, 120, 160] },
+    ruins: { every: 8, p: 0.6, set: ['container', 'rockTall', 'rockLarge', 'rockTallB', 'stone', 'log'], near: 1.5, spread: 3, col: [200, 130, 170] },
+    forest: { every: 6, p: 0.6, set: ['pine', 'pine', 'pineB', 'rockTall', 'rockLarge', 'stone', 'log'], near: 1.45, spread: 3.5, col: null },
+  }[kit];
+  if (!tbl) return;
+  const cols = sec.x.trees || [sec.road, sec.lane, sec.grid];
+  for (let i = 20; i < N - 10; i++) {
+    const s = track[i]; if (s.tunnel || i % tbl.every !== 3) continue;
+    for (const side of [-1, 1]) {
+      if (K() > tbl.p) continue;
+      const nm = tbl.set[Math.floor(K() * tbl.set.length)], sc = 0.8 + K() * 0.7, off = tbl.near + K() * tbl.spread, yaw = K() * 6.28, ci = Math.floor(K() * cols.length);
+      if (!KENNEY_MESHES[nm]) continue;
+      const col = tbl.col || (kit === 'forest' ? cols[ci] : [sec.road, sec.lane, sec.grid][ci % 3]);
+      s.deco.push({ t: 'kmesh', m: nm, x: side * off, sc, yaw, col });
+    }
+  }
 }
 
 // ---------- 投影 ----------
@@ -481,6 +507,10 @@ function drawDecoSeg(n) {
     } else if (d.t === 'hex') {   // 地面の六角形
       const c = proj(z, d.x * ROAD_W, 2, P3); if (!c) continue; const r = d.r * c[2], pts = []; for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3; pts.push(c[0] + Math.cos(an) * r, c[1] + Math.sin(an) * r * 0.25); }
       glowLine(pts, [120, 255, 200], a * 0.6, 1, true);
+    } else if (d.t === 'kmesh') {   // Kenney の3Dモデル(近い区間だけ、多角形で描く)
+      if (n > (lite ? 55 : 120) || typeof drawMesh !== 'function') continue;
+      const M = KENNEY_MESHES[d.m]; if (!M) continue;
+      drawMesh(M, z, d.x * ROAD_W + Math.sign(d.x) * 250 * d.sc, 0, { yaw: d.yaw }, d.col, { a: a * 0.9, scale: d.sc });
     } else if (d.t === 'cloud') {   // 雲海(道より下)
       const c = proj(z, d.x * ROAD_W, d.y, P3); if (!c) continue; const r = d.r * c[2];
       ctx.fillStyle = 'rgba(240,245,255,0.55)'; ctx.beginPath(); ctx.ellipse(c[0], c[1], r * 1.6, r * 0.5, 0, 0, Math.PI * 2); ctx.fill();
