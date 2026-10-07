@@ -421,7 +421,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   // ---------- 面の開始・終了 ----------
   function startStage(n, retry) {
     DR.length = 0; FXL.length = 0; R.stage = n; if (!retry) R.snap = { skills: Object.assign({}, R.skills), lv: R.lv, xp: R.xp, score: R.score, lives: R.lives }; EB.length = PB.length = EN.length = GM.length = PT.length = BEAM.length = 0; bossB = null;
-    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, elaser: [], gim: (RECIPES[n] || {}).gim || null, shut: [], cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0 };
+    S = { n, time: 0, scroll: 0, ter: buildTerrain(n), tf: 1, script: buildScript(n), si: 0, later: [], boss: false, warn: 0, guard: guardMax(), buffs: {}, elaser: [], gim: (RECIPES[n] || {}).gim || null, shut: [], cleared: 0, fire: 0, mfire: 0, bitA: 0, hits: 0, spawnT: 0, grazeChain: 0, grazeT: 0 };
     if (S.gim === 'shutter') { const rs = rngOf(n * 17); for (let i0 = 36, k = 0; i0 < 560; i0 += 30 + Math.floor(rs() * 12), k++) S.shut.push({ i0, w: 3, top: k % 2 === 0, ph: rs() * 6 }); }
     P = { x: 56, y: H / 2, inv: 1.5, dead: 0, charge: 0, F: { mode: 'front', x: 72, y: H / 2, vx: 0, vy: 0, cd: 0 }, bitCd: 0, anim: 0 };
     banner = { t: 2.6, a: 'STAGE ' + n, b: STAGE_NAMES[n - 1] };
@@ -532,7 +532,9 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
 
   // ---------- プレイヤー ----------
   const moveSpeed = slow => (slow ? 46 : 98) * (1 + .07 * lvOf('speed'));
-  const hitR = slow => slow ? 1.1 : (lvOf('speed') >= 3 ? 1.3 : 1.6);
+  // 戦闘機の胴体に沿う楕円。低速時は少し小さくして精密な回避を残す。
+  const hitX = slow => slow ? 5 : (lvOf('speed') >= 3 ? 8 : 9);
+  const hitY = slow => slow ? 3 : (lvOf('speed') >= 3 ? 4 : 5);
   function pdmg() { return [1, 1, 1.3, 1.3, 1.7][lvOf('shot') - 1] || 1; }
   function pshot(x, y, vx, vy, dmg, o) { if (PB.length > 500) return; PB.push(Object.assign({ x, y, vx, vy, dmg: dmg * bm('dmg'), pierce: lvOf('pierce') >= 5 || bf('pierce') ? 99 : lvOf('pierce'), life: 1.2, w: 5, h: 2 }, o || {})); }
   function nearestEnemy(x, y, maxd) {
@@ -571,14 +573,21 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     updForce(dt);
     // ミスと接触
     if (P.inv <= 0) {
-      const hr = hitR(IN.slow) * (bf('ghost') ? .5 : 1);
+      const ghost = bf('ghost') ? .5 : 1, hx0 = hitX(IN.slow) * ghost, hy0 = hitY(IN.slow) * ghost;
       for (let i = EB.length - 1; i >= 0; i--) {
-        const b = EB[i], dx = b.x - P.x, dy = b.y - P.y, d2 = dx * dx + dy * dy, rr2 = hr + b.r * .75;
-        if (d2 < rr2 * rr2) { playerHit(); EB.splice(i, 1); break; }
-        if (!b.g && d2 < (b.r + 8) * (b.r + 8)) { b.g = 1; R.graze++; R.score += 10; addXp(.12); Snd.se('graze'); }
+        const b = EB[i], dx = b.x - P.x, dy = b.y - P.y;
+        const rx = hx0 + b.r * .75, ry = hy0 + b.r * .75;
+        if (dx * dx / (rx * rx) + dy * dy / (ry * ry) < 1) { playerHit(); if (EB[i] === b) EB.splice(i, 1); break; }
+        const gx = rx + 5, gy = ry + 5;
+        if (!b.g && dx * dx / (gx * gx) + dy * dy / (gy * gy) < 1) {
+          b.g = 1; R.graze++; S.grazeChain = Math.min(20, S.grazeChain + 1); S.grazeT = 2.5;
+          R.score += 10 * (1 + Math.floor((S.grazeChain - 1) / 4)); addXp(.12);
+          if (P.holding) P.charge = Math.min(1, P.charge + .02);
+          Snd.se('graze');
+        }
       }
-      if (P.inv <= 0) for (const e of EN) { const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < e.r + hr + 1) { playerHit(); break; } }
-      if (P.inv <= 0 && bossB && !bossB.dead && !bossB.enter && Math.hypot(bossB.x - P.x, bossB.y - P.y) < bossB.r - 2) playerHit();
+      if (P.inv <= 0) for (const e of EN) { const rx = e.r + hx0, ry = e.r + hy0; const dx = e.x - P.x, dy = e.y - P.y; if (dx * dx / (rx * rx) + dy * dy / (ry * ry) < 1) { playerHit(); break; } }
+      if (P.inv <= 0 && bossB && !bossB.dead && !bossB.enter) { const rx = bossB.r - 2 + hx0, ry = bossB.r - 2 + hy0, dx = bossB.x - P.x, dy = bossB.y - P.y; if (dx * dx / (rx * rx) + dy * dy / (ry * ry) < 1) playerHit(); }
     }
   }
   const bf = k => S && S.buffs && S.buffs[k] && S.buffs[k].t > 0 ? S.buffs[k] : null;
@@ -632,6 +641,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function playerHit() {
     if (P.inv > 0) return;
+    S.grazeChain = 0; S.grazeT = 0;
     if (S.guard > 0) { S.guard--; P.inv = 1.6; for (let i = EB.length - 1; i >= 0; i--) if (Math.hypot(EB[i].x - P.x, EB[i].y - P.y) < 46) EB.splice(i, 1); Snd.se('big'); boom(P.x, P.y, 14, .6); banner = { t: 1.2, a: 'GUARD!', b: '被弾を防いだ' }; return; }
     R.lives--; P.dead = 1.6; boom(P.x, P.y, 36, 1.4); fx('fx_boom2', P.x, P.y, .8, 1, 3); fx('fx_fire', P.x, P.y, 1, .8, 2.4); Snd.se('miss'); shake = 10; EB.length = 0;
     if (lvOf('guard') >= 5) S.guard = guardMax();
@@ -673,6 +683,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (state === 'ending') { if (edge.ok) state = 'title'; clearEdges(); return; }
     if (state !== 'play') return;
     if (edge.pause) { state = 'paused'; menuSel = 0; clearEdges(); return; }
+    if (S.grazeT > 0) { S.grazeT = Math.max(0, S.grazeT - dt); if (S.grazeT === 0) S.grazeChain = 0; }
     if (flag('bot')) IN = botInput(); else readInput();
     // 台本・スクロール
     if (!S.boss) {
@@ -686,7 +697,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     for (let i = S.elaser.length - 1; i >= 0; i--) {
       const l = S.elaser[i]; l.t += dt; if (bossB && !bossB.dead) l.x = bossB.x - 10;
       if (l.t > l.w + l.f) { S.elaser.splice(i, 1); continue; }
-      if (l.t >= l.w) { shake = Math.max(shake, 1.5); if (P.inv <= 0 && P.dead <= 0 && P.x < l.x && Math.abs(P.y - l.y) < l.h / 2 + hitR(IN.slow)) playerHit(); }
+      if (l.t >= l.w) { shake = Math.max(shake, 1.5); if (P.inv <= 0 && P.dead <= 0 && P.x - hitX(IN.slow) < l.x && Math.abs(P.y - l.y) < l.h / 2 + hitY(IN.slow)) playerHit(); }
     }
     for (const e of EN) updEnemy(e, dt);
     if (bossB) { if (bossB.dead) { bossB.dying -= dt; if (rr() < .5) { const bx = bossB.x + (rr() - .5) * 70, by = bossB.y + (rr() - .5) * 70; boom(bx, by, 8, 1); if (rr() < .6) fx(rr() < .5 ? 'fx_boom2' : 'fx_fire', bx, by, .6, .8, 2.2); } if (bossB.dying <= 0) { R.bossKills++; R.score += 10000 * S.n; bossB = null; stageClear(); return; } } else if (S.warn <= 0 || bossB.enter) updBoss(bossB, dt); }
@@ -887,7 +898,9 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         ctx.globalAlpha = 1;
         if (P.charge > .08 && SP.ext.fx_swirl1) SP.drawScaled(ctx, 'fx_swirl1', P.x + 20, P.y, Math.round(10 + P.charge * 26), { rot: time * 10, alpha: .55 + .4 * P.charge });
         if (P.charge > .05) { const n = Math.round(P.charge * 10); ctx.fillStyle = P.charge >= 1 ? '#ffffff' : '#ffe070'; ctx.fillRect(Math.round(P.x - 9), Math.round(P.y + 8), n * 2, 2); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(Math.round(P.x - 9) + n * 2, Math.round(P.y + 8), 20 - n * 2, 2); }
-        // 当たり判定の点
+        // 低速時は実際の当たり判定を表示する。
+        if (IN && IN.slow) { ctx.strokeStyle = 'rgba(125,255,234,.75)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(Math.round(P.x), Math.round(P.y), hitX(true), hitY(true), 0, 0, TAU); ctx.stroke(); }
+        // 当たり判定の中心
         ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(P.x) - 1, Math.round(P.y) - 1, 3, 3); ctx.fillStyle = '#ff2040'; ctx.fillRect(Math.round(P.x), Math.round(P.y), 1, 1);
         if (S.guard > 0) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.strokeRect(Math.round(P.x) - 12.5, Math.round(P.y) - 9.5, 24, 18); }
       }
@@ -925,7 +938,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
     if (state === 'title') return drawTitle();
     if (!R || !S) return;
     box(0, 0, W, 13, 'rgba(0,0,12,.6)'); box(0, H - 14, W, 14, 'rgba(0,0,12,.6)');
-    T('STAGE ' + S.n, 4, 10, 9, '#7dffea'); T(('0000000' + R.score).slice(-8), W / 2, 10, 9, '#fff', 'center'); T('HI ' + Math.max(save.hi, R.score), W - 30, 10, 9, '#ffd84a', 'right');
+    T('STAGE ' + S.n, 4, 10, 9, '#7dffea'); if (S.grazeChain >= 2) T('GRAZE x' + S.grazeChain, 64, 10, 8, S.grazeChain >= 10 ? '#ffe070' : '#7dffea'); T(('0000000' + R.score).slice(-8), W / 2, 10, 9, '#fff', 'center'); T('HI ' + Math.max(save.hi, R.score), W - 30, 10, 9, '#ffd84a', 'right');
     T('II', W - 8, 10, 9, '#fff', 'center');
     // 下: LV・経験値・波動・スキル・残機
     const nx = needXp(R.lv); T('LV ' + R.lv, 4, H - 4, 9, '#ffd84a');
@@ -961,6 +974,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   function drawTitle() {
     T('VOID FORCE 20', W / 2, 78, 36, '#7dffea', 'center'); T('弾幕フォース  ─  全20面の横スクロール弾幕シューティング', W / 2, 98, 10, '#cfe', 'center');
     T('【作成中】1面〜20面(2面以降は自動生成の骨組み)', W / 2, 114, 8, '#ffb050', 'center', false);
+    T('弾をかすめて連続スコア / 波動チャージ加速', W / 2, 131, 8, '#7dffea', 'center', false);
     T('◀  STAGE ' + selStage + '  ▶', W / 2, 160, 13, '#7dffea', 'center'); T(STAGE_NAMES[selStage - 1] + (selStage > 1 ? '  (標準装備つき)' : ''), W / 2, 171, 7.5, '#9ab', 'center', false);
     T('◀  ' + DF().name + '  ▶', W / 2, 200, 14, '#ffd84a', 'center'); T('(面: ↑↓ / タップ   難しさ: ←→ / タップ)', W / 2, 212, 7, '#9ab', 'center', false);
     if (((time * 2) | 0) % 2 === 0) T('TAP / Z / Enter でスタート', W / 2, 236, 12, '#fff', 'center');
