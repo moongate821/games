@@ -1,6 +1,10 @@
 self.assetsManifest = {
   "assets": [
     {
+      "hash": "sha256-4kWKHOm91CgiAliPjrnu7b3SRR7yPPO8XO/RLaN8iPA=",
+      "url": "shell.js"
+    },
+    {
       "hash": "sha256-SxhPI3LSU8MsJfJN344t4/RyvGZKCzuaLnaB3Uil9wQ=",
       "url": "pad.js"
     },
@@ -4701,7 +4705,7 @@ self.assetsManifest = {
       "url": "img\/ui\/wall_town.webp"
     },
     {
-      "hash": "sha256-LMzqIfIfWomLxmZeXpq0snr1YBCh9AsXOtB2SQ1ii6k=",
+      "hash": "sha256-szML41OfFgd4E4zcJQBfoPTeBCgjRSTFXCGWQVkKh5U=",
       "url": "index.html"
     },
     {
@@ -4757,5 +4761,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "YaUA5JMw-07283a4e"
+  "version": "YaUA5JMw-7fe82523"
 };
