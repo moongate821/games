@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex">
+<title>SUPER RING 超人プロレス【作成中】</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0a14; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+  body { display: flex; align-items: center; justify-content: center; }
+  #wrap { position: relative; width: 100vw; height: 100vh; max-width: calc(100vh * 16 / 9); max-height: calc(100vw * 9 / 16); }
+  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; background: #000; }
+  .pad { position: absolute; bottom: 4%; display: none; gap: 2%; }
+  .touch .pad { display: flex; }
+  #pl { left: 3%; } #pr { right: 3%; }
+  .b { width: 9vmin; height: 9vmin; min-width: 52px; min-height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(20,20,40,.55); color: #fff; font: bold 3.2vmin sans-serif; display: flex; align-items: center; justify-content: center; }
+  .b.on { background: rgba(255,200,60,.65); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="960" height="540"></canvas>
+  <div class="pad" id="pl"><div class="b" data-k="ArrowLeft">◀</div><div class="b" data-k="ArrowUp">▲</div><div class="b" data-k="ArrowDown">▼</div><div class="b" data-k="ArrowRight">▶</div></div>
+  <div class="pad" id="pr"><div class="b" data-k="KeyZ">弱</div><div class="b" data-k="KeyX">強</div><div class="b" data-k="KeyC">組</div><div class="b" data-k="KeyV">必</div></div>
+</div>
+<script src="game.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>

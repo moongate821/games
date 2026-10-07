@@ -24,4 +24,4 @@
 - VOID FORCE 20 ― 弾幕フォース: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
 - NEON RIDER ― 光の轍: https://moongate821.github.io/games/neonrider/ — 光の道を走る疑似3Dのバイクレース(Tron×AKIRA 風)。全30コース、バイク5台。
-- GALACTIC HEGEMONY ― 銀河覇権: https://moongate821.github.io/games/stellar/ — 銀河を舞台にした宇宙戦略・艦隊戦シミュレーション。補給線、提督、3Dの艦隊戦。
+- SUPER RING 超人プロレス: https://moongate821.github.io/games/wrestling/ — ドット絵のプロレス。20人の超人レスラー、掴みから投げ・関節・飛び技、ゲージで必殺技、3カウントで決着。派手な演出つき。
