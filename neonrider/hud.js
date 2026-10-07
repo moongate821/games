@@ -94,6 +94,26 @@ function drawTrailPiece(a, b, i, pl) {   // 光の帯: 低い光の幕と、テ�
   ctx.strokeStyle = rgba(col, f * 0.6); ctx.lineWidth = Math.max(1, pa[2] * 4); ctx.beginPath(); ctx.moveTo(pa[0], ta); ctx.lineTo(pb[0], tb); ctx.stroke();
   ctx.globalCompositeOperation = 'source-over';
 }
+// ---------- CGバイクのスプライト(2026-10-07) ----------
+// assets/bikes/<id>.webp(向き yaw × 傾き roll の格子を1枚にしたアトラス)と <id>.json。素材制作フォルダの render_bike_sprites.py が、Meshy のテクスチャ付きモデルから作る。
+// 自機・AI の yaw / roll に最も近い1コマを選んで描く。読めない・角度が大きすぎるときは、従来の多角形メッシュ(drawMesh)で描く。?sprite=0 で使わない。
+const BIKE_SPR = {};
+const QS = [0, 0, 0, 0, 0];
+if (!/[?&]sprite=0/.test(location.search)) for (const id of ['kai', 'arc', 'nst', 'ngt']) {
+  fetch('assets/bikes/' + id + '.json').then(r => r.json()).then(meta => { const img = new Image(); img.onload = () => { BIKE_SPR[id] = { img, m: meta }; }; img.src = 'assets/bikes/' + meta.file; }).catch(() => {});
+}
+function drawBikeSprite(r, bk, x, hov, rot, flash) {
+  const S = BIKE_SPR[bk.mesh]; if (!S || (rot.pitch || 0) !== 0) return false;
+  const m = S.m, y0 = m.yaws[0], ys = m.yaws[1] - m.yaws[0], r0 = m.rolls[0], rs = m.rolls[1] - m.rolls[0];
+  if (rot.yaw < y0 - ys * 1.4 || rot.yaw > m.yaws[m.yaws.length - 1] + ys * 1.4 || rot.roll < r0 - rs * 1.4 || rot.roll > m.rolls[m.rolls.length - 1] + rs * 1.4) return false;   // 範囲外は旧メッシュ
+  const yi = clamp(Math.round((rot.yaw - y0) / ys), 0, m.yaws.length - 1), ri = clamp(Math.round((rot.roll - r0) / rs), 0, m.rolls.length - 1);
+  const a = proj(r.z, x, r.y + hov, QS); if (!a) return false;
+  const k = a[2] / m.ppu, w = m.fw * k, h = m.fh * k, dx = a[0] - m.anchorX * k, dy = a[1] - m.anchorY * k;
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = lite ? 'low' : 'medium';
+  ctx.drawImage(S.img, yi * m.fw, ri * m.fh, m.fw, m.fh, dx, dy, w, h);
+  if (flash) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.55; ctx.drawImage(S.img, yi * m.fw, ri * m.fh, m.fw, m.fh, dx, dy, w, h); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  return true;
+}
 function drawRacer(r, t) {
   if (r !== P && relZ(r.z, cam.z) < 820) return;   // カメラの横や後ろにいるマシンは描かない(巨大に映るため)
   const bk = r.bk, x = r.x * ROAD_W, hov = bk.hover ? 40 + Math.sin(t * 5 + r.idx) * 12 : 0;
@@ -102,7 +122,7 @@ function drawRacer(r, t) {
   const sh = proj(r.z, x, 0, Q1);
   if (sh && sh[2] < 0.16 && r !== P) {   // 遠景でも機種固有の車輪・装甲・浮上船体を残す
     const mesh = MESH['distant_' + bk.mesh] || MESH[bk.mesh];
-    drawMesh(mesh, r.z, x, r.y + hov, rot, bk.col, { glowCol: r.glow || bk.hi, shade: true, pal: r.pal, iri: r.iri, tailCol: bk.tailCol, scale: 1.12 });
+    if (!drawBikeSprite(r, bk, x, hov, rot, lim)) drawMesh(mesh, r.z, x, r.y + hov, rot, bk.col, { glowCol: r.glow || bk.hi, shade: true, pal: r.pal, iri: r.iri, tailCol: bk.tailCol, scale: 1.12 });
     if (sh[4] < 9000) txt(r.human ? r.name : r.pos + ' ' + r.name, sh[0], sh[1] - 335 * sh[2], clamp(Math.round(sh[2] * 60), 9, 16), r.human ? [120, 220, 255] : [210, 220, 230], 'center', 0.85);
     return;
   }
@@ -118,7 +138,9 @@ function drawRacer(r, t) {
   // ブースト・ミニターボの噴射
   if (r.boostOn || r.turbo > 0) { const e = proj(wrapZ(r.z - 340), x, r.y + 150 + hov, Q3); if (e) { const col = r.turbo > 0 && !r.boostOn ? [255, 170, 60] : [90, 220, 255]; ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 3; i++) { const rr = (60 + Math.random() * 50) * e[2] * (1 + i * 0.6); const g = ctx.createRadialGradient(e[0], e[1] + rr * 0.3 * i, 0, e[0], e[1] + rr * 0.3 * i, rr); g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.4, rgba(col, 0.6)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.fillRect(e[0] - rr, e[1] - rr + rr * 0.3 * i, rr * 2, rr * 2); } ctx.globalCompositeOperation = 'source-over'; } }
   if (bk.id === 'kmi' && sh) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(sh[0], sh[1] - 150 * sh[2], 0, sh[0], sh[1] - 150 * sh[2], 520 * sh[2]); g.addColorStop(0, 'rgba(255,220,120,0.22)'); g.addColorStop(1, 'rgba(255,200,80,0)'); ctx.fillStyle = g; ctx.fillRect(sh[0] - 520 * sh[2], sh[1] - 670 * sh[2], 1040 * sh[2], 1040 * sh[2]); ctx.globalCompositeOperation = 'source-over'; }
-  drawMesh(!r.human && MESH['rival_' + bk.mesh] || MESH[bk.mesh], r.z, x, r.y + hov, rot, lim ? [255, 30, 30] : bk.col, { glowCol: r.glow || bk.hi, brake: r.brk > 0, shade: true, pal: r.pal, iri: r.iri, tailCol: bk.tailCol });
+  if (drawBikeSprite(r, bk, x, hov, rot, lim)) {   // CGバイク(スプライト)。ブレーキの灯だけ上から足す
+    if (r.brk > 0 && sh) { const tl = proj(wrapZ(r.z - 330), x, r.y + hov + (bk.hover ? 70 : 190), QS); if (tl) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(tl[0], tl[1], 0, tl[0], tl[1], 90 * tl[2]); g.addColorStop(0, 'rgba(255,60,60,0.8)'); g.addColorStop(1, 'rgba(255,40,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(tl[0], tl[1], 90 * tl[2], 0, Math.PI * 2); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; } }
+  } else drawMesh(!r.human && MESH['rival_' + bk.mesh] || MESH[bk.mesh], r.z, x, r.y + hov, rot, lim ? [255, 30, 30] : bk.col, { glowCol: r.glow || bk.hi, brake: r.brk > 0, shade: true, pal: r.pal, iri: r.iri, tailCol: bk.tailCol });
   // 名前: AI は順位と名前、2人のときは P1 / P2
   if (sh && r !== P) { const tg = proj(r.z, x, r.y + 420, Q4); if (tg && tg[4] < 9000) { const lab = r.human ? r.name : r.pos + ' ' + r.name; txt(lab, tg[0], tg[1], clamp(Math.round(tg[2] * 60), 9, 18), r.human ? (r.idx === PLAYERS[0].idx ? [255, 120, 130] : [120, 220, 255]) : [210, 220, 230], 'center', 0.85); } }
 }

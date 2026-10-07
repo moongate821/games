@@ -230,7 +230,7 @@ function disposeScene(sc) { if (!sc) return; sc.traverse((o) => { if (o.geometry
 function startRace(ci, mi) {
   const opts = { laps: +q.get('laps') || 0 };
   if (race) { camera.remove(race.lines.mesh); race.scene.remove(camera); disposeScene(race.scene); }
-  ui.innerHTML = ''; paused = false;
+  ui.innerHTML = ''; paused = false; { const fd = $('fade'); if (fd) { fd.style.transition = 'none'; fd.style.opacity = '0'; } } // 新しいレースでは暗転を戻す
   const def = COURSES[ci], tr = buildTrack(def), scene = new THREE.Scene();
   const meshes = buildTrackMeshes(tr);
   scene.add(new THREE.Mesh(meshes.body, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide })));
@@ -299,7 +299,8 @@ function evHandler(type, s, val) {
   else if (type === 'lap') { Snd.lap(); say(`LAP ${s.lap + 1}${s.lap + 1 === race.laps ? '  FINAL' : ''}`, 1.6, true); }
   else if (type === 'finish') { Snd.finish(); say('FINISH!', 3); race.resultsT = 3.2; }
   else if (type === 'down') { Snd.explode(); say('MACHINE DOWN', 3, true); race.resultsT = 3.2; explode(s); }
-  else if (type === 'respawn') { Snd.respawn(); }
+  else if (type === 'fall') { if (s.isPlayer) { const f = $('fade'); f.style.transition = 'opacity .7s ease-in .35s'; f.style.opacity = '1'; say('FALL!', 1.2, true); } }   // 谷・コース外へ落ちた: 少し落ちてから暗転
+  else if (type === 'respawn') { Snd.respawn(); if (s.isPlayer) { const f = $('fade'); f.style.transition = 'opacity .35s ease-out'; f.style.opacity = '0'; } }
 }
 function flash() { const f = $('flash'); f.classList.add('on'); setTimeout(() => f.classList.remove('on'), 90); }
 const _a = new THREE.Vector3(), _b = new THREE.Vector3();

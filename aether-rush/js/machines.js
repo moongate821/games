@@ -58,8 +58,13 @@ export function parseGLB(buf) {
     if (a.componentType === 5121) { const u = new Uint8Array(buf.slice(off, off + n)); return { data: u, nc, count: a.count, norm: true }; }
     throw new Error('component ' + a.componentType);
   };
-  const pos = read(prim.attributes.POSITION), col = read(prim.attributes.COLOR_0), idx = read(prim.indices);
-  return { pos: pos.data, col: col.data, colNC: col.nc, idx: idx.data, n: pos.count };
+  const pos = read(prim.attributes.POSITION), idx = read(prim.indices);
+  const col = prim.attributes.COLOR_0 !== undefined ? read(prim.attributes.COLOR_0) : null;
+  const uv = prim.attributes.TEXCOORD_0 !== undefined ? read(prim.attributes.TEXCOORD_0) : null;
+  let image = null;   // 埋め込みのテクスチャ画像(JPEG/PNG)。make_machine_glb_tex.py の xl だけが持つ
+  const mat = prim.material !== undefined ? json.materials[prim.material] : null, ti = mat && mat.pbrMetallicRoughness && mat.pbrMetallicRoughness.baseColorTexture;
+  if (ti) { const im = json.images[json.textures[ti.index].source], bv = json.bufferViews[im.bufferView]; image = { bytes: new Uint8Array(buf.slice(bo + (bv.byteOffset || 0), bo + (bv.byteOffset || 0) + bv.byteLength)), mime: im.mimeType || 'image/jpeg' }; }
+  return { pos: pos.data, col: col ? col.data : null, colNC: col ? col.nc : 4, uv: uv ? uv.data : null, image, idx: idx.data, n: pos.count };
 }
 // PC は大きくてもきれいな版(xl 約5〜6万三角形)を使う。スマホ・タブレットは軽い版(hi/lo)。?q=high / ?q=low で切り替えて確かめられる
 const TOUCH_DEV = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
@@ -69,7 +74,7 @@ export const machineAssetsReady = (async () => {
   const jobs = [];
   for (const m of MACHINES) for (const lod of (HIGH_QUALITY ? ['xl', 'hi'] : ['hi', 'lo'])) {
     jobs.push(fetch(`assets/machines/${m.id}_${lod}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-      .then((b) => { (ASSETS[m.id] = ASSETS[m.id] || {})[lod] = prepareAsset(parseGLB(b)); }).catch((e) => { console.warn('機体モデルを読めない', m.id, lod, e); }));
+      .then(async (b) => { const g = prepareAsset(parseGLB(b)); if (g.image && g.uv) { const bmp = await createImageBitmap(new Blob([g.image.bytes], { type: g.image.mime })); const tx = new THREE.Texture(bmp); tx.flipY = false; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; tx.needsUpdate = true; g.tex = tx; } (ASSETS[m.id] = ASSETS[m.id] || {})[lod] = g; }).catch((e) => { console.warn('機体モデルを読めない', m.id, lod, e); }));
   }
   await Promise.all(jobs);
 })();
@@ -93,17 +98,22 @@ function prepareAsset(g) {
 function makeGlbShip(m, paint, lod) {
   const A = ASSETS[m.id]; const a = A && (A[lod] || A.hi || A.xl || A.lo); if (!a) return null;
   const body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
-  const useBaked = !paint && m.id === 'viper';   // 緑のVIPER-9は、元の塗り(テクスチャを焼き込んだ頂点色)をそのまま使う
-  const col = new Float32Array(a.n * 3), nc = a.colNC;
-  for (let i = 0; i < a.n; i++) {
-    const mk = a.col[i * nc + 3] / 255, br = a.col[i * nc] / 255, bg = a.col[i * nc + 1] / 255, bb = a.col[i * nc + 2] / 255;
-    if (useBaked) { col[i * 3] = br; col[i * 3 + 1] = bg; col[i * 3 + 2] = bb; }
-    else { col[i * 3] = (body[0] * (1 - mk) + acc[0] * mk) * br; col[i * 3 + 1] = (body[1] * (1 - mk) + acc[1] * mk) * bg; col[i * 3 + 2] = (body[2] * (1 - mk) + acc[2] * mk) * bb; }
-  }
-  if (!a.geo) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a.pos, 3)); g.setIndex(new THREE.BufferAttribute(a.idx, 1)); g.computeVertexNormals(); a.geo = g; }
-  const g = a.geo.clone(); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  if (!a.geo) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a.pos, 3)); g.setIndex(new THREE.BufferAttribute(a.idx, 1)); if (a.uv) g.setAttribute('uv', new THREE.BufferAttribute(a.uv, 2)); g.computeVertexNormals(); a.geo = g; }
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: a.n < 15000, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide })));   // 高品質版(xl)はなめらかに、軽い版はフラットに
+  if (a.tex && !paint) {
+    // PC のプレイヤー・メニュー: Meshy のテクスチャそのままで描く(2048の絵)
+    group.add(new THREE.Mesh(a.geo, new THREE.MeshStandardMaterial({ map: a.tex, roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide })));
+  } else {
+    // 頂点色の版(スマホ・ライバル): 元のテクスチャの色を焼き込んである。塗り替え(paint)のときは、本体色↔アクセント色をアクセント塗りの場所で混ぜ、元の明暗(模様)を乗せる
+    const col = new Float32Array(a.n * 3), nc = a.colNC;
+    for (let i = 0; i < a.n; i++) {
+      const mk = a.col[i * nc + 3] / 255, br = Math.pow(a.col[i * nc] / 255, 2.2), bg = Math.pow(a.col[i * nc + 1] / 255, 2.2), bb = Math.pow(a.col[i * nc + 2] / 255, 2.2);   // テクスチャの色(sRGB)を、three の頂点色(線形)に直す
+      if (!paint) { col[i * 3] = br; col[i * 3 + 1] = bg; col[i * 3 + 2] = bb; }
+      else { const lum = Math.min(1.25, 0.35 + (0.3 * br + 0.59 * bg + 0.11 * bb) * 1.25); col[i * 3] = (body[0] * (1 - mk) + acc[0] * mk) * lum; col[i * 3 + 1] = (body[1] * (1 - mk) + acc[1] * mk) * lum; col[i * 3 + 2] = (body[2] * (1 - mk) + acc[2] * mk) * lum; }
+    }
+    const g = a.geo.clone(); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    group.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: a.n < 15000, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide })));   // 軽い版はフラットに
+  }
   const I = a.info;
   // ゼッケン
   const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.9), new THREE.MeshBasicMaterial({ map: numberPlate(m.num, '#ffffff'), transparent: true, depthWrite: false }));

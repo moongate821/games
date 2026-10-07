@@ -211,9 +211,9 @@ export function stepShip(tr, s, inp, dt, ev) {
   s.speed = vel.length();
   s.u = fr.lat; s.h = fr.h;
 
-  // 落下(コース外・ギャップ)したら復帰
-  if (fr.h < -70 || (fr.h < -22 && onRoad2 && false)) respawn(tr, s, ev);
-  else if (!onRoad2 && fr.h < -22) respawn(tr, s, ev);
+  // 落下(コース外・ギャップ): すぐ戻さず、しばらく本当に落ちていく(プレイヤーは約1.3秒、画面は暗転)。そのあとコースへ復帰する
+  if (s.falling > 0) { s.falling -= dt; s.invul = Math.max(s.invul, 0.3); if (s.falling <= 0) { s.falling = 0; respawn(tr, s, ev); } }
+  else if (fr.h < -70 || (!onRoad2 && fr.h < -22)) { s.falling = s.isPlayer ? 1.3 : 0.8; if (ev) ev('fall', s); }
   if (s.energy <= 0 && !s.isPlayer) s.energy = 6; // 相手は大破しない(ブーストが使えなくなるだけ)
   if (s.energy <= 0) { s.energy = 0; s.down = true; s.downT = 0; if (ev) ev('down', s); }
   s.energy = Math.min(CFG.ENERGY, s.energy);
@@ -235,7 +235,7 @@ export function respawn(tr, s, ev) {
   s.respawns = (s.respawns || 0) + 1;
   placeShip(tr, s, i, 0, speed);
   s.energy = Math.max(12, s.energy - 12);
-  s.invul = 2.2; s.air = 0; s.boostT = 0; s.steerS = 0;
+  s.invul = 2.2; s.air = 0; s.boostT = 0; s.steerS = 0; s.falling = 0;
   if (ev) ev('respawn', s);
 }
 

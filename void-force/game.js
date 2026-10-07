@@ -849,7 +849,7 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
           else SP.drawScaled(ctx, nm, F.x, F.y, Math.round((nm === 'force_orb' ? 14 : 18) * sc), { rot: P.anim * (nm === 'force_orb' ? 4 : -3) });
         } else { const fr = SP.forceFrames[((P.anim * 8) | 0) % 2]; const sz = Math.round(fr.width * sc); ctx.drawImage(fr, Math.round(F.x - sz / 2), Math.round(F.y - sz / 2), sz, sz); }
         if (bf('ghost')) ctx.globalAlpha = .55;
-        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { const pnm = (S.fire > .11 * .6 && SP.ext.player_fire) ? 'player_fire' : 'player'; if (!(Rig.has(pnm) && Rig.draw(ctx, pnm, P.x, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
+        if (P.inv <= 0 || ((P.anim * 20) | 0) % 2) { const pnm = (S.fire > .11 * .6 && SP.ext.player_fire) ? 'player_fire' : 'player'; const fox = pnm === 'player_fire' && SP.ext.player ? (SP.ext.player_fire.width - SP.ext.player.width) / 2 : 0;   /* 発射ポーズの絵は右に銃口の炎の分だけ長い → 機体の位置がずれて二重に見えないよう、機体の左端をそろえる */ if (!(Rig.has(pnm) && Rig.draw(ctx, pnm, P.x + fox, P.y, P.anim, { rot: clamp(IN.dy * .16, -.22, .22) }))) SP.draw(ctx, 'player', P.x, P.y, SP.player); }
         ctx.globalAlpha = 1;
         if (S.fire > .11 * .5 && SP.ext.player_flash) SP.drawScaled(ctx, 'player_flash', P.x + 20, P.y, 18, { alpha: .9 });
         if (P.charge > .08 && SP.ext.fx_swirl1) SP.drawScaled(ctx, 'fx_swirl1', P.x + 20, P.y, Math.round(10 + P.charge * 26), { rot: time * 10, alpha: .55 + .4 * P.charge });
