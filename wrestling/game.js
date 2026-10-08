@@ -48,13 +48,14 @@ const Snd = {
 };
 
 // ---------- 画像・データ ----------
-const IMG = { body: {}, face: {}, action: {} }, PROP = window.PROP = {};
+const IMG = { body: {}, face: {}, action: {}, down: {} }, PROP = window.PROP = {};
 let DATA = null, SIM = false;
 function loadAll() {
   const jobs = [fetch('moves.json').then((r) => r.json()).then((d) => { DATA = d; })];
   for (let i = 1; i <= 20; i++) for (const k of ['body', 'face']) jobs.push(new Promise((res) => { const im = new Image(); im.onload = () => { IMG[k][i] = im; res(); }; im.onerror = res; im.src = `assets/${k}_${String(i).padStart(2, '0')}.png`; }));
   jobs.push(PUP.loadAll());
   jobs.push(fetch('assets/action/manifest.json').then((r) => r.json()).then((numbers) => Promise.all(numbers.map((id) => new Promise((res) => { const im = new Image(); im.onload = () => { IMG.action[+id] = im; res(); }; im.onerror = res; im.src = 'assets/action/' + id + '.png'; })))).catch(() => {}));
+  jobs.push(fetch('assets/down/manifest.json').then((r) => r.json()).then((numbers) => Promise.all(numbers.map((id) => new Promise((res) => { const im = new Image(); im.onload = () => { IMG.down[+id] = im; res(); }; im.onerror = res; im.src = 'assets/down/' + id + '.png'; })))).catch(() => {}));
   jobs.push(fetch('assets/props/props.json').then((r) => r.json()).then((d) => Promise.all(Object.keys(d).map((k) => new Promise((res) => { const im = new Image(); im.onload = () => { PROP[k] = im; res(); }; im.onerror = res; im.src = 'assets/props/' + k + '.png'; })))).catch(() => {}));
   return Promise.all(jobs);
 }
@@ -514,9 +515,12 @@ function drawFighter(f) {
   const im = IMG.body[f.no]; if (!im) return;
   if (f.trail && f.trail.length > 1 && !PUP.has(f.no)) { const fl = f.face >= 0 ? 1 : -1, h0 = 212, s0 = h0 / im.height, w0 = im.width * s0; f.trail.forEach((p, i) => { if (i === f.trail.length - 1) return; ctx.save(); ctx.globalAlpha = 0.07 + 0.22 * i / f.trail.length; ctx.translate(sx(p.x) + p.ox, GROUND - h0 / 2 - p.lift); ctx.rotate(p.rot); ctx.scale(fl, 1); ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= 0.8; ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.restore(); }); }
   if (M.act && M.act.a === f && M.act.mv.id && M.act.mv.id[0] === 'S') { const px0 = sx(f.x), pulse = 0.75 + 0.25 * Math.sin(M.act.t * 18), g = ctx.createRadialGradient(px0, GROUND - 110, 10, px0, GROUND - 110, 190 * pulse); g.addColorStop(0, 'rgba(255,230,255,.75)'); g.addColorStop(0.45, 'rgba(255,80,225,.38)'); g.addColorStop(1, 'rgba(255,60,200,0)'); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(px0 - 220, GROUND - 330, 440, 440); ctx.restore(); }
+  if ((f.mode === 'down' || f.lieN > 0.5) && IMG.down[f.no]) { drawDownSprite(f); return; }
   const actionFrame = actionFrameFor(f);
   if (actionFrame !== null && IMG.action[f.no]) { drawActionSprite(f, actionFrame); return; }
-  if (PUP.has(f.no)) { drawPuppet(f); return; }
+  // 倒れた体と投げられる体は一枚絵でつなぎ、関節の部品がばらけて見えるのを防ぐ。
+  const wholeBody = f.mode === 'down' || f.lieN > 0.5 || (M.act && M.act.d === f && M.act.motionKind === '投');
+  if (!wholeBody && PUP.has(f.no)) { drawPuppet(f); return; }
   const o = opp(f), v = f.vis;
   const hh = 212, sc = hh / im.height, w = im.width * sc;
   const px = sx(f.x) + v.ox, flip = (f.face >= 0 ? 1 : -1);
@@ -540,17 +544,26 @@ function actionFrameFor(f) {
   }
   if (M.lock && (M.lock.a === f || M.lock.d === f)) return 1;
   if (f.getupT > 0 && f.mode === 'free') return 5;
-  if (f.mode === 'free' && f.stun <= 0 && (f.walkVisual || 0) <= 0 && (!M.act || (M.act.a !== f && M.act.d !== f))) return 0;
+  if (f.mode === 'free' && f.stun <= 0 && (!M.act || (M.act.a !== f && M.act.d !== f))) return 0;
   return null;
 }
 function drawActionSprite(f, frame) {
   const v = f.vis, s = 1.72, px = sx(f.x) + v.ox, lift = v.lift || 0;
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 48 * (1 - Math.min(0.5, lift / 280)), 9, 0, 0, 7); ctx.fill();
-  ctx.save(); ctx.translate(px, GROUND - lift + (f.moving ? Math.sin(f.walkT || 0) * 2 : 0)); ctx.rotate(v.rot || 0);
+  const walking = (f.walkVisual || 0) > 0;
+  ctx.save(); ctx.translate(px, GROUND - lift - (walking ? Math.abs(Math.sin(f.walkT || 0)) * 3 : 0)); ctx.rotate((v.rot || 0) + (walking ? Math.sin(f.walkT || 0) * 0.025 : 0));
   ctx.scale((f.face >= 0 ? 1 : -1) * s * v.sx, s * v.sy);
   const im = IMG.action[f.no], x = (frame % 3) * 128, y = Math.floor(frame / 3) * 128;
   ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128);
   if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.45; ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128); }
+  ctx.restore();
+}
+function drawDownSprite(f) {
+  const px = sx(f.x) + f.vis.ox, im = IMG.down[f.no];
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 3, 88, 8, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(px, GROUND - Math.max(0, f.vis.lift || 0)); ctx.scale(f.face >= 0 ? 1 : -1, 1);
+  ctx.drawImage(im, -128, -128);
+  if (f.vis.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .4; ctx.drawImage(im, -128, -128); }
   ctx.restore();
 }
 function drawFx() {
