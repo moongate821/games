@@ -48,14 +48,12 @@ const Snd = {
 };
 
 // ---------- 画像・データ ----------
-const IMG = { body: {}, face: {}, action: {}, down: {} }, PROP = window.PROP = {};
+const IMG = { body: {}, face: {} }, PROP = window.PROP = {};
 let DATA = null, SIM = false;
 function loadAll() {
   const jobs = [fetch('moves.json').then((r) => r.json()).then((d) => { DATA = d; })];
   for (let i = 1; i <= 20; i++) for (const k of ['body', 'face']) jobs.push(new Promise((res) => { const im = new Image(); im.onload = () => { IMG[k][i] = im; res(); }; im.onerror = res; im.src = `assets/${k}_${String(i).padStart(2, '0')}.png`; }));
-  jobs.push(PUP.loadAll());
-  jobs.push(fetch('assets/action/manifest.json').then((r) => r.json()).then((numbers) => Promise.all(numbers.map((id) => new Promise((res) => { const im = new Image(); im.onload = () => { IMG.action[+id] = im; res(); }; im.onerror = res; im.src = 'assets/action/' + id + '.png'; })))).catch(() => {}));
-  jobs.push(fetch('assets/down/manifest.json').then((r) => r.json()).then((numbers) => Promise.all(numbers.map((id) => new Promise((res) => { const im = new Image(); im.onload = () => { IMG.down[+id] = im; res(); }; im.onerror = res; im.src = 'assets/down/' + id + '.png'; })))).catch(() => {}));
+  jobs.push(PUP.loadReferee());
   jobs.push(fetch('assets/props/props.json').then((r) => r.json()).then((d) => Promise.all(Object.keys(d).map((k) => new Promise((res) => { const im = new Image(); im.onload = () => { PROP[k] = im; res(); }; im.onerror = res; im.src = 'assets/props/' + k + '.png'; })))).catch(() => {}));
   return Promise.all(jobs);
 }
@@ -513,57 +511,34 @@ function drawRopes(front) {
 // ---------- 描画: レスラー ----------
 function drawFighter(f) {
   const im = IMG.body[f.no]; if (!im) return;
-  if (f.trail && f.trail.length > 1 && !PUP.has(f.no)) { const fl = f.face >= 0 ? 1 : -1, h0 = 212, s0 = h0 / im.height, w0 = im.width * s0; f.trail.forEach((p, i) => { if (i === f.trail.length - 1) return; ctx.save(); ctx.globalAlpha = 0.07 + 0.22 * i / f.trail.length; ctx.translate(sx(p.x) + p.ox, GROUND - h0 / 2 - p.lift); ctx.rotate(p.rot); ctx.scale(fl, 1); ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= 0.8; ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.restore(); }); }
+  if (f.trail && f.trail.length > 1) { const fl = f.face >= 0 ? 1 : -1, h0 = 212, s0 = h0 / im.height, w0 = im.width * s0; f.trail.forEach((p, i) => { if (i === f.trail.length - 1) return; ctx.save(); ctx.globalAlpha = 0.07 + 0.22 * i / f.trail.length; ctx.translate(sx(p.x) + p.ox, GROUND - h0 / 2 - p.lift); ctx.rotate(p.rot); ctx.scale(fl, 1); ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= 0.8; ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.restore(); }); }
   if (M.act && M.act.a === f && M.act.mv.id && M.act.mv.id[0] === 'S') { const px0 = sx(f.x), pulse = 0.75 + 0.25 * Math.sin(M.act.t * 18), g = ctx.createRadialGradient(px0, GROUND - 110, 10, px0, GROUND - 110, 190 * pulse); g.addColorStop(0, 'rgba(255,230,255,.75)'); g.addColorStop(0.45, 'rgba(255,80,225,.38)'); g.addColorStop(1, 'rgba(255,60,200,0)'); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(px0 - 220, GROUND - 330, 440, 440); ctx.restore(); }
-  if ((f.mode === 'down' || f.lieN > 0.5) && IMG.down[f.no]) { drawDownSprite(f); return; }
-  const actionFrame = actionFrameFor(f);
-  if (actionFrame !== null && IMG.action[f.no]) { drawActionSprite(f, actionFrame); return; }
-  // 倒れた体と投げられる体は一枚絵でつなぎ、関節の部品がばらけて見えるのを防ぐ。
-  const wholeBody = f.mode === 'down' || f.lieN > 0.5 || (M.act && M.act.d === f && M.act.motionKind === '投');
-  if (!wholeBody && PUP.has(f.no)) { drawPuppet(f); return; }
-  const o = opp(f), v = f.vis;
+  // レスラーは常に元の body_NN.png を描く。衣装・腕の数・体格が場面で変わらない。
+  const v = f.vis, pose = f.poseName || 'guard', lie = f.lieN;
   const hh = 212, sc = hh / im.height, w = im.width * sc;
-  const px = sx(f.x) + v.ox, flip = (f.face >= 0 ? 1 : -1);
+  const px = sx(f.x) + v.ox, flip = f.face >= 0 ? 1 : -1;
+  const walking = f.mode === 'free' && (f.walkVisual || 0) > 0;
+  const walkWave = Math.sin(f.walkT || 0);
+  let tilt = 0, poseLift = 0, poseScaleY = 1;
+  if (walking) { tilt = walkWave * 0.035; poseLift = Math.abs(walkWave) * 3; }
+  else if (pose === 'windup' || pose === 'chopUp') tilt = -0.1;
+  else if (['punch', 'lariat', 'chopDown', 'headbutt', 'elbow', 'slamDown'].includes(pose)) tilt = 0.18;
+  else if (pose === 'kick' || pose === 'lowKick') { tilt = -0.12; poseLift = 7; }
+  else if (pose === 'clinch' || pose === 'grapple' || pose === 'hold') { tilt = 0.08; poseScaleY = 0.96; }
+  else if (pose === 'liftHigh' || pose === 'carry' || pose === 'spark') { tilt = -0.08; poseScaleY = 1.03; }
+  else if (pose === 'stagger') tilt = -0.16;
+  else if (pose === 'getup') poseScaleY = 0.9;
+  if (f.mode === 'free' && !walking && pose === 'guard') poseScaleY += Math.sin(M.time * 3 + f.no) * 0.008;
   // 影
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56 * (1 - Math.min(0.5, v.lift / 280)), 11, 0, 0, 7); ctx.fill();
-  const lie = f.lieN, cyStand = GROUND - hh / 2 - v.lift, cyLie = GROUND - 42 - v.lift * 0.3, cy = lerp(cyStand, cyLie, lie);
-  ctx.save(); ctx.translate(px, cy);
-  const lieRot = (flip >= 0 ? -1 : 1) * 1.45 * lie; ctx.rotate(v.rot + lieRot);
-  ctx.scale(flip * v.sx, v.sy);
+  const cyStand = GROUND - hh / 2 - v.lift - poseLift, cyLie = GROUND - 35 - v.lift * 0.3;
+  ctx.save(); ctx.translate(px, lerp(cyStand, cyLie, lie));
+  ctx.scale(1, 1 - 0.3 * lie); // 寝た体の高さを抑え、元絵の脚が上へ広がらないようにする
+  const lieRot = -flip * 1.55 * lie, poseRot = flip * tilt * (1 - clamp(Math.abs(v.rot) / 0.65, 0, 1)) * (1 - lie);
+  ctx.rotate(v.rot + lieRot + poseRot);
+  ctx.scale(flip * v.sx, v.sy * poseScaleY);
   ctx.drawImage(im, -w / 2, -hh / 2, w, hh);
   if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.7; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
-  ctx.restore();
-}
-function actionFrameFor(f) {
-  if (!M || !IMG.action[f.no]) return null;
-  if (M.over && M.over.winner === f) return null;
-  // 汎用のボディスラム用シートは、回転・逆さ抱えなどの必殺技には使わない。
-  if (M.act && M.act.a === f && M.act.motionKind === '投' && M.act.throwStyle === 'slam') {
-    const A = M.act, u = clamp((A.t - A.intro) / Math.max(0.01, A.dur - A.intro), 0, 1);
-    return u < 0.2 ? 1 : u < 0.42 ? 2 : u < 0.7 ? 3 : 4;
-  }
-  if (M.lock && (M.lock.a === f || M.lock.d === f)) return 1;
-  if (f.getupT > 0 && f.mode === 'free') return 5;
-  if (f.mode === 'free' && f.stun <= 0 && (!M.act || (M.act.a !== f && M.act.d !== f))) return 0;
-  return null;
-}
-function drawActionSprite(f, frame) {
-  const v = f.vis, s = 1.72, px = sx(f.x) + v.ox, lift = v.lift || 0;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 48 * (1 - Math.min(0.5, lift / 280)), 9, 0, 0, 7); ctx.fill();
-  const walking = (f.walkVisual || 0) > 0;
-  ctx.save(); ctx.translate(px, GROUND - lift - (walking ? Math.abs(Math.sin(f.walkT || 0)) * 3 : 0)); ctx.rotate((v.rot || 0) + (walking ? Math.sin(f.walkT || 0) * 0.025 : 0));
-  ctx.scale((f.face >= 0 ? 1 : -1) * s * v.sx, s * v.sy);
-  const im = IMG.action[f.no], x = (frame % 3) * 128, y = Math.floor(frame / 3) * 128;
-  ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128);
-  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.45; ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128); }
-  ctx.restore();
-}
-function drawDownSprite(f) {
-  const px = sx(f.x) + f.vis.ox, im = IMG.down[f.no];
-  ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 3, 88, 8, 0, 0, 7); ctx.fill();
-  ctx.save(); ctx.translate(px, GROUND - Math.max(0, f.vis.lift || 0)); ctx.scale(f.face >= 0 ? 1 : -1, 1);
-  ctx.drawImage(im, -128, -128);
-  if (f.vis.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .4; ctx.drawImage(im, -128, -128); }
   ctx.restore();
 }
 function drawFx() {
@@ -829,5 +804,5 @@ function poseFor(f) {
 }
 function stepPoses(dt) {
   if (!M) return;
-  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; f.walkVisual = f.moving ? 0.12 : Math.max(0, (f.walkVisual || 0) - dt); const [name, rate, extra] = poseFor(f); PUP.step(f, name, dt, rate, extra); f.moving = false; }
+  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; f.walkVisual = f.moving ? 0.12 : Math.max(0, (f.walkVisual || 0) - dt); f.poseName = poseFor(f)[0]; f.moving = false; }
 }

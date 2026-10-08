@@ -66,6 +66,7 @@ const PUP = (() => {
     })).catch(() => { store[no] = { ok: false }; });
   }
   const loadAll = () => Promise.all(Array.from({ length: 21 }, (_, i) => loadOne(i + 1)));
+  const loadReferee = () => loadOne(21);
   const has = (no) => !!(store[no] && store[no].ok) && !/[?&#,]nopuppet/.test(location.href);
   // ----- ポーズの補間(なめらかに近づける) -----
   function newPose() { return Object.assign({}, POSE.guard); }
@@ -136,5 +137,5 @@ const PUP = (() => {
     if (!E) ctx.restore();
     ctx.restore(); return true;
   }
-  return { POSE, has, loadAll, step, draw, store, newPose };
+  return { POSE, has, loadAll, loadReferee, step, draw, store, newPose };
 })();
