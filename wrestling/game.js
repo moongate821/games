@@ -136,15 +136,39 @@ function burst(x, y, k, big) { const w = ['CRASH!', 'BOOM!', 'WHAM!', 'SMASH!', 
 // act = { a, d, mv, kind, t, dur, hit:false, ... }
 function styleOf(mv) {
   const n = mv.name; if (mv.id === 'CHAIR') return 'chop';
-  if (/ラリアット/.test(n)) return 'lariat'; if (/チョップ|手刀|水平/.test(n)) return 'chop'; if (/ヘッドバット|頭突き/.test(n)) return 'headbutt';
+  if (/ラリアット|ボンバー|ミキサー|突撃/.test(n)) return 'lariat'; if (/チョップ|手刀|水平|赤い雨/.test(n)) return 'chop'; if (/ヘッドバット|頭突き/.test(n)) return 'headbutt';
   if (/ロー/.test(n)) return 'lowKick'; if (/キック|蹴|ブーツ|ニー|膝/.test(n)) return 'kick'; if (/エルボー|肘/.test(n)) return 'elbow';
   return 'punch';
 }
+function motionKindOf(mv) {
+  if (mv.kind === '合') return /ネジ|回し/.test(mv.name) ? '投' : '打';
+  if (mv.kind !== '奥') return mv.kind;
+  const n = mv.name + ' ' + (mv.desc || '');
+  if (/マッスル・スパーク/.test(mv.name)) return '投';
+  if (/プレス|山崩れ/.test(n)) return '飛';
+  if (/連撃|連続|ラッシュ|ストーム|ボンバー|クラッシュ|海嘯|シンフォニー/.test(n)) return '打';
+  if (/ロック|締め上げ|四肢と首を完全に固め/.test(n)) return '関';
+  return '投';
+}
+// 参考動画のように、組む→体重を預ける→投げる→着地を技ごとに見せる。
+function throwStyle(mv) {
+  const n = mv.name + ' ' + (mv.desc || '');
+  if (/スパーク/.test(mv.name)) return 'spark';
+  if (/ブレーンバスター|フィッシャーマンバスター|スープレックス|バックドロップ/.test(mv.name)) return 'suplex';
+  if (/バスター/.test(mv.name)) return 'buster';
+  if (/竜巻|ネジ回し|手裏剣|回転しながら/.test(n)) return 'twister';
+  if (/パイルドライバー|ツームストーン|ドライバー|断頭台|判決|ペナルティ|逆さに担ぎ上げ/.test(n)) return 'piledriver';
+  if (/DDT|フェイスバスター/.test(n)) return 'ddt';
+  if (/スープレックス|バックドロップ|ブレーンバスター|サンセット|逆転|順逆|チェンジ/.test(n)) return 'suplex';
+  return 'slam';
+}
 function startAct(a, d, mv, kind, extra) {
   const act = Object.assign({ a, d, mv, kind, t: 0, hit: false, x0: a.x, dx0: d.x, ticks: 0 }, extra || {});
-  const k = mv.kind, sp = mv.id && mv.id[0] === 'S';
-  act.dur = kind === 'whiff' ? 0.4 : k === '打' ? 0.55 : k === '投' ? 1.5 : k === '関' ? 1.35 : k === '飛' ? 1.15 : k === '地' ? 0.8 : k === 'ロ' ? 1.5 : k === '奥' ? 1.9 : k === '角' ? 1.6 : 1;
-  act.style = styleOf(mv); act.intro = sp ? 1.3 : 0; act.dur += act.intro;
+  const k = act.motionKind = motionKindOf(mv), sp = mv.id && mv.id[0] === 'S';
+  act.dur = kind === 'whiff' ? 0.4 : k === '打' ? (sp ? 1.12 : 0.55) : k === '投' ? (sp ? 2.0 : 1.5) : k === '関' ? (sp ? 1.85 : 1.35) : k === '飛' ? (sp ? 1.48 : 1.15) : k === '地' ? 0.8 : k === 'ロ' ? 1.5 : k === '角' ? 1.6 : 1;
+  act.style = styleOf(mv); act.throwStyle = k === '投' ? throwStyle(mv) : null;
+  act.rush = sp && k === '打' && /連撃|連続|ラッシュ|ストーム|雨|分身|全奥義|処刑|海嘯/.test(mv.name + ' ' + (mv.desc || ''));
+  act.intro = sp ? 1.3 : 0; act.dur += act.intro;
   a.mode = 'act'; d.mode = kind === 'strike' || kind === 'whiff' ? d.mode : 'hold';
   if (sp) { a.gauge -= mv.gauge; M.counts.specials++; Snd.special(); flashT = 0.5; banner = { s: mv.name, t: 0, dur: act.dur, special: true, who: a }; }
   else if (kind !== 'whiff' && mv.rank >= 3) banner = { s: mv.name, t: 0, dur: Math.min(1.6, act.dur), who: a };
@@ -158,13 +182,25 @@ function stepAct(dt) {
   const a = A.a, d = A.d, mv = A.mv, dir = a.x < d.x ? 1 : -1, sp = mv.id && mv.id[0] === 'S';
   A.t += dt; let t = A.t - A.intro; const u = clamp(t / (A.dur - A.intro), 0, 1);
   if (t < 0) { a.vis.sy = 1 + 0.04 * Math.sin(A.t * 30); a.vis.flash = 0.12 * ((A.t * 12) % 1 > 0.5 ? 1 : 0); if (rnd() < 0.5) FX.push({ type: 'dot', x: sx(a.x) + rr(-50, 50), y: GROUND - rr(0, 200), vx: rr(-40, 40), vy: rr(-300, -120), t: 0, dur: 0.6, tier: 3 }); return; }   // 必殺技の溜め
-  const big = sp || mv.rank >= 4, k = mv.kind;
+  const big = sp || mv.rank >= 4, k = A.motionKind;
   const fast = (A.kind === 'strike' && u < 0.4) || k === '飛' || k === 'ロ' || A.kind === 'rope'; if (fast) { a.trail = a.trail || []; a.trail.push({ x: a.x, lift: a.vis.lift, rot: a.vis.rot, ox: a.vis.ox }); if (a.trail.length > 7) a.trail.shift(); } else if (a.trail && a.trail.length) a.trail.shift();
   if (A.kind === 'whiff') { a.x += dir * 0.35 * dt; if (u > 0.5 && !A.hit) { A.hit = true; Snd.whiff(); } }
   else if (k === '打' && A.kind !== 'rope') {
     const gap = Math.abs(d.x - a.x);
-    if (u < 0.35) { a.x += dir * Math.min(gap - 0.1, 0.5) * dt * 3.2; a.vis.ox = dir * 12 * ease(u / 0.35); }
-    if (u >= 0.35 && !A.hit) {
+    const impactAt = sp ? (A.rush ? 0.39 : 0.67) : 0.35;
+    if (u < impactAt) { a.x += dir * Math.max(0, Math.min(gap - 0.1, 0.5)) * dt * (sp ? 4.5 : 3.2); a.vis.ox = dir * (sp ? 18 : 12) * ease(u / impactAt); }
+    if (A.rush) {
+      const beats = [0.39, 0.59, 0.79];
+      while (A.ticks < beats.length && u >= beats[A.ticks]) {
+        const last = A.ticks === beats.length - 1; A.ticks++;
+        a.vis.ox = dir * (last ? 26 : 14); d.vis.ox = dir * (last ? 35 : 12); d.vis.rot = dir * (last ? 0.38 : 0.13);
+        if (Math.abs(d.x - a.x) <= 0.34 && d.mode !== 'down') {
+          applyHit(a, d, mv, last, last ? 0.4 : 0.3, !last);
+          if (last && d.life > 0) { d.mode = 'down'; d.downT = rr(1.8, 2.7); M.counts.downs++; }
+        } else if (last) Snd.whiff();
+        if (last) { A.hit = true; A.react = 0.7; }
+      }
+    } else if (u >= impactAt && !A.hit) {
       A.hit = true;
       // 当たりの瞬間に距離を見直す(相手が下がった・倒れたなら空振り=本物の当たり判定)
       const reach = Math.abs(d.x - a.x) <= 0.31 && d.mode !== 'down';
@@ -174,25 +210,67 @@ function stepAct(dt) {
         const tier = sp ? 3 : big ? 2 : mv.rank >= 3 ? 1 : 0;   // 軽・中・大・必殺で、のけぞりの大きさと硬直を変える
         d.x = clamp(d.x + dir * [0.04, 0.08, 0.15, 0.25][tier], -0.95, 0.95);
         d.vis.ox = dir * [10, 18, 30, 44][tier]; d.vis.rot = dir * [0.08, 0.16, 0.28, 0.42][tier]; A.react = [0.2, 0.34, 0.55, 0.8][tier];
-        if (A.knock && d.life > 0) { d.mode = 'down'; d.downT = rr(1.6, 2.6); M.counts.downs++; }
+        if ((A.knock || sp) && d.life > 0) { d.mode = 'down'; d.downT = rr(1.6, 2.6); M.counts.downs++; }
       }
     }
-    if (u > 0.35) { a.vis.ox = lerp(a.vis.ox, 0, 0.2); if (A.hit && d.mode === 'free') { d.vis.ox = lerp(d.vis.ox, 0, 0.08); d.vis.rot = lerp(d.vis.rot, 0, 0.08); } }
+    if (u > impactAt) { a.vis.ox = lerp(a.vis.ox, 0, 0.2); if (A.hit && d.mode === 'free') { d.vis.ox = lerp(d.vis.ox, 0, 0.08); d.vis.rot = lerp(d.vis.rot, 0, 0.08); } }
     if (A.missed && u > 0.6) A.t = Math.max(A.t, A.dur);   // 空振りは余計な間を残さず、あとの隙で表す
   } else if (k === '投' || k === '奥') {
-    // 掴んで → 持ち上げ → 叩きつけ
-    const hold = d.x; a.x = lerp(a.x, hold - dir * 0.13, 0.2);
-    if (u < 0.3) { d.vis.lift = 90 * ease(u / 0.3); d.vis.rot = -dir * 1.4 * ease(u / 0.3); a.vis.sy = 1 - 0.06 * ease(u / 0.3); }
-    else if (u < 0.72) { const v = (u - 0.3) / 0.42; d.vis.lift = 90 + 28 * Math.sin(v * Math.PI); d.vis.rot = -dir * (1.4 + (big ? 5.2 : 1.7) * ease(v)); a.vis.sy = 0.94; d.x = a.x + dir * 0.1; }
-    else { const v = (u - 0.72) / 0.28; d.vis.lift = lerp(90, 0, ease(v)); d.vis.rot = -dir * (big ? 6.6 : 3.1) * (1 - 0.0 * v); d.x = a.x + dir * 0.1; if (u > 0.9 && !A.hit) { A.hit = true; applyHit(a, d, mv, true, 1); if (d.life > 0) { d.mode = 'down'; d.downT = rr(2.0, 3.2); M.counts.downs++; } d.vis.lift = 0; d.vis.rot = 0; d.lieN = 1; } }
+    // 投げは相手との接点を保ち、技の種類ごとに異なる軌道と受け身を描く。
+    const ts = A.throwStyle, bend = ease(clamp(u / 0.23, 0, 1));
+    a.x = lerp(a.x, A.dx0 - dir * 0.15, 0.22);
+    a.vis.sy = 1 - 0.09 * bend * (1 - ease(clamp((u - 0.3) / 0.2, 0, 1)));
+    if (A.ukeAI === undefined) A.ukeAI = rnd() < 0.12 + 0.05 * d.st['耐'];
+    if (u > 0.5 && u < 0.9 && !A.uke && d.life > 0 && (d.human ? wasPressed('KeyZ', 'KeyX', 'KeyC') : A.ukeAI && u > 0.7)) { A.uke = true; say('受け身!', 0.8); Snd.menu(); FX.push({ type: 'ring', x: sx(d.x), y: GROUND + 4, t: 0, dur: 0.4, k: 1, tier: 0 }); }
+    const lift = ease(clamp((u - 0.2) / 0.31, 0, 1));
+    const fall = ease(clamp((u - 0.62) / 0.24, 0, 1));
+    const landing = ts === 'suplex' ? -0.24 : ts === 'ddt' ? 0.19 : 0.17;
+    d.x = a.x + dir * lerp(0.15, landing, fall);
+    if (ts === 'spark') {
+      a.vis.lift = 64 * lift * (1 - fall);
+      d.vis.lift = 126 * lift * (1 - fall);
+      d.vis.rot = -dir * (0.7 * lift + 0.9 * fall);
+      a.vis.rot = dir * 0.28 * lift * (1 - fall);
+      d.x = a.x + dir * lerp(0.13, 0.06, lift);
+    } else if (ts === 'buster') {
+      d.vis.lift = 86 * lift * (1 - fall);
+      d.vis.rot = -dir * (1.5 * lift + 0.45 * fall);
+      a.vis.sy = 1 - 0.13 * fall;
+    } else if (ts === 'twister') {
+      d.vis.lift = (68 * lift + 16 * Math.sin(u * 18)) * (1 - fall);
+      d.vis.rot = -dir * 6.1 * ease(clamp((u - 0.3) / 0.56, 0, 1));
+      a.vis.rot = dir * 0.18 * Math.sin(u * 16);
+    } else if (ts === 'suplex') {
+      d.vis.lift = (72 * lift + 27 * Math.sin(Math.PI * clamp((u - 0.42) / 0.44, 0, 1))) * (1 - fall);
+      d.vis.rot = -dir * (0.85 * lift + 1.65 * fall);
+      a.vis.rot = -dir * 0.76 * fall; a.vis.lie = 0.82 * fall;
+    } else if (ts === 'ddt') {
+      d.vis.lift = 43 * lift * (1 - fall); d.vis.rot = dir * (0.38 * lift + 1.12 * fall);
+      a.vis.rot = dir * 0.42 * fall; a.vis.lie = 0.72 * fall;
+    } else if (ts === 'piledriver') {
+      d.vis.lift = 83 * lift * (1 - fall); d.vis.rot = -dir * Math.PI * lift;
+      a.vis.sy = 1 - 0.2 * fall; a.vis.lift = -9 * fall;
+    } else {
+      d.vis.lift = (76 * lift + 20 * Math.sin(Math.PI * clamp((u - 0.42) / 0.44, 0, 1))) * (1 - fall);
+      d.vis.rot = -dir * (1.05 * lift + 1.1 * fall);
+      a.vis.rot = dir * 0.25 * fall;
+    }
+    if (u >= 0.86 && !A.hit) {
+      A.hit = true; A.hitT = A.t;
+      applyHit(a, d, mv, !A.uke, A.uke ? 0.6 : 1);
+      if (d.life > 0) { d.mode = 'down'; d.downT = rr(2.0, 3.2) * (A.uke ? 0.55 : 1); M.counts.downs++; }
+      d.vis.lift = 0; d.vis.rot = 0; d.lieN = 1;
+    }
+    if (A.hit) { d.vis.lift = 0; d.vis.rot = 0; }
   } else if (k === '関') {
-    d.x = lerp(d.x, a.x + dir * 0.12, 0.2); d.vis.rot = -dir * 0.35; d.vis.ox = Math.sin(A.t * 40) * 5; a.vis.ox = Math.sin(A.t * 40) * 2;
-    const n = Math.floor(u * 3.2); while (A.ticks < n && A.ticks < 3) { A.ticks++; applyHit(a, d, mv, false, 0.34, false); if (A.ticks === 3) FX.push({ type: 'ring', x: sx(d.x), y: GROUND - 90, t: 0, dur: 0.4, k: 1.2, tier: 1, air: true }); }
+    d.x = lerp(d.x, a.x + dir * 0.12, 0.2); d.vis.rot = -dir * (sp ? 0.6 : 0.35); d.vis.ox = Math.sin(A.t * 40) * 5; a.vis.ox = Math.sin(A.t * 40) * 2;
+    if (sp && /タワーブリッジ|背骨/.test(mv.name + (mv.desc || ''))) d.vis.lift = 42 * ease(clamp(u / 0.32, 0, 1));
+    const n = Math.floor(u * 3.2); while (A.ticks < n && A.ticks < 3) { A.ticks++; applyHit(a, d, mv, false, 0.34, false); if (A.ticks === 3) { A.hit = true; FX.push({ type: 'ring', x: sx(d.x), y: GROUND - 90, t: 0, dur: 0.4, k: 1.2, tier: 1, air: true }); } }
     if (d.life <= 0) { A.t = A.dur; }
   } else if (k === '飛') {
     // 飛びつき(倒れた相手へ。立っている相手へは、ぶつかる)
     const tx = d.x - dir * 0.14; const v = clamp(u / 0.62, 0, 1);
-    a.x = lerp(A.x0, tx, ease(v)); a.vis.lift = Math.sin(v * Math.PI) * 150; a.vis.rot = dir * 0.9 * Math.sin(v * Math.PI) + (mv.name.indexOf('宙') >= 0 ? v * 6.28 * dir : 0);
+    a.x = lerp(A.x0, tx, ease(v)); a.vis.lift = Math.sin(v * Math.PI) * (sp ? 190 : 150); a.vis.rot = dir * 0.9 * Math.sin(v * Math.PI) + (/宙|ローリング|スター|バウンス/.test(mv.name) ? v * 6.28 * dir : 0);
     if (u >= 0.62 && !A.hit) { A.hit = true; a.vis.lift = 0; a.vis.rot = 0; applyHit(a, d, mv, true, A.mult); if (d.life > 0 && d.mode !== 'down') { d.mode = 'down'; d.downT = rr(1.8, 2.8); M.counts.downs++; } }
   } else if (k === '地') {
     a.x = lerp(a.x, d.x - dir * 0.2, 0.15); const v = clamp(u / 0.45, 0, 1); a.vis.lift = Math.sin(clamp(u / 0.5, 0, 1) * Math.PI) * 55; a.vis.rot = dir * 0.2 * Math.sin(v * Math.PI);
@@ -206,7 +284,7 @@ function stepAct(dt) {
   }
   if (A.t >= A.dur) {
     a.vis = { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 }; if (d.mode !== 'down') d.vis = { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 };
-    a.trail = []; a.mode = 'free'; a.cool = A.kind === 'whiff' ? 0.5 : 0.25; if (d.mode === 'hold') { d.mode = 'free'; d.stun = A.mv.kind === '関' ? 0.6 : 0.3; }
+    a.trail = []; a.mode = 'free'; a.cool = A.kind === 'whiff' ? 0.5 : 0.25; if (d.mode === 'hold') { d.mode = 'free'; d.stun = A.motionKind === '関' ? 0.6 : 0.3; }
     if (d.mode === 'free' && A.kind === 'strike' && A.hit) d.stun = A.react || 0.25;
     if (A.missed) a.cool = 0.75;   // 空振りの隙
     if (d.mode === 'down') d.vis.rot = 0;
@@ -215,7 +293,7 @@ function stepAct(dt) {
 }
 
 // ---------- 組み付き(技選び) ----------
-function startLock(a, d) { a.mode = 'lock'; d.mode = 'hold'; M.lock = { a, d, t: 0, sel: 0, items: lockItems(a), limit: 3.4 }; a.x = clamp(a.x, -0.9, 0.9); }
+function startLock(a, d) { a.mode = 'lock'; d.mode = 'hold'; M.lock = { a, d, t: 0, sel: 0, items: lockItems(a), limit: 3.4, sp: { a: 0, d: 0, T: 1.0, t: 0 } }; a.x = clamp(a.x, -0.9, 0.9); }
 function lockItems(a) {
   const it = [], seen = new Set();
   for (const s of a.specials) if (a.gauge >= s.gauge - 0.001) it.push(s);
@@ -228,9 +306,27 @@ function lockItems(a) {
   return it.slice(0, 6);
 }
 function lockMoveName(m) { return (m.id[0] === 'S' ? '★' : '') + m.name; }
+function stepStruggle(L, dt) {   // 組んだ瞬間の力比べ: 連打で押し勝つ。勝てば技が1.15倍、端なら ロープに押し込む。負ければふりほどかれる
+  const S = L.sp, a = L.a, d = L.d; S.T -= dt; S.t += dt;
+  for (const [f, k] of [[a, 'a'], [d, 'd']]) {
+    if (f.human) { if (wasPressed('KeyZ', 'KeyX', 'KeyC', 'Enter', 'Space')) S[k] += 1; }
+    else S[k] += dt * (2.4 + f.st['力'] * 0.32) * rr(0.7, 1.3);
+  }
+  a.vis.ox = Math.sin(S.t * 38) * 3; d.vis.ox = Math.sin(S.t * 38 + 2) * 3;
+  if (S.T > 0) return;
+  a.vis.ox = 0; d.vis.ox = 0; L.t = 0; L.sp = null;
+  const diff = S.a - S.d, dir = d.x >= a.x ? 1 : -1;
+  if (diff < -1.2) {
+    M.lock = null; a.mode = 'free'; d.mode = 'free'; a.stun = 0.5; a.cool = 0.3; d.stun = 0.05; a.x = clamp(a.x - dir * 0.12, -0.95, 0.95);
+    say('ふりほどいた!', 0.9); Snd.whiff(); FX.push({ type: 'star', x: sx((a.x + d.x) / 2), y: GROUND - 112, t: 0, dur: 0.3, k: 0.9, tier: 0 });
+  } else if (diff > 1.2) {
+    L.bonus = true; say('力で押し込んだ!', 0.8); Snd.menu();
+    if (Math.abs(d.x) > 0.8) { applyHit(a, d, { id: 'PUSH', name: 'ロープ押し込み', kind: 'ロ', rank: 2, dmg: 7, cost: 0, part: '背', sit: '立ち' }, false, 1); d.x = clamp(d.x + dir * 0.0, -0.95, 0.95); say('ロープに押し込んだ!', 0.9); }
+  }
+}
 function chooseLock(i) {
   const L = M.lock; if (!L) return; const m = L.items[i]; if (!m) return; Snd.menu();
-  M.lock = null; const a = L.a, d = L.d; a.mode = 'act'; startAct(a, d, m, 'lock');
+  M.lock = null; const a = L.a, d = L.d; a.mode = 'act'; startAct(a, d, m, 'lock', { mult: L.bonus ? 1.15 : 1 });
 }
 
 // ---------- ピン(3カウント) ----------
@@ -256,11 +352,20 @@ function freeStep(f, dt) {
   const o = opp(f);
   f.cool = Math.max(0, f.cool - dt); f.stun = Math.max(0, f.stun - dt); f.power = Math.min(MAXPOWER, f.power + dt * (0.9 + f.st['気'] * 0.12));
   f.vis.flash = Math.max(0, f.vis.flash - dt);
+  if (f.slide) { f.x = clamp(f.x + f.slide * dt * 0.8, -0.95, 0.95); f.slide *= Math.pow(0.02, dt); if (Math.abs(f.slide) < 0.05) f.slide = 0; }
   if (f.mode === 'down') {
     f.downT -= dt * (1 + f.mash * 0.0); lieTo(f, true, dt); f.vis.lie = f.lieN;
     if (f.human && wasPressed('KeyZ', 'KeyX', 'KeyC', 'KeyV', 'Enter', 'Space')) f.downT -= 0.22;
     if (!f.human && rnd() < dt * 1.2) f.downT -= 0.1;
-    if (f.downT <= 0 && !(M.pin && M.pin.d === f)) { f.mode = 'free'; f.stun = 0.2; f.invuln = 0.4; }
+    if (f.downT <= 0 && !(M.pin && M.pin.d === f)) {
+      if (!f.human && !f.fakeDone && f.ratio > 0.3 && rnd() < 0.12) { f.fakeDone = true; f.downT = 0.6; return; }   // 狸寝入り: もう少し寝たふり
+      const o2 = opp(f), away = f.x >= o2.x ? 1 : -1;
+      f.mode = 'free'; f.stun = 0.2; f.invuln = 0.4;
+      if (f.fakeDone) { f.fakeDone = false; f.stun = 0; f.invuln = 0.8; f.surprise = 1.2; say('狸寝入りだった!', 0.9); }   // 起きざま不意打ち
+      else if (f.human ? (keys.ArrowDown || f.ratio < 0.3 && !keys.ArrowLeft && !keys.ArrowRight && false) : f.ratio < 0.35) { f.stun = 0.6; f.power = Math.min(MAXPOWER, f.power + 1.5); }   // ゆっくり起きて気力を戻す
+      else if (f.human ? (keys.ArrowLeft || keys.ArrowRight) : rnd() < 0.2) { f.slide = (f.human ? (keys.ArrowRight ? 1 : -1) : away) * 1.1; f.invuln = 0.7; f.stun = 0; }   // ころがって逃げる
+      f.fakeDone = false;
+    }
     return;
   }
   lieTo(f, false, dt); f.vis.lie = f.lieN;
@@ -289,7 +394,7 @@ function freeStep(f, dt) {
     const mv = { id: 'CHAIR', name: 'パイプ椅子攻撃', kind: '打', rank: 4, dmg: 20, cost: 2, part: '頭', sit: '立ち' };
     f.holding = null; startAct(f, o, mv, 'strike', { dodge: false, knock: true, mult: 1 }); return;
   }
-  if (I.special && near) { const s = f.specials.filter((m) => f.gauge >= m.gauge - 0.001); if (s.length) { startLock(f, o); M.lock.items = s.concat(M.lock.items).slice(0, 6); return; } }
+  if (I.special && near) { const s = f.specials.filter((m) => f.gauge >= m.gauge - 0.001); if (s.length) { startLock(f, o); M.lock.sp = null; M.lock.items = s.concat(M.lock.items).slice(0, 6); return; } }
   if (I.rope && Math.abs(f.x) > 0.7 && f.rope.length && d < 1.5) { startAct(f, o, pick(f.rope), 'rope'); return; }
   if (I.light || I.heavy) {
     const mv = I.heavy ? pick(f.heavy) : pick(f.light);
@@ -315,6 +420,7 @@ function aiIntent(f, o, dt) {
     if (d > 0.4 && d < 1.0 && f.dive.length && A.t <= 0 && rnd() < 0.4) { A.t = 0.5; I.heavy = true; I.mx = 0; }
     return I;
   }
+  if (f.surprise > 0) { f.surprise -= dt; if (d < 0.34) { f.surprise = 0; I.heavy = true; return I; } I.mx = dir; return I; }
   if (!f.holding && Math.abs(f.x) > 0.8 && M.chairs.some((c) => c.avail && Math.sign(f.x) === c.side) && rnd() < 0.5 * dt * 4) { I.grab = true; I.up = true; return I; }
   if (f.holding === 'chair' && d < 0.3 && A.t <= 0) { A.t = rr(0.3, 0.7); I.heavy = true; return I; }
   if (d > 0.27) { I.mx = dir * (rnd() < 0.9 ? 1 : 0); if (d < 0.6 && A.t <= 0) { A.t = rr(0.2, 0.5); if (rnd() < 0.25) I.light = true; } return I; }
@@ -340,8 +446,8 @@ function stepMatch(dt) {
   if (M.time > M.limit) { const [a, b] = M.p; endMatch(a.ratio >= b.ratio ? a : b, '判定'); return; }
   if (M.act) stepAct(dt);
   else if (M.lock) {
-    const L = M.lock; L.t += dt; Snd.ac && 0;
-    if (L.a.human) {
+    const L = M.lock; L.t += dt; if (L.sp) stepStruggle(L, dt);
+    if (L.sp) { /* 力比べ中 */ } else if (L.a.human) {
       if (wasPressed('ArrowUp')) { L.sel = (L.sel + L.items.length - 1) % L.items.length; Snd.menu(); }
       if (wasPressed('ArrowDown')) { L.sel = (L.sel + 1) % L.items.length; Snd.menu(); }
       for (let i = 0; i < 6; i++) if (wasPressed('Digit' + (i + 1))) chooseLock(i);
@@ -350,7 +456,7 @@ function stepMatch(dt) {
     } else aiLock(L);
   } else if (M.pin) stepPin(dt);
   for (const f of M.p) { if (f.mode === 'act' && !M.act) f.mode = 'free'; if (f.mode === 'hold' && !M.act && !M.lock) f.mode = 'free'; }
-  if (!M.act) for (const f of M.p) freeStep(f, dt); else { for (const f of M.p) { f.cool = Math.max(0, f.cool); f.vis.flash = Math.max(0, f.vis.flash - dt); lieTo(f, f.mode === 'down', dt); f.vis.lie = f.lieN; } }
+  if (!M.act) for (const f of M.p) freeStep(f, dt); else { for (const f of M.p) { f.cool = Math.max(0, f.cool); f.vis.flash = Math.max(0, f.vis.flash - dt); lieTo(f, f.mode === 'down', dt); f.vis.lie = Math.max(f.vis.lie || 0, f.lieN); } }
   // 他の演出
 }
 function stepRef(dt) {
@@ -455,7 +561,13 @@ function drawHud() {
   if (banner) { const u = banner.t / banner.dur, a = u < 0.1 ? u / 0.1 : u > 0.85 ? (1 - u) / 0.15 : 1; ctx.globalAlpha = clamp(a, 0, 1); ctx.fillStyle = banner.special ? 'rgba(80,0,60,.9)' : 'rgba(10,20,70,.9)'; ctx.fillRect(W / 2 - 250, 456, 500, 44); ctx.strokeStyle = banner.special ? '#ff60e0' : '#fff'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 250, 456, 500, 44); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((banner.special ? '★ ' : '') + banner.s + (banner.special ? ' ★' : ''), W / 2, 487); ctx.globalAlpha = 1; }
 }
 function drawLock() {
-  const L = M.lock; if (!L.a.human) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(W / 2 - 150, 130, 300, 34); ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(L.a.name + ' が組みついた!', W / 2, 154); return; }
+  const L = M.lock;
+  if (L.sp) {   // 力比べ(連打)
+    const S = L.sp, x0 = W / 2 - 170, tot = Math.max(1, S.a + S.d), r = clamp(S.a / tot, 0.04, 0.96);
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(x0 - 12, 100, 364, 70); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('力比べ! ボタン連打!', W / 2, 128);
+    ctx.fillStyle = '#331'; ctx.fillRect(x0, 140, 340, 16); ctx.fillStyle = L.a.human ? '#5cf' : '#f66'; ctx.fillRect(x0, 140, 340 * r, 16); ctx.fillStyle = L.d.human ? '#5cf' : '#f66'; ctx.fillRect(x0 + 340 * r, 140, 340 * (1 - r), 16); ctx.fillStyle = '#fff'; ctx.fillRect(x0 + 340 * r - 2, 136, 4, 24);
+    return;
+  } if (!L.a.human) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(W / 2 - 150, 130, 300, 34); ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(L.a.name + ' が組みついた!', W / 2, 154); return; }
   const n = L.items.length, h = 30, y0 = 112, w = 330, x0 = W / 2 - w / 2;
   ctx.fillStyle = 'rgba(8,12,50,.88)'; ctx.fillRect(x0 - 10, y0 - 34, w + 20, n * h + 46); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(x0 - 10, y0 - 34, w + 20, n * h + 46);
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('組み! 技を選べ(↑↓ + Z / 数字)', x0, y0 - 12);
@@ -532,11 +644,11 @@ function drawMatch() {
   if (crowdT > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,230,160,' + (0.1 + 0.08 * Math.sin(M.time * 30)) * Math.min(1, crowdT) + ')'; ctx.fillRect(0, 60, W, 180); ctx.fillStyle = '#fff'; for (let i = 0; i < 10; i++) ctx.fillRect(rr(0, W), rr(70, 230), 3, 3); ctx.restore(); }
   drawRopes(false);
   if (M.ref && PUP.has(21)) { const R = M.ref, px = sx(R.x); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(px, GROUND - 4, 46, 9, 0, 0, 7); ctx.fill(); PUP.draw(ctx, R, px, GROUND - 8, R.face, 0, 0, R.vis); }
-  const order = M.p.slice().sort((a, b) => (a.mode === 'down' ? -1 : 0) - (b.mode === 'down' ? -1 : 0)); const first = M.act ? [M.act.d, M.act.a] : order; for (const f of first) drawFighter(f);
+  const order = M.p.slice().sort((a, b) => (a.mode === 'down' ? -1 : 0) - (b.mode === 'down' ? -1 : 0)); const first = M.act ? [M.act.d, M.act.a] : M.lock ? [M.lock.d, M.lock.a] : M.pin ? [M.pin.d, M.pin.a] : order; for (const f of first) drawFighter(f);
   drawRopes(true); drawRingside(); drawFx(); ctx.restore();
   if (flashT > 0) { ctx.fillStyle = `rgba(${flashRGB},${Math.min(1, flashT)})`; ctx.fillRect(0, 0, W, H); }
   if (M.act && M.act.intro > 0 && M.act.t < M.act.intro) drawCutIn(M.act);
-  if (M.praise) { const p = M.praise, u = p.t / p.dur, sc = 1 + Math.max(0, 0.25 - p.t) * 3; ctx.save(); ctx.translate(W / 2, 150); ctx.rotate(-0.06); ctx.scale(sc, sc); ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.font = 'bold ' + (p.tier >= 3 ? 84 : 64) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 10; ctx.strokeStyle = p.tier >= 3 ? '#601070' : '#8a1010'; ctx.fillStyle = p.tier >= 3 ? '#ffb0f8' : '#ffe040'; ctx.strokeText(p.s, 0, 0); ctx.fillText(p.s, 0, 0); ctx.restore(); }
+  if (M.praise) { const p = M.praise, u = p.t / p.dur, sc = 1 + Math.max(0, 0.25 - p.t) * 2; ctx.save(); ctx.translate(W / 2, 86); ctx.rotate(-0.06); ctx.scale(sc, sc); ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.font = 'bold ' + (p.tier >= 3 ? 62 : 54) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = p.tier >= 3 ? '#601070' : '#8a1010'; ctx.fillStyle = p.tier >= 3 ? '#ffb0f8' : '#ffe040'; ctx.strokeText(p.s, 0, 0); ctx.fillText(p.s, 0, 0); ctx.restore(); }
   drawHud();
 }
 
@@ -575,7 +687,7 @@ function fastSim(sec, a, b) {
   const r = { winner: M.over ? M.over.winner.name : null, how: M.over ? M.over.how : null, time: +M.time.toFixed(1), life: M.p.map((f) => Math.round(f.life)), counts: M.counts };
   document.title = JSON.stringify(r); return r;
 }
-window.__pw = { fastSim, get M() { return M; }, newMatch, get state() { return state; }, chooseLock, stepMatch, keys, pressed };
+window.__pw = { startAct, startLock, fastSim, get M() { return M; }, newMatch, get state() { return state; }, chooseLock, stepMatch, keys, pressed };
 loadAll().then(() => {
   buildBg(); state = 'select';
   const vs = hp('vs'), sim = hp('sim'), auto = hp('auto') !== null || HASH.indexOf('auto') === 0;
@@ -598,7 +710,7 @@ function drawHelp() {
   const rows = [['←  →', '移動(相手に近づく/離れる)'], ['Z', '弱打 ― 立ち技の打撃(倒れた相手には 地上技)'], ['X', '強打 ― 重い打撃(倒れた相手には 飛び技)'], ['C', '組み付き → 技を選ぶ(倒れた相手には カバー=3カウント)'], ['↑ + X', 'ロープ反動技(ロープ際で)'], ['V', '必殺技(ゲージがたまっていれば組みで出せる)'], ['連打', 'カバーされたら ボタン連打で返す / 倒れたとき 連打で早く起きる'], ['組み中', '↑↓ + Z か 数字 1〜6 で技を選ぶ(3秒で自動)']];
   ctx.font = 'bold 15px sans-serif'; let y = 72;
   for (const [k, t] of rows) { ctx.fillStyle = '#ff9040'; ctx.fillRect(24, y - 15, 70, 22); ctx.fillStyle = '#10102a'; ctx.textAlign = 'center'; ctx.fillText(k, 59, y + 1); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = '14px sans-serif'; wrapText(t, 102, y, 270, 17); ctx.font = 'bold 15px sans-serif'; y += (t.length > 19 ? 40 : 28); }
-  ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('iPhone: 左手=◀▶(移動)▲▼ / 右手=弱・強・組、必・ロープ・椅子。技は画面をタップで選ぶ', 24, y + 14); ctx.fillText('勝ち方: 3カウント / K.O.(体力0) / 時間切れ判定', 24, y + 34); ctx.fillText('青いバー=気力(技を出すと減る) ピンクの3つ=必殺ゲージ', 24, y + 54);
+  ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('iPhone: 左手=◀▶(移動)▲▼ / 右手=弱・強・組、必・ロープ・椅子。技は画面をタップで選ぶ', 24, y + 14); ctx.fillText('勝ち方: 3カウント / K.O.(体力0) / 時間切れ判定', 24, y + 34); ctx.fillText('青いバー=気力(技を出すと減る) ピンクの3つ=必殺ゲージ', 24, y + 54); ctx.fillText('組んだら連打で力比べ / 投げられる瞬間にボタンで受け身 / 倒れたあと ◀▶でころがり ▼で休む', 24, y + 74);
   // 右: そのレスラーの技表
   const X = 404; ctx.fillStyle = '#16163a'; ctx.fillRect(X - 8, 50, W - X - 8, 428); ctx.strokeStyle = '#445'; ctx.strokeRect(X - 8, 50, W - X - 8, 428);
   const fi = IMG.face[helpNo]; if (fi) ctx.drawImage(fi, X, 56, 56, 56);
@@ -619,29 +731,50 @@ function wrapText(t, x, y, mw, lh) { let line = '', yy = y; for (const ch of t) 
 function drawPuppet(f) {
   const v = f.vis, flip = f.face >= 0 ? 1 : -1, px = sx(f.x) + v.ox;
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56 * (1 - Math.min(0.5, v.lift / 280)), 11, 0, 0, 7); ctx.fill();
-  PUP.draw(ctx, f, sx(f.x), GROUND, flip, v.lift, f.lieN, v);
+  PUP.draw(ctx, f, sx(f.x), GROUND, flip, v.lift, Math.max(f.lieN, v.lie || 0), v);
 }
 function actPose(A, f) {
-  const att = A.a === f, mv = A.mv, k = mv.kind, ti = A.t - A.intro, u = clamp(ti / Math.max(0.01, A.dur - A.intro), 0, 1);
+  const att = A.a === f, mv = A.mv, k = A.motionKind, ti = A.t - A.intro, u = clamp(ti / Math.max(0.01, A.dur - A.intro), 0, 1);
   if (ti < 0) return att ? 'power' : 'guard';
   const hitAge = A.hitT === undefined ? 0 : A.t - A.hitT;
   if (A.kind === 'whiff' || (k === '打' && A.kind !== 'rope')) {
-    if (att) return u < 0.3 ? (A.style === 'chop' ? 'chopUp' : 'windup') : u < 0.7 ? (A.style === 'chop' ? 'chopDown' : A.style) : 'guard';
-    return A.hit && !A.dodge && u < 0.8 ? 'stagger' : A.dodge && u < 0.6 ? 'windup' : 'guard';
+    if (att && A.rush) return u < 0.28 ? 'windup' : u < 0.49 ? 'punch' : u < 0.69 ? 'chopDown' : u < 0.86 ? 'lariat' : 'guard';
+    if (att) return u < (A.intro ? 0.52 : 0.3) ? (A.style === 'chop' ? 'chopUp' : 'windup') : u < (A.intro ? 0.85 : 0.7) ? (A.style === 'chop' ? 'chopDown' : A.style) : 'guard';
+    return (A.ticks > 0 || A.hit) && !A.dodge && u < 0.9 ? 'stagger' : A.dodge && u < 0.6 ? 'windup' : 'guard';
   }
-  if (k === '投' || k === '奥') return att ? (u < 0.3 ? 'grapple' : u < 0.72 ? 'liftHigh' : 'slamDown') : (A.hit ? 'down' : 'held');
-  if (k === '関') return att ? 'hold' : 'held';
+  if (k === '投' || k === '奥') {
+    if (!att) return A.hit ? 'down' : A.throwStyle === 'piledriver' && u > 0.32 ? 'tucked' : 'held';
+    if (u < 0.22) return 'clinch';
+    if (u < 0.62) return 'liftHigh';
+    if (A.throwStyle === 'spark') return u < 0.86 ? 'spark' : 'kneel';
+    if (A.throwStyle === 'buster') return u < 0.86 ? 'carry' : 'kneel';
+    if (A.throwStyle === 'suplex') return 'bridge';
+    if (A.throwStyle === 'ddt') return 'fallBack';
+    return u < 0.86 ? 'slamDown' : 'kneel';
+  }
+  if (k === '関') return att ? (A.intro && /タワーブリッジ|背骨/.test(mv.name + (mv.desc || '')) ? 'bridge' : 'hold') : 'held';
   if (k === '飛') return att ? (u < 0.62 ? 'dive' : 'elbowDrop') : (f.mode === 'down' ? 'down' : 'stagger');
   if (k === '地') return att ? (u < 0.45 ? (/エルボー|ヒップ/.test(mv.name) ? 'elbowDrop' : 'stomp') : 'guard') : 'down';
   if (k === 'ロ' || A.kind === 'rope') return att ? (u < 0.35 ? 'runRope' : 'lariat') : (u > 0.6 ? 'stagger' : 'guard');
   return att ? 'dive' : 'stagger';
+}
+// 投げ技で持ち上げられた側: 持ち上げで背をそらし、頭上で体を振って(足がおくれてついてくる)、叩きつけの前に くの字に折れる
+function flexOf(A) {
+  const u = clamp((A.t - A.intro) / Math.max(0.01, A.dur - A.intro), 0, 1);
+  if (u < 0.3) { const s = u / 0.3; return { tr: -0.55 * s, hr: -0.6 * s, af1: -1.1 * s, ab1: -1.2 * s, lf1: -0.5 * s, lb1: -0.8 * s, lf2: -0.3 * s }; }
+  if (u < 0.72) { const v = (u - 0.3) / 0.42, w = Math.sin(v * Math.PI * 1.6); return { tr: -0.5 + 0.55 * w, hr: -0.55 + 0.7 * w, af1: -1 + 0.8 * w, ab1: -1.1 + 0.9 * w, lf1: -0.5 - 0.9 * w, lb1: -0.8 - 0.9 * w, lf2: -0.4 * w, lb2: -0.4 * w }; }
+  const v = (u - 0.72) / 0.28; return { tr: 0.15 + 0.85 * v, hr: 0.2 + 0.5 * v, af1: 0.4 + 0.8 * v, ab1: 0.4 + 0.8 * v, lf1: 0.4 + 1.0 * v, lb1: 0.2 + 1.0 * v, lf2: -0.9 * v, lb2: -0.9 * v };   // 叩きつけ直前: くの字
 }
 function poseFor(f) {
   if (!M) return ['guard'];
   if (M.over && M.over.winner === f) return ['power'];
   if (f.lieN > 0.5 || f.mode === 'down') return ['down'];
   if (M.pin && M.pin.a === f) return ['pinTop'];
-  if (M.act && (M.act.a === f || M.act.d === f)) return [actPose(M.act, f), 22];
+  if (M.act && (M.act.a === f || M.act.d === f)) {
+    const A = M.act, k = A.motionKind;
+    if (A.d === f && (k === '投' || k === '奥') && A.t >= A.intro && !A.hit) return [A.throwStyle === 'piledriver' ? 'tucked' : 'held', 24, flexOf(A)];   // 持ち上げられた体がしなる
+    return [actPose(A, f), 22];
+  }
   if (M.lock && (M.lock.a === f || M.lock.d === f)) return ['grapple'];
   if (f.stun > 0) return ['stagger', 20];
   if (f.mode === 'free') {
