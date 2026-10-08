@@ -75,14 +75,14 @@ function aiInput() {   // AI(とデモの自機): 走行ライン・加速帯・
   if (me.blockK > 0) for (const h of PLAYERS) { if (h === me || !h.human) continue; const dz = relZ(me.z, h.z); if (dz > 200 && dz < 1500 && Math.abs(h.x - me.x) < 0.4) target = lerp(target, h.x, me.blockK); }
   target = clamp(target, -0.88, 0.88);   // 壁に寄りすぎない
   const wantDrift = Math.abs(cNear) > 3.2 && me.kmh > 170 && me.skill > 0.95;   // 急なカーブでは、ドリフト
-  { const g0 = me.bk.stat.grip, spd = me.kmh / 300, dr = me.drifting ? 0.3 : 1, lcA = latCoef(me.bk, me.kmh, me.air, me.drifting ? 1 : 0), ff = segAt(me.z).curve * spd * spd * 0.22 / g0 * dr * lcA.damp / lcA.A;   // 遠心力を先に打ち消す(先読みの舵)
+  { const g0 = me.bk.stat.grip, spd = me.kmh / 300, dr = me.drifting ? 0.3 : 1, lcA = latCoef(me.bk, me.kmh, me.air, me.drifting ? 1 : 0), ff = segAt(me.z).curve * spd * spd * CF_K / g0 * dr * lcA.damp / lcA.A;   // 遠心力を先に打ち消す(先読みの舵)
     if (Math.abs(cNear) > 2) target = lerp(target, clamp(cNear * 0.14, -0.7, 0.7), 0.4);   // 急なカーブでは、内側を優先
     for (const e of ents) {   // 障害物(ゲートの壁)をよける: 最後に決める。上手な AI は、内側の狭いゲート(加速帯)を狙う
       if (e.t !== 'barrier') continue; const dz = relZ(e.z, me.z); if (dz < -100 || dz > 3000 + me.kmh * KMH * 0.7) continue;
       const l = e.x - e.w - 0.15, rr = e.x + e.w + 0.15, gapIn = e.x > 0 ? rr : l, gapOut = e.x > 0 ? l : rr;
       if (Math.abs(target - e.x) < e.w + 0.12 || Math.abs(me.x - e.x) < e.w + 0.1) target = me.skill > 1.0 && Math.abs(gapIn) < 1.05 ? clamp(gapIn, -1.02, 1.02) : gapOut;
     }
-    r.steer = clamp((target - me.x) * 3.4 - me.vx * 1.15 + ff - (me.drifting ? me.driftDir * 0.28 : 0), -1, 1);   // 横の速度にも慣性があるので、位置と速度の両方で舵を切る
+    r.steer = clamp((target - me.x) * 3.4 - me.vx * 1.5 + ff - (me.drifting ? me.driftDir * 0.28 : 0), -1, 1);   // 横の速度にも慣性があるので、位置と速度の両方で舵を切る
     if (wantDrift) { r.drift = true; if (!me.drifting && Math.abs(r.steer) < 0.35) r.steer = Math.sign(cNear) * 0.4; } }
   // ブーストと熱: 直線で使い、熱くなりすぎる前にやめる
   const straight = Math.abs(cNear) < 1.6 && Math.abs(c1) < 2.4;
@@ -178,10 +178,11 @@ function stepEngine(dt, inp) {
 // 横方向の運動(2026-10-07: AETHER RUSH のように「滑る」感触にした。横の速度に慣性があり、舵をやめてもしばらく滑る。ドリフト中はさらに滑る)
 function latCoef(B, kmh, air, drift) {
   const gr = B.stat.grip, spd = kmh / 300;
-  return { A: 4.6 * gr * Math.min(1, 0.25 + spd) * (air ? 0.45 : 1) * (drift ? 1.25 : 1),                       // 舵が横の速度を増やす強さ
+  return { A: 6.0 * gr * Math.min(1, 0.25 + spd) * (air ? 0.45 : 1) * (drift ? 1.25 : 1),                       // 舵が横の速度を増やす強さ
            damp: (air ? 0.9 : drift ? 1.25 : SLIDE_DAMP) * Math.min(1.25, Math.max(0.8, gr)) };                   // 横の速度が収まる速さ(小さいほど滑る)
 }
-const SLIDE_DAMP = +((/[?&]slide=([\d.]+)/.exec(location.search) || [0, 1.15])[1]);   // 横の速度の収まりやすさ。小さいほど滑る(標準 1.15。?slide=1.2 でよく滑り、?slide=7 で従来に近い)
+const CF_K = +((/[?&]cf=([\d.]+)/.exec(location.search) || [0, 0.8])[1]);   // カーブで外へ膨らむ力(大きいほどピーキー)
+const SLIDE_DAMP = +((/[?&]slide=([\d.]+)/.exec(location.search) || [0, 0.85])[1]);   // 横の速度の収まりやすさ。小さいほど滑る(標準 0.85。?slide=1.2 でよく滑り、?slide=7 で従来に近い)
 // ---------- マシン: 移動・ドリフト・ジャンプ ----------
 function stepBike(dt, inp) {
   const spd = P.kmh / 300, s = segAt(P.z), gr = P.bk.stat.grip;
@@ -200,7 +201,7 @@ function stepBike(dt, inp) {
   }
   const drift = P.drifting ? 1 : 0;
   const lc = latCoef(P.bk, P.kmh, P.air, drift);
-  const cf = P.air ? 0 : s.curve * spd * spd * 0.34 / gr * (drift ? 0.3 : 1);                    // カーブの遠心力(ドリフト中は弱い)
+  const cf = P.air ? 0 : s.curve * spd * spd * CF_K / gr * (drift ? 0.3 : 1);                    // カーブの遠心力(ドリフト中は弱い)
   const driftPush = drift ? P.driftDir * 0.35 * lc.A / 1.25 : 0;
   P.vx += (lc.A * steer + driftPush - cf * lc.damp - P.vx * lc.damp) * dt;                        // 舵=加速度、遠心力=外向きの力、減衰=摩擦
   P.vx = clamp(P.vx, -3.2, 3.2);
