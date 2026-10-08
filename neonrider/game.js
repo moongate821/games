@@ -25,7 +25,7 @@ function torque(r) { return r < 2000 ? 0.35 : r < 6000 ? 0.35 + (r - 2000) / 400
 function newRacer(cfg, idx) {
   const bk = bikeById(cfg.bike);
   return { idx, name: cfg.name, human: !!cfg.human, bot: !cfg.human, bk, trans: cfg.trans || 'AT', cam: { z: 0, x: 0, y: 0, pct: 0, shake: 0, tilt: 0 }, pulse: { up: false, down: false },
-    pal: cfg.pal || bk.pal, iri: cfg.iri || bk.iri, glow: cfg.glow || bk.hi, aiTop: cfg.aiTop || 1, skill: cfg.skill || 1, laneBias: cfg.laneBias || 0, blockK: cfg.block || 0, padIndex: null,
+    hue: cfg.hue, sat: cfg.sat, pal: cfg.pal || bk.pal, iri: cfg.iri || bk.iri, glow: cfg.glow || bk.hi, aiTop: cfg.aiTop || 1, skill: cfg.skill || 1, laneBias: cfg.laneBias || 0, blockK: cfg.block || 0, padIndex: null,
     z: 0, x: 0, vx: 0, y: 0, vy: 0, air: false, kmh: 0, rpm: IDLE, rpmFree: IDLE, gear: 0, clutch: 1, engine: true, stallT: 0, knock: 0, limT: 0, shiftT: 0,
     heat: 0, over: 0, boostOn: false, slip: 0, slipT: 0, turbo: 0, drifting: false, driftDir: 0, driftT: 0, spinT: 0, onCool: false,
     slideT: 0, slideMax: 0, slideDir: 1, lean: 0, yaw: 0, dist: 0, lap: 1, lapStart: 0, lapTimes: [], bestLap: null, finished: false, finishT: null, pos: idx + 1,
@@ -266,16 +266,17 @@ function startRace(cfgs, cIdx, isDemo) {
   // 出走表: 人のプレイヤーは後ろの方から、AI は色違いのマシンで
   const humans = cfgs.map((c, i) => Object.assign({ human: !isDemo, name: 'P' + (i + 1), me: true }, c));
   const R = mulberry(777 + cIdx), diffK = 0.93 + cIdx * 0.0035, list = [];
-  const aiBikes = ['kai', 'arc', 'nst', 'ngt'];
+  const aiBikes = ['kai', 'arc', 'nst', 'ngt'], AI_HUES = [[150, 1], [40, 1.1], [260, 1], [330, 1.1], [190, 1], [95, 1.05], [215, 0.9]];   // AIの色違い(色相の回転角, 彩度)
   let nameI = Math.floor(R() * AI_NAMES.length);
   for (let i = 0; i < N_RACERS - humans.length; i++) {
     const b = aiBikes[(i + cIdx) % 4], pv = AI_PALS[b], k = Math.floor(R() * 10);
-    list.push({ bike: b, name: AI_NAMES[(nameI++) % AI_NAMES.length], trans: 'AT', pal: Object.assign({}, bikeById(b).pal || {}, pv[k % pv.length]), iri: b === 'ngt' ? AI_IRI[k % 2] : null, glow: AI_GLOW[b] ? AI_GLOW[b][k % 2] : null,
+    list.push({ hue: AI_HUES[i % AI_HUES.length][0], sat: AI_HUES[i % AI_HUES.length][1], bike: b, name: AI_NAMES[(nameI++) % AI_NAMES.length], trans: 'AT', pal: Object.assign({}, bikeById(b).pal || {}, pv[k % pv.length]), iri: b === 'ngt' ? AI_IRI[k % 2] : null, glow: AI_GLOW[b] ? AI_GLOW[b][k % 2] : null,
       aiTop: diffK * (0.985 + R() * 0.03) - (i > 4 ? 0.01 : 0), skill: 0.88 + R() * 0.2, laneBias: (R() - 0.5) * 0.4, block: R() < 0.5 ? 0.35 + R() * 0.3 : 0 });
   }
   const order = [...list.slice(0, 5), ...humans, ...list.slice(5)];
   RACERS = order.map((c, i) => { const r = newRacer(c, i); r.baseTop = r.aiTop; r.me = !!c.me; return r; });
   PLAYERS = RACERS.filter(r => r.me);
+  { const q = RACERS.filter(r => r.hue != null && !r.me); let qi = 0; const pre = () => { if (qi >= q.length) return; const r = q[qi]; if (typeof hueVariant === 'function' && hueVariant(r.bk.mesh, r.hue, r.sat || 1) === null) { setTimeout(pre, 200); return; } qi++; setTimeout(pre, 60); }; setTimeout(pre, 100); }   // 色違いの画像を、レース開始のあとに1枚ずつ作っておく(途中でカクつかないように)
   if (isDemo) PLAYERS[0].camFollow = true;
   RACERS.forEach((r, i) => { const row = Math.floor(i / 2), col = i % 2; r.dist = -(420 + (N_RACERS / 2 - 1 - row) * 620); r.z = wrapZ(START_I * SEG_L + r.dist); r.x = col ? 0.36 : -0.36; r.cam.x = r.x * ROAD_W * 0.72; r.cam.z = wrapZ(r.z - PL_DIST); });
   use(PLAYERS[0]);

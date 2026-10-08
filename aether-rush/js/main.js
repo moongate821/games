@@ -261,7 +261,7 @@ function startRace(ci, mi) {
     ships.push(s); return s;
   };
   const player = mk(MACHINES[mi], 'YOU', true, null, 1, 0, playerSlot);
-  const rivals = RIVALS.map((r, k) => mk(MACHINES[r.mach], r.name, false, { body: r.body, accent: r.accent }, r.skill, r.lane, aiSlots[k]));
+  const rivals = RIVALS.map((r, k) => mk(MACHINES[r.mach], r.name, false, { body: r.body, accent: r.accent, hue: r.hue, sat: r.sat }, r.skill, r.lane, aiSlots[k]));
   const mm = minimapPath(tr, 170);
   race = { ci, mi, def, tr, scene, ships, player, laps, time: -3.6, state: 'countdown', acc: 0, parts, lines, skyObjs, mm, msgT: 0, wrong: 0, camPos: new THREE.Vector3(), camUp: new THREE.Vector3(0, 1, 0), fov: 64, shake: 0, lastCount: 4, resultsT: 0, bot: q.get('bot') === '1', finishedOrder: [], hudCache: {}, bgm: false };
   initCamera();

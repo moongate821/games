@@ -19,13 +19,13 @@ export const MACHINES = [
 ];
 
 export const RIVALS = [
-  { name: 'NOVA', mach: 1, body: 0xc8d4ff, accent: 0x4a6aff, skill: 1.0, lane: -12 },
-  { name: 'REX', mach: 0, body: 0x2a2a34, accent: 0xff7a1a, skill: 0.985, lane: 14 },
-  { name: 'ZEN', mach: 2, body: 0xe8e0c8, accent: 0x2ad0a0, skill: 0.97, lane: -20 },
-  { name: 'MIKA', mach: 3, body: 0xf4f4ff, accent: 0xff2a6a, skill: 0.955, lane: 6 },
-  { name: 'GRIM', mach: 0, body: 0x6a2a8a, accent: 0xc8ff2a, skill: 0.94, lane: 20 },
-  { name: 'ECHO', mach: 1, body: 0xff8a2a, accent: 0x2a2a34, skill: 0.925, lane: -6 },
-  { name: 'JUNO', mach: 3, body: 0x2ad0e0, accent: 0xffffff, skill: 0.91, lane: 0 },
+  { name: 'NOVA', hue: 150, sat: 1.0, mach: 1, body: 0xc8d4ff, accent: 0x4a6aff, skill: 1.0, lane: -12 },
+  { name: 'REX', hue: 330, sat: 1.1, mach: 0, body: 0x2a2a34, accent: 0xff7a1a, skill: 0.985, lane: 14 },
+  { name: 'ZEN', hue: 60, sat: 1.0, mach: 2, body: 0xe8e0c8, accent: 0x2ad0a0, skill: 0.97, lane: -20 },
+  { name: 'MIKA', hue: 300, sat: 1.15, mach: 3, body: 0xf4f4ff, accent: 0xff2a6a, skill: 0.955, lane: 6 },
+  { name: 'GRIM', hue: 255, sat: 0.9, mach: 0, body: 0x6a2a8a, accent: 0xc8ff2a, skill: 0.94, lane: 20 },
+  { name: 'ECHO', hue: 20, sat: 1.1, mach: 1, body: 0xff8a2a, accent: 0x2a2a34, skill: 0.925, lane: -6 },
+  { name: 'JUNO', hue: 185, sat: 1.0, mach: 3, body: 0x2ad0e0, accent: 0xffffff, skill: 0.91, lane: 0 },
 ];
 
 // 機体モデル(低ポリのホバーボート型)。前は -Z、上は +Y、右は +X
@@ -95,6 +95,15 @@ function prepareAsset(g) {
   g.info = { zmin, zmax, L, flames, top, topZ: zmin + L * 0.4 };
   return g;
 }
+// 色違い: テクスチャの色(sRGB)の色相を回す(明暗・模様はそのまま)。deg=回す角度、sat=彩度の倍率
+function hueShift(r, g, b, deg, sat) {
+  const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  const R = (0.213 + c * 0.787 - s * 0.213) * r + (0.715 - c * 0.715 - s * 0.715) * g + (0.072 - c * 0.072 + s * 0.928) * b;
+  const G = (0.213 - c * 0.213 + s * 0.143) * r + (0.715 + c * 0.285 + s * 0.140) * g + (0.072 - c * 0.072 - s * 0.283) * b;
+  const B = (0.213 - c * 0.213 - s * 0.787) * r + (0.715 - c * 0.715 + s * 0.715) * g + (0.072 + c * 0.928 + s * 0.072) * b;
+  const l = 0.3 * R + 0.59 * G + 0.11 * B, k = (v) => Math.min(1, Math.max(0, l + (v - l) * sat));
+  return [k(R), k(G), k(B)];
+}
 function makeGlbShip(m, paint, lod) {
   const A = ASSETS[m.id]; const a = A && (A[lod] || A.hi || A.xl || A.lo); if (!a) return null;
   const body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
@@ -108,7 +117,8 @@ function makeGlbShip(m, paint, lod) {
     const col = new Float32Array(a.n * 3), nc = a.colNC;
     for (let i = 0; i < a.n; i++) {
       const mk = a.col[i * nc + 3] / 255, br = Math.pow(a.col[i * nc] / 255, 2.2), bg = Math.pow(a.col[i * nc + 1] / 255, 2.2), bb = Math.pow(a.col[i * nc + 2] / 255, 2.2);   // テクスチャの色(sRGB)を、three の頂点色(線形)に直す
-      if (!paint) { col[i * 3] = br; col[i * 3 + 1] = bg; col[i * 3 + 2] = bb; }
+      if (paint && paint.hue != null) { const c = hueShift(a.col[i * nc] / 255, a.col[i * nc + 1] / 255, a.col[i * nc + 2] / 255, paint.hue, paint.sat || 1); col[i * 3] = Math.pow(c[0], 2.2); col[i * 3 + 1] = Math.pow(c[1], 2.2); col[i * 3 + 2] = Math.pow(c[2], 2.2); }
+      else if (!paint) { col[i * 3] = br; col[i * 3 + 1] = bg; col[i * 3 + 2] = bb; }
       else { const lum = Math.min(1.25, 0.35 + (0.3 * br + 0.59 * bg + 0.11 * bb) * 1.25); col[i * 3] = (body[0] * (1 - mk) + acc[0] * mk) * lum; col[i * 3 + 1] = (body[1] * (1 - mk) + acc[1] * mk) * lum; col[i * 3 + 2] = (body[2] * (1 - mk) + acc[2] * mk) * lum; }
     }
     const g = a.geo.clone(); g.setAttribute('color', new THREE.BufferAttribute(col, 3));

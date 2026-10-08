@@ -102,16 +102,34 @@ const QS = [0, 0, 0, 0, 0];
 if (!/[?&]sprite=0/.test(location.search)) for (const id of ['kai', 'arc', 'nst', 'ngt']) {
   fetch('assets/bikes/' + id + '.json').then(r => r.json()).then(meta => { const img = new Image(); img.onload = () => { BIKE_SPR[id] = { img, m: meta }; }; img.src = 'assets/bikes/' + meta.file; }).catch(() => {});
 }
+// 色違い(AIのマシン): スプライトの色相を回した画像を、最初に使うときに作る(大きさ SPR_SC 倍。スマホは小さめにして記憶領域を節約)
+const SPR_VAR = {}, SPR_SC = (/Mobi|Android|iPhone|iPad/.test(navigator.userAgent) || navigator.maxTouchPoints > 1) ? 0.5 : 0.75;
+function hueVariant(id, hue, sat) {
+  const key = id + '|' + hue + '|' + sat; if (SPR_VAR[key] !== undefined) return SPR_VAR[key];
+  const S = BIKE_SPR[id]; if (!S) return null;   // まだ読み込み中: 次のフレームでもう一度
+  const im = S.img, w = Math.round(im.naturalWidth * SPR_SC), hh = Math.round(im.naturalHeight * SPR_SC);
+  const c = document.createElement('canvas'); c.width = w; c.height = hh; const cx = c.getContext('2d', { willReadFrequently: true }); cx.drawImage(im, 0, 0, w, hh);
+  const d = cx.getImageData(0, 0, w, hh), p = d.data, a = hue * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+  const m = [0.213 + co * 0.787 - si * 0.213, 0.715 - co * 0.715 - si * 0.715, 0.072 - co * 0.072 + si * 0.928, 0.213 - co * 0.213 + si * 0.143, 0.715 + co * 0.285 + si * 0.140, 0.072 - co * 0.072 - si * 0.283, 0.213 - co * 0.213 - si * 0.787, 0.715 - co * 0.715 + si * 0.715, 0.072 + co * 0.928 + si * 0.072];
+  for (let i = 0; i < p.length; i += 4) {
+    if (p[i + 3] === 0) continue; const r0 = p[i], g0 = p[i + 1], b0 = p[i + 2];
+    const R = m[0] * r0 + m[1] * g0 + m[2] * b0, G = m[3] * r0 + m[4] * g0 + m[5] * b0, B = m[6] * r0 + m[7] * g0 + m[8] * b0, l = 0.3 * R + 0.59 * G + 0.11 * B;
+    p[i] = Math.max(0, Math.min(255, l + (R - l) * sat)); p[i + 1] = Math.max(0, Math.min(255, l + (G - l) * sat)); p[i + 2] = Math.max(0, Math.min(255, l + (B - l) * sat));
+  }
+  cx.putImageData(d, 0, 0); return (SPR_VAR[key] = c);
+}
 function drawBikeSprite(r, bk, x, hov, rot, flash) {
-  const S = BIKE_SPR[bk.mesh]; if (!S || (rot.pitch || 0) !== 0) return false;
+  let S = BIKE_SPR[bk.mesh]; if (!S || (rot.pitch || 0) !== 0) return false;
+  let sc = 1;
+  if (r.hue != null && r !== P) { const v = hueVariant(bk.mesh, r.hue, r.sat || 1); if (v) { S = { img: v, m: S.m }; sc = SPR_SC; } }
   const m = S.m, y0 = m.yaws[0], ys = m.yaws[1] - m.yaws[0], r0 = m.rolls[0], rs = m.rolls[1] - m.rolls[0];
   if (rot.yaw < y0 - ys * 1.4 || rot.yaw > m.yaws[m.yaws.length - 1] + ys * 1.4 || rot.roll < r0 - rs * 1.4 || rot.roll > m.rolls[m.rolls.length - 1] + rs * 1.4) return false;   // 範囲外は旧メッシュ
   const yi = clamp(Math.round((rot.yaw - y0) / ys), 0, m.yaws.length - 1), ri = clamp(Math.round((rot.roll - r0) / rs), 0, m.rolls.length - 1);
   const a = proj(r.z, x, r.y + hov, QS); if (!a) return false;
   const k = a[2] / m.ppu, w = m.fw * k, h = m.fh * k, dx = a[0] - m.anchorX * k, dy = a[1] - m.anchorY * k;
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = lite ? 'low' : 'medium';
-  ctx.drawImage(S.img, yi * m.fw, ri * m.fh, m.fw, m.fh, dx, dy, w, h);
-  if (flash) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.55; ctx.drawImage(S.img, yi * m.fw, ri * m.fh, m.fw, m.fh, dx, dy, w, h); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  ctx.drawImage(S.img, yi * m.fw * sc, ri * m.fh * sc, m.fw * sc, m.fh * sc, dx, dy, w, h);
+  if (flash) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.55; ctx.drawImage(S.img, yi * m.fw * sc, ri * m.fh * sc, m.fw * sc, m.fh * sc, dx, dy, w, h); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   return true;
 }
 function drawRacer(r, t) {
