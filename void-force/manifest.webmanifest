@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "VOID FORCE 20 — 弾幕フォース",
-  "short_name": "VOID FORCE",
+  "name": "弾幕突撃戦闘機",
+  "short_name": "弾幕突撃戦闘機",
   "lang": "ja",
   "description": "Rタイプ風の横スクロール弾幕シューティング。フォースを育てて20面を抜ける。",
   "start_url": "./",
@@ -11,8 +11,7 @@
   "background_color": "#05060f",
   "theme_color": "#05060f",
   "icons": [
-    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {"src":"icons/fighter-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/fighter-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ]
 }

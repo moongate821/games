@@ -902,7 +902,22 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
         if (IN && IN.slow) { ctx.strokeStyle = 'rgba(125,255,234,.75)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(Math.round(P.x), Math.round(P.y), hitX(true), hitY(true), 0, 0, TAU); ctx.stroke(); }
         // 当たり判定の中心
         ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(P.x) - 1, Math.round(P.y) - 1, 3, 3); ctx.fillStyle = '#ff2040'; ctx.fillRect(Math.round(P.x), Math.round(P.y), 1, 1);
-        if (S.guard > 0) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.strokeRect(Math.round(P.x) - 12.5, Math.round(P.y) - 9.5, 24, 18); }
+        if (S.guard > 0) {
+          // 機首を包む流線型の防護膜。外縁と前方の光を重ねて立体感を出す。
+          const gx = Math.round(P.x), gy = Math.round(P.y), pulse = .65 + Math.sin(P.anim * 7) * .12;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(gx - 20, gy);
+          ctx.bezierCurveTo(gx - 17, gy - 13, gx + 5, gy - 16, gx + 19, gy - 7);
+          ctx.quadraticCurveTo(gx + 29, gy, gx + 19, gy + 7);
+          ctx.bezierCurveTo(gx + 5, gy + 16, gx - 17, gy + 13, gx - 20, gy);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(90,245,255,.08)'; ctx.fill();
+          ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(130,255,245,${pulse})`; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(gx - 12, gy - 10); ctx.quadraticCurveTo(gx + 10, gy - 16, gx + 23, gy - 3);
+          ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.restore();
+        }
       }
       for (const d of DR) {
         const R0 = RAR[d.ri], bob = Math.round(Math.sin(d.t * 5) * 1.5), x = Math.round(d.x), y = Math.round(d.y) + bob, f = ((d.t * 6) | 0) % 2;
@@ -972,8 +987,8 @@ const cn = n => Math.max(1, Math.round(n * DF().b * DENS));
   }
   function wrapT(s, x, y, n, size, col) { for (let i = 0; i * n < s.length && i < 4; i++) T(s.slice(i * n, (i + 1) * n), x, y + i * (size + 3), size, col, 'center', false); }
   function drawTitle() {
-    T('VOID FORCE 20', W / 2, 78, 36, '#7dffea', 'center'); T('弾幕フォース  ─  全20面の横スクロール弾幕シューティング', W / 2, 98, 10, '#cfe', 'center');
-    T('【作成中】1面〜20面(2面以降は自動生成の骨組み)', W / 2, 114, 8, '#ffb050', 'center', false);
+    T('弾幕突撃戦闘機', W / 2, 78, 36, '#7dffea', 'center'); T('全20面の横スクロール弾幕シューティング', W / 2, 98, 10, '#cfe', 'center');
+    T('全20面・ボス20体', W / 2, 114, 8, '#ffb050', 'center', false);
     T('弾をかすめて連続スコア / 波動チャージ加速', W / 2, 131, 8, '#7dffea', 'center', false);
     T('◀  STAGE ' + selStage + '  ▶', W / 2, 160, 13, '#7dffea', 'center'); T(STAGE_NAMES[selStage - 1] + (selStage > 1 ? '  (標準装備つき)' : ''), W / 2, 171, 7.5, '#9ab', 'center', false);
     T('◀  ' + DF().name + '  ▶', W / 2, 200, 14, '#ffd84a', 'center'); T('(面: ↑↓ / タップ   難しさ: ←→ / タップ)', W / 2, 212, 7, '#9ab', 'center', false);

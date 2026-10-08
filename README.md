@@ -21,7 +21,7 @@
 - 世界の果てで君を探す: https://moongate821.github.io/games/sekai/ — 作者の小説が原作。いなくなった君を探す旅を、油絵の絵本ゲームに。結末は40種類。
 - 君に逢うために: https://moongate821.github.io/games/kimi/ — 作者の小説が原作。雨の夜の祈りからやり直す二度目の人生を、ポップなコミック調の絵本ゲームに。結末は40種類。
 - RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。赤い敵の車が行進してくる、ひとり用サバイバー。
-- VOID FORCE 20 ― 弾幕フォース: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
+- 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
 - NEON RIDER ― 光の轍: https://moongate821.github.io/games/neonrider/ — 光の道を走る疑似3Dのバイクレース(Tron×AKIRA 風)。全30コース、バイク5台。
 - SUPER RING 超人プロレス: https://moongate821.github.io/games/wrestling/ — ドット絵のプロレス。20人の超人レスラー、掴みから投げ・関節・飛び技、ゲージで必殺技、3カウントで決着。派手な演出つき。
