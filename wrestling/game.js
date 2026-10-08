@@ -48,12 +48,13 @@ const Snd = {
 };
 
 // ---------- 画像・データ ----------
-const IMG = { body: {}, face: {} }, PROP = window.PROP = {};
+const IMG = { body: {}, face: {}, action: {} }, PROP = window.PROP = {};
 let DATA = null, SIM = false;
 function loadAll() {
   const jobs = [fetch('moves.json').then((r) => r.json()).then((d) => { DATA = d; })];
   for (let i = 1; i <= 20; i++) for (const k of ['body', 'face']) jobs.push(new Promise((res) => { const im = new Image(); im.onload = () => { IMG[k][i] = im; res(); }; im.onerror = res; im.src = `assets/${k}_${String(i).padStart(2, '0')}.png`; }));
   jobs.push(PUP.loadAll());
+  jobs.push(fetch('assets/action/manifest.json').then((r) => r.json()).then((numbers) => Promise.all(numbers.map((id) => new Promise((res) => { const im = new Image(); im.onload = () => { IMG.action[+id] = im; res(); }; im.onerror = res; im.src = 'assets/action/' + id + '.png'; })))).catch(() => {}));
   jobs.push(fetch('assets/props/props.json').then((r) => r.json()).then((d) => Promise.all(Object.keys(d).map((k) => new Promise((res) => { const im = new Image(); im.onload = () => { PROP[k] = im; res(); }; im.onerror = res; im.src = 'assets/props/' + k + '.png'; })))).catch(() => {}));
   return Promise.all(jobs);
 }
@@ -224,7 +225,7 @@ function stepAct(dt) {
     if (u > 0.5 && u < 0.9 && !A.uke && d.life > 0 && (d.human ? wasPressed('KeyZ', 'KeyX', 'KeyC') : A.ukeAI && u > 0.7)) { A.uke = true; say('受け身!', 0.8); Snd.menu(); FX.push({ type: 'ring', x: sx(d.x), y: GROUND + 4, t: 0, dur: 0.4, k: 1, tier: 0 }); }
     const lift = ease(clamp((u - 0.2) / 0.31, 0, 1));
     const fall = ease(clamp((u - 0.62) / 0.24, 0, 1));
-    const landing = ts === 'suplex' ? -0.24 : ts === 'ddt' ? 0.19 : 0.17;
+    const landing = ts === 'suplex' ? -0.24 : ts === 'slam' ? 0.44 : ts === 'ddt' ? 0.19 : 0.17;
     d.x = a.x + dir * lerp(0.15, landing, fall);
     if (ts === 'spark') {
       a.vis.lift = 64 * lift * (1 - fall);
@@ -251,8 +252,9 @@ function stepAct(dt) {
       d.vis.lift = 83 * lift * (1 - fall); d.vis.rot = -dir * Math.PI * lift;
       a.vis.sy = 1 - 0.2 * fall; a.vis.lift = -9 * fall;
     } else {
-      d.vis.lift = (76 * lift + 20 * Math.sin(Math.PI * clamp((u - 0.42) / 0.44, 0, 1))) * (1 - fall);
-      d.vis.rot = -dir * (1.05 * lift + 1.1 * fall);
+      // 参考動画のボディスラム: 水平に抱える間を置き、腕を伸ばして前方へ放る。
+      d.vis.lift = 74 * lift * (1 - fall);
+      d.vis.rot = -dir * (1.48 * lift + 1.15 * fall);
       a.vis.rot = dir * 0.25 * fall;
     }
     if (u >= 0.86 && !A.hit) {
@@ -293,7 +295,7 @@ function stepAct(dt) {
 }
 
 // ---------- 組み付き(技選び) ----------
-function startLock(a, d) { a.mode = 'lock'; d.mode = 'hold'; M.lock = { a, d, t: 0, sel: 0, items: lockItems(a), limit: 3.4, sp: { a: 0, d: 0, T: 1.0, t: 0 } }; a.x = clamp(a.x, -0.9, 0.9); }
+function startLock(a, d) { a.mode = 'lock'; d.mode = 'hold'; M.lock = { a, d, t: 0, sel: 0, items: lockItems(a), limit: 3.4, sp: { a: 0, d: 0, T: a.human || d.human ? 1.0 : 0.5, t: 0 } }; a.x = clamp(a.x, -0.9, 0.9); }
 function lockItems(a) {
   const it = [], seen = new Set();
   for (const s of a.specials) if (a.gauge >= s.gauge - 0.001) it.push(s);
@@ -361,6 +363,7 @@ function freeStep(f, dt) {
       if (!f.human && !f.fakeDone && f.ratio > 0.3 && rnd() < 0.12) { f.fakeDone = true; f.downT = 0.6; return; }   // 狸寝入り: もう少し寝たふり
       const o2 = opp(f), away = f.x >= o2.x ? 1 : -1;
       f.mode = 'free'; f.stun = 0.2; f.invuln = 0.4;
+      f.getupT = 0.38;
       if (f.fakeDone) { f.fakeDone = false; f.stun = 0; f.invuln = 0.8; f.surprise = 1.2; say('狸寝入りだった!', 0.9); }   // 起きざま不意打ち
       else if (f.human ? (keys.ArrowDown || f.ratio < 0.3 && !keys.ArrowLeft && !keys.ArrowRight && false) : f.ratio < 0.35) { f.stun = 0.6; f.power = Math.min(MAXPOWER, f.power + 1.5); }   // ゆっくり起きて気力を戻す
       else if (f.human ? (keys.ArrowLeft || keys.ArrowRight) : rnd() < 0.2) { f.slide = (f.human ? (keys.ArrowRight ? 1 : -1) : away) * 1.1; f.invuln = 0.7; f.stun = 0; }   // ころがって逃げる
@@ -369,6 +372,7 @@ function freeStep(f, dt) {
     return;
   }
   lieTo(f, false, dt); f.vis.lie = f.lieN;
+  f.getupT = Math.max(0, (f.getupT || 0) - dt);
   if (f.mode !== 'free') return;
   const I = f.human ? humanIntent(f) : aiIntent(f, o, dt);
   f.face = o.x >= f.x ? 1 : -1;
@@ -431,7 +435,7 @@ function aiIntent(f, o, dt) {
   if (Math.abs(f.x) > 0.8 && rnd() < 0.25 && f.rope.length) { I.rope = true; I.light = I.heavy = false; }
   return I;
 }
-function aiLock(L) { if (L.t > rr(0.5, 1.1)) { const it = L.items; let best = 0, bs = -1; it.forEach((m, i) => { const s = m.dmg * (m.id[0] === 'S' ? 1.35 : 1) + rnd() * 8; if (s > bs) { bs = s; best = i; } }); chooseLock(best); } }
+function aiLock(L) { if (L.t > rr(0.2, 0.45)) { const it = L.items; let best = 0, bs = -1; it.forEach((m, i) => { const s = m.dmg * (m.id[0] === 'S' ? 1.35 : 1) + rnd() * 8; if (s > bs) { bs = s; best = i; } }); chooseLock(best); } }
 
 // ---------- 更新 ----------
 function stepMatch(dt) {
@@ -510,6 +514,8 @@ function drawFighter(f) {
   const im = IMG.body[f.no]; if (!im) return;
   if (f.trail && f.trail.length > 1 && !PUP.has(f.no)) { const fl = f.face >= 0 ? 1 : -1, h0 = 212, s0 = h0 / im.height, w0 = im.width * s0; f.trail.forEach((p, i) => { if (i === f.trail.length - 1) return; ctx.save(); ctx.globalAlpha = 0.07 + 0.22 * i / f.trail.length; ctx.translate(sx(p.x) + p.ox, GROUND - h0 / 2 - p.lift); ctx.rotate(p.rot); ctx.scale(fl, 1); ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= 0.8; ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.restore(); }); }
   if (M.act && M.act.a === f && M.act.mv.id && M.act.mv.id[0] === 'S') { const px0 = sx(f.x), pulse = 0.75 + 0.25 * Math.sin(M.act.t * 18), g = ctx.createRadialGradient(px0, GROUND - 110, 10, px0, GROUND - 110, 190 * pulse); g.addColorStop(0, 'rgba(255,230,255,.75)'); g.addColorStop(0.45, 'rgba(255,80,225,.38)'); g.addColorStop(1, 'rgba(255,60,200,0)'); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(px0 - 220, GROUND - 330, 440, 440); ctx.restore(); }
+  const actionFrame = actionFrameFor(f);
+  if (actionFrame !== null && IMG.action[f.no]) { drawActionSprite(f, actionFrame); return; }
   if (PUP.has(f.no)) { drawPuppet(f); return; }
   const o = opp(f), v = f.vis;
   const hh = 212, sc = hh / im.height, w = im.width * sc;
@@ -522,6 +528,29 @@ function drawFighter(f) {
   ctx.scale(flip * v.sx, v.sy);
   ctx.drawImage(im, -w / 2, -hh / 2, w, hh);
   if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.7; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  ctx.restore();
+}
+function actionFrameFor(f) {
+  if (!M || !IMG.action[f.no]) return null;
+  if (M.over && M.over.winner === f) return null;
+  // 汎用のボディスラム用シートは、回転・逆さ抱えなどの必殺技には使わない。
+  if (M.act && M.act.a === f && M.act.motionKind === '投' && M.act.throwStyle === 'slam') {
+    const A = M.act, u = clamp((A.t - A.intro) / Math.max(0.01, A.dur - A.intro), 0, 1);
+    return u < 0.2 ? 1 : u < 0.42 ? 2 : u < 0.7 ? 3 : 4;
+  }
+  if (M.lock && (M.lock.a === f || M.lock.d === f)) return 1;
+  if (f.getupT > 0 && f.mode === 'free') return 5;
+  if (f.mode === 'free' && f.stun <= 0 && (f.walkVisual || 0) <= 0 && (!M.act || (M.act.a !== f && M.act.d !== f))) return 0;
+  return null;
+}
+function drawActionSprite(f, frame) {
+  const v = f.vis, s = 1.72, px = sx(f.x) + v.ox, lift = v.lift || 0;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 48 * (1 - Math.min(0.5, lift / 280)), 9, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(px, GROUND - lift + (f.moving ? Math.sin(f.walkT || 0) * 2 : 0)); ctx.rotate(v.rot || 0);
+  ctx.scale((f.face >= 0 ? 1 : -1) * s * v.sx, s * v.sy);
+  const im = IMG.action[f.no], x = (frame % 3) * 128, y = Math.floor(frame / 3) * 128;
+  ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128);
+  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.45; ctx.drawImage(im, x, y, 128, 128, -64, -128, 128, 128); }
   ctx.restore();
 }
 function drawFx() {
@@ -768,14 +797,16 @@ function flexOf(A) {
 function poseFor(f) {
   if (!M) return ['guard'];
   if (M.over && M.over.winner === f) return ['power'];
-  if (f.lieN > 0.5 || f.mode === 'down') return ['down'];
+  if (f.mode === 'down' || f.lieN > 0.75) return ['down'];
+  if (f.getupT > 0) return ['getup', 18];
+  if (f.lieN > 0.5) return ['down'];
   if (M.pin && M.pin.a === f) return ['pinTop'];
   if (M.act && (M.act.a === f || M.act.d === f)) {
     const A = M.act, k = A.motionKind;
     if (A.d === f && (k === '投' || k === '奥') && A.t >= A.intro && !A.hit) return [A.throwStyle === 'piledriver' ? 'tucked' : 'held', 24, flexOf(A)];   // 持ち上げられた体がしなる
     return [actPose(A, f), 22];
   }
-  if (M.lock && (M.lock.a === f || M.lock.d === f)) return ['grapple'];
+  if (M.lock && (M.lock.a === f || M.lock.d === f)) { const v = Math.sin(M.lock.t * 15 + (M.lock.a === f ? 0 : Math.PI)); return ['clinch', 18, { tr: v * 0.09, rr: v * 0.035, rx: v * 2, af1: v * 0.12, ab1: -v * 0.1 }]; }
   if (f.stun > 0) return ['stagger', 20];
   if (f.mode === 'free') {
     if (f.moving) { const sw = Math.sin(f.walkT || 0); return ['guard', 14, { lf1: sw * 0.5, lb1: -sw * 0.5, ry: -Math.abs(sw) * 3, af1: -sw * 0.15, ab1: sw * 0.12 }]; }
@@ -785,5 +816,5 @@ function poseFor(f) {
 }
 function stepPoses(dt) {
   if (!M) return;
-  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; const [name, rate, extra] = poseFor(f); PUP.step(f, name, dt, rate, extra); f.moving = false; }
+  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; f.walkVisual = f.moving ? 0.12 : Math.max(0, (f.walkVisual || 0) - dt); const [name, rate, extra] = poseFor(f); PUP.step(f, name, dt, rate, extra); f.moving = false; }
 }
