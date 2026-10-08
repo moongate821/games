@@ -69,10 +69,11 @@ export function parseGLB(buf) {
 // PC は大きくてもきれいな版(xl 約5〜6万三角形)を使う。スマホ・タブレットは軽い版(hi/lo)。?q=high / ?q=low で切り替えて確かめられる
 const TOUCH_DEV = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
 export const HIGH_QUALITY = /[?&]q=high/.test(location.search) || (!TOUCH_DEV && !/[?&]q=low/.test(location.search));
-export const PLAYER_LOD = HIGH_QUALITY ? 'xl' : 'hi', RIVAL_LOD = HIGH_QUALITY ? 'hi' : 'lo';
+// スマホは、自分の機体とメニューにテクスチャつきの中間版 md(約4.5万三角形・1024)、ライバルは軽い lo(頂点色)。PCは xl と hi
+export const PLAYER_LOD = HIGH_QUALITY ? 'xl' : 'md', RIVAL_LOD = HIGH_QUALITY ? 'hi' : 'lo';
 export const machineAssetsReady = (async () => {
   const jobs = [];
-  for (const m of MACHINES) for (const lod of (HIGH_QUALITY ? ['xl', 'hi'] : ['hi', 'lo'])) {
+  for (const m of MACHINES) for (const lod of (HIGH_QUALITY ? ['xl', 'hi'] : ['md', 'lo'])) {
     jobs.push(fetch(`assets/machines/${m.id}_${lod}.glb`).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
       .then(async (b) => { const g = prepareAsset(parseGLB(b)); if (g.image && g.uv) { const bmp = await createImageBitmap(new Blob([g.image.bytes], { type: g.image.mime })); const tx = new THREE.Texture(bmp); tx.flipY = false; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; tx.needsUpdate = true; g.tex = tx; } (ASSETS[m.id] = ASSETS[m.id] || {})[lod] = g; }).catch((e) => { console.warn('機体モデルを読めない', m.id, lod, e); }));
   }
@@ -105,7 +106,7 @@ function hueShift(r, g, b, deg, sat) {
   return [k(R), k(G), k(B)];
 }
 function makeGlbShip(m, paint, lod) {
-  const A = ASSETS[m.id]; const a = A && (A[lod] || A.hi || A.xl || A.lo); if (!a) return null;
+  const A = ASSETS[m.id]; const a = A && (A[lod] || A.md || A.hi || A.xl || A.lo); if (!a) return null;
   const body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
   if (!a.geo) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a.pos, 3)); g.setIndex(new THREE.BufferAttribute(a.idx, 1)); if (a.uv) g.setAttribute('uv', new THREE.BufferAttribute(a.uv, 2)); g.computeVertexNormals(); a.geo = g; }
   const group = new THREE.Group();
