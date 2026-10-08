@@ -165,13 +165,13 @@ function throwStyle(mv) {
   return 'slam';
 }
 function startAct(a, d, mv, kind, extra) {
-  const act = Object.assign({ a, d, mv, kind, t: 0, hit: false, x0: a.x, dx0: d.x, ticks: 0 }, extra || {});
+  const act = Object.assign({ a, d, mv, kind, t: 0, hit: false, x0: a.x, dx0: d.x, ticks: 0, targetWasDown: d.mode === 'down' }, extra || {});
   const k = act.motionKind = motionKindOf(mv), sp = mv.id && mv.id[0] === 'S';
   act.dur = kind === 'whiff' ? 0.4 : k === '打' ? (sp ? 1.12 : 0.55) : k === '投' ? (sp ? 2.0 : 1.5) : k === '関' ? (sp ? 1.85 : 1.35) : k === '飛' ? (sp ? 1.48 : 1.15) : k === '地' ? 0.8 : k === 'ロ' ? 1.5 : k === '角' ? 1.6 : 1;
   act.style = styleOf(mv); act.throwStyle = k === '投' ? throwStyle(mv) : null;
   act.rush = sp && k === '打' && /連撃|連続|ラッシュ|ストーム|雨|分身|全奥義|処刑|海嘯/.test(mv.name + ' ' + (mv.desc || ''));
   act.intro = sp ? 1.3 : 0; act.dur += act.intro;
-  a.mode = 'act'; d.mode = kind === 'strike' || kind === 'whiff' ? d.mode : 'hold';
+  a.mode = 'act'; d.mode = kind === 'strike' || kind === 'whiff' || act.targetWasDown ? d.mode : 'hold';
   if (sp) { a.gauge -= mv.gauge; M.counts.specials++; Snd.special(); flashT = 0.5; banner = { s: mv.name, t: 0, dur: act.dur, special: true, who: a }; }
   else if (kind !== 'whiff' && mv.rank >= 3) banner = { s: mv.name, t: 0, dur: Math.min(1.6, act.dur), who: a };
   a.power = Math.max(0, a.power - (sp ? 0 : mv.cost));
