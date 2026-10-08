@@ -241,7 +241,8 @@ function startRace(ci, mi) {
   scene.add(new THREE.HemisphereLight(pal.skyBot, pal.ground, 1.05));
   const sunL = new THREE.DirectionalLight(0xffffff, 2.0); sunL.position.set(-0.5, 1, 0.3); scene.add(sunL);
   const fill = new THREE.DirectionalLight(pal.edge, 0.8); fill.position.set(0.6, 0.3, -0.8); scene.add(fill);
-  const parts = new Particles(scene, 360);
+  const parts = new Particles(scene, isTouch ? 1100 : 2000);
+  const engLight = new THREE.PointLight(0x00e8ff, 0, 42, 2); scene.add(engLight);
   scene.add(camera);
   const lines = new SpeedLines(camera);
 
@@ -263,7 +264,7 @@ function startRace(ci, mi) {
   const player = mk(MACHINES[mi], 'YOU', true, null, 1, 0, playerSlot);
   const rivals = RIVALS.map((r, k) => mk(MACHINES[r.mach], r.name, false, { body: r.body, accent: r.accent, hue: r.hue, sat: r.sat }, r.skill, r.lane, aiSlots[k]));
   const mm = minimapPath(tr, 170);
-  race = { ci, mi, def, tr, scene, ships, player, laps, time: -3.6, state: 'countdown', acc: 0, parts, lines, skyObjs, mm, msgT: 0, wrong: 0, camPos: new THREE.Vector3(), camUp: new THREE.Vector3(0, 1, 0), fov: 64, shake: 0, lastCount: 4, resultsT: 0, bot: q.get('bot') === '1', finishedOrder: [], hudCache: {}, bgm: false };
+  race = { engLight, ci, mi, def, tr, scene, ships, player, laps, time: -3.6, state: 'countdown', acc: 0, parts, lines, skyObjs, mm, msgT: 0, wrong: 0, camPos: new THREE.Vector3(), camUp: new THREE.Vector3(0, 1, 0), fov: 64, shake: 0, lastCount: 4, resultsT: 0, bot: q.get('bot') === '1', finishedOrder: [], hudCache: {}, bgm: false };
   initCamera();
   buildHud();
   mode = 'race'; $('hud').classList.remove('hidden'); if (isTouch) $('touch').classList.remove('hidden'); else $('touch').classList.add('hidden');
@@ -431,15 +432,52 @@ function syncModels(dt, time) {
     const sr = Math.min(1.3, s.speed / s.mach.top);
     const fl = m.userData.flames, thr = 0.4 + sr;
     const fb = m.userData.flameBase || 1;
-    for (const f of fl) { const k = fb * (1 + (s.boosting ? 0.6 : 0)); f.scale.set(k, k, (0.5 + thr * 2.2 + (s.boosting ? 4 : 0)) * (0.85 + Math.random() * 0.3)); }
+    for (const f of fl) f.visible = false;   // 炎は粒(engineFx)で出す。円錐のメッシュは使わない
     // 影
     const sh = s.shadow; sh.visible = s.grounded && !s.down;
     if (sh.visible) { sh.position.copy(s.pos).addScaledVector(s.up, -(s.h - 0.12)); sh.quaternion.setFromRotationMatrix(_m); const sc = 1 + Math.max(0, s.h - 3) * 0.04; sh.scale.set(sc, 1, sc); }
-    // 排気の粒
-    if (!s.down && (s.boosting || sr > 0.6) && Math.random() < (s.boosting ? 0.5 : 0.12)) {
-      r.parts.emit(s.pos.x - s.hd.x * 4.4, s.pos.y - s.hd.y * 4.4 + 0.2, s.pos.z - s.hd.z * 4.4, -s.vel.x * 0.15 + (Math.random() - 0.5) * 8, (Math.random() - 0.3) * 6, -s.vel.z * 0.15 + (Math.random() - 0.5) * 8, s.boosting ? 0x7affff : 0xff9a50, 0.25 + Math.random() * 0.25);
-    }
+    engineFx(s, dt, sr);
     if (s.scrape && Math.random() < 0.6) sparks(s, 2);
+  }
+}
+
+// ---------- エンジンの炎(粒) ----------
+const _en = new THREE.Vector3(), _ed = new THREE.Vector3();
+const _dc = new THREE.Color();
+const dimHex = (hex, f) => _dc.set(hex).multiplyScalar(f).getHex();
+function engineFx(s, dt, sr) {
+  const r = race, m = s.model, fl = m.userData.flames;
+  if (s.down || !fl || !fl.length) return;
+  const near = s.isPlayer || s.pos.distanceToSquared(camera.position) < 150 * 150;
+  if (!near) return;
+  const bst = s.boosting ? 1 : 0, glow = s.mach.glow, hot = bst ? 0xdffeff : 0xfff0d0, mid = bst ? 0x6ae8ff : glow;
+  const q = (isTouch ? 0.6 : 1) * (s.isPlayer ? 1 : 0.4);
+  const rate = (120 + 260 * sr + 460 * bst) * q;                       // 1つのエンジンから、1秒に出す粒の数
+  if (s.boosting && !s._wasBoost && s.isPlayer) s._burst = 1; s._wasBoost = s.boosting;
+  m.updateMatrixWorld(true);
+  _ed.copy(s.hd).negate();
+  for (const f of fl) {
+    f.getWorldPosition(_en);
+    _en.addScaledVector(_ed, 0.1);
+    f.userData.acc = (f.userData.acc || 0) + rate * dt; let n = Math.floor(f.userData.acc); f.userData.acc -= n;
+    if (s._burst) n += Math.round(40 * q);
+    const back = 16 + 24 * sr + 34 * bst, jit = 0.5 + 1.1 * bst;
+    for (let i = 0; i < n; i++) {
+      const u = Math.random(), kind = Math.random();
+      const px = _en.x - s.vel.x * dt * u, py = _en.y - s.vel.y * dt * u, pz = _en.z - s.vel.z * dt * u;      // 1コマの間に進んだ分をなめらかにうめる
+      const sp = back * (0.5 + Math.random() * 0.9) * (s._burst ? 1.8 : 1);
+      const vx = s.vel.x * 0.92 + _ed.x * sp + (Math.random() - 0.5) * jit * 2, vy = s.vel.y * 0.92 + _ed.y * sp + (Math.random() - 0.5) * jit * 2, vz = s.vel.z * 0.92 + _ed.z * sp + (Math.random() - 0.5) * jit * 2;
+      if (kind < 0.35) r.parts.emit(px, py, pz, vx, vy, vz, hot, 0.05 + Math.random() * 0.06, 0.55 + 0.35 * bst, 0.18, mid, 3, 0);                                   // 白熱した芯(短い)
+      else if (kind < 0.95) r.parts.emit(px, py, pz, vx, vy, vz, mid, 0.14 + Math.random() * 0.16 + 0.1 * bst, 0.42 + 0.25 * Math.random() + 0.2 * bst, 0.9 + 0.7 * bst, bst ? 0x1a4aff : 0xff4a10, 1.6, 0);   // 色つきの炎(細く、先で広がって消える)
+      else r.parts.emit(px, py, pz, vx * 0.8 + (Math.random() - 0.5) * 16, vy * 0.8 + Math.random() * 8, vz * 0.8 + (Math.random() - 0.5) * 16, 0xffd070, 0.3 + Math.random() * 0.4, 0.26, 0.07, 0xff3a10, 0.7, 70);   // 火の粉
+    }
+    // 口元のやわらかい光(毎コマ出して、次のコマで消える)
+    r.parts.emit(_en.x, _en.y, _en.z, s.vel.x, s.vel.y, s.vel.z, dimHex(mid, 0.5), Math.max(dt * 1.6, 0.03), 1.5 + 1.0 * bst + 0.4 * sr, 1.3 + 0.8 * bst, dimHex(hot, 0.4), 0, 0);
+  }
+  s._burst = 0;
+  if (s.isPlayer && r.engLight) {   // 後ろの光が路面を照らす
+    const l = r.engLight; l.color.set(mid); l.intensity = (120 + 220 * sr + 700 * bst) * (0.92 + Math.random() * 0.16);
+    l.position.copy(s.pos).addScaledVector(_ed, 4.2).addScaledVector(s.up, 1.0);
   }
 }
 
@@ -483,7 +521,7 @@ function raceUpdate(dt) {
   while (race.acc >= DT && n < 8) { simStep(DT); race.acc -= DT; n++; }
   if (race.acc > DT * 8) race.acc = 0;
   updateCamera(dt); syncModels(dt, race.time);
-  race.parts.update(dt);
+  race.parts.update(dt, camera, renderer.domElement.height);
   const p = race.player, sr = Math.min(1.4, p.speed / p.mach.top);
   race.lines.update(dt, sr, p.boosting);
   Snd.engineUpdate(sr, true, p.boosting, p.down ? 0 : 1);

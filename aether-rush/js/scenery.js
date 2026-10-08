@@ -274,32 +274,46 @@ export class SpeedLines {
 
 // ---- 火花・排気の粒 ----
 export class Particles {
-  constructor(scene, max = 320) {
+  // 加算合成のやわらかい光の粒。1粒ごとに 大きさ(始め→終わり)・色(始め→終わり)・空気抵抗・重力 を持てる。火花・爆発・エンジンの炎に使う
+  constructor(scene, max = 1800) {
     this.max = max; this.p = [];
-    const pos = new Float32Array(max * 3), col = new Float32Array(max * 3);
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    const cv = document.createElement('canvas'); cv.width = cv.height = 32; const cg = cv.getContext('2d');
-    const gr = cg.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    cg.fillStyle = gr; cg.fillRect(0, 0, 32, 32);
-    this.mat = new THREE.PointsMaterial({ size: 1.0, map: new THREE.CanvasTexture(cv), vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
-    this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; scene.add(this.pts);
-    for (let i = 0; i < max; i++) this.p.push({ life: 0, x: 0, y: -1e5, z: 0, vx: 0, vy: 0, vz: 0, r: 0, g: 0, b: 0, max: 1 });
-    this.cursor = 0;
+    const g = new THREE.BufferGeometry();
+    this.pos = new Float32Array(max * 3); this.col = new Float32Array(max * 3); this.siz = new Float32Array(max); this.alp = new Float32Array(max);
+    g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(this.col, 3));
+    g.setAttribute('size', new THREE.BufferAttribute(this.siz, 1)); g.setAttribute('alpha', new THREE.BufferAttribute(this.alp, 1));
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: { uScale: { value: 600 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute float size; attribute float alpha; attribute vec3 color; uniform float uScale; varying vec3 vC; varying float vA;
+        void main(){ vC = color; vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = min(160.0, size * uScale / max(0.5, -mv.z)); gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `varying vec3 vC; varying float vA;
+        void main(){ float d = length(gl_PointCoord - 0.5) * 2.0; float a = clamp(1.0 - d, 0.0, 1.0); a = a * a * (3.0 - 2.0 * a); float core = pow(a, 3.0) * 0.6; gl_FragColor = vec4(vC * (a + core) * vA, a * vA); }`,
+    });
+    this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = 5; scene.add(this.pts);
+    for (let i = 0; i < max; i++) this.p.push({ life: 0, max: 1, x: 0, y: -1e5, z: 0, vx: 0, vy: 0, vz: 0, r0: 0, g0: 0, b0: 0, r1: 0, g1: 0, b1: 0, s0: 1, s1: 1, drag: 0, grav: 60 });
+    this.cursor = 0; this._c = new THREE.Color();
   }
-  emit(x, y, z, vx, vy, vz, color, life) {
+  // color→color2 へ移り変わる。size は 始め→終わり。drag は 1秒あたりの速度の減り方(0〜)
+  emit(x, y, z, vx, vy, vz, color, life, size0 = 1.3, size1 = 0.4, color2 = null, drag = 0, grav = 60) {
     const q = this.p[this.cursor]; this.cursor = (this.cursor + 1) % this.max;
-    q.x = x; q.y = y; q.z = z; q.vx = vx; q.vy = vy; q.vz = vz; q.life = q.max = life;
-    const c = new THREE.Color(color); q.r = c.r; q.g = c.g; q.b = c.b;
+    q.x = x; q.y = y; q.z = z; q.vx = vx; q.vy = vy; q.vz = vz; q.life = q.max = life; q.s0 = size0; q.s1 = size1; q.drag = drag; q.grav = grav;
+    const c = this._c.set(color); q.r0 = c.r; q.g0 = c.g; q.b0 = c.b;
+    if (color2 == null) { q.r1 = c.r; q.g1 = c.g; q.b1 = c.b; } else { const c2 = this._c.set(color2); q.r1 = c2.r; q.g1 = c2.g; q.b1 = c2.b; }
   }
-  update(dt) {
-    const pa = this.pts.geometry.attributes.position.array, ca = this.pts.geometry.attributes.color.array;
+  update(dt, camera, heightPx) {
+    if (camera) this.mat.uniforms.uScale.value = (heightPx || 600) * 0.5 * camera.projectionMatrix.elements[5];
+    const pa = this.pos, ca = this.col, sa = this.siz, aa = this.alp;
     for (let i = 0; i < this.max; i++) {
       const q = this.p[i];
-      if (q.life > 0) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; q.vy -= 60 * dt; }
-      const a = q.life > 0 ? q.life / q.max : 0;
+      if (q.life > 0) {
+        q.life -= dt; const k = q.drag > 0 ? Math.exp(-q.drag * dt) : 1;
+        q.vx *= k; q.vy = q.vy * k - q.grav * dt; q.vz *= k; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+      }
+      const a = q.life > 0 ? q.life / q.max : 0, t = 1 - a;
       pa[i * 3] = q.x; pa[i * 3 + 1] = a > 0 ? q.y : -1e5; pa[i * 3 + 2] = q.z;
-      ca[i * 3] = q.r * a; ca[i * 3 + 1] = q.g * a; ca[i * 3 + 2] = q.b * a;
+      ca[i * 3] = q.r0 + (q.r1 - q.r0) * t; ca[i * 3 + 1] = q.g0 + (q.g1 - q.g0) * t; ca[i * 3 + 2] = q.b0 + (q.b1 - q.b0) * t;
+      sa[i] = q.s1 + (q.s0 - q.s1) * a; aa[i] = Math.pow(a, 0.75);
     }
-    this.pts.geometry.attributes.position.needsUpdate = true; this.pts.geometry.attributes.color.needsUpdate = true;
+    const g = this.pts.geometry.attributes;
+    g.position.needsUpdate = g.color.needsUpdate = g.size.needsUpdate = g.alpha.needsUpdate = true;
   }
 }
