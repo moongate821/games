@@ -513,6 +513,7 @@ function drawFighter(f) {
   const im = IMG.body[f.no]; if (!im) return;
   if (f.trail && f.trail.length > 1) { const fl = f.face >= 0 ? 1 : -1, h0 = 212, s0 = h0 / im.height, w0 = im.width * s0; f.trail.forEach((p, i) => { if (i === f.trail.length - 1) return; ctx.save(); ctx.globalAlpha = 0.07 + 0.22 * i / f.trail.length; ctx.translate(sx(p.x) + p.ox, GROUND - h0 / 2 - p.lift); ctx.rotate(p.rot); ctx.scale(fl, 1); ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= 0.8; ctx.drawImage(im, -w0 / 2, -h0 / 2, w0, h0); ctx.restore(); }); }
   if (M.act && M.act.a === f && M.act.mv.id && M.act.mv.id[0] === 'S') { const px0 = sx(f.x), pulse = 0.75 + 0.25 * Math.sin(M.act.t * 18), g = ctx.createRadialGradient(px0, GROUND - 110, 10, px0, GROUND - 110, 190 * pulse); g.addColorStop(0, 'rgba(255,230,255,.75)'); g.addColorStop(0.45, 'rgba(255,80,225,.38)'); g.addColorStop(1, 'rgba(255,60,200,0)'); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(px0 - 220, GROUND - 330, 440, 440); ctx.restore(); }
+  if (f.mode !== 'down' && f.lieN < 0.35 && Math.abs(f.vis.rot) < 0.8) { drawOriginalPuppet(f, im); return; }
   // レスラーは常に元の body_NN.png を描く。衣装・腕の数・体格が場面で変わらない。
   const v = f.vis, pose = f.poseName || 'guard', lie = f.lieN;
   const hh = 212, sc = hh / im.height, w = im.width * sc;
@@ -539,6 +540,25 @@ function drawFighter(f) {
   ctx.scale(flip * v.sx, v.sy * poseScaleY);
   ctx.drawImage(im, -w / 2, -hh / 2, w, hh);
   if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.7; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  ctx.restore();
+}
+function drawOriginalPuppet(f, im) {
+  const v = f.vis, p = f.pose || PUP.newPose(), hh = 212, sc = hh / im.height, w = im.width * sc;
+  const px = sx(f.x) + v.ox, cy = GROUND - hh / 2 - v.lift, flip = f.face >= 0 ? 1 : -1;
+  const shoulder = im.height * .3, hip = im.height * .57, mid = im.width * .5, overlap = 8;
+  const ax = (x) => x * sc - w / 2, ay = (y) => y * sc - hh / 2;
+  const slice = (x, y, sw, sh) => ctx.drawImage(im, x, y, sw, sh, ax(x), ay(y), sw * sc, sh * sc);
+  const turn = (x, y, angle, x0, y0, sw, sh) => { ctx.save(); ctx.translate(ax(x), ay(y)); ctx.rotate(angle); ctx.translate(-ax(x), -ay(y)); slice(x0, y0, sw, sh); ctx.restore(); };
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56, 11, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(px, cy); ctx.rotate(v.rot); ctx.scale(flip * v.sx, v.sy);
+  // 元絵を頭・胴・脚の重なり合う3層に分け、元の画素を描き直さずに関節を動かす。
+  const legRot = (p.lf1 + p.lb1) * .12 + (f.walkVisual > 0 ? Math.sin(f.walkT || 0) * .035 : 0);
+  turn(mid, hip, legRot, 0, hip - overlap, im.width, im.height - hip + overlap);
+  ctx.save(); ctx.translate(ax(mid), ay(hip)); ctx.rotate((p.tr - .06) * .32); ctx.translate(-ax(mid), -ay(hip));
+  slice(0, shoulder - overlap, im.width, hip - shoulder + overlap * 2);
+  turn(mid, shoulder, -p.hr * .24, 0, 0, im.width, shoulder + overlap);
+  ctx.restore();
+  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .3; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); }
   ctx.restore();
 }
 function drawFx() {
@@ -625,7 +645,7 @@ function drawSelect() {
 function drawResult() {
   const o = M.over; ctx.fillStyle = 'rgba(0,0,20,.7)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; const w = o.winner;
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 60px sans-serif'; ctx.fillText(w.name + ' の勝ち!', W / 2, 200); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.fillText(({ PIN: '3カウント', KO: 'K.O.', '判定': '時間切れ判定' })[o.how] + '  ' + Math.floor(M.time / 60) + '分' + Math.floor(M.time % 60) + '秒', W / 2, 250);
-  const im = IMG.body[w.no]; if (im && !PUP.has(w.no)) { const hh = 190, sc = hh / im.height; ctx.drawImage(im, W / 2 - im.width * sc / 2, 280, im.width * sc, hh); }
+  const im = IMG.body[w.no]; if (im) { const hh = 190, sc = hh / im.height; ctx.drawImage(im, W / 2 - im.width * sc / 2, 280, im.width * sc, hh); }
   if (PROP.belt) { const b = PROP.belt; ctx.drawImage(b, W / 2 - b.width * 1.3, 268, b.width * 2.6, b.height * 2.6); }  ctx.fillStyle = '#9bf'; ctx.font = '18px sans-serif'; ctx.fillText('Z / タップで レスラー選択へ', W / 2, 520);
 }
 function drawCutIn(A) {
@@ -804,5 +824,5 @@ function poseFor(f) {
 }
 function stepPoses(dt) {
   if (!M) return;
-  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; f.walkVisual = f.moving ? 0.12 : Math.max(0, (f.walkVisual || 0) - dt); f.poseName = poseFor(f)[0]; f.moving = false; }
+  for (const f of M.p) { if (f.moving) f.walkT = (f.walkT || 0) + dt * 11; f.walkVisual = f.moving ? 0.12 : Math.max(0, (f.walkVisual || 0) - dt); const [name, rate, extra] = poseFor(f); PUP.step(f, name, dt, rate, extra); f.moving = false; }
 }
