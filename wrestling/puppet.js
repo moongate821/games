@@ -52,8 +52,10 @@ const PUP = (() => {
   // ----- ポーズの補間(なめらかに近づける) -----
   function newPose() { return Object.assign({}, POSE.guard); }
   function step(f, name, dt, rate, extra) {
-    const t = POSE[name] || POSE.guard; f.pose = f.pose || newPose(); const k = 1 - Math.exp(-dt * (rate || 16));
-    for (const key of KEYS) { let v = t[key] + (extra && extra[key] || 0); f.pose[key] += (v - f.pose[key]) * k; }
+    const t = POSE[name] || POSE.guard; f.pose = f.pose || newPose(); f.pv = f.pv || {};
+    const w = (rate || 16) * 1.15, z = 0.82, h = Math.min(dt, 1 / 30);      // ばね+ダンパー: 少しゆきすぎて戻る(しなやかな動き)
+    for (const key of KEYS) { const v = t[key] + (extra && extra[key] || 0); let q = f.pv[key] || 0;
+      q += (w * w * (v - f.pose[key]) - 2 * z * w * q) * h; f.pv[key] = q; f.pose[key] += q * h; }
     f.poseName = name;
   }
   // ----- 描画 -----
@@ -67,18 +69,23 @@ const PUP = (() => {
     if (vis.flash > 0 && 'filter' in ctx) ctx.filter = 'brightness(2.4) saturate(.5)';
     ctx.translate(p.rx * 0.7, 0); ctx.rotate(p.rr); ctx.scale(K, K);      // 以後は部品の元の大きさ(px)で書く。原点=腰の中心
     const img = (im, ax, ay) => ctx.drawImage(im, -ax * im.width, -ay * im.height);
-    const limb = (up, lo, x, y, a1, a2, hold) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-a1); img(up, .5, .1); ctx.translate(0, (.86 - .1) * up.height); ctx.rotate(-a2); img(lo, .5, .08);
-      if (hold && window.PROP && window.PROP[hold]) { const pi = window.PROP[hold], sc = (hold === 'chair' ? 70 : 60) / K / pi.height; ctx.translate(0, (.9 - .08) * lo.height); ctx.rotate(hold === 'chair' ? 0.5 : 0); ctx.scale(sc, sc); ctx.drawImage(pi, -pi.width * 0.5, -pi.height * 0.62); }
+    // 手首・足首: すね/前腕の下の部分(手・足)を別パーツとして、もう一つの関節で曲げる(fr=関節の位置の割合, a3=曲げ角)
+    const limb = (up, lo, x, y, a1, a2, hold, a3, fr, v2) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-a1); img(up, .5, .1); ctx.translate(0, (.86 - .1) * up.height); ctx.rotate(-a2);
+      const w = lo.width, h = lo.height, cut = fr * h; ctx.drawImage(lo, 0, 0, w, cut + 2, -.5 * w, -.08 * h, w, cut + 2);
+      ctx.translate(0, cut - .08 * h); ctx.rotate(-a3); ctx.drawImage(lo, 0, cut, w, h - cut, -.5 * w, -1, w, h - cut);
+      if (hold && window.PROP && window.PROP[hold]) { const pi = window.PROP[hold], sc = (hold === 'chair' ? 70 : 60) / K / pi.height; ctx.translate(0, (.9 - fr) * h); ctx.rotate(hold === 'chair' ? 0.5 : 0); ctx.scale(sc, sc); ctx.drawImage(pi, -pi.width * 0.5, -pi.height * 0.62); }
       ctx.restore(); };
+    const pv = f.pv || {}, cl = (v, m) => Math.max(-m, Math.min(m, v));
+    const hand = (a1, a2, k2) => cl(-0.05 * (pv[k2] || 0) + 0.12 * (a1 + a2) * 0.3, .8), foot = (a1, a2, k2) => cl(-(a1 + a2) * .55 - 0.04 * (pv[k2] || 0), .9);
     const hipY = (.8 - .12) * pe.height, hipX = .24 * pe.width;
-    limb(lu, ll, -hipX, hipY, p.lb1, p.lb2);                                   // 後ろ脚
-    limb(lu, ll, hipX, hipY, p.lf1, p.lf2);                                    // 前脚
+    limb(lu, ll, -hipX, hipY, p.lb1, p.lb2, null, foot(p.lb1, p.lb2, 'lb2'), .72);                                   // 後ろ脚
+    limb(lu, ll, hipX, hipY, p.lf1, p.lf2, null, foot(p.lf1, p.lf2, 'lf2'), .72);                                    // 前脚
     ctx.save(); img(pe, .5, .12); ctx.restore();                              // 腰
     ctx.save(); ctx.rotate(p.tr);                                              // 胴(腰を軸に前へ倒れる)
-    limb(au, al, -.38 * to.width, (.14 - .97) * to.height, p.ab1, p.ab2);      // 後ろ腕(胴の後ろ側)
+    limb(au, al, -.38 * to.width, (.14 - .97) * to.height, p.ab1, p.ab2, null, hand(p.ab1, p.ab2, 'ab2'), .66);      // 後ろ腕(胴の後ろ側)
     img(to, .5, .97);
     ctx.save(); ctx.translate(0, (.04 - .97) * to.height); ctx.rotate(p.hr); img(he, .5, .9); ctx.restore();   // 頭
-    limb(au, al, .38 * to.width, (.14 - .97) * to.height, p.af1, p.af2, f.holding);       // 前腕側(手前)。小物を持っていれば手に描く
+    limb(au, al, .38 * to.width, (.14 - .97) * to.height, p.af1, p.af2, f.holding, hand(p.af1, p.af2, 'af2'), .66);       // 前腕側(手前)。小物を持っていれば手に描く
     ctx.restore();
     ctx.restore(); return true;
   }

@@ -164,8 +164,21 @@ function stepAct(dt) {
   else if (k === '打' && A.kind !== 'rope') {
     const gap = Math.abs(d.x - a.x);
     if (u < 0.35) { a.x += dir * Math.min(gap - 0.1, 0.5) * dt * 3.2; a.vis.ox = dir * 12 * ease(u / 0.35); }
-    if (u >= 0.35 && !A.hit) { A.hit = true; if (A.dodge) { Snd.whiff(); say('かわした!', 0.7); } else { applyHit(a, d, mv, big, A.mult); d.x = clamp(d.x + dir * 0.06, -0.95, 0.95); d.vis.ox = dir * 16; if (A.knock && d.life > 0) { d.mode = 'down'; d.downT = rr(1.6, 2.6); M.counts.downs++; } } }
-    if (u > 0.35) a.vis.ox = lerp(a.vis.ox, 0, 0.2);
+    if (u >= 0.35 && !A.hit) {
+      A.hit = true;
+      // 当たりの瞬間に距離を見直す(相手が下がった・倒れたなら空振り=本物の当たり判定)
+      const reach = Math.abs(d.x - a.x) <= 0.31 && d.mode !== 'down';
+      if (A.dodge || !reach) { Snd.whiff(); if (A.dodge) say('かわした!', 0.7); else A.missed = true; }
+      else {
+        applyHit(a, d, mv, big, A.mult);
+        const tier = sp ? 3 : big ? 2 : mv.rank >= 3 ? 1 : 0;   // 軽・中・大・必殺で、のけぞりの大きさと硬直を変える
+        d.x = clamp(d.x + dir * [0.04, 0.08, 0.15, 0.25][tier], -0.95, 0.95);
+        d.vis.ox = dir * [10, 18, 30, 44][tier]; d.vis.rot = dir * [0.08, 0.16, 0.28, 0.42][tier]; A.react = [0.2, 0.34, 0.55, 0.8][tier];
+        if (A.knock && d.life > 0) { d.mode = 'down'; d.downT = rr(1.6, 2.6); M.counts.downs++; }
+      }
+    }
+    if (u > 0.35) { a.vis.ox = lerp(a.vis.ox, 0, 0.2); if (A.hit && d.mode === 'free') { d.vis.ox = lerp(d.vis.ox, 0, 0.08); d.vis.rot = lerp(d.vis.rot, 0, 0.08); } }
+    if (A.missed && u > 0.6) A.t = Math.max(A.t, A.dur);   // 空振りは余計な間を残さず、あとの隙で表す
   } else if (k === '投' || k === '奥') {
     // 掴んで → 持ち上げ → 叩きつけ
     const hold = d.x; a.x = lerp(a.x, hold - dir * 0.13, 0.2);
@@ -194,7 +207,8 @@ function stepAct(dt) {
   if (A.t >= A.dur) {
     a.vis = { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 }; if (d.mode !== 'down') d.vis = { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 };
     a.trail = []; a.mode = 'free'; a.cool = A.kind === 'whiff' ? 0.5 : 0.25; if (d.mode === 'hold') { d.mode = 'free'; d.stun = A.mv.kind === '関' ? 0.6 : 0.3; }
-    if (d.mode === 'free' && A.kind === 'strike' && A.hit) d.stun = 0.25;
+    if (d.mode === 'free' && A.kind === 'strike' && A.hit) d.stun = A.react || 0.25;
+    if (A.missed) a.cool = 0.75;   // 空振りの隙
     if (d.mode === 'down') d.vis.rot = 0;
     M.act = null; M.lock = null;
   }
@@ -254,7 +268,7 @@ function freeStep(f, dt) {
   const I = f.human ? humanIntent(f) : aiIntent(f, o, dt);
   f.face = o.x >= f.x ? 1 : -1;
   if (f.stun <= 0) {
-    const sp = 0.42 + f.st['速'] * 0.045; f.x = clamp(f.x + I.mx * sp * dt, -0.95, 0.95); f.moving = Math.abs(I.mx) > 0.05;
+    const sp = (0.42 + f.st['速'] * 0.045) * (f.power < 4 ? 0.72 : 1) * (f.life / f.maxLife < 0.25 ? 0.85 : 1); f.x = clamp(f.x + I.mx * sp * dt, -0.95, 0.95); f.moving = Math.abs(I.mx) > 0.05;
     // 相手を通り抜けない
     const gap = 0.17; if (Math.abs(f.x - o.x) < gap && o.mode !== 'down') f.x = o.x + (f.x < o.x ? -gap : gap) * 1;
     f.x = clamp(f.x, -0.95, 0.95);
