@@ -78,7 +78,7 @@ export function stepShip(tr, s, inp, dt, ev) {
   const onRoad = !gapHere && Math.abs(fr.lat) < tr.halfW + 3.5;
   const n = _n.set(fr.ux, fr.uy, fr.uz);
   // 姿勢の「上」は路面法線へなめらかに
-  const airborne = !onRoad || fr.h > CFG.HOVER * 3.2;
+  const airborne = !onRoad || fr.h > CFG.HOVER * 3.2 || s.jumpT > 0;
   if (!airborne) s.up.lerp(n, Math.min(1, dt * 14)).normalize(); else s.up.lerp(_v.set(0, 1, 0), Math.min(1, dt * 1.2)).normalize();
   s.grounded = !airborne;
   // 向きを面に射影
@@ -109,6 +109,12 @@ export function stepShip(tr, s, inp, dt, ev) {
   _w.copy(vel).addScaledVector(up, -vh); // 面内の速度
   fs = _w.dot(s.hd);
   let ss = _w.dot(right);
+  if (s.jumpT > 0) {   // ジャンプ中は、コースの向きと中央へ自然に寄せる(谷の向こうの道に着地できるように)
+    const k = Math.min(1, dt * 2.2);
+    _v.set(fr.tx, fr.ty, fr.tz); _v.addScaledVector(up, -_v.dot(up));
+    if (_v.lengthSq() > 1e-6) { s.hd.lerp(_v.normalize(), k).normalize(); right.copy(s.hd).cross(up).normalize(); }
+    ss += (-fr.lat * 0.9 - ss) * k;
+  }
 
   // ブースト
   s.boostT = Math.max(0, s.boostT - dt);
@@ -136,7 +142,7 @@ export function stepShip(tr, s, inp, dt, ev) {
 
   // ---- 垂直(ホバー or 空中) ----
   let landing = false;
-  if (onRoad && fr.h < CFG.HOVER * 2.4) {
+  if (onRoad && fr.h < CFG.HOVER * 2.4 && !(s.jumpT > 0)) {
     const accV = (CFG.HOVER - fr.h) * CFG.K - vh * CFG.DAMP - CFG.GRAV; // GRAV: 路面に吸い付く力(つり合いで少し沈む)
     vh += accV * dt;
     if (fr.h < 0.4) { vh = Math.max(vh, 0); }
@@ -193,7 +199,14 @@ export function stepShip(tr, s, inp, dt, ev) {
           if (f2 < want) vel.addScaledVector(s.hd, Math.min(want - f2, 520 * dt));
           s.padHint = 'boost';
         } else if (p.type === 'jump') {
-          if (s.jumpCool <= 0 && vel.dot(up) < 40) { vel.addScaledVector(up, 46); s.jumpCool = 1.2; if (ev) ev('jump', s); }
+          if (s.jumpCool <= 0 && vel.dot(up) < 40) {
+            // 谷を必ず越える: 谷の向こう側までの距離から、必要な滞空時間と上向きの速さを決める(遅くても最低限の速さまで押す)
+            let gd = 30, gl = 12; for (const g of tr.gaps) { const d = (g.i0 - s.idx + tr.N) % tr.N; if (d < 40) { gd = d; gl = g.len; break; } }
+            const dist = (gd + gl) * tr.ds + 28, fs0 = Math.max(0, vel.dot(s.hd)), FLOOR = 215;
+            if (fs0 < FLOOR) vel.addScaledVector(s.hd, FLOOR - fs0);
+            const T = Math.min(1.6, Math.max(0.6, dist / Math.max(FLOOR, fs0)));
+            vel.addScaledVector(up, CFG.GRAV * T / 2); s.jumpT = T; s.jumpCool = 1.2; if (ev) ev('jump', s);
+          }
           s.padHint = 'jump';
         } else if (p.type === 'recover') {
           s.energy = Math.min(CFG.ENERGY, s.energy + 28 * dt); s.padHint = 'recover';
@@ -204,7 +217,7 @@ export function stepShip(tr, s, inp, dt, ev) {
     if (s.padHint !== 'recover') s._rec = false;
     s.lastSafe = s.idx;
   }
-  s.jumpCool = Math.max(0, s.jumpCool - dt);
+  s.jumpCool = Math.max(0, s.jumpCool - dt); s.jumpT = Math.max(0, (s.jumpT || 0) - dt);
   if (landing && ev) ev('land', s);
   s.invul = Math.max(0, s.invul - dt);
   s.hitFx = Math.max(0, s.hitFx - dt * 3);
@@ -213,7 +226,7 @@ export function stepShip(tr, s, inp, dt, ev) {
 
   // 落下(コース外・ギャップ): すぐ戻さず、しばらく本当に落ちていく(プレイヤーは約1.3秒、画面は暗転)。そのあとコースへ復帰する
   if (s.falling > 0) { s.falling -= dt; s.invul = Math.max(s.invul, 0.3); if (s.falling <= 0) { s.falling = 0; respawn(tr, s, ev); } }
-  else if (fr.h < -70 || (!onRoad2 && fr.h < -22)) { s.falling = s.isPlayer ? 1.3 : 0.8; if (ev) ev('fall', s); }
+  else if (fr.h < -70 || (!onRoad2 && fr.h < -22)) { s.falling = s.isPlayer ? 1.3 : 0.8; s.penalty = (s.penalty || 0) + 2; s.falls = (s.falls || 0) + 1; if (ev) ev('fall', s); }
   if (s.energy <= 0 && !s.isPlayer) s.energy = 6; // 相手は大破しない(ブーストが使えなくなるだけ)
   if (s.energy <= 0) { s.energy = 0; s.down = true; s.downT = 0; if (ev) ev('down', s); }
   s.energy = Math.min(CFG.ENERGY, s.energy);
@@ -249,10 +262,10 @@ export function updateProgress(tr, s, time, totalLaps, ev) {
   s.cum += d;
   const lapNow = Math.floor(s.cum / N);
   if (lapNow > s.lap && !s.finished) {
-    const lt = time - s.lapStart; s.lapStart = time;
+    const te = time + (s.penalty || 0), lt = te - s.lapStart; s.lapStart = te;
     if (s.lap >= 0) { s.lapTimes.push(lt); if (!s.bestLap || lt < s.bestLap) s.bestLap = lt; }
     s.lap = lapNow;
-    if (s.lap >= totalLaps) { s.finished = true; s.finishTime = time; if (ev) ev('finish', s); }
+    if (s.lap >= totalLaps) { s.finished = true; s.finishTime = te; if (ev) ev('finish', s); }
     else if (ev && s.lap >= 1) ev('lap', s, lt);
   } else if (lapNow < s.lap && !s.finished) {
     s.lap = lapNow; // 逆走で戻った

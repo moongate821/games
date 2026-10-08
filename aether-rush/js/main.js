@@ -299,7 +299,7 @@ function evHandler(type, s, val) {
   else if (type === 'lap') { Snd.lap(); say(`LAP ${s.lap + 1}${s.lap + 1 === race.laps ? '  FINAL' : ''}`, 1.6, true); }
   else if (type === 'finish') { Snd.finish(); say('FINISH!', 3); race.resultsT = 3.2; }
   else if (type === 'down') { Snd.explode(); say('MACHINE DOWN', 3, true); race.resultsT = 3.2; explode(s); }
-  else if (type === 'fall') { if (s.isPlayer) { const f = $('fade'); f.style.transition = 'opacity .7s ease-in .35s'; f.style.opacity = '1'; say('FALL!', 1.2, true); } }   // 谷・コース外へ落ちた: 少し落ちてから暗転
+  else if (type === 'fall') { if (s.isPlayer) { const f = $('fade'); f.style.transition = 'opacity .7s ease-in .35s'; f.style.opacity = '1'; say('FALL!  +2.0s', 1.6, true); } }   // 谷・コース外へ落ちた: 少し落ちてから暗転
   else if (type === 'respawn') { Snd.respawn(); if (s.isPlayer) { const f = $('fade'); f.style.transition = 'opacity .35s ease-out'; f.style.opacity = '0'; } }
 }
 function flash() { const f = $('flash'); f.classList.add('on'); setTimeout(() => f.classList.remove('on'), 90); }
@@ -449,7 +449,7 @@ function updateHud(dt) {
   const list = rankShips();
   setText('pos', `${p.rank}<small>/${r.ships.length}</small>`);
   setText('lap', `LAP ${Math.max(1, Math.min(r.laps, p.lap + 1))}/${r.laps}`);
-  const t = Math.max(0, p.finished ? p.finishTime : r.time);
+  const t = Math.max(0, p.finished ? p.finishTime : r.time + (p.penalty || 0));
   setText('time', fmt(t));
   setText('best', 'BEST ' + fmt(p.bestLap));
   setText('spd', `${Math.round(p.speed * KMH)}<small>km/h</small>`);
