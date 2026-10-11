@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>NEXARIA WILDS【作成中】</title>
+<style>
+html,body{margin:0;height:100%;background:#05070d;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:"Hiragino Sans","Yu Gothic",sans-serif;color:#dff}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+canvas{width:100%;height:100%;max-width:calc(100vh*16/9);max-height:calc(100vw*9/16);image-rendering:pixelated;background:#000;cursor:crosshair}
+#lootp{position:fixed;right:10px;top:70px;width:262px;z-index:6;display:none;background:rgba(6,14,26,.93);border:1px solid #22d3ee;box-shadow:0 0 18px #22d3ee55;padding:8px;font-size:13px;color:#e0f2fe;max-height:70vh;overflow:auto}
+#lootp .lh{font-weight:bold;color:#67e8f9;margin-bottom:6px;letter-spacing:1px}
+#lootp .lr{display:flex;align-items:center;gap:8px;padding:4px;border-bottom:1px solid #164e63}
+#lootp .lr.dim{color:#475569}
+#lootp .li{width:28px;height:28px;image-rendering:pixelated;background:#0b1626;border:1px solid #164e63}
+#lootp .ln{flex:1}
+#lootp button{background:#0e7490;color:#fff;border:1px solid #67e8f9;padding:5px 9px;font-size:12px;cursor:pointer;margin-left:2px}
+#lootp .lf{display:flex;gap:6px;margin-top:8px}
+#lootp .lf button{flex:1;padding:8px}
+#ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,6,14,.82);z-index:5}
+#ov .box{max-width:620px;width:88%;max-height:92%;overflow:auto;border:2px solid #22d3ee;background:#0a1220;padding:18px 22px;box-shadow:0 0 30px #22d3ee55;line-height:1.7}
+#ov h1{margin:0 0 4px;font-size:26px;letter-spacing:3px;color:#22d3ee}
+#ov .wip{color:#fbbf24;font-size:13px;margin-bottom:8px}
+#ov p{margin:6px 0;font-size:14px}
+button.b{background:#0e7490;color:#fff;border:1px solid #67e8f9;padding:10px 16px;margin:6px 6px 0 0;font-size:15px;cursor:pointer}
+button.b:hover{background:#0891b2}
+button.padf,.npc.padf{outline:3px solid #fde047;outline-offset:2px}
+#sel{display:flex;flex-wrap:wrap;margin-top:6px}
+#sel button{min-width:46px}
+#sel button[disabled]{opacity:.35}
+.npcrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.npc{background:#0b1626;border:2px solid #164e63;color:#e0f2fe;padding:4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;width:78px;font-size:12px;font-family:inherit}
+.npc.on{border-color:#22d3ee;background:#0e3a4a}
+.npc[disabled]{opacity:.4;cursor:default}
+.say{background:#0b1626;border-left:3px solid #22d3ee;padding:8px 10px;margin:6px 0;font-size:14px}
+.qrow{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #164e63;padding:4px 0;gap:8px}
+.tb{position:fixed;z-index:4;display:none;width:64px;height:64px;border-radius:50%;border:2px solid #67e8f9;background:#0e749066;color:#fff;font-size:13px}
+#bScope{right:18px;bottom:130px}#bReload{right:98px;bottom:150px}#bSwap{right:98px;bottom:70px}#bMed{right:18px;bottom:210px}#bBoost{right:98px;bottom:230px}#bBomb{right:178px;bottom:150px}
+body.touch .tb{display:block}
+#bFire{right:18px;bottom:48px;background:#b91c1caa;border-color:#fecaca}
+#mobilehud,#rotateHint{display:none}
+@media (orientation:landscape) and (max-height:600px){
+  body.touch .tb{width:52px;height:52px;font-size:11px;right:auto;bottom:auto}
+  body.touch #bFire{right:8px;bottom:8px;width:70px;height:70px;font-weight:bold;font-size:15px}
+  body.touch #bScope{right:86px;bottom:8px}body.touch #bReload{right:146px;bottom:8px}body.touch #bSwap{right:206px;bottom:8px}
+  body.touch #bMed{right:8px;bottom:86px}body.touch #bBoost{right:68px;bottom:86px}body.touch #bBomb{right:128px;bottom:86px}
+  body.touch #mobilehud{display:block;position:fixed;z-index:4;top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);background:#06101cdd;border:1px solid #164e63;color:#fff;padding:4px 8px;font:bold 14px monospace;pointer-events:none}
+  body.touch #padbadge{bottom:auto!important;top:2px;left:auto!important;right:4px;transform:none!important;font-size:10px!important;max-width:42vw;overflow:hidden;white-space:nowrap}
+  body.touch #lootp{top:28px;right:8px;width:min(38vw,262px);max-height:70vh}
+}
+@media (max-width:600px) and (orientation:portrait){
+  #rotateHint{display:flex;position:fixed;inset:0;z-index:12;align-items:center;justify-content:center;background:#050b15f2;text-align:center;padding:24px;box-sizing:border-box;font:bold 20px sans-serif;line-height:1.7}
+  body.touch .tb{display:none}
+}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c" width="960" height="540"></canvas></div>
+<div id="ov"><div class="box" id="obox"></div></div>
+<div id="lootp"></div>
+<div id="padbadge" style="position:fixed;left:50%;transform:translateX(-50%);bottom:6px;z-index:9;display:none;background:#0b1626cc;border:1px solid #67e8f9;color:#e0f2fe;font-size:12px;padding:3px 10px;pointer-events:none"></div>
+<div id="mobilehud"></div><div id="rotateHint">📱 画面を横向きにしてください<br>横向きで移動・照準・射撃を操作できます</div>
+<button class="tb" id="bScope">SCOPE</button>
+<button class="tb" id="bReload">装填</button>
+<button class="tb" id="bSwap">武器</button>
+<button class="tb" id="bMed">医療</button>
+<button class="tb" id="bBoost">強化</button>
+<button class="tb" id="bBomb">爆弾</button>
+<button class="tb" id="bFire">射撃</button>
+<script src="akira_sprite.js"></script>
+<script src="enemy_sprites.js"></script>
+<script src="boss_sprites.js"></script>
+<script src="animal_sprites.js"></script>
+<script src="prop_sprites.js"></script>
+<script src="tile_sprites.js"></script>
+<script src="wall_sprites.js"></script>
+<script src="item_sprites.js"></script>
+<script src="meshy_sprites.js"></script>
+<script src="title_art.js"></script>
+<script src="portraits.js"></script>
+<script src="effects.js"></script>
+<script src="chars.js"></script>
+<script src="weapon_sprites.js"></script>
+<script src="game.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>

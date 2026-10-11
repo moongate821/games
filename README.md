@@ -24,4 +24,4 @@
 - 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
 - NEON RIDER ― 光の轍: https://moongate821.github.io/games/neonrider/ — 光の道を走る疑似3Dのバイクレース(Tron×AKIRA 風)。全30コース、バイク5台。
-- SUPER RING 超人プロレス: https://moongate821.github.io/games/wrestling/ — ドット絵のプロレス。20人の超人レスラー、掴みから投げ・関節・飛び技、ゲージで必殺技、3カウントで決着。派手な演出つき。
+- NEXARIA WILDS: https://moongate821.github.io/games/nexaria-wilds/ — 動物たちが銃を持つ世界の、斜め見下ろしドット絵の脱出シューター。森・海・砂漠・氷河・雪山の全10面を巡り、山頂の白き王へ。【作成中】
