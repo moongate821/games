@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "DROP PARTY — 素粒子とテラリウムの落ち物パズル",
+  "short_name": "DROP PARTY",
+  "lang": "ja",
+  "description": "TERRARIUM GENESIS と QUANTUM DROP の2本立て。ひとり・2人対戦・CPU対戦。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#120a2a",
+  "theme_color": "#120a2a",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

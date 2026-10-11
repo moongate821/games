@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "RALLY DROP SURVIVORS — ラリーX×落ち物",
+  "short_name": "RALLY DROP",
+  "lang": "ja",
+  "description": "ラリーXの煙幕・玉突き・S旗を落ち物パズルに。敵の車が行進してくるサバイバー。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

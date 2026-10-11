@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "STARFIGHTER — Neon Frontier",
+  "short_name": "STARFIGHTER",
+  "lang": "ja",
+  "description": "ネオンの宇宙を駆ける、ワイヤーフレーム・フライトシューティング。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#070d17",
+  "theme_color": "#070d17",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}
