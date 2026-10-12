@@ -2,7 +2,7 @@
 window.GAME = {
   id: "kimi",
   title: "君に逢うために",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "雨の夜の祈りから、もう一度。淡い光の絵本ゲーム",
   credit: "原作 小説『君に逢うために』",
   start: "rain",

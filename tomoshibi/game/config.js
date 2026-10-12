@@ -2,7 +2,7 @@
 window.GAME = {
   id: "tomoshibi40",
   title: "ともしびと迷子の手紙",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "ひとりぼっちの灯りが、手紙の主をさがす、絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "lamp",

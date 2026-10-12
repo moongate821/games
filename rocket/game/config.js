@@ -2,7 +2,7 @@
 window.GAME = {
   id: "rocket40",
   title: "ダンボールロケットで月まで",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "段ボールのロケットで、月まで、ケーキをとどける、工作の絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "yard",

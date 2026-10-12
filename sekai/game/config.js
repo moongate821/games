@@ -2,7 +2,7 @@
 window.GAME = {
   id: "sekai",
   title: "世界の果てで君を探す",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "何度失っても、また会いに行く。水彩の絵本ゲーム",
   credit: "原作 小説『世界の果てで君を探す』",
   start: "hill",

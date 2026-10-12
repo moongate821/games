@@ -2,7 +2,7 @@
 window.GAME = {
   id: "yuki40",
   title: "ユキと春の足あと",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "春にとけてしまう、雪の子の、絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "birth",

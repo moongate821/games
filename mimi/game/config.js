@@ -2,7 +2,7 @@
 window.GAME = {
   id: "mimi40",
   title: "ミミのながい帰り道",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "おいていかれた、ぬいぐるみの、帰り道の絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "closet",

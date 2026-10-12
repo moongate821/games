@@ -2,7 +2,7 @@
 window.GAME = {
   id: "hisui",
   title: "翡翠の約束",
-  eyebrow: "【作成中】 AN INTERACTIVE PICTURE BOOK",
+  eyebrow: "AN INTERACTIVE PICTURE BOOK",
   subtitle: "時をこえて受けつがれる、墨絵の絵本ゲーム",
   credit: "原作 小説『翡翠の約束』",
   start: "funeral",

@@ -122,6 +122,7 @@
     function newGame() { eng.start(); persist(); openBook(); }
     function continueGame() {
       if (!eng.load(localStorage.getItem(K("save")))) eng.start();
+      else if (eng.scene() && eng.scene().ending && eng.canBack()) eng.back();   // 以前の版で結末のまま保存されていた記録は、ひとつ前の分かれ道へ戻す
       openBook();
     }
     function openBook() {
@@ -129,7 +130,16 @@
       pageIdx = 0; lastArtKey = "";
       render(true);
     }
-    function persist() { try { localStorage.setItem(K("save"), eng.serialize()); } catch (e) { /* 無視 */ } store.set("endings", eng.endings); }
+    function persist() {
+      try {
+        let s = eng.serialize();
+        // 結末のページでは、ひとつ前の分かれ道を保存する(「つづきから読む」でいきなり結末が開かないように)
+        const cs = eng.state && game.scenes[eng.state.scene];
+        if (cs && cs.ending && eng.history.length) { const hh = eng.history.slice(); const st = hh.pop(); s = JSON.stringify({ state: st, history: hh.slice(-300) }); }
+        localStorage.setItem(K("save"), s);
+      } catch (e) { /* 無視 */ }
+      store.set("endings", eng.endings);
+    }
 
     // ── 描画 ─────────────────────────────
     function sceneArt() {
@@ -690,11 +700,21 @@
     }
 
     // ── 選ぶ ─────────────────────────────
-    function pick(id) {
+    // 結末へ行く選択は、まちがってタップしても終わらないように、ひとこと確かめる
+    function askEnd(entry, go) {
+      modal("ここで、お話が おわります", [
+        h("p", { class: "sb-shelf-lead" }, `「${entry.opt.label || "この選びかた"}」を えらぶと、この お話は ここで おわります。すすみますか?`),
+        h("div", { class: "sb-cover-buttons" },
+          h("button", { class: "sb-btn primary", type: "button", onclick: () => { closeModal(); go(); } }, "すすむ"),
+          h("button", { class: "sb-btn", type: "button", onclick: () => closeModal() }, "やめておく"))
+      ]);
+    }
+    function pick(id, confirmed) {
       if (busy) return;
       const entry = eng.options().find((e) => e.id === id);
       if (!entry) return;
       if (!readyHotspots() && entry.opt.at) { toast("ページをさいごまで めくってから えらんでね。"); return; }
+      if (!confirmed && entry.enabled && entry.opt.next && game.scenes[entry.opt.next] && game.scenes[entry.opt.next].ending) { askEnd(entry, () => pick(id, true)); return; }
       const before = eng.state.items.slice();
       if (entry.enabled && entry.opt.next) {
         let res;
