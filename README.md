@@ -9,6 +9,7 @@
 - Dungeon Explorer: https://moongate821.github.io/games/dungeon/ — 3Dの迷宮を進むダンジョンRPG。街・カジノ・闘技場つき。セーブは端末に保存。
 - 1980s GALAXY SHOOTER: https://moongate821.github.io/games/starfighter/ — ワイヤーフレームの宇宙を飛ぶ3Dシューティング。横向きで遊びます。
 - RALLY X SURVIVORS: https://moongate821.github.io/games/rally-x/ — 止まらない車で迷路を走り、敵を引き連れて煙幕で玉突き。レベルアップで武器が増えるサバイバル。
+- アリスの暗い午後: https://moongate821.github.io/games/alice-dark/ — 大人のための、激ムズの絵本ゲーム。水彩画の不思議の国で、謎を解いて午後六時のむこうへ。結末は18種類。英語版つき。
 - 王子さまと夕日の星: https://moongate821.github.io/games/prince/ — ちいさな星の王子さまの、クレヨン画の絵本ゲーム。結末は40種類。
 - 桃太郎ときびだんごの旅: https://moongate821.github.io/games/momotaro/ — おなじみの昔話を、選んで進むクレヨン画の絵本ゲームに。結末は40種類。
 - 銀河鉄道と星の切符: https://moongate821.github.io/games/ginga/ — 星の汽車に乗って、夜空をめぐるクレヨン画の絵本ゲーム。結末は40種類。
