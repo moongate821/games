@@ -3,6 +3,7 @@ window.GAME = {
   id: "prince40",
   title: "王子さまと夕日の星",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "夕日をさがす、星めぐりの絵本ゲーム",
   credit: "原案: サン＝テグジュペリ『星の王子さま』(1943)",
   start: "planet",

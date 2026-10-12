@@ -29,13 +29,14 @@
   function mount(game, rootEl) {
     const art = game.art;
     const eng = Core.createEngine(game);
+    const TTS = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
     const K = (s) => game.id + ":" + s;
     const store = {
       get(k, d) { try { const v = localStorage.getItem(K(k)); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
       set(k, v) { try { localStorage.setItem(K(k), JSON.stringify(v)); } catch (e) { /* 保存できなくても遊べる */ } }
     };
     eng.endings = store.get("endings", {});
-    const settings = Object.assign({ size: 1, labels: false, sparkle: true, sound: true, music: 0.7, sfx: 0.8, idleFx: true, cameo: true }, store.get("settings", {}));
+    const settings = Object.assign({ size: 1, labels: false, sparkle: true, sound: true, music: 0.7, sfx: 0.8, idleFx: true, cameo: true }, game.defaults || {}, store.get("settings", {}));
     const audio = (game.audio && root.BookAudio) ? root.BookAudio.create(game) : null;
     if (audio) { audio.on = !!settings.sound; audio.music = settings.music; audio.sfxVol = settings.sfx; }
     const snd = (n) => { if (audio) audio.sfx(n); };
@@ -71,6 +72,7 @@
         ui.body = h("div", { class: "sb-body" }),
         h("footer", { class: "sb-turn" },
           ui.prev = h("button", { class: "sb-turnbtn", type: "button", onclick: () => prevPage() }, "◂ まえ"),
+          ui.read = h("button", { class: "sb-turnbtn sb-read", type: "button", "aria-label": "このページを、こえで よみあげる", hidden: !TTS, onclick: () => toggleRead() }, "🔊 よむ"),
           ui.dots = h("span", { class: "sb-dots", "aria-hidden": "true" }),
           ui.next = h("button", { class: "sb-turnbtn sb-next", type: "button", onclick: () => nextPage() }, "めくる ▸"))),
       ui.curl = h("button", { class: "sb-curl", type: "button", "aria-label": "つぎのページへ", onclick: () => nextPage() }));
@@ -604,6 +606,7 @@
     }
 
     function renderText() {
+      stopRead();
       clearFloaters(true);
       layout();
       const sc = eng.scene();
@@ -688,6 +691,18 @@
       setTimeout(() => { if (busy) done(); }, 1200);
     }
 
+    // ── よみあげ(ことばが まだ よめない子や、目を休めたい人のために。ブラウザの音声を使う) ──
+    let reading = false;
+    function stopRead() { if (TTS) { try { window.speechSynthesis.cancel(); } catch (e) { /* 無視 */ } } reading = false; if (ui.read) ui.read.classList.remove("on"); }
+    function toggleRead() {
+      if (reading) { stopRead(); return; }
+      if (!TTS) { toast("この ブラウザでは、よみあげが つかえません。"); return; }
+      const t = ui.body.querySelector(".sb-text"); const txt = t ? t.innerText.replace(/\s+/g, " ").trim() : ""; if (!txt) return;
+      const u = new window.SpeechSynthesisUtterance(txt); u.lang = "ja-JP"; u.rate = settings.readRate || 0.9; u.pitch = 1.05;
+      try { const vs = window.speechSynthesis.getVoices().filter((v) => /^ja/i.test(v.lang)); if (vs.length) u.voice = vs[0]; } catch (e) { /* 無視 */ }
+      u.onend = u.onerror = () => { reading = false; ui.read.classList.remove("on"); };
+      reading = true; ui.read.classList.add("on"); window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }
     function nextPage() {
       if (pageIdx >= pgs.length - 1) return;
       turn(() => { pageIdx++; renderText(); renderArt(false); }, "next");
@@ -805,6 +820,7 @@
       modal("せってい", [
         h("div", { class: "sb-set" }, h("b", null, "もじの大きさ"), h("div", null, sizeBtn(0.9, "小"), sizeBtn(1, "ふつう"), sizeBtn(1.15, "大"), sizeBtn(1.3, "とても大"))),
         h("div", { class: "sb-set" }, tog("labels", "絵の中のものの名前を、いつも出す")),
+        ...(TTS ? [h("div", { class: "sb-set" }, h("b", null, "よみあげの はやさ"), h("div", null, ...[[0.7, "ゆっくり"], [0.9, "ふつう"], [1.1, "はやい"]].map((p) => h("button", { type: "button", class: "sb-seg" + ((settings.readRate || 0.9) === p[0] ? " on" : ""), onclick: () => { settings.readRate = p[0]; saveSettings(); openSettings(); } }, p[1]))))] : []),
         h("div", { class: "sb-set" }, tog("sparkle", "さわれるものに、きらきらを付ける")),
         h("div", { class: "sb-set" }, tog("idleFx", "しばらく考えていると、文字が浮かんで虫になる")),
         h("div", { class: "sb-set" }, tog("cameo", "ときどき、特別なキャラクターが、ひとこと言いに来る")),

@@ -3,6 +3,7 @@ window.GAME = {
   id: "neko40",
   title: "ねこのレストランと満月オムライス",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "子ねこのコックと、ふしぎなお客の、切り絵の絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "open",

@@ -3,6 +3,7 @@ window.GAME = {
   id: "rocket40",
   title: "ダンボールロケットで月まで",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "段ボールのロケットで、月まで、ケーキをとどける、工作の絵本ゲーム",
   credit: "書き下ろしの物語",
   start: "yard",

@@ -3,6 +3,7 @@ window.GAME = {
   id: "ginga40",
   title: "銀河鉄道と星の切符",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "星めぐりの汽車に乗る、絵本ゲーム",
   credit: "原案: 宮沢賢治『銀河鉄道の夜』",
   start: "school",

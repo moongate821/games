@@ -318,3 +318,7 @@
 .sb-char.home { animation: none; }
 @keyframes sb-lift { from { transform: translateY(0) scale(1); } to { transform: translateY(-8px) scale(1.22); } }
 @keyframes sb-floatchar { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--x1, 12px), var(--y1, -18px)) rotate(var(--r1, 10deg)); } 100% { transform: translate(var(--x2, -10px), var(--y2, -30px)) rotate(var(--r2, -12deg)); } }
+
+/* よみあげボタン(2026-10-12) */
+.sb-read { white-space: nowrap; }
+.sb-read.on { color: var(--accent, #b04a2a); font-weight: bold; }

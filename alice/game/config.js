@@ -3,6 +3,7 @@ window.ALICE_GAME = {
   id: "alice40",
   title: "アリスの小さな大冒険",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "ふしぎの国を、選んで進む絵本ゲーム",
   credit: "原案: ルイス・キャロル『不思議の国のアリス』(1865)",
   start: "river",

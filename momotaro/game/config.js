@@ -3,6 +3,7 @@ window.GAME = {
   id: "momo40",
   title: "桃太郎ときびだんごの旅",
   eyebrow: "AN INTERACTIVE PICTURE BOOK",
+  defaults: { labels: true },   // 子供が読むので、絵の中のものの名前を、いつも出す
   subtitle: "鬼ヶ島へ、選んで進む絵本ゲーム",
   credit: "原案: 昔話『桃太郎』",
   start: "river",
