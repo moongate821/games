@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta name="robots" content="noindex, nofollow, noarchive">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d1427">
+  <title>三次元チェス 実験版</title>
+  <link rel="stylesheet" href="style.css?v=20261012i">
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div><p class="eyebrow">THREE LAYER CHESS · PROTOTYPE 0.6</p><h1>三次元チェス</h1><p class="subtitle">中央の戦場から、上下の盤へ。立体の攻防を試す実験版。</p></div>
+      <div class="top-actions"><div class="game-clock"><span>対局時間</span><time id="gameTime" datetime="PT0S">00:00</time></div><button id="newGame" class="primary">新しい対局</button><button id="undo">1手戻す</button></div>
+    </header>
+    <section class="controlbar" aria-label="対局設定">
+      <label>対戦相手 <select id="mode"><option value="human">2人で対局</option><option value="bot">AI（黒）</option><option value="auto">AI同士で対局</option></select></label>
+      <label id="difficultyWrap" hidden>AIの強さ <select id="difficulty"><option value="strong">手強い · 相手の返しを読む</option><option value="easy">練習 · 1手ずつ考える</option><option value="deep">深読み · 3半手（試験用）</option></select></label>
+      <button id="toggleAuto" hidden>一時停止</button>
+      <label>駒と盤 <select id="theme"><option value="druid">ドルイドの森</option><option value="standard">標準チェス</option><option value="lattice">クラシック象牙</option><option value="crown">王宮の宝石</option></select></label>
+      <label>BGM <select id="bgmSelect"></select></label>
+      <label class="bgm-volume">音量 <input id="bgmVolume" type="range" min="0" max="100" step="5" aria-label="BGMの音量"></label><span id="bgmStatus" class="bgm-status" aria-live="polite"></span>
+      <span class="separator"></span>
+      <label class="move-toggle"><input id="showMoves" type="checkbox" checked><span>移動先を表示</span><strong id="moveToggleState">ON</strong></label>
+      <span class="legend"><i class="mark move"></i>移動先 <i class="mark capture"></i>取れる駒 <i class="mark selected"></i>選択中</span>
+      <button id="claimDraw" hidden>引き分けを申告</button>
+    </section>
+    <section class="viewbar" aria-label="盤面の表示方法">
+      <div class="segmented"><button id="view2d" class="active" aria-pressed="true">平面表示</button><button id="view3d" aria-pressed="false">立体表示</button></div>
+      <span id="viewHint">立体表示ではドラッグで回転できます。倍率は100%固定です。</span>
+      <div class="view-actions"><label id="layerFocusWrap" hidden>表示層 <select id="layerFocus"><option value="all">全層</option><option value="2">上段</option><option value="1">中央</option><option value="0">下段</option></select></label><button id="topView" hidden>真上から</button><button id="resetView" hidden>視点を戻す</button></div>
+    </section>
+    <section class="game">
+      <div class="boards" id="boards" aria-label="三層のチェス盤"></div>
+      <div class="viewer" id="viewer" hidden>
+        <div class="viewer-head"><strong>立体盤</strong><span id="cameraInfo">傾き 58° · 回転 -30° · 倍率 100%</span></div>
+        <div class="focus-notice" id="focusNotice" hidden><span id="focusMessage"></span><button id="showAllLayers">3段を表示</button></div>
+        <div class="viewport" id="viewport" aria-label="ドラッグで回転できる三次元盤"><div class="world" id="world"></div></div>
+        <p>盤面をドラッグして視点を変更。駒やマスをクリックして着手できます。</p>
+      </div>
+      <aside class="sidebar">
+        <div class="card captured-card" aria-label="取った駒の置き場">
+          <h3>取った駒</h3>
+          <div class="captured-side"><strong>白が取った駒</strong><div id="captureWhite" class="captured-pieces" aria-live="polite">なし</div></div>
+          <div class="captured-side"><strong>黒が取った駒</strong><div id="captureBlack" class="captured-pieces" aria-live="polite">なし</div></div>
+        </div>
+        <div class="inspiration-card">
+          <img id="themePreview" src="assets/celtic-pieces-lite/preview-fit.png" alt="MeshyのCeltic King Chess">
+          <div><p class="small-title">MESHY PIECE MODELS</p><h3 id="themeTitle">Celtic Chess</h3><p id="themeDescription">6種類の駒を個別に軽量化し、立体表示で使用しています。平面表示は判別しやすい記号駒です。</p><a id="themeSource" href="https://www.meshy.ai/ja/3d-models/Celtic-King-Chess-019a2147-62cc-747c-90bd-b81086ae0a5f" target="_blank" rel="noopener noreferrer">Meshyのキングを見る ↗</a></div>
+        </div>
+        <div class="status-card"><p class="small-title">対局状況</p><h2 id="status">白の手番</h2><p id="detail">駒を選択してください。</p><div class="mini-stats"><div><strong id="moveNo">1</strong><small>手目</small></div><div><strong id="captureNo">0</strong><small>取った駒</small></div><div><strong id="checkNo">0</strong><small>チェック</small></div></div></div>
+        <div class="card"><div class="card-head"><h3>着手履歴</h3><button id="copyLog" class="text-button">コピー</button></div><ol id="history" class="history"><li class="empty">対局が始まるとここに表示されます。</li></ol></div>
+        <div class="card rules"><h3>この試作のルール</h3><p>中央8×8、上段・下段は6×6。白黒とも中央から開始します。ルークは縦横上下、ビショップは2軸の斜め、クイーンは空間斜めも移動。ナイトは立体L字、キングは隣接マスへ動きます。</p><p>ポーンは中央盤内を進みます。キャスリング、アンパッサン、昇格に対応しています。試作独自のルールで、作品の公式ルールではありません。</p><p>立体盤で奥のマスを選びにくいときは「表示層」で1段ずつ表示できます。</p><a href="../銀河英雄伝説_三次元チェス調査.md">調査・設計資料を見る</a></div>
+      </aside>
+    </section>
+    <footer>AIと立体表示は試験用です。立体駒はMeshyのCC0公開モデルを軽量化したものです。盤はブラウザ描画です。</footer>
+  </main>
+  <dialog id="promotionDialog"><form method="dialog"><h2>ポーンを昇格</h2><p>変更する駒を選んでください。</p><div id="promotionChoices" class="promotion-choices"></div></form></dialog>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <script type="module" src="main.js?v=20261012i"></script>
+<script src="shell.js"></script>
+</body>
+</html>
