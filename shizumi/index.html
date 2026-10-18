@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テキスト型RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20261018b">
+</head>
+<body>
+<div id="screen">
+  <div id="bar"><span id="bar-title">RPG</span><span id="bar-right"></span></div>
+  <div id="status"></div>
+  <div id="out" aria-live="polite"></div>
+  <div id="prompt"><span id="prompt-path">C:\&gt;</span><span id="prompt-in"></span><span class="cursor">_</span></div>
+  <div id="foot">
+    <button data-k="I">I 持ち物</button><button data-k="K">K 知識</button><button data-k="Q">Q 照会</button><button data-k="H">H 遊び方</button><button data-k="S">S 速さ</button><button data-k="M">M 音</button><button data-k="-" aria-label="文字を小さく">A−</button><button data-k="+" aria-label="文字を大きく">A＋</button>
+  </div>
+</div>
+<!-- ?v= は直したら上げる(古いファイルがキャッシュに残るのを防ぐ) -->
+<script src="data.js?v=20261018b"></script>
+<script src="engine.js?v=20261018b"></script>
+<script src="shell.js"></script>
+</body>
+</html>

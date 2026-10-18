@@ -4,6 +4,7 @@
 
 - 入口: https://moongate821.github.io/games/
 - SWARM BREAKER: https://moongate821.github.io/games/swarm-breaker/ — 単機で出撃し、弱らせた敵を捕獲して仲間を増やす縦シューティング。全12面・ボス5体。PC・タッチ・ゲームパッド対応。【工事中・試遊版】
+- 沈書庫: https://moongate821.github.io/games/shizumi/ — MS-DOS風の画面で遊ぶ、死に覚えのテキストRPG。地下へ沈む書庫で、死ぬと一冊の本になる。知ったことだけが次の周に残る(激ムズ)。
 - DROP PARTY: https://moongate821.github.io/games/drop-party/ — TERRARIUM GENESIS と QUANTUM DROP の2本立て落ち物パズル。ひとり・CPU対戦・デモ観戦。
 - WORLD BUILD DROP: https://moongate821.github.io/games/world-build-drop/ — 言葉を落として物語を編む落ち物パズル。合体して章を完成させよう。
 - アリスの小さな大冒険: https://moongate821.github.io/games/alice/ — クレヨン画の絵本をめくって進む分岐ゲーム。結末は40種類。
