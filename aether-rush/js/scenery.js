@@ -290,8 +290,11 @@ export class Particles {
     });
     this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = 5; scene.add(this.pts);
     for (let i = 0; i < max; i++) this.p.push({ life: 0, max: 1, x: 0, y: -1e5, z: 0, vx: 0, vy: 0, vz: 0, r0: 0, g0: 0, b0: 0, r1: 0, g1: 0, b1: 0, s0: 1, s1: 1, drag: 0, grav: 60 });
-    this.cursor = 0; this._c = new THREE.Color();
+    this.cursor = 0; this._c = new THREE.Color(); this.tr = [];
   }
+  // 火花: 飛びながら毎コマ小さな粒を置いていくので、尾を引く線に見える
+  tracer(x, y, z, vx, vy, vz, color, life = 0.5, size = 0.32) { if (this.tr.length > 140) this.tr.shift(); this.tr.push({ x, y, z, vx, vy, vz, c: color, life, size }); }
+
   // color→color2 へ移り変わる。size は 始め→終わり。drag は 1秒あたりの速度の減り方(0〜)
   emit(x, y, z, vx, vy, vz, color, life, size0 = 1.3, size1 = 0.4, color2 = null, drag = 0, grav = 60) {
     const q = this.p[this.cursor]; this.cursor = (this.cursor + 1) % this.max;
@@ -301,6 +304,13 @@ export class Particles {
   }
   update(dt, camera, heightPx) {
     if (camera) this.mat.uniforms.uScale.value = (heightPx || 600) * 0.5 * camera.projectionMatrix.elements[5];
+    for (let i = this.tr.length - 1; i >= 0; i--) {
+      const t = this.tr[i]; t.life -= dt;
+      if (t.life <= 0) { this.tr.splice(i, 1); continue; }
+      const k = Math.exp(-0.6 * dt); t.vx *= k; t.vz *= k; t.vy = t.vy * k - 55 * dt;
+      for (let j = 0; j < 2; j++) { const u = j / 2; this.emit(t.x - t.vx * dt * u, t.y - t.vy * dt * u, t.z - t.vz * dt * u, t.vx * 0.05, t.vy * 0.05, t.vz * 0.05, 0xfff2c0, 0.11, t.size, t.size * 0.2, t.c, 0, 0); }
+      t.x += t.vx * dt; t.y += t.vy * dt; t.z += t.vz * dt;
+    }
     const pa = this.pos, ca = this.col, sa = this.siz, aa = this.alp;
     for (let i = 0; i < this.max; i++) {
       const q = this.p[i];

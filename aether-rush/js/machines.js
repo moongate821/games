@@ -105,6 +105,35 @@ function hueShift(r, g, b, deg, sat) {
   const l = 0.3 * R + 0.59 * G + 0.11 * B, k = (v) => Math.min(1, Math.max(0, l + (v - l) * sat));
   return [k(R), k(G), k(B)];
 }
+
+// ---- エンジンの炎(専用シェーダー): 芯が白く、外が機体の色、衝撃波のダイヤ模様がゆらぎながら流れる ----
+function makeJetMaterial(glow) {
+  const c = new THREE.Color(glow);
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uPower: { value: 1 }, uBoost: { value: 0 }, uCore: { value: new THREE.Color(0xfff4d8) }, uMid: { value: c.clone() }, uEdge: { value: c.clone().multiplyScalar(0.3) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main(){ vUv = uv; vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position, 1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform float uTime; uniform float uPower; uniform float uBoost; uniform vec3 uCore; uniform vec3 uMid; uniform vec3 uEdge;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      float h(float x){ return fract(sin(x * 127.1) * 43758.5453); }
+      void main(){
+        float t = clamp(vUv.y, 0.0, 1.0);
+        float f = abs(dot(normalize(vN), normalize(vV)));
+        float n = h(floor(uTime * 45.0));
+        float flick = 0.8 + 0.2 * sin(uTime * 75.0 + t * 20.0 + n * 6.28);
+        float dia = pow(max(0.0, sin(t * (30.0 + 12.0 * uBoost) - uTime * 28.0)), 7.0) * (1.0 - t);
+        float taper = pow(1.0 - t, 1.15);
+        float a = taper * (0.65 * f * f + 0.22 * pow(1.0 - f, 0.8) + 0.8 * dia * (0.4 + f)) * uPower * flick;
+        float k = (0.6 * f + 0.4) * (1.0 - t * 0.65) + dia * 0.45;
+        vec3 col = mix(uEdge, uMid, smoothstep(0.08, 0.55, k));
+        col = mix(col, uCore, smoothstep(0.55, 0.98, k));
+        gl_FragColor = vec4(col * a * 2.0, a);
+      }`,
+  });
+}
+function makeJetGeo() { const g = new THREE.ConeGeometry(0.5, 1.0, 18, 12, true); g.rotateX(Math.PI / 2); g.translate(0, 0, 0.5); return g; }
+
 function makeGlbShip(m, paint, lod) {
   const A = ASSETS[m.id]; const a = A && (A[lod] || A.md || A.hi || A.xl || A.lo); if (!a) return null;
   const body = rgb(paint ? paint.body : m.body), acc = rgb(paint ? paint.accent : m.accent), glowC = rgb(m.glow);
@@ -130,11 +159,10 @@ function makeGlbShip(m, paint, lod) {
   const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.9), new THREE.MeshBasicMaterial({ map: numberPlate(m.num, '#ffffff'), transparent: true, depthWrite: false }));
   pl.rotation.x = -Math.PI / 2; pl.position.set(0, I.top + 0.06, I.topZ); pl.scale.set(0.9, 0.9, 1); group.add(pl);
   // 炎
-  const flames = [], fm = new THREE.MeshBasicMaterial({ color: m.glow, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
-  const fg = new THREE.ConeGeometry(0.5, 1.0, 6, 1, true); fg.rotateX(Math.PI / 2); fg.translate(0, 0, 0.5);
+  const flames = [], fm = makeJetMaterial(m.glow), fg = makeJetGeo();
   let fb = 0.9;
   for (const e of I.flames) { const fs = Math.min(0.95, Math.max(0.5, e.r / 0.5 * 0.7)); fb = fs; const f = new THREE.Mesh(fg, fm); f.position.set(e.x, e.y, I.zmax + 0.05); f.scale.set(fs, fs, 1); group.add(f); flames.push(f); }
-  group.userData.flames = flames; group.userData.len = I.L; group.userData.flameBase = fb; group.userData.glb = true;
+  group.userData.flames = flames; group.userData.jetMat = fm; group.userData.len = I.L; group.userData.flameBase = fb; group.userData.glb = true;
   return group;
 }
 export function makeShipModel(m, paint, lod = PLAYER_LOD) { return makeGlbShip(m, paint, lod) || makeShipModelProc(m, paint); }
@@ -218,14 +246,12 @@ export function makeShipModelProc(m, paint) {
   }
   // ---- 炎 ----
   const flames = [];
-  const fm = new THREE.MeshBasicMaterial({ color: m.glow, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
-  const fg = new THREE.ConeGeometry(0.5, 1.0, 6, 1, true);
-  fg.rotateX(Math.PI / 2); fg.translate(0, 0, 0.5);
+  const fm = makeJetMaterial(m.glow), fg = makeJetGeo();
   const fs = eg.r / 0.5 * 0.9;
   for (const sd of [-1, 1]) {
     const f = new THREE.Mesh(fg, fm); f.position.set(sd * eg.x, eg.y, zR + 0.55); f.scale.set(fs, fs, 1); group.add(f); flames.push(f);
   }
-  group.userData.flames = flames; group.userData.len = L; group.userData.flameBase = fs;
+  group.userData.flames = flames; group.userData.jetMat = fm; group.userData.len = L; group.userData.flameBase = fs;
   return group;
 }
 

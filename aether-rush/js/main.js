@@ -241,8 +241,9 @@ function startRace(ci, mi) {
   scene.add(new THREE.HemisphereLight(pal.skyBot, pal.ground, 1.05));
   const sunL = new THREE.DirectionalLight(0xffffff, 2.0); sunL.position.set(-0.5, 1, 0.3); scene.add(sunL);
   const fill = new THREE.DirectionalLight(pal.edge, 0.8); fill.position.set(0.6, 0.3, -0.8); scene.add(fill);
-  const parts = new Particles(scene, isTouch ? 1100 : 2000);
+  const parts = new Particles(scene, isTouch ? 1800 : 3200);
   const engLight = new THREE.PointLight(0x00e8ff, 0, 42, 2); scene.add(engLight);
+  const flareL = makeFlare(), flareR = makeFlare(); scene.add(flareL, flareR);
   scene.add(camera);
   const lines = new SpeedLines(camera);
 
@@ -264,7 +265,7 @@ function startRace(ci, mi) {
   const player = mk(MACHINES[mi], 'YOU', true, null, 1, 0, playerSlot);
   const rivals = RIVALS.map((r, k) => mk(MACHINES[r.mach], r.name, false, { body: r.body, accent: r.accent, hue: r.hue, sat: r.sat }, r.skill, r.lane, aiSlots[k]));
   const mm = minimapPath(tr, 170);
-  race = { engLight, ci, mi, def, tr, scene, ships, player, laps, time: -3.6, state: 'countdown', acc: 0, parts, lines, skyObjs, mm, msgT: 0, wrong: 0, camPos: new THREE.Vector3(), camUp: new THREE.Vector3(0, 1, 0), fov: 64, shake: 0, lastCount: 4, resultsT: 0, bot: q.get('bot') === '1', finishedOrder: [], hudCache: {}, bgm: false };
+  race = { engLight, flares: [flareL, flareR], ci, mi, def, tr, scene, ships, player, laps, time: -3.6, state: 'countdown', acc: 0, parts, lines, skyObjs, mm, msgT: 0, wrong: 0, camPos: new THREE.Vector3(), camUp: new THREE.Vector3(0, 1, 0), fov: 64, shake: 0, lastCount: 4, resultsT: 0, bot: q.get('bot') === '1', finishedOrder: [], hudCache: {}, bgm: false };
   initCamera();
   buildHud();
   mode = 'race'; $('hud').classList.remove('hidden'); if (isTouch) $('touch').classList.remove('hidden'); else $('touch').classList.add('hidden');
@@ -310,6 +311,7 @@ function sparks(s, n) {
   for (let i = 0; i < n; i++) {
     _a.set(Math.random() - 0.5, Math.random() * 0.8, Math.random() - 0.5).multiplyScalar(40);
     race.parts.emit(s.pos.x, s.pos.y, s.pos.z, s.vel.x * 0.5 + _a.x, s.vel.y * 0.3 + _a.y + 14, s.vel.z * 0.5 + _a.z, col[i % 3], 0.35 + Math.random() * 0.4);
+    if (i % 2 === 0) race.parts.tracer(s.pos.x, s.pos.y, s.pos.z, s.vel.x * 0.55 + _a.x * 1.6, s.vel.y * 0.3 + _a.y * 1.4 + 18, s.vel.z * 0.55 + _a.z * 1.6, col[i % 3], 0.45 + Math.random() * 0.4);
   }
 }
 function explode(s) {
@@ -394,10 +396,11 @@ function simStep(dt) {
 function updateCamera(dt) {
   const r = race, p = r.player;
   const sr = Math.min(1.4, p.speed / p.mach.top);
-  const back = 17.5 + sr * 4.5 + (p.boosting ? 3 : 0), up = 5.9 + sr * 0.7;
+  const back = 14.5 + sr * 3.2 + (p.boosting ? 2.4 : 0), up = 5.1 + sr * 0.6;
   const target = _a.copy(p.pos).addScaledVector(p.hd, -back).addScaledVector(p.up, up);
   const k = 1 - Math.exp(-dt * (p.grounded ? 11 : 6));
   r.camPos.lerp(target, k);
+  { const dAlong = _b.copy(r.camPos).sub(p.pos).dot(p.hd); r.camPos.addScaledVector(p.hd, (-back - dAlong) * 0.92); }   // 進む方向の距離はほぼ固定(速いときに機体が遠のかない)。横・上下だけなめらか
   // 近すぎ/遠すぎの補正
   _b.copy(r.camPos).sub(p.pos); const d = _b.length(); if (d > back * 1.7) r.camPos.copy(p.pos).addScaledVector(_b.normalize(), back * 1.7);
   r.camUp.lerp(p.up, 1 - Math.exp(-dt * 6)).normalize();
@@ -432,13 +435,32 @@ function syncModels(dt, time) {
     const sr = Math.min(1.3, s.speed / s.mach.top);
     const fl = m.userData.flames, thr = 0.4 + sr;
     const fb = m.userData.flameBase || 1;
-    for (const f of fl) f.visible = false;   // 炎は粒(engineFx)で出す。円錐のメッシュは使わない
+    const jm = m.userData.jetMat;
+    if (jm) {   // 専用シェーダーの炎: 長さ・太さ・明るさ・色を速度とブーストで変える
+      const bst = s.boosting ? 1 : 0, u = jm.uniforms;
+      u.uTime.value = time; u.uBoost.value = bst; u.uPower.value = s.down ? 0 : (0.85 + 0.55 * sr + 1.0 * bst);
+      u.uMid.value.set(bst ? 0x62e6ff : s.mach.glow); u.uEdge.value.set(bst ? 0x1a46ff : s.mach.glow).multiplyScalar(bst ? 1 : 0.3); u.uCore.value.set(bst ? 0xe8ffff : 0xfff2d8);
+      const Lj = 3.0 + 3.0 * sr + 7.5 * bst, rr = fb * (0.95 + 0.5 * bst);
+      for (const f of fl) { f.visible = !s.down; f.scale.set(rr, rr, Lj * (0.93 + Math.random() * 0.14)); }
+    } else for (const f of fl) f.visible = false;
     // 影
     const sh = s.shadow; sh.visible = s.grounded && !s.down;
     if (sh.visible) { sh.position.copy(s.pos).addScaledVector(s.up, -(s.h - 0.12)); sh.quaternion.setFromRotationMatrix(_m); const sc = 1 + Math.max(0, s.h - 3) * 0.04; sh.scale.set(sc, 1, sc); }
     engineFx(s, dt, sr);
     if (s.scrape && Math.random() < 0.6) sparks(s, 2);
   }
+}
+
+// ---------- エンジンの光条(アナモルフィックな横長の光)。カメラに向けて貼る ----------
+function makeFlare() {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+    uniforms: { uI: { value: 0 }, uCol: { value: new THREE.Color(0x62e6ff) }, uT: { value: 0 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform float uI; uniform vec3 uCol; uniform float uT; varying vec2 vUv;
+      void main(){ vec2 p = (vUv - 0.5) * 2.0; float streak = exp(-abs(p.x) * 3.2) * exp(-abs(p.y) * 22.0); float glow = exp(-dot(p, p) * 9.0); float vert = exp(-abs(p.y) * 3.0) * exp(-abs(p.x) * 26.0) * 0.5;
+        float a = (streak * 1.1 + glow * 0.8 + vert) * uI * (0.88 + 0.12 * sin(uT * 60.0)); gl_FragColor = vec4(mix(uCol, vec3(1.0), clamp(glow, 0.0, 1.0)) * a, a); }`,
+  }));
+  m.renderOrder = 30; m.frustumCulled = false; return m;
 }
 
 // ---------- エンジンの炎(粒) ----------
@@ -472,9 +494,20 @@ function engineFx(s, dt, sr) {
       else r.parts.emit(px, py, pz, vx * 0.8 + (Math.random() - 0.5) * 16, vy * 0.8 + Math.random() * 8, vz * 0.8 + (Math.random() - 0.5) * 16, 0xffd070, 0.3 + Math.random() * 0.4, 0.26, 0.07, 0xff3a10, 0.7, 70);   // 火の粉
     }
     // 口元のやわらかい光(毎コマ出して、次のコマで消える)
-    r.parts.emit(_en.x, _en.y, _en.z, s.vel.x, s.vel.y, s.vel.z, dimHex(mid, 0.5), Math.max(dt * 1.6, 0.03), 1.5 + 1.0 * bst + 0.4 * sr, 1.3 + 0.8 * bst, dimHex(hot, 0.4), 0, 0);
+    r.parts.emit(_en.x, _en.y, _en.z, s.vel.x, s.vel.y, s.vel.z, dimHex(mid, 0.5), Math.max(dt * 1.6, 0.03), 1.6 + 2.6 * bst + 0.5 * sr, 1.4 + 2.2 * bst, dimHex(hot, 0.4), 0, 0);
+  }
+  if (s.isPlayer && (s.boosting || s._burst) && Math.random() < (s._burst ? 1 : 0.55)) {   // ブーストの火花
+    for (const f of fl) { f.getWorldPosition(_en); for (let k = 0; k < (s._burst ? 7 : 1); k++) r.parts.tracer(_en.x, _en.y, _en.z, s.vel.x * 0.7 + (Math.random() - 0.5) * 36 + _ed.x * 30, s.vel.y * 0.7 + Math.random() * 18, s.vel.z * 0.7 + (Math.random() - 0.5) * 36 + _ed.z * 30, Math.random() < 0.5 ? 0x9affff : 0xffffff, 0.35 + Math.random() * 0.35, 0.28); }
   }
   s._burst = 0;
+  if (s.isPlayer && r.flares) {   // 光条: ブーストで大きく、ふだんはほのか
+    const I = Math.min(1.2, 0.05 + 0.22 * sr + 0.95 * bst), col = bst ? 0x7aeaff : glow;
+    r.flares.forEach((fm, i) => {
+      const f = fl[Math.min(i, fl.length - 1)]; f.getWorldPosition(_en); fm.position.copy(_en).addScaledVector(_ed, 0.4);
+      fm.quaternion.copy(camera.quaternion); const w = 1.8 + 5.2 * bst + 1.6 * sr; fm.scale.set(w, w * 0.5, 1);
+      fm.material.uniforms.uI.value = I * (s.down ? 0 : 1); fm.material.uniforms.uCol.value.set(col); fm.material.uniforms.uT.value = r.time; fm.visible = I > 0.06;
+    });
+  }
   if (s.isPlayer && r.engLight) {   // 後ろの光が路面を照らす
     const l = r.engLight; l.color.set(mid); l.intensity = (120 + 220 * sr + 700 * bst) * (0.92 + Math.random() * 0.16);
     l.position.copy(s.pos).addScaledVector(_ed, 4.2).addScaledVector(s.up, 1.0);
@@ -494,6 +527,7 @@ function updateHud(dt) {
   const on = Math.ceil((p.energy / CFG.ENERGY) * 20), bar = $('pbar');
   if (r.hudCache.pb !== on) { r.hudCache.pb = on; [...bar.children].forEach((e, i) => e.classList.toggle('on', i < on)); bar.classList.toggle('low', on <= 5); }
   $('boostTag').classList.toggle('on', p.boosting);
+  $('boostfx').style.opacity = p.boosting && !p.down ? (0.7 + 0.3 * Math.sin(r.time * 24)) : 0;
   // 逆走
   const tr = r.tr, i = p.idx;
   const dotT = p.hd.x * tr.T[i * 3] + p.hd.y * tr.T[i * 3 + 1] + p.hd.z * tr.T[i * 3 + 2];
