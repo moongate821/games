@@ -1,4 +1,4 @@
-// ゲームの流れ: 街・施設・ダンジョン・戦闘のボタン、選択→確認→実行の手順。ゲームのルールはC#(GameSession)にある。
+﻿// ゲームの流れ: 街・施設・ダンジョン・戦闘のボタン、選択→確認→実行の手順。ゲームのルールはC#(GameSession)にある。
 'use strict';
 
 const FAC_ICONS = {
@@ -84,6 +84,19 @@ function facilityActions() {
     const f = G.facility;
     const info = api('facilityInfo', { id: f.id }).data;
     const acts = [];
+    if (f.type === 'Temple') {
+        for (const m of G.snap.party) {
+            if (m.revivalCost != null) acts.push({
+                label: `${m.name}: 蘇生(${Math.round(m.revivalChance * 100)}%、${m.revivalCost}G)`,
+                onClick: async () => {
+                    if (await confirmBox('蘇生の確認', `${m.name}の蘇生を試みますか?成功率${Math.round(m.revivalChance * 100)}%、費用${m.revivalCost}G。失敗すると霊魂、霊魂から失敗すると完全ロストになります。`))
+                        act('templeRevive', { member: m.i });
+                }
+            });
+            else if (m.life === 'Lost') acts.push({ label: `${m.name}: 完全ロスト(蘇生不可)`, onClick: () => {} });
+        }
+        if (!acts.length) acts.push({ label: '蘇生が必要な仲間はいない。', onClick: () => {} });
+    }
     if (f.type === 'Guild') {
         const q = api('quests').data;
         acts.push(
@@ -93,9 +106,16 @@ function facilityActions() {
     } else if (f.type === 'Appraisal') {
         if (!info.unidentifiedScrolls.length) acts.push({ label: '未鑑定の巻物は無い', onClick: () => { } });
         for (const id of info.unidentifiedScrolls) acts.push({ label: `未鑑定の巻物#${id}を鑑定する(50G)`, onClick: () => act('identify', { itemId: id }) });
+    } else if (f.type === 'Warehouse') {
+        const st = info.storage;
+        acts.push({label:`銀行預金: ${st.bankGold}G / 所持金: ${G.snap.gold}G`,onClick:()=>{}});
+        acts.push({label:'品物を預ける',onClick:()=>warehouseFlow(true,st.spare)},
+            {label:'品物を引き出す',onClick:()=>warehouseFlow(false,st.stored)},
+            {label:'銀行に預金する',onClick:()=>bankFlow(true,G.snap.gold)},
+            {label:'銀行から引き出す',onClick:()=>bankFlow(false,st.bankGold)});
     } else if (f.type === 'Inn') {
         acts.push(
-            { label: `宿屋に泊まる(${info.innCost}G)`, icon: 'icon_inn', cls: 'primary', onClick: async () => { if (await confirmBox('宿泊の確認', `宿代は${info.innCost}Gです。\n泊まって、全員のHP・MPを回復しますか?`)) act('innStay'); } },
+            { label: `宿屋に泊まる(${info.innCost}G)`, icon: 'icon_inn', cls: 'primary', onClick: async () => { if (await confirmBox('宿泊の確認', `宿代は${info.innCost}Gです。\n泊まって、生存者のHP・MPを回復しますか?死亡した仲間は神殿での蘇生が必要です。`)) act('innStay'); } },
             { label: info.innOffer, cls: 'sub', onClick: () => { } },
             { label: '買い取る', onClick: async () => { if (await confirmBox('購入確認', 'この掘り出し物を買い取りますか?')) act('innBuyOffer'); } },
             { label: '持ち物一覧', icon: 'icon_inventory', onClick: inventoryScreen },
@@ -154,6 +174,23 @@ function facilityActions() {
     return acts;
 }
 
+async function transferQuantity(maximum) {
+    if (maximum <= 0) { await messageBox('数量', '移動できる品物・お金が無い。'); return null; }
+    const amounts = [...new Set([1, 5, 10, 100, 1000, maximum].filter(n => n <= maximum))].sort((a,b)=>a-b);
+    return pickDialog('数量を選ぶ',amounts.map(n=>({id:n,label:n===maximum?`全部(${n})`:String(n)})));
+}
+async function warehouseFlow(deposit, list) {
+    if (!list.length) { await messageBox('倉庫', '移動できる品物が無い。'); return; }
+    const id=await pickDialog(deposit?'倉庫に預ける':'倉庫から引き出す',list.map(p=>({id:p.id,label:`${p.name} ×${p.count}`,icon:p.id})));
+    if(id===null)return;
+    const quantity=await transferQuantity(list.find(p=>p.id===id).count);
+    if(quantity!==null)act(deposit?'storageDeposit':'storageWithdraw',{id,quantity});
+}
+async function bankFlow(deposit, maximum) {
+    const amount=await transferQuantity(maximum);
+    if(amount!==null)act(deposit?'bankDeposit':'bankWithdraw',{amount});
+}
+
 async function casinoPrizeFlow() {
     const list = api('casinoPrizes').data;
     const coins = api('facilityInfo', { id: G.facility.id }).data.casino.coins;
@@ -205,7 +242,7 @@ function dungeonActions() {
             { label: '開ける', icon: 'icon_chest', cls: 'primary', onClick: () => act('open') },
             { label: 'あきらめる', icon: 'icon_move', onClick: () => act('abandon') });
     }
-    if (d.onInn) a.push({ label: `旅の宿屋に泊まる(${d.dungeonInnCost}G)`, icon: 'icon_inn', cls: 'primary', onClick: async () => { if (await confirmBox('宿泊の確認', `旅の宿屋の宿代は${d.dungeonInnCost}Gです。\n泊まって、全員のHP・MPを回復しますか?(所持金 ${G.snap.gold}G)`)) act('dungeonInnStay'); } });
+    if (d.onInn) a.push({ label: `旅の宿屋に泊まる(${d.dungeonInnCost}G)`, icon: 'icon_inn', cls: 'primary', onClick: async () => { if (await confirmBox('宿泊の確認', `旅の宿屋の宿代は${d.dungeonInnCost}Gです。\n泊まって、生存者のHP・MPを回復しますか?死亡した仲間は神殿での蘇生が必要です。(所持金 ${G.snap.gold}G)`)) act('dungeonInnStay'); } });
     if (d.onShop) a.push({ label: '行商の道具屋で買う', icon: 'icon_general_store', cls: 'primary', onClick: dungeonShopFlow });
     if (d.onStairs) a.push({ label: '階段を下りる', icon: 'icon_stairs', cls: 'primary', onClick: () => act('stairs') });
     if (d.secretDoor) a.push({ label: '深淵の底の扉を開ける', sub: '終焉竜ニヒルに挑む', icon: 'icon_stairs', cls: 'primary', onClick: () => act('secretDoor') });
@@ -295,7 +332,7 @@ async function pickSkillCommand(member) {
     if (id === null) return null;
     const sk = skills.find(k => k.id === id);
     if (sk.heal) {
-        const t = await pickMember('誰を回復しますか?', true);
+        const t = await pickMember('誰を回復しますか?', !sk.revival);
         return t === null ? null : { member, kind: 'Skill', skillId: id, targetMember: t, _label: skillName(sk) };
     }
     const e = await pickEnemy('どの敵に使う?');
@@ -307,7 +344,7 @@ async function pickItemCommand(member) {
     if (!inv.length) { logMessage('使える道具が無い。'); refresh(); return null; }
     const id = await pickDialog('どうぐを使う', inv.map(i => ({ id: i.id, label: `${i.name} ×${i.count}`, sub: i.effect, icon: i.id })), { wide: true });
     if (id === null) return null;
-    const t = await pickMember('誰に使いますか?', true);
+    const t = await pickMember('誰に使いますか?', ![3025, 3026, 3027].includes(id));
     const it = inv.find(i => i.id === id);
     return t === null ? null : { member, kind: 'Item', itemId: id, targetMember: t, _label: it ? it.name : '' };
 }
@@ -347,17 +384,20 @@ async function skillFlow() {
     const sk = skills.find(k => k.id === id);
     let target = null;
     if (sk.heal) {
-        target = await pickMember('誰を回復しますか?', true);
+        target = await pickMember('誰を回復しますか?', !sk.revival);
         if (target === null) return;
     }
     act('skill', { id, member: m, target });
 }
 
 function gameOverActions() {
-    const life = G.snap.playerLife;
-    const a = [];
-    if (life === 'Downed') a.push({ label: '蘇生を試みる', cls: 'primary', onClick: () => act('revive') });
-    else if (life === 'Soul') a.push({ label: '霊魂の蘇生を試みる', cls: 'primary', onClick: () => act('soulRevive') });
+    const a = [{ label: '神殿へ搬送する(自動復活なし)', cls: 'primary', onClick: async () => {
+        const result = api('transportTemple');
+        logMessage(result.msg);
+        refresh();
+        const temple = (api('facilities').data || []).find(f => f.type === 'Temple');
+        if (temple) enterFacility(temple);
+    } }];
     a.push({ label: 'ロードして再開', icon: 'icon_load', onClick: () => act('load') });
     return a;
 }
@@ -373,7 +413,7 @@ async function useItemFlow() {
     if (!inv.length) { logMessage('使える道具が無い。'); refresh(); return; }
     const id = await pickDialog('道具を使う', inv.map(i => ({ id: i.id, label: `${i.name} ×${i.count}`, sub: i.effect, icon: i.id })), { wide: true });
     if (id === null) return;
-    const m = await pickMember('誰に使いますか?', true);
+    const m = await pickMember('誰に使いますか?', ![3025, 3026, 3027].includes(id));
     if (m !== null) act('useItem', { id, member: m });
 }
 
