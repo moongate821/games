@@ -80,27 +80,25 @@
     return Math.round(n / 36 * 100);
   }
 
-  // ---------- 音(PCスピーカー風) ----------
-  let actx = null;
-  function beep(freq, ms, vol) {
-    if (M.mute) return;
-    try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.type = 'square'; o.frequency.value = freq;
-      g.gain.value = vol || 0.03;
-      o.connect(g); g.connect(actx.destination);
-      o.start(); o.stop(actx.currentTime + ms / 1000);
-    } catch (e) { }
+  // ---------- 音(sound.js の SND に任せる。無ければ鳴らさない) ----------
+  const SNDOK = () => !!window.SND;
+  const sfx = new Proxy({}, { get: (_, name) => () => { if (SNDOK()) (name === 'die' ? SND.jingle('death') : SND.sfx(name)); } });
+  // 音の設定: 0=BGM+効果音 1=効果音のみ 2=音なし(前の版の「音:切」は2に読み替える)
+  if (M.sound == null) M.sound = M.mute ? 2 : 0;
+  if (SNDOK()) SND.setLevel(M.sound);
+  const SOUND_NAME = ['BGM+効果音', '効果音のみ', '音なし'];
+  // 場面の曲: 候補を順に見て、曲がある最初のものを鳴らす
+  const BG = list => { if (SNDOK()) SND.scene(list.filter(Boolean)); };
+  const HAS = sc => SNDOK() && SND.has(sc);
+  const flKey = () => 'floor' + (S.floor + 1);
+  // 探索中の曲: 錯乱 > 体力が少ない > その階層・章の曲
+  function bgField() {
+    const n = S.floor + 1;
+    if (!HIDE.has('sp') && S.sp <= 0 && (HAS('madness' + n) || HAS('madness'))) return BG(['madness' + n, 'madness']);
+    if (!HIDE.has('hp') && S.hp <= S.maxhp / 3 && (HAS('danger' + n) || HAS('danger'))) return BG(['danger' + n, 'danger']);
+    const vs = SNDOK() && SND.varScene(S.vars || {});
+    BG([vs, flKey()]);
   }
-  const sfx = {
-    key: () => beep(660, 25),
-    ok: () => { beep(880, 60); setTimeout(() => beep(1320, 80), 70); },
-    ng: () => beep(140, 180, 0.05),
-    hit: () => beep(90, 120, 0.06),
-    meta: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 90), i * 90)),
-    die: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => beep(f, 260, 0.05), i * 260)),
-  };
 
   // ---------- 出力(1文字ずつ打つ。キーで早送り) ----------
   const queue = [];
@@ -130,6 +128,7 @@
       const n = Math.min(budget, q.text.length - q.pos);
       q.el.textContent += q.text.substr(q.pos, n);
       q.pos += n; budget -= n;
+      if (n && SNDOK() && q.text.trim()) SND.tick();
       if (q.pos >= q.text.length) queue.shift();
     }
     $out.scrollTop = $out.scrollHeight;
@@ -207,7 +206,8 @@
     keymap = {}; optEls = [];
     sfx.key();
     cls();
-    fn(() => { cls(); back(); });
+    // 照会端末の曲のまま戻らないよう、戻ったら探索の曲にする(戦闘中は戦闘の画面が直す)
+    fn(() => { cls(); back(); if (inRun() && !S.combat && SNDOK() && SND.playing === 'terminal') bgField(); });
   }
   const GLOBAL = {
     I: () => { if (!inRun()) return false; if (S.combat) { keymap = {}; return inventory(true); } keymap = {}; inventory(); },
@@ -226,7 +226,7 @@
     if (k.length !== 1) return false;
     k = k.toUpperCase();
     if (keymap[k]) { choose(k); return true; }
-    if (k === 'M') { M.mute = !M.mute; saveMeta(); note(M.mute ? '[音: 切]' : '[音: 入]'); return true; }
+    if (k === 'M') { M.sound = ((M.sound || 0) + 1) % 3; saveMeta(); if (SNDOK()) SND.setLevel(M.sound); note('[音: ' + SOUND_NAME[M.sound] + ']'); return true; }
     if (k === 'S') { M.speed = ((M.speed || 0) + 1) % 3; saveMeta(); note('[文字の速さ: ' + SPEED_NAME[M.speed] + ']'); return true; }
     if (k === '+' || k === ';' || k === '=') { setFs(0.1); return true; }
     if (k === '-') { setFs(-0.1); return true; }
@@ -306,6 +306,7 @@
     if (it.kind !== 'key' && invCount() >= INV_MAX) { print(`(持ちきれない。${it.name}を置いていった)`, 'd'); return; }
     S.inv.push(id);
     print(`《${it.name}》を手に入れた。`, 'c');
+    later(sfx.item);
   }
   function loseItem(id) {
     const i = S.inv.indexOf(id);
@@ -313,6 +314,7 @@
     S.inv.splice(i, 1);
     const it = byId(D.items, id);
     print(`《${it ? it.name : id}》を失った。`, 'r');
+    later(sfx.lose);
   }
   function gainMeta(m) {
     arr(m).forEach(f => {
@@ -340,7 +342,7 @@
       const v = VARS.find(x => x.id === k) || { id: k, name: k, max: 10 };
       S.vars[k] = Math.max(0, Math.min(v.max || 10, (S.vars[k] || 0) + n));
       const mk = v.mark !== undefined ? v.mark : '♥';
-      if (v.show !== false && n) parts.push(`${v.name} ${mk}${n > 0 ? '+' : ''}${n}`);
+      if (v.show !== false && n) { parts.push(`${v.name} ${mk}${n > 0 ? '+' : ''}${n}`); if (mk) later(n > 0 ? sfx.heart : sfx.heartDown); }
     });
     if (fx.stat) Object.entries(fx.stat).forEach(([k, n]) => { S.stats[k] = Math.max(0, (S.stats[k] || 0) + n); parts.push(`${stName(k)} ${n > 0 ? '+' : ''}${n}`); });
     if (parts.length) {
@@ -378,6 +380,7 @@
     title(true);
   }
   function title(keep) {
+    BG(['title']);
     S = load(SAVE_KEY);
     const hasSave = !!S;
     if (S) S = null;
@@ -410,7 +413,8 @@
       '',
       '【どこでも使える命令】(下の帯のボタンでも可)',
       `　I 持ち物 / K ${T.knowledge}` + ((D.queries || []).length ? ` / Q ${T.terminal}` : ''),
-      '　S 文字の速さ / M 音 / ＋− 文字の大きさ',
+      '　S 文字の速さ / ＋− 文字の大きさ',
+      '　M 音(BGM+効果音 → 効果音のみ → 音なし)',
       '',
     ];
     if (D.help) { print(common.concat(D.help).join('\n')); return menu([{ label: '戻る', fn: back, key: '0' }]); }
@@ -482,6 +486,8 @@
     $promptPath = document.getElementById('prompt-path');
   }
   function terminal(back) {
+    sfx.terminal();
+    if (HAS('terminal')) BG(['terminal']);
     print('━━━━ ' + T.terminal + ' ━━━━', 'g');
     print('> ' + T.terminalPrompt + (T.terminalCost ? `(${LB.light}${T.terminalCost})` : ''), 'g');
     print('> 空のまま Enter で終了。', 'd');
@@ -623,6 +629,8 @@
     print('━━━━ ' + F.name + ' ━━━━', 'c');
     print('');
     print(F.intro || '');
+    if (S.floor > 0) sfx.stairs();
+    bgField();
     current = enterFloor;
     menu([{ label: '進む', fn: doorScreen }], { I: () => inventory() });
   }
@@ -683,6 +691,7 @@
     print(`― ${LB.room} ${S.room + 1}/${F.rooms} ―　` + (F.boss ? (left === 1 ? `この先に、${LB.boss}の気配。` : `${LB.boss}まで、あと${left}${LB.room}。`) : (left === 1 ? T.lastRoom : `${T.toEnd}、あと${left}${LB.room}。`)), left === 1 ? 'r' : 'd');
     if ((S.food <= 1 && !HIDE.has('food')) || (S.light <= 2 && !HIDE.has('light'))) print(`(${[S.food <= 1 && !HIDE.has('food') ? (T.lowFood || '食料が尽きかけている') : '', S.light <= 2 && !HIDE.has('light') ? (T.lowLight || '灯りが細い') : ''].filter(Boolean).join('。')}。I で持ち物を使える)`, 'y');
     print(T.doors);
+    bgField();
     current = doorScreen;
     menu(S.doors.map(d => ({ label: doorLabel(d), fn: () => openDoor(d) })), { I: () => inventory() });
   }
@@ -690,6 +699,7 @@
     S.doors = null;
     S.room++; S.rooms++;
     cls();
+    sfx.door();
     // 時が進む
     if (TICK.food) { if (S.food > 0) S.food = Math.max(0, S.food - TICK.food); else { S.hp -= 2; S.lastHurt = T.starveCause || '飢えて動けなくなった'; print(`${T.starve}${LB.hp} -2`, 'r'); } }
     if (TICK.light && S.light > 0) { S.light = Math.max(0, S.light - TICK.light); if (S.light === 0) print(T.lightOut, 'r'); }
@@ -712,6 +722,7 @@
     S.at = { t: 'remains' };
     save();
     if (!L) return afterRoom();
+    BG(['remains' + (S.floor + 1), 'remains', flKey()]);
     print(R.text.replace('{cls}', L.cls).replace('{cause}', L.cause), 'br');
     current = null;
     const goods = (L.items || []).filter(id => byId(D.items, id));
@@ -736,6 +747,7 @@
     save();
     if (keep) print(''); else cls();
     print(ev.text || '');
+    { const n = S.floor + 1, c = ['ev:' + id, SNDOK() && SND.evScene(id), ev.kind + n, ev.kind].filter(Boolean); if (c.some(HAS)) BG(c); else bgField(); }
     current = () => runEvent(id);
     const shown = (ev.choices || []).filter(c => meets(c.need) || c.hidden === false);
     if (!shown.length) {
@@ -814,6 +826,7 @@
     }
     S.at = { t: 'shop' };
     save();
+    if (HAS('shop' + (S.floor + 1)) || HAS('shop')) BG(['shop' + (S.floor + 1), 'shop']);
     print('');
     print(`■ 品書き  (所持金 ${S.gold})`, 'y');
     current = () => { cls(); shopScreen(); };
@@ -825,6 +838,7 @@
   function buy(it) {
     if (it.kind !== 'key' && invCount() >= INV_MAX) { print('もう持てない。', 'r'); return shopScreen(); }
     S.gold -= it.price;
+    sfx.buy();
     S.shop.splice(S.shop.indexOf(it.id), 1);
     addItem(it.id);
     shopScreen();
@@ -850,6 +864,7 @@
     if (!it || !USE[it.kind]) { print('それは今、使い道がない。', 'd'); return inventory(inCombat); }
     S.inv.splice(idx, 1);
     print(`《${it.name}》を使った。`, 'c');
+    sfx.heal();
     applyFx({ [USE[it.kind]]: it.value });
     save();
     if (inCombat) return enemyAct(false);
@@ -861,6 +876,7 @@
     const e = byId(D.enemies, id);
     if (!e) { print('(敵 ' + id + ' が見つからない)', 'r'); return afterRoom(); }
     S.combat = { id, hp: e.hp, idx: 0, boss: !!opt.boss, next: opt.next || null };
+    sfx.hurt();
     save();
     print('');
     print(`▼ ${e.name} が現れた。`, 'r');
@@ -871,6 +887,9 @@
     const C = S.combat, e = byId(D.enemies, C.id);
     const p = e.pattern[C.idx % e.pattern.length];
     save();
+    { const n = S.floor + 1;
+      if (C.boss) BG(C.hp <= e.hp / 2 ? ['enemy:' + C.id + 'b', 'boss' + n + 'b', 'bossb', 'enemy:' + C.id, 'boss' + n, 'boss'] : ['enemy:' + C.id, 'boss' + n, 'boss']);
+      else BG(S.hp <= S.maxhp / 3 ? ['battleDanger', 'enemy:' + C.id, 'battle' + n, 'battle'] : ['enemy:' + C.id, 'battle' + n, 'battle']); }
     current = () => { cls(); if (S.combat) combatTurn(); else afterRoom(); };
     // 戦闘が長引いても画面が流れすぎないよう、古い行を間引く
     while ($out.children.length > 16) $out.removeChild($out.firstChild);
@@ -902,7 +921,7 @@
       if (a + b === 2) { dmg = 0; print(`[${a}][${b}] 空を切った。`, 'r'); }
       else {
         dmg = Math.max(1, a + b + (S.stats[(byId(D.classes, S.cls) || {}).atkStat || 'str'] || 0) + wpn() - 8 - (e.def || 0));
-        if (a + b === 12) dmg *= 2;
+        if (a + b === 12) { dmg *= 2; sfx.crit(); }
         if (p.intent === 'guard') dmg = Math.max(1, Math.floor(dmg / 2));
         print(`[${a}][${b}] ${a + b === 12 ? '会心の一撃。' : ''}${e.name}に ${dmg} の傷。${p.intent === 'guard' ? '(守りに阻まれた)' : ''}`, 'w');
         later(sfx.hit);
@@ -911,11 +930,12 @@
       if (C.hp <= 0) return win();
       return enemyAct(false);
     }
-    if (kind === 'guard') { print('身を固めた。', 'w'); return enemyAct(true); }
+    if (kind === 'guard') { print('身を固めた。', 'w'); sfx.guard(); return enemyAct(true); }
     if (kind === 'flee') {
       const a = d6(), b = d6(), tot = a + b + (S.stats.dex || 0);
       if (tot >= e.flee) {
         print(`[${a}][${b}] 逃げ切った。`, 'g');
+        sfx.flee();
         S.combat = null;
         return afterRoom();
       }
@@ -936,12 +956,13 @@
       case 'attack':
         d = Math.max(0, d - arm()); if (guarding) d = Math.floor(d / 2); else d = Math.max(1, d);
         S.hp -= d; S.lastHurt = cause;
-        print(`${e.name}の攻撃。${LB.hp} -${d}`, 'r'); later(sfx.hit); break;
+        print(`${e.name}の攻撃。${LB.hp} -${d}`, 'r'); later(sfx.hurt); break;
       case 'heavy':
         d = Math.max(0, d - arm()); if (guarding) d = Math.floor(d / 4);
         S.hp -= d; S.lastHurt = cause;
-        print(`${e.name}の渾身の一撃。${LB.hp} -${d}${guarding ? '(受け流した)' : ''}`, 'r'); later(sfx.hit); break;
+        print(`${e.name}の渾身の一撃。${LB.hp} -${d}${guarding ? '(受け流した)' : ''}`, 'r'); later(guarding ? sfx.guard : sfx.heavy); break;
       case 'mind': {
+        later(sfx.mind);
         // 精神が尽きている分は体力に通る
         if (guarding) d = Math.floor(d / 2);
         const over = Math.max(0, d - S.sp);
@@ -968,6 +989,7 @@
     const C = S.combat, e = byId(D.enemies, C.id);
     S.combat = null;
     current = null;
+    sfx.win();
     print('');
     print(e.defeat || `${e.name}は動かなくなった。`, 'w');
     later(sfx.ok);
@@ -986,6 +1008,7 @@
     S.at = { t: 'boss' };
     save();
     cls();
+    BG(F.boss ? ['bossIntro' + (S.floor + 1), 'bossIntro', flKey()] : ['chapterEnd' + (S.floor + 1), 'chapterEnd', flKey()]);
     print(F.bossIntro || '', 'w');
     // ボスなしの章: 章の終わりの文を出して、そのまま次の章へ
     if (!F.boss) { current = null; return afterBoss(); }
@@ -1020,6 +1043,7 @@
     saveMeta();
     menu([{ label: '……', fn: () => {
       cls();
+      BG(['ending:' + e.id, 'ending']);
       print('━━━━ ' + e.name + ' ━━━━', 'y');
       print('');
       print(e.text);
