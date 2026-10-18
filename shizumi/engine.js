@@ -5,9 +5,28 @@
 (function () {
   'use strict';
   const D = window.GAME_DATA;
-  const SAVE_KEY = 'textrpg_save_v1';
-  const META_KEY = 'textrpg_meta_v1';
+  // 同じサイトに複数の作品を置くので、保存の名前は作品ごとに分ける(沈書庫は saveKey なし=従来の名前)
+  const NS = D.saveKey ? 'textrpg_' + D.saveKey : 'textrpg';
+  const SAVE_KEY = NS + '_save_v1';
+  const META_KEY = NS + '_meta_v1';
   const INV_MAX = 8;
+  // 鍵の品(kind:key)は持ち物の枠に数えない
+  const invCount = () => S.inv.filter(id => { const it = (D.items || []).find(x => x.id === id); return !it || it.kind !== 'key'; }).length;
+  // 表示名と言葉(省略時は沈書庫の言葉)
+  const LB = Object.assign({ hp: '体力', sp: '精神', light: '灯り', food: '食料', luck: '運', gold: '金', floor: '階層', room: '部屋', boss: '階層の主' }, D.labels || {});
+  const HIDE = new Set(D.hide || []);
+  const T = Object.assign({
+    deathTitle: '＊＊＊　あなたは死んだ　＊＊＊', causeLabel: '死因', deathLine: 'あなたは第{n}刷として、書架に並んだ。',
+    itemsKept: '持ち物は、本の頁に挟まれた。次のあなたが拾えるかもしれない。',
+    shelf: '書架', shelfLine: '第{n}刷', knowledge: '知識の目録', knowledgeUnit: '知識',
+    terminal: '照会端末', terminalPrompt: '照会語を入力してください。', terminalCost: 1, notFound: '該当なし。',
+    retry: 'もう一度潜る', start: '新しく潜る', classPrompt: '何者として潜るか', descend: '下へ降りる',
+    doors: '扉が並んでいる。', remainsTag: '背表紙', starve: '腹が鳴る。', lightOut: '灯りが、ふっと消えた。',
+    lastRoom: 'この章も、残りわずか。', toEnd: '章の終わりまで', seenNone: '(記録にない相手だ)',
+    newKnow: '【記録】新たな知識が刻まれた。',
+  }, D.terms || {});
+  const TICK = D.tick || { food: 1, light: 1 };
+  const VARS = D.vars || [];
 
   const $out = document.getElementById('out');
   const $status = document.getElementById('status');
@@ -38,7 +57,7 @@
       if (o.fx && o.fx.meta) arr(o.fx.meta).forEach(m => set.add(m));
       Object.values(o).forEach(walk);
     })(D);
-    (D.endings || []).forEach(e => e.meta && set.add(e.meta));
+    (D.endings || []).forEach(e => arr(e.meta).forEach(m => set.add(m)));
     (D.enemies || []).forEach(e => arr(e.meta).forEach(m => set.add(m)));
     if (D.deathMeta) set.add(D.deathMeta);
     if (D.deathMetaFloor) D.floors.forEach((f, i) => set.add(D.deathMetaFloor + (i + 1)));
@@ -193,7 +212,7 @@
   const GLOBAL = {
     I: () => { if (!inRun()) return false; if (S.combat) { keymap = {}; return inventory(true); } keymap = {}; inventory(); },
     K: () => overlay(knowledge),
-    Q: () => { if (!inRun() || S.combat) return false; overlay(terminal); },
+    Q: () => { if (!inRun() || S.combat || !(D.queries || []).length) return false; overlay(terminal); },
     H: () => overlay(help),
   };
   function handleKey(k) {
@@ -219,6 +238,10 @@
     if (handleKey(ev.key)) ev.preventDefault();
   });
   $out.addEventListener('click', () => { if (queue.length) flush(); });
+  // 帯のボタンの名前も作品に合わせる
+  const qb = document.querySelector('#foot [data-k="Q"]'), kb = document.querySelector('#foot [data-k="K"]');
+  if (qb) { if (!(D.queries || []).length) qb.style.display = 'none'; else qb.textContent = 'Q ' + (T.terminalShort || '照会'); }
+  if (kb) kb.textContent = 'K ' + (T.knowledgeShort || T.knowledgeUnit);
   document.querySelectorAll('#foot [data-k]').forEach(b => b.addEventListener('click', ev => { ev.preventDefault(); handleKey(b.dataset.k); }));
 
   // ---------- 状態表示 ----------
@@ -226,8 +249,17 @@
   function wpn() { return Math.max(0, ...S.inv.map(i => byId(D.items, i)).filter(x => x && x.kind === 'weapon').map(x => x.value)); }
   function arm() { return Math.max(0, ...S.inv.map(i => byId(D.items, i)).filter(x => x && x.kind === 'armor').map(x => x.value)); }
   function knownCount() { return [...ALL_META].filter(m => M.flags[m]).length; }
+  // 上の帯の右端の時計など(data の clock: {"text":"03:17","after":{"cleared_true":"03:18"}})
+  function updateClock() {
+    const el = document.getElementById('bar-right');
+    if (!el || !D.clock) return;
+    let t = D.clock.text || '';
+    Object.entries(D.clock.after || {}).forEach(([m, v]) => { if (M.flags[m]) t = v; });
+    el.textContent = t;
+  }
   function updateStatus() {
-    if (!S || S.over) { $status.innerHTML = `<span class="st d">死亡 ${M.deaths} 回</span><span class="st d">知識 ${knownCount()}/${ALL_META.size}</span>`; $promptPath.textContent = 'C:\\>'; return; }
+    updateClock();
+    if (!S || S.over) { $status.innerHTML = `<span class="st d">${(T.deathWord || (T.causeLabel === '死因' ? '死亡' : 'BAD END'))} ${M.deaths} 回</span><span class="st d">${T.knowledgeUnit} ${knownCount()}/${ALL_META.size}</span>`; $promptPath.textContent = 'C:\\>'; return; }
     const F = D.floors[S.floor];
     const bar = (n, max, c) => {
       const w = 6, f = Math.max(0, Math.min(w, Math.ceil(n / max * w)));
@@ -236,14 +268,19 @@
     const num = (n, warn, c) => `<span class="${n <= warn ? 'low' : (c || 'w')}">${n}</span>`;
     const st = Object.keys(D.stats).map(k => stName(k) + '<span class="w">' + S.stats[k] + '</span>').join(' ');
     const hpc = S.hp <= S.maxhp / 3 ? 'r' : 'g';
+    const sh = k => !HIDE.has(k);
+    const vars = VARS.filter(v => v.show !== false).map(v => `<span class="st">${v.name}${bar(S.vars[v.id] || 0, v.max || 10, v.c || 'm')}${S.vars[v.id] || 0}</span>`).join('');
+    const hasW = D.items.some(i => i.kind === 'weapon' || i.kind === 'armor');
     $status.innerHTML =
-      `<div><span class="st c">${F ? F.name : ''}</span><span class="st">部屋 ${Math.min(S.room, F ? F.rooms : 0)}/${F ? F.rooms : 0}</span><span class="st d">${S.className}</span></div>` +
-      `<div><span class="st">体力${bar(S.hp, S.maxhp, hpc)}${num(S.hp, Math.floor(S.maxhp / 3))}/${S.maxhp}</span>` +
-      `<span class="st">精神${bar(S.sp, S.maxsp, 'm')}${num(S.sp, 3)}/${S.maxsp}</span></div>` +
-      `<div><span class="st">灯り ${num(S.light, 3)}</span><span class="st">食料 ${num(S.food, 1)}</span><span class="st">運 ${num(S.luck, 0)}</span><span class="st">金 ${num(S.gold, -1, 'y')}</span>` +
-      `<span class="st">${st}</span><span class="st">武器+${wpn()} 防具${arm()}</span><span class="st">持ち物 ${S.inv.length}/${INV_MAX}</span>` +
-      (S.sp <= 0 ? '<span class="st m">《錯乱》</span>' : '') + (S.light <= 0 ? '<span class="st r">《暗闇》</span>' : '') +
-      (S.food <= 0 ? '<span class="st r">《飢え》</span>' : '') + '</div>';
+      `<div><span class="st c">${F ? F.name : ''}</span><span class="st">${LB.room} ${Math.min(S.room, F ? F.rooms : 0)}/${F ? F.rooms : 0}</span><span class="st d">${S.className}</span></div>` +
+      `<div>` + (sh('hp') ? `<span class="st">${LB.hp}${bar(S.hp, S.maxhp, hpc)}${num(S.hp, Math.floor(S.maxhp / 3))}/${S.maxhp}</span>` : '') +
+      (sh('sp') ? `<span class="st">${LB.sp}${bar(S.sp, S.maxsp, 'm')}${num(S.sp, 3)}/${S.maxsp}</span>` : '') + `</div>` +
+      (vars ? `<div>${vars}</div>` : '') +
+      `<div>` + (sh('light') ? `<span class="st">${LB.light} ${num(S.light, 3)}</span>` : '') + (sh('food') ? `<span class="st">${LB.food} ${num(S.food, 1)}</span>` : '') +
+      (sh('luck') ? `<span class="st">${LB.luck} ${num(S.luck, 0)}</span>` : '') + (sh('gold') ? `<span class="st">${LB.gold} ${num(S.gold, -1, 'y')}</span>` : '') +
+      `<span class="st">${st}</span>` + (hasW ? `<span class="st">武器+${wpn()} 防具${arm()}</span>` : '') + `<span class="st">持ち物 ${invCount()}/${INV_MAX}</span>` +
+      (sh('sp') && S.sp <= 0 ? `<span class="st m">${T.madState || '《錯乱》'}</span>` : '') + (sh('light') && S.light <= 0 ? `<span class="st r">${T.darkState || '《暗闇》'}</span>` : '') +
+      (sh('food') && S.food <= 0 ? `<span class="st r">${T.starveState || '《飢え》'}</span>` : '') + '</div>';
     $promptPath.textContent = 'C:\\B' + (S.floor + 1) + '>';
   }
 
@@ -257,6 +294,8 @@
     if (r.item && !arr(r.item).every(i => S.inv.includes(i))) return false;
     if (r.noitem && arr(r.noitem).some(i => S.inv.includes(i))) return false;
     if (r.gold && S.gold < r.gold) return false;
+    if (r.var && !Object.entries(r.var).every(([k, n]) => (S.vars[k] || 0) >= n)) return false;
+    if (r.varmax && !Object.entries(r.varmax).every(([k, n]) => (S.vars[k] || 0) <= n)) return false;
     return true;
   }
 
@@ -264,7 +303,7 @@
   function addItem(id) {
     const it = byId(D.items, id);
     if (!it) return;
-    if (S.inv.length >= INV_MAX) { print(`(持ちきれない。${it.name}を置いていった)`, 'd'); return; }
+    if (it.kind !== 'key' && invCount() >= INV_MAX) { print(`(持ちきれない。${it.name}を置いていった)`, 'd'); return; }
     S.inv.push(id);
     print(`《${it.name}》を手に入れた。`, 'c');
   }
@@ -280,10 +319,10 @@
       if (M.flags[f]) return;
       M.flags[f] = true; saveMeta();
       later(sfx.meta);
-      print(`【記録】新たな知識が刻まれた。(知識 ${knownCount()}/${ALL_META.size})`, 'y');
+      print(`${T.newKnow}(${T.knowledgeUnit} ${knownCount()}/${ALL_META.size})`, 'y');
     });
   }
-  const LABEL = { hp: '体力', sp: '精神', light: '灯り', food: '食料', luck: '運', gold: '金', maxhp: '最大体力' };
+  const LABEL = Object.assign({}, LB, { maxhp: '最大' + LB.hp });
   function applyFx(fx) {
     fx = fx || {};
     const parts = [];
@@ -294,11 +333,18 @@
       if (k === 'hp') S.hp = Math.min(S.hp, S.maxhp);
       if (k === 'sp') S.sp = Math.max(0, Math.min(S.sp, S.maxsp));
       if (['light', 'food', 'luck', 'gold'].includes(k)) S[k] = Math.max(0, S[k]);
-      parts.push(`${LABEL[k]} ${fx[k] > 0 ? '+' : ''}${fx[k]}`);
+      if (!HIDE.has(k)) parts.push(`${LABEL[k]} ${fx[k] > 0 ? '+' : ''}${fx[k]}`);
+    });
+    // 変数(好感度など)。隠しの変数は増減を見せない
+    if (fx.var) Object.entries(fx.var).forEach(([k, n]) => {
+      const v = VARS.find(x => x.id === k) || { id: k, name: k, max: 10 };
+      S.vars[k] = Math.max(0, Math.min(v.max || 10, (S.vars[k] || 0) + n));
+      const mk = v.mark !== undefined ? v.mark : '♥';
+      if (v.show !== false && n) parts.push(`${v.name} ${mk}${n > 0 ? '+' : ''}${n}`);
     });
     if (fx.stat) Object.entries(fx.stat).forEach(([k, n]) => { S.stats[k] = Math.max(0, (S.stats[k] || 0) + n); parts.push(`${stName(k)} ${n > 0 ? '+' : ''}${n}`); });
     if (parts.length) {
-      const bad = ['hp', 'sp', 'light', 'food', 'luck', 'gold', 'maxhp'].some(k => fx[k] < 0);
+      const bad = ['hp', 'sp', 'light', 'food', 'luck', 'gold', 'maxhp'].some(k => fx[k] < 0) || Object.values(fx.var || {}).some(n => n < 0);
       print('  ' + parts.join('  '), bad ? 'r' : 'g');
       later(bad ? sfx.hit : sfx.ok);
     }
@@ -306,13 +352,17 @@
     arr(fx.item).forEach(addItem);
     arr(fx.flag).forEach(f => { S.flags[f] = true; });
     if (fx.meta) gainMeta(fx.meta);
-    if (fx.skipRooms) S.room = Math.min(D.floors[S.floor].rooms, S.room + fx.skipRooms);
+    if (fx.skipRooms) {
+      const F = D.floors[S.floor];
+      const pinned = (F.pool || []).some(id => { const e = byId(D.events, id); return e && e.pin === 'last' && !(e.once && S.used[e.id]) && meets(e.require); });
+      S.room = Math.min(F.rooms - (pinned ? 1 : 0), S.room + fx.skipRooms);
+    }
   }
   // 効果のあとの行き先
   function after(fx) {
     fx = fx || {};
     if (fx.death) return die(fx.death);
-    if (S.hp <= 0) return die(S.lastHurt || '傷が深すぎた');
+    if (S.hp <= 0) return die(T.hpDeath || S.lastHurt || '傷が深すぎた');
     if (fx.ending) return ending(fx.ending);
     if (fx.fight) return startCombat(fx.fight, { next: fx.next || null });
     if (fx.next) return runEvent(fx.next, true);
@@ -339,12 +389,12 @@
     print(rule, 'c');
     if (D.subtitle) print('  ' + D.subtitle, 'd');
     print('');
-    if (M.deaths || M.runs) print(`  死亡 ${M.deaths} 回 / 最深 第${M.best}層 / 知識 ${knownCount()}/${ALL_META.size}`, 'd');
+    if (M.deaths || M.runs) print(`  ${(T.deathWord || (T.causeLabel === '死因' ? '死亡' : 'BAD END'))} ${M.deaths} 回 / 最も先 ${D.floors[Math.max(0, M.best - 1)].name} / ${T.knowledgeUnit} ${knownCount()}/${ALL_META.size}`, 'd');
     menu([
-      { label: hasSave ? '続きから' : '新しく潜る', fn: hasSave ? resume : newGame, c: 'w' },
-      hasSave ? { label: '新しく潜る(今の続きは消える)', fn: newGame } : { label: '続きから', disabled: true },
-      { label: '知識の目録', fn: () => overlay(knowledge) },
-      { label: '記録と書架', fn: records },
+      { label: hasSave ? '続きから' : T.start, fn: hasSave ? resume : newGame, c: 'w' },
+      hasSave ? { label: T.start + '(今の続きは消える)', fn: newGame } : { label: '続きから', disabled: true },
+      { label: T.knowledge, fn: () => overlay(knowledge) },
+      { label: '記録と' + T.shelf, fn: records },
       { label: '遊び方', fn: () => overlay(help) },
     ]);
     current = null;
@@ -354,14 +404,17 @@
   function help(back) {
     cls();
     print('■ 遊び方', 'w');
-    print([
+    const common = [
       '数字キーか、行をタップして選ぶ。↑↓とEnterでも選べる。',
       '文字が流れている間は、何かキー(タップ)で早送り。',
       '',
       '【どこでも使える命令】(下の帯のボタンでも可)',
-      '　I 持ち物 / K 知識の目録 / Q 照会端末',
+      `　I 持ち物 / K ${T.knowledge}` + ((D.queries || []).length ? ` / Q ${T.terminal}` : ''),
       '　S 文字の速さ / M 音 / ＋− 文字の大きさ',
       '',
+    ];
+    if (D.help) { print(common.concat(D.help).join('\n')); return menu([{ label: '戻る', fn: back, key: '0' }]); }
+    print(common.concat([
       '・部屋を進むたび、食料と灯りが1ずつ減る。',
       '　食料が尽きると体力が削れ、灯りが尽きると',
       '　扉の先が見えなくなる。',
@@ -376,13 +429,13 @@
       '　灯りを1使う。何が返ってくるかは、打つまで分からない。',
       '・死ねばすべて失う。だが、知ったことは記録に残る。',
       '　死んだ階層には、前のあなたの本が残る。',
-    ].join('\n'));
+    ]).join('\n'));
     menu([{ label: '戻る', fn: back, key: '0' }]);
   }
 
   // 知識の目録: 周回をまたいで残った記録
   function knowledge(back) {
-    print('■ 知識の目録', 'w');
+    print('■ ' + T.knowledge, 'w');
     print(`  ${knownCount()}/${ALL_META.size} を知っている。`, 'y');
     print('');
     const info = D.metaInfo || {};
@@ -429,22 +482,22 @@
     $promptPath = document.getElementById('prompt-path');
   }
   function terminal(back) {
-    print('━━━━ 照会端末 ━━━━', 'g');
-    print('> 照会語を入力してください。(灯り1)', 'g');
+    print('━━━━ ' + T.terminal + ' ━━━━', 'g');
+    print('> ' + T.terminalPrompt + (T.terminalCost ? `(${LB.light}${T.terminalCost})` : ''), 'g');
     print('> 空のまま Enter で終了。', 'd');
     later(() => {
-      if (S.light <= 0) { print('画面を読むだけの灯りがない。', 'r'); return menu([{ label: '戻る', fn: back, key: '0' }]); }
+      if (T.terminalCost && S.light < T.terminalCost) { print(`${LB.light}が足りない。`, 'r'); return menu([{ label: '戻る', fn: back, key: '0' }]); }
       ask('照会> ', v => {
         const w = norm(v);
         if (!w) return back();
         print('> 照会: ' + v.trim(), 'w');
         const free = ['HELP', '?', 'へるぷ', 'CLS'];
-        if (!free.includes(w)) { S.light = Math.max(0, S.light - 1); }
+        if (!free.includes(w)) { S.light = Math.max(0, S.light - (T.terminalCost || 0)); }
         if (w === 'CLS') { cls(); return terminal(back); }
         const q = (D.queries || []).find(x => arr(x.words).some(t => norm(t) === w));
         const r = q && (q.answers || []).find(a => meets(a.need));
         if (!r) {
-          print('> 該当なし。', 'g'); later(sfx.ng);
+          print('> ' + T.notFound, 'g'); later(sfx.ng);
         } else {
           const txt = String(r.text).replace(/\{deaths\}/g, M.deaths).replace(/\{runs\}/g, M.runs).replace(/\{know\}/g, knownCount());
           print(txt, 'g');
@@ -462,15 +515,15 @@
   function records() {
     cls();
     print('■ 記録', 'w');
-    print(`  潜った回数 ${M.runs}  死亡 ${M.deaths}  最深 第${M.best}層`);
+    print(`  遊んだ回数 ${M.runs}  ${(T.deathWord || (T.causeLabel === '死因' ? '死亡' : 'BAD END'))} ${M.deaths}  最も先 ${D.floors[Math.max(0, M.best - 1)].name}`);
     print(`  知識 ${knownCount()}/${ALL_META.size}`, 'y');
     const ends = (D.endings || []).map(e => (M.endings[e.id] ? '■ ' + e.name : '□ ？？？')).join('\n  ');
     print('  結末:\n  ' + ends);
     const shelf = (M.shelf || []).slice(-10).reverse();
     if (shelf.length) {
       print('');
-      print('■ 書架(新しい順)', 'w');
-      shelf.forEach(b => print(`  第${b.n}刷  ${b.cls}  第${b.floor}層  ${b.cause}`, 'br'));
+      print('■ ' + T.shelf + '(新しい順)', 'w');
+      shelf.forEach(b => print(`  ${T.shelfLine.replace('{n}', b.n)}  ${b.cls}  ${(D.floors[b.floor - 1] || {}).name || ''}  ${b.cause}`, 'br'));
     }
     menu([
       { label: '記録を書き出す(コピー用)', fn: exportSave },
@@ -507,18 +560,20 @@
     store(SAVE_KEY, null);
     cls();
     // intro の各行は文字列か {"text":..,"meta":..}(その記録がある時だけ出す)/{"text":..,"nometa":..}(無い時だけ)
+    // {n} は今回が何回目か
+    const fill = t => String(t).replace(/\{n\}/g, M.runs + 1);
     (D.intro || []).forEach(l => {
-      if (typeof l === 'string') return print(l);
+      if (typeof l === 'string') return print(fill(l));
       if (l.meta && !M.flags[l.meta]) return;
       if (l.nometa && M.flags[l.nometa]) return;
-      print(l.text, l.c || '');
+      print(fill(l.text), l.c || '');
     });
     print('');
-    print('■ 何者として潜るか', 'w');
+    print('■ ' + T.classPrompt, 'w');
     const opts = D.classes.map(c => {
       const open = !c.unlock || M.flags[c.unlock];
       return open
-        ? { label: `${c.name}  ` + Object.keys(D.stats).map(k => stName(k) + c.stats[k]).join(' ') + `  体${c.hp} 精${c.sp} 運${c.luck}`, fn: () => confirmClass(c) }
+        ? { label: `${c.name}  ` + Object.keys(D.stats).map(k => stName(k) + c.stats[k]).join(' ') + ['hp', 'sp', 'luck'].filter(k => !HIDE.has(k)).map(k => ` ${LB[k].slice(0, 1)}${c[k]}`).join(''), fn: () => confirmClass(c) }
         : { label: '？？？(まだ知らない)', disabled: true };
     });
     opts.push({ label: '戻る', fn: title, key: '0' });
@@ -528,8 +583,8 @@
     print('');
     print(c.desc, 'w');
     const items = c.items.map(i => (byId(D.items, i) || {}).name).filter(Boolean).join('、');
-    print(`持ち物: ${items || 'なし'}  灯り${c.light} 食料${c.food} 金${c.gold}`, 'd');
-    menu([{ label: 'この者で潜る', fn: () => startRun(c) }, { label: '選び直す', fn: newGame, key: '0' }]);
+    print(`持ち物: ${items || 'なし'}` + ['light', 'food', 'gold'].filter(k => !HIDE.has(k)).map(k => `  ${LB[k]}${c[k]}`).join(''), 'd');
+    menu([{ label: T.confirmClass || 'この者で潜る', fn: () => startRun(c) }, { label: '選び直す', fn: newGame, key: '0' }]);
   }
   function startRun(c) {
     S = {
@@ -537,8 +592,8 @@
       cls: c.id, className: c.name,
       hp: c.hp, maxhp: c.hp, sp: c.sp, maxsp: c.sp, luck: c.luck,
       light: c.light, food: c.food, gold: c.gold,
-      stats: Object.assign({}, c.stats), inv: c.items.slice(0, INV_MAX),
-      flags: {}, used: {}, floor: 0, room: 0, rooms: 0, doors: null, at: null, combat: null, shop: null,
+      stats: Object.assign({}, c.stats), inv: c.items.slice(),
+      flags: {}, used: {}, vars: Object.fromEntries(VARS.map(v => [v.id, v.start || 0])), floor: 0, room: 0, rooms: 0, doors: null, at: null, combat: null, shop: null,
     };
     M.runs++; saveMeta();
     enterFloor();
@@ -546,6 +601,7 @@
   function resume() {
     S = load(SAVE_KEY);
     if (!S) return title();
+    S.vars = S.vars || {};
     const at = S.at || {};
     if (S.combat) { cls(); return combatTurn(); }
     if (at.t === 'event') return runEvent(at.id);
@@ -571,7 +627,7 @@
     menu([{ label: '進む', fn: doorScreen }], { I: () => inventory() });
   }
 
-  const KIND = { fight: '気配', shop: '灯り', rest: '静けさ', treasure: 'きらめき', omen: '不穏' };
+  const KIND = Object.assign({ fight: '気配', shop: '灯り', rest: '静けさ', treasure: 'きらめき', omen: '不穏', other: '扉' }, T.doorKinds || {});
   const FIGHT_DOORS = ['何かの息づかい。', '床に、新しい引っかき傷。', '低い唸り声。'];
   function genDoors() {
     const F = D.floors[S.floor];
@@ -586,7 +642,7 @@
     if ((F.enemies || []).length) pool.push({ t: 'fight', id: pick(F.enemies), w: 3, door: pick(F.fightDoors || FIGHT_DOORS) });
     // 前の周に死んだ階層には、前のあなたの本が出る(1周に1回)
     const L = M.lastDeath;
-    if (L && L.floor === S.floor && !S.flags.__remains) pool.push({ t: 'remains', w: 8 });
+    if (D.remains !== false && L && L.floor === S.floor && !S.flags.__remains) pool.push({ t: 'remains', w: 8 });
     const n = Math.min(pool.length, rng() < 0.5 ? 2 : 3);
     const out = [];
     while (out.length < n && pool.length) {
@@ -595,14 +651,26 @@
       for (; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) break; }
       out.push(pool.splice(Math.min(i, pool.length - 1), 1)[0]);
     }
+    // twin: この扉が出たら、対になるもの(本物)も同じ並びに出す
+    out.slice().forEach(d => {
+      const e = d.t === 'event' && byId(D.events, d.id);
+      if (!e || !e.twin) return;
+      if (out.some(x => (e.twin === '__remains' ? x.t === 'remains' : x.id === e.twin))) return;
+      let tw = null;
+      if (e.twin === '__remains') { if (D.remains !== false && L && L.floor === S.floor && !S.flags.__remains) tw = { t: 'remains' }; }
+      else { const t = byId(D.events, e.twin); if (t && !(t.once && S.used[t.id]) && meets(t.require)) tw = { t: 'event', id: t.id }; }
+      if (!tw) return;
+      const j = out.findIndex(x => x !== d);
+      if (j >= 0) out[j] = tw; else out.push(tw);
+    });
     return out;
   }
   function doorLabel(d) {
-    if (S.light <= 0) return '[？？？] ……暗くて何も見えない';
+    if (S.light <= 0) return '[？？？] ' + (T.blindDoor || '……暗くて何も見えない');
     if (d.t === 'fight') return `[${KIND.fight}] ${d.door}`;
-    if (d.t === 'remains') return `[背表紙] ${REM().door}`;
+    if (d.t === 'remains') return `[${T.remainsTag}] ${REM().door}`;
     const e = byId(D.events, d.id);
-    return `[${KIND[e.kind] || '扉'}] ${e.door || '……'}`;
+    return `[${KIND[e.kind] || KIND.other}] ${e.door || '……'}`;
   }
   function doorScreen() {
     const F = D.floors[S.floor];
@@ -612,9 +680,9 @@
     save();
     cls();
     const left = F.rooms - S.room;
-    print(`― 部屋 ${S.room + 1}/${F.rooms} ―　` + (left === 1 ? 'この先に、階層の主の気配。' : `主まで、あと${left}部屋。`), left === 1 ? 'r' : 'd');
-    if (S.food <= 1 || S.light <= 2) print(`(${[S.food <= 1 ? '食料が尽きかけている' : '', S.light <= 2 ? '灯りが細い' : ''].filter(Boolean).join('。')}。I で持ち物を使える)`, 'y');
-    print('扉が並んでいる。');
+    print(`― ${LB.room} ${S.room + 1}/${F.rooms} ―　` + (F.boss ? (left === 1 ? `この先に、${LB.boss}の気配。` : `${LB.boss}まで、あと${left}${LB.room}。`) : (left === 1 ? T.lastRoom : `${T.toEnd}、あと${left}${LB.room}。`)), left === 1 ? 'r' : 'd');
+    if ((S.food <= 1 && !HIDE.has('food')) || (S.light <= 2 && !HIDE.has('light'))) print(`(${[S.food <= 1 && !HIDE.has('food') ? (T.lowFood || '食料が尽きかけている') : '', S.light <= 2 && !HIDE.has('light') ? (T.lowLight || '灯りが細い') : ''].filter(Boolean).join('。')}。I で持ち物を使える)`, 'y');
+    print(T.doors);
     current = doorScreen;
     menu(S.doors.map(d => ({ label: doorLabel(d), fn: () => openDoor(d) })), { I: () => inventory() });
   }
@@ -623,9 +691,9 @@
     S.room++; S.rooms++;
     cls();
     // 時が進む
-    if (S.food > 0) S.food--; else { S.hp -= 2; S.lastHurt = '飢えて動けなくなった'; print('腹が鳴る。体力 -2', 'r'); }
-    if (S.light > 0) { S.light--; if (S.light === 0) print('灯りが、ふっと消えた。', 'r'); }
-    if (S.hp <= 0) return die(S.lastHurt);
+    if (TICK.food) { if (S.food > 0) S.food = Math.max(0, S.food - TICK.food); else { S.hp -= 2; S.lastHurt = T.starveCause || '飢えて動けなくなった'; print(`${T.starve}${LB.hp} -2`, 'r'); } }
+    if (TICK.light && S.light > 0) { S.light = Math.max(0, S.light - TICK.light); if (S.light === 0) print(T.lightOut, 'r'); }
+    if (S.hp <= 0) return die(T.hpDeath || S.lastHurt);
     if (d.t === 'fight') return startCombat(d.id, {});
     if (d.t === 'remains') return remains();
     runEvent(d.id, true);
@@ -648,13 +716,13 @@
     current = null;
     const goods = (L.items || []).filter(id => byId(D.items, id));
     menu([
-      goods.length ? { label: `持ち物を拾う(${goods.slice(0, 2).map(i => byId(D.items, i).name).join('、')})`, fn: () => {
+      goods.length ? { label: `${T.remainsTake || '持ち物を拾う'}(${goods.slice(0, 2).map(i => byId(D.items, i).name).join('、')})`, fn: () => {
         print(''); print(R.take, 'w');
         goods.slice(0, 2).forEach(addItem);
         M.lastDeath = null; saveMeta();
         afterRoom();
       } } : { label: '持ち物は、何も残っていない', disabled: true },
-      { label: '棚に戻す', fn: () => { print(''); print(R.leave, 'w'); applyFx({ luck: 1 }); afterRoom(); } },
+      { label: T.remainsLeave || '棚に戻す', fn: () => { print(''); print(R.leave, 'w'); applyFx({ luck: 1 }); afterRoom(); } },
     ]);
   }
 
@@ -691,7 +759,7 @@
       const a = live.splice(Math.floor(rng() * live.length), 1)[0];
       const b = pick(live);
       const t = opts[a].fn; opts[a].fn = opts[b].fn; opts[b].fn = t;
-      print('(頭の中で、誰かの声が混線している)', 'm');
+      print(T.madness || '(頭の中で、誰かの声が混線している)', 'm');
     }
     menu(opts);
   }
@@ -727,7 +795,7 @@
     afterRoom();
   }
   function afterRoom() {
-    if (S.hp <= 0) return die(S.lastHurt || '力尽きた');
+    if (S.hp <= 0) return die(T.hpDeath || S.lastHurt || '力尽きた');
     S.at = { t: 'after' };
     save();
     current = afterRoom;
@@ -755,7 +823,7 @@
     }).concat([{ label: '立ち去る', key: '0', fn: () => { S.shop = null; afterRoom(); } }]), { I: () => inventory() });
   }
   function buy(it) {
-    if (S.inv.length >= INV_MAX) { print('もう持てない。', 'r'); return shopScreen(); }
+    if (it.kind !== 'key' && invCount() >= INV_MAX) { print('もう持てない。', 'r'); return shopScreen(); }
     S.gold -= it.price;
     S.shop.splice(S.shop.indexOf(it.id), 1);
     addItem(it.id);
@@ -808,20 +876,21 @@
     while ($out.children.length > 16) $out.removeChild($out.firstChild);
     print('');
     const eb = Math.max(0, Math.ceil(Math.max(0, C.hp) / e.hp * 10));
-    print(`${e.name}  ${'■'.repeat(eb)}${'□'.repeat(10 - eb)} ${Math.max(0, C.hp)}/${e.hp}`, 'r');
+    print(`${e.name}  ${T.enemyHp ? T.enemyHp + ' ' : ''}${'■'.repeat(eb)}${'□'.repeat(10 - eb)} ${Math.max(0, C.hp)}/${e.hp}`, 'r');
     print(`予兆: ${p.tell}`, 'y');
     // 前の周までに見た行動は、記録から先読みできる
     const seen = (M.seen || {})[e.id] || [];
     const n1 = (C.idx + 1) % e.pattern.length, n2 = (C.idx + 2) % e.pattern.length;
     if (seen[n1]) print(`記録 次　: ${e.pattern[n1].tell}`, 'c');
     if (seen[n1] && seen[n2] && e.pattern.length > 2) print(`記録 その次: ${e.pattern[n2].tell}`, 'c');
-    if (!seen.length) print('(記録にない相手だ)', 'd');
+    if (!seen.length) print(T.seenNone, 'd');
     const flee = e.flee >= 99 ? null : chance(S.stats.dex || 0, e.flee);
+    const FC = T.fightCmds || ['攻撃', '防御', '道具', '逃走'];
     menu([
-      { label: '攻撃', fn: () => act('attack') },
-      { label: '防御', fn: () => act('guard') },
-      { label: '道具', fn: () => inventory(true) },
-      flee === null ? { label: '逃走(逃げ場はない)', disabled: true } : { label: `逃走〔${stName('dex')}${e.flee}・${flee}%〕`, fn: () => act('flee') },
+      { label: FC[0], fn: () => act('attack') },
+      { label: FC[1], fn: () => act('guard') },
+      { label: FC[2], fn: () => inventory(true) },
+      flee === null ? { label: `${FC[3]}(逃げ場はない)`, disabled: true } : { label: `${FC[3]}〔${stName('dex')}${e.flee}・${flee}%〕`, fn: () => act('flee') },
     ]);
   }
   function act(kind) {
@@ -832,7 +901,7 @@
       let dmg;
       if (a + b === 2) { dmg = 0; print(`[${a}][${b}] 空を切った。`, 'r'); }
       else {
-        dmg = Math.max(1, a + b + S.stats.str + wpn() - 8 - (e.def || 0));
+        dmg = Math.max(1, a + b + (S.stats[(byId(D.classes, S.cls) || {}).atkStat || 'str'] || 0) + wpn() - 8 - (e.def || 0));
         if (a + b === 12) dmg *= 2;
         if (p.intent === 'guard') dmg = Math.max(1, Math.floor(dmg / 2));
         print(`[${a}][${b}] ${a + b === 12 ? '会心の一撃。' : ''}${e.name}に ${dmg} の傷。${p.intent === 'guard' ? '(守りに阻まれた)' : ''}`, 'w');
@@ -862,33 +931,33 @@
     saveMeta();
     C.idx = (C.idx + 1) % e.pattern.length;
     let d = p.dmg || 0;
-    const cause = `${e.name}に倒された`;
+    const cause = T.fightDeath ? T.fightDeath.replace('{enemy}', e.name) : (T.hpDeath || `${e.name}に倒された`);
     switch (p.intent) {
       case 'attack':
         d = Math.max(0, d - arm()); if (guarding) d = Math.floor(d / 2); else d = Math.max(1, d);
         S.hp -= d; S.lastHurt = cause;
-        print(`${e.name}の攻撃。体力 -${d}`, 'r'); later(sfx.hit); break;
+        print(`${e.name}の攻撃。${LB.hp} -${d}`, 'r'); later(sfx.hit); break;
       case 'heavy':
         d = Math.max(0, d - arm()); if (guarding) d = Math.floor(d / 4);
         S.hp -= d; S.lastHurt = cause;
-        print(`${e.name}の渾身の一撃。体力 -${d}${guarding ? '(受け流した)' : ''}`, 'r'); later(sfx.hit); break;
+        print(`${e.name}の渾身の一撃。${LB.hp} -${d}${guarding ? '(受け流した)' : ''}`, 'r'); later(sfx.hit); break;
       case 'mind': {
         // 精神が尽きている分は体力に通る
         if (guarding) d = Math.floor(d / 2);
         const over = Math.max(0, d - S.sp);
         const was = S.sp;
         S.sp = Math.max(0, S.sp - d);
-        print(`意識が削れる。精神 -${d - over}${was > 0 && S.sp === 0 ? '  ……何かが壊れた。' : ''}`, 'm');
-        if (over) { S.hp -= over; S.lastHurt = cause; print(`空いた心に、痛みが流れこむ。体力 -${over}`, 'r'); later(sfx.hit); }
+        print(`${T.mindHit || '意識が削れる。'}${LB.sp} -${d - over}${was > 0 && S.sp === 0 ? '  ……何かが壊れた。' : ''}`, 'm');
+        if (over) { S.hp -= over; S.lastHurt = cause; print(`${T.mindOver || '空いた心に、痛みが流れこむ。'}${LB.hp} -${over}`, 'r'); later(sfx.hit); }
         break;
       }
       case 'drain':
         if (guarding) d = Math.floor(d / 2);
         S.light = Math.max(0, S.light - d);
-        print(`灯りが喰われる。灯り -${d}`, 'r'); break;
+        print(`${T.drainHit || '灯りが喰われる。'}${LB.light} -${d}`, 'r'); break;
       case 'steal':
         d = Math.min(S.gold, d); S.gold -= d;
-        print(`懐を探られた。金 -${d}`, 'r'); break;
+        print(`懐を探られた。${LB.gold} -${d}`, 'r'); break;
       default:
         print(`${e.name}は身構えている。`, 'd');
     }
@@ -918,8 +987,10 @@
     save();
     cls();
     print(F.bossIntro || '', 'w');
+    // ボスなしの章: 章の終わりの文を出して、そのまま次の章へ
+    if (!F.boss) { current = null; return afterBoss(); }
     current = bossScreen;
-    menu([{ label: '挑む', fn: () => startCombat(F.boss, { boss: true }) }], { I: () => inventory() });
+    menu([{ label: T.challenge || '挑む', fn: () => startCombat(F.boss, { boss: true }) }], { I: () => inventory() });
   }
   function afterBoss() {
     const F = D.floors[S.floor];
@@ -928,15 +999,17 @@
     if (S.floor >= D.floors.length) return endingCheck();
     S.at = { t: 'floor' };
     save();
-    const stairs = () => menu([{ label: '下へ降りる', fn: enterFloor }], { I: () => inventory() });
-    current = () => { cls(); print('階段が、下へ続いている。'); stairs(); };
+    const stairs = () => menu([{ label: T.descend, fn: enterFloor }], { I: () => inventory() });
+    current = () => { cls(); print(T.stairs || '階段が、下へ続いている。'); stairs(); };
     stairs();
   }
 
   // ---------- 結末と死 ----------
   function endingCheck() {
     const e = (D.endings || []).find(x => !x.cond ||
-      (arr(x.cond.flags).every(f => S.flags[f]) && arr(x.cond.metas).every(f => M.flags[f])));
+      (arr(x.cond.flags).every(f => S.flags[f]) && arr(x.cond.metas).every(f => M.flags[f]) &&
+        Object.entries(x.cond.vars || {}).every(([k, n]) => (S.vars[k] || 0) >= n) &&
+        Object.entries(x.cond.varmax || {}).every(([k, n]) => (S.vars[k] || 0) <= n)));
     ending(e ? e.id : null);
   }
   function ending(id) {
@@ -967,23 +1040,23 @@
     saveMeta();
     later(() => { sfx.die(); });
     print('');
-    print('＊＊＊　あなたは死んだ　＊＊＊', 'r');
+    print(T.deathTitle, 'r');
     print('');
     // 死んだこと自体を記録に残す(data の deathMeta / deathMetaFloor で指定)
     if (D.deathMeta) gainMeta(D.deathMeta);
     if (D.deathMetaFloor) gainMeta(D.deathMetaFloor + Math.min(S.floor + 1, D.floors.length));
-    print('死因: ' + (cause || '不明'), 'w');
+    print(T.causeLabel + ': ' + (cause || '不明'), 'w');
     if ((D.deathTexts || []).length) print(pick(D.deathTexts));
-    print(`到達: ${D.floors[Math.min(S.floor, D.floors.length - 1)].name}  通った部屋 ${S.rooms}`, 'd');
+    print(`${T.reached || '到達'}: ${D.floors[Math.min(S.floor, D.floors.length - 1)].name}  通った${LB.room} ${S.rooms}`, 'd');
     print('');
     if ((D.hints || []).length) print('「' + D.hints[Math.floor(Math.random() * D.hints.length)] + '」', 'c');
     print('');
-    print(`あなたは第${M.deaths}刷として、書架に並んだ。`, 'br');
-    if (M.lastDeath.items.length) print('持ち物は、本の頁に挟まれた。次のあなたが拾えるかもしれない。', 'd');
+    print(T.deathLine.replace('{n}', M.deaths), 'br');
+    if (M.lastDeath.items.length && D.remains !== false) print(T.itemsKept, 'd');
     print('');
     print('Abort, Retry, Fail?', 'w');
     menu([
-      { label: 'Retry  もう一度潜る', key: 'R', fn: newGame },
+      { label: 'Retry  ' + T.retry, key: 'R', fn: newGame },
       { label: 'Abort  タイトルへ', key: 'A', fn: title },
       { label: 'Fail   記録を見る', key: 'F', fn: records },
     ]);

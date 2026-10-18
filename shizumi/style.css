@@ -74,9 +74,8 @@ body{
   .opt:not(.d){border-bottom:1px dotted #333;}
 }
 body.shell #bar{padding-left:calc(env(safe-area-inset-left,0px) + 96px); min-height:calc(env(safe-area-inset-top,0px) + 50px); align-items:flex-end; padding-bottom:.25em; box-sizing:border-box;}
-@media (max-width:520px){
-  #bar-right{display:none;}
-}
+#bar-title{overflow:hidden; text-overflow:ellipsis; min-width:0;}
+#bar-right{flex:none; margin-left:.8em; color:var(--yellow);}
 
 /* 走査線 */
 body::after{
