@@ -33,11 +33,11 @@ self.assetsManifest = {
       "url": "_framework\/dotnet.runtime.8.0.32.2unzlbu72i.js"
     },
     {
-      "hash": "sha256-AbrScq4R2zIEjUe+3yGW7OFb70P5PX\/I+gm7TwsgqTI=",
+      "hash": "sha256-QmKIJvOqkjOal4GtST4suRC\/+F2OIqQvdAj+X6JM5Ok=",
       "url": "_framework\/blazor.boot.json"
     },
     {
-      "hash": "sha256-HkFpQJYlydX7F4FJ9x+MswStpjs+NKcZ9Vxau5NJegM=",
+      "hash": "sha256-aLf0gRchwWSsAGmWpYf\/GQ\/SWG1k36J\/o4D5fSpTQNo=",
       "url": "_framework\/Game.App.wasm"
     },
     {
@@ -65,11 +65,11 @@ self.assetsManifest = {
       "url": "_framework\/Game.Persistence.wasm"
     },
     {
-      "hash": "sha256-QAb8cAxHQj7xzYmxNruY5RLeqQiUG\/EgVb3lewA0iWs=",
+      "hash": "sha256-UM7m3h0gEApWnWeOcHOZyWXa5TyhASVlGbW4LrR0cBE=",
       "url": "_framework\/Game.Systems.wasm"
     },
     {
-      "hash": "sha256-DMJIopXGWQUZ3H1h1+9zj8lcrAzkKQSKuXAEqtiBggY=",
+      "hash": "sha256-lqS3jsivtjt51LK3uhxh+BTMHZ4B7PNIAHiAmRBwvuU=",
       "url": "_framework\/Game.Web.wasm"
     },
     {
@@ -4761,5 +4761,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "EWeU8slt-7fe82523"
+  "version": "NIn9paBH-7fe82523"
 };
