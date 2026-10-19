@@ -38,6 +38,9 @@ body{
   -webkit-overflow-scrolling:touch;
 }
 .ln{min-height:1.55em; text-wrap:pretty;}
+/* 英語版: 単語の途中で折り返さない */
+.lang-en #out{overflow-wrap:break-word; line-break:auto; word-break:normal;}
+.lang-en #foot button{font-size:.8em;}
 #prompt{padding:.2em 0; color:var(--white); border-top:1px solid var(--gray); display:flex; align-items:center;}
 #prompt input{
   flex:1; min-width:0; background:transparent; border:0; outline:0; color:var(--green);
