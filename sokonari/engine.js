@@ -212,7 +212,8 @@
   // 挿絵: 走査線で描かれ、白く光って揺れる(動きを減らす設定の人には光と揺れなし)。描かれるまで文字は待つ
   const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   // again: 同じ画面に戻った時(持ち物・遊び方から戻る、続きから)。音も光もなく、一度に出す
-  function showArt(id, again) {
+  // stick: 結末の絵は、長い文章を読む間も上に残す
+  function showArt(id, again, stick) {
     if (!window.ART || !ART.has(id)) return;
     // 驚かせる絵は、初めて見る時だけ閃光と揺れ。2回目からは静かに描く(周回で慣れて効かなくなるのを防ぐ)
     M.artSeen = M.artSeen || {};
@@ -221,7 +222,7 @@
     if (!again && first) { M.artSeen[id] = 1; saveMeta(); }
     const rate = shock ? ART.rate(id) : Math.min(ART.rate(id), 3);
     // 絵の枠は、文字の行と並ぶ順番を保つために先に置く(中身は後で描く)
-    const c = document.createElement('canvas'); c.className = 'art hide'; c.width = ART.W; c.height = ART.H; c.setAttribute('role', 'img'); c.setAttribute('aria-label', EN ? 'illustration' : '挿絵');
+    const c = document.createElement('canvas'); c.className = 'art hide' + (stick ? ' stick' : ''); c.width = ART.W; c.height = ART.H; c.setAttribute('role', 'img'); c.setAttribute('aria-label', EN ? 'illustration' : '挿絵');
     $out.appendChild(c);
     later(() => {
       c.classList.remove('hide');
@@ -1204,7 +1205,7 @@
       cls();
       BG(['ending:' + e.id, 'ending']);
       print('━━━━ ' + e.name + ' ━━━━', 'y');
-      if (e.art) showArt(e.art);
+      if (e.art) showArt(e.art, false, true);
       print('');
       print(e.text);
       print('');

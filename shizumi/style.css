@@ -41,6 +41,8 @@ body{
 /* 挿絵: ぼかさず拡大(昔のドット絵の見え方)。出た時に白く光って揺れる */
 canvas.art{display:block; width:100%; max-width:640px; aspect-ratio:2/1; image-rendering:pixelated; image-rendering:crisp-edges; image-rendering:pixelated; border:2px solid var(--gray); margin:.5em 0; background:#000;}
 canvas.art.hide{display:none;}
+/* 結末の絵: 文章が流れても上に残る */
+canvas.art.stick{position:sticky; top:0; z-index:1; box-shadow:0 6px 8px #000;}
 body.flash{filter:invert(1) contrast(1.4);}
 #screen.shake{animation:shake .5s steps(2) 1;}
 @keyframes shake{0%{transform:translate(0,0)}15%{transform:translate(-7px,3px)}30%{transform:translate(6px,-4px)}45%{transform:translate(-5px,-2px)}60%{transform:translate(4px,3px)}80%{transform:translate(-2px,1px)}100%{transform:translate(0,0)}}
