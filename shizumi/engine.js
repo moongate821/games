@@ -690,7 +690,7 @@
     ]);
   }
   function exportSave() {
-    const code = btoa(unescape(encodeURIComponent(JSON.stringify({ M, S: load(SAVE_KEY) }))));
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify({ game: D.saveKey || 'shizumi', lang: LANG, M, S: load(SAVE_KEY) }))));
     try { navigator.clipboard && navigator.clipboard.writeText(code); } catch (e) { }
     print(U.exportNote, 'w');
     print(code, 'd');
@@ -701,7 +701,25 @@
     if (!code) return records();
     try {
       const o = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
-      M = o.M; saveMeta(); store(SAVE_KEY, o.S || null);
+      const obj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+      const count = v => Number.isSafeInteger(v) && v >= 0;
+      const m = o && o.M, s = o && o.S;
+      const shelfOK = b => obj(b) && count(b.n) && typeof b.cls === 'string' && count(b.floor) && b.floor <= D.floors.length && typeof b.cause === 'string';
+      const validMeta = obj(m) && obj(m.flags) && obj(m.endings) && count(m.deaths) && count(m.runs) && count(m.best) && m.best <= D.floors.length &&
+        (!m.shelf || (Array.isArray(m.shelf) && m.shelf.every(shelfOK))) &&
+        (!m.lastDeath || (obj(m.lastDeath) && count(m.lastDeath.floor) && m.lastDeath.floor < D.floors.length &&
+          typeof m.lastDeath.cls === 'string' && typeof m.lastDeath.cause === 'string' && Array.isArray(m.lastDeath.items))) &&
+        (!m.seen || (obj(m.seen) && Object.values(m.seen).every(Array.isArray))) && (!m.artSeen || obj(m.artSeen));
+      const validRun = s == null || (obj(s) && D.classes.some(c => c.id === s.cls && c.name === s.className) && count(s.floor) && s.floor < D.floors.length &&
+        count(s.room) && count(s.rooms) && Array.isArray(s.inv) && s.inv.every(id => !!byId(D.items, id)) &&
+        obj(s.stats) && Object.values(s.stats).every(Number.isFinite) && obj(s.flags) && obj(s.used) &&
+        (s.doors == null || (Array.isArray(s.doors) && s.doors.every(d => obj(d) && ['event', 'fight', 'remains'].includes(d.t) &&
+          (d.t === 'event' ? !!byId(D.events, d.id) : d.t === 'fight' ? !!byId(D.enemies, d.id) : true)))) &&
+        (s.combat == null || (obj(s.combat) && !!byId(D.enemies, s.combat.id) && Number.isFinite(s.combat.hp) && count(s.combat.idx))) &&
+        ['hp', 'maxhp', 'sp', 'maxsp', 'luck', 'light', 'food', 'gold'].every(k => Number.isFinite(s[k])) &&
+        (s.vars == null || obj(s.vars)) && !s.over);
+      if (!validMeta || !validRun || (o.game !== undefined && o.game !== (D.saveKey || 'shizumi')) || (o.lang !== undefined && o.lang !== LANG)) throw new Error('Invalid backup');
+      M = m; saveMeta(); store(SAVE_KEY, s || null);
       print(U.imported, 'g');
     } catch (e) { print(U.importFail, 'r'); }
     menu([{ label: U.back, fn: records, key: '0' }]);
