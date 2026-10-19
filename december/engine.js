@@ -209,6 +209,31 @@
     pump();
   }
   function later(fn) { queue.push({ fn }); pump(); }
+  // 挿絵: 走査線で描かれ、白く光って揺れる(動きを減らす設定の人には光と揺れなし)。描かれるまで文字は待つ
+  const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // again: 同じ画面に戻った時(持ち物・遊び方から戻る、続きから)。音も光もなく、一度に出す
+  function showArt(id, again) {
+    if (!window.ART || !ART.has(id)) return;
+    // 驚かせる絵は、初めて見る時だけ閃光と揺れ。2回目からは静かに描く(周回で慣れて効かなくなるのを防ぐ)
+    M.artSeen = M.artSeen || {};
+    const first = !M.artSeen[id];
+    const shock = ART.style(id) === 'shock' && first;
+    if (!again && first) { M.artSeen[id] = 1; saveMeta(); }
+    const rate = shock ? ART.rate(id) : Math.min(ART.rate(id), 3);
+    // 絵の枠は、文字の行と並ぶ順番を保つために先に置く(中身は後で描く)
+    const c = document.createElement('canvas'); c.className = 'art hide'; c.width = ART.W; c.height = ART.H; c.setAttribute('role', 'img'); c.setAttribute('aria-label', EN ? 'illustration' : '挿絵');
+    $out.appendChild(c);
+    later(() => {
+      c.classList.remove('hide');
+      if (again) { ART.reveal(c, id, { quick: true }); return; }
+      if (SNDOK()) SND.sfx(shock ? 'shock' : 'reveal');
+      if (shock && !CALM) { document.body.classList.add('flash'); setTimeout(() => document.body.classList.remove('flash'), 110);
+        document.getElementById('screen').classList.add('shake'); setTimeout(() => document.getElementById('screen').classList.remove('shake'), 520); }
+      ART.reveal(c, id, { rate });
+      $out.scrollTop = $out.scrollHeight;
+    });
+    if (!again) queue.push({ wait: Math.ceil(ART.H / rate) * 16 + 200 });
+  }
   function pump() { if (!timer) timer = setInterval(step, 16); }
   const SPEEDS = [3, 9, 99999];            // 文字の速さ: 普通 / 速い / 一瞬
   const SPEED_NAME = U.speedName;
@@ -217,6 +242,7 @@
     while (queue.length && budget > 0) {
       const q = queue[0];
       if (q.fn) { queue.shift(); q.fn(); continue; }
+      if (q.wait != null) { q.wait -= 16; if (q.wait <= 0) queue.shift(); break; }
       const n = Math.min(budget, q.text.length - q.pos);
       q.el.textContent += q.text.substr(q.pos, n);
       q.pos += n; budget -= n;
@@ -230,11 +256,12 @@
     let guard = 0;
     while (queue.length && guard++ < 5000) {
       const q = queue.shift();
-      if (q.fn) q.fn(); else q.el.textContent = q.text;
+      if (q.fn) q.fn(); else if (q.wait == null) q.el.textContent = q.text;
     }
+    if (window.ART) ART.finishAll();
     $out.scrollTop = $out.scrollHeight;
   }
-  function flushSilent() { queue.length = 0; if (timer) { clearInterval(timer); timer = null; } }
+  function flushSilent() { if (window.ART) ART.finishAll(); queue.length = 0; if (timer) { clearInterval(timer); timer = null; } }
 
   // opts: [{label, fn, c, disabled, key}]
   let optEls = [], sel = -1;
@@ -738,7 +765,7 @@
     S.vars = S.vars || {};
     const at = S.at || {};
     if (S.combat) { cls(); return combatTurn(); }
-    if (at.t === 'event') return runEvent(at.id);
+    if (at.t === 'event') return runEvent(at.id, false, true);
     if (at.t === 'shop') return shopScreen();
     if (at.t === 'after') return afterRoom();
     if (at.t === 'boss') return bossScreen();
@@ -755,6 +782,8 @@
     save();
     cls();
     print('━━━━ ' + F.name + ' ━━━━', 'c');
+    if (F.art) showArt(F.art, S.floorArtSeen === S.floor);
+    S.floorArtSeen = S.floor;
     print('');
     print(F.intro || '');
     if (S.floor > 0) sfx.stairs();
@@ -867,16 +896,17 @@
 
   // ---------- イベント ----------
   // keep: 画面を消さずに続ける(直前の文を残す)
-  function runEvent(id, keep) {
+  function runEvent(id, keep, again) {
     const ev = byId(D.events, id);
     if (!ev) { print(U.evMissing(id), 'r'); return afterRoom(); }
     if (ev.once) S.used[id] = true;
     S.at = { t: 'event', id };
     save();
     if (keep) print(''); else cls();
+    if (ev.art) showArt(ev.art, again);
     print(ev.text || '');
     { const n = S.floor + 1, c = ['ev:' + id, SNDOK() && SND.evScene(id), ev.kind + n, ev.kind].filter(Boolean); if (c.some(HAS)) BG(c); else bgField(); }
-    current = () => runEvent(id);
+    current = () => runEvent(id, false, true);
     const shown = (ev.choices || []).filter(c => meets(c.need) || c.hidden === false);
     if (!shown.length) {
       if (ev.kind === 'shop') return later(() => shopScreen(true));
@@ -1008,6 +1038,7 @@
     save();
     print('');
     print(U.appears(e.name), 'r');
+    if (e.art) showArt(e.art);
     if (e.desc) print(e.desc);
     combatTurn();
   }
@@ -1173,6 +1204,7 @@
       cls();
       BG(['ending:' + e.id, 'ending']);
       print('━━━━ ' + e.name + ' ━━━━', 'y');
+      if (e.art) showArt(e.art);
       print('');
       print(e.text);
       print('');
@@ -1219,6 +1251,6 @@
   [300, 1200, 3000].forEach(ms => setTimeout(() => { if (document.getElementById('shl-home')) document.body.classList.add('shell'); }, ms));
 
   // 検証用(ブラウザの開発ツールから呼ぶ)
-  window.GAME = { get S() { return S; }, get M() { return M; }, chance };
+  window.GAME = { get S() { return S; }, get M() { return M; }, chance, openEvent: id => { cls(); runEvent(id); }, showArt: id => { cls(); showArt(id); } };
   boot();
 })();

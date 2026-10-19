@@ -316,6 +316,10 @@
     win: t => [0, 4, 7, 12, 7, 12].forEach((d, i) => note(sfxBus, 67 + X + d, t + i * 0.08, i === 5 ? 0.4 : 0.07, W, 0.09)),
     flee: t => [12, 7, 3, 0].forEach((d, i) => note(sfxBus, 70 + X + d, t + i * 0.04, 0.04, W, 0.06)),
     stairs: t => [0, 2, 4, 5, 7, 9, 11, 12].forEach((d, i) => note(sfxBus, (GM.stairsUp ? 60 + d : 72 - d) + X, t + i * 0.06, 0.06, 'triangle', 0.08)),
+    // 挿絵が出る時の「ハッ」とする音: 雑音の一撃 + 急に落ちる低音 + 高い刺す音
+    shock: t => { noise(sfxBus, t, 0.35, 0.5, 200, 7000); kick(sfxBus, t, 0.5); note(sfxBus, 96 + X, t, 0.12, 'square', 0.1, { slide: 0.35, lp: 5000 }); note(sfxBus, 33 + X, t + 0.02, 0.5, 'sawtooth', 0.14, { slide: 0.6, lp: 500 }); },
+    // 静かな絵が出る時: 遠くの鐘のような二音
+    reveal: t => { note(sfxBus, 76 + X, t, 0.5, 'bell', 0.07, { decay: 0.5, sustain: 0.1, rel: 1.0 }); note(sfxBus, 83 + X, t + 0.18, 0.7, 'bell', 0.05, { decay: 0.6, sustain: 0.1, rel: 1.2 }); },
     terminal: t => [0, 12, 0, 12].forEach((d, i) => note(sfxBus, 81 + d + X, t + i * 0.04, 0.03, 'square', 0.04, { lp: 2500 })),
   };
   function sfx(name) {
