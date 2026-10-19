@@ -200,7 +200,9 @@
     if (EN && text != null) text = joinSoft(text);
     String(text == null ? '' : text).split('\n').forEach(line => {
       const el = document.createElement('div');
-      el.className = 'ln ' + (c || '');
+      // 枠の行(+---+ | や ┌─┐│└┘)は折り返すと崩れるので、折り返さずに幅へ収める
+      const box = /^\s*([+|┌│└├┤┐┘─]|-{3,})/.test(line) && /[|│+┐┘┤]\s*$|-{3,}|─{3,}/.test(line);
+      el.className = 'ln ' + (c || '') + (box ? ' box' : '');
       $out.appendChild(el);
       queue.push({ el, text: line, pos: 0 });
     });
@@ -689,18 +691,23 @@
     // intro の各行は文字列か {"text":..,"meta":..}(その記録がある時だけ出す)/{"text":..,"nometa":..}(無い時だけ)
     // {n} は今回が何回目か
     const fill = t => String(t).replace(/\{n\}/g, M.runs + 1);
-    (D.intro || []).forEach(l => {
-      if (typeof l === 'string') return print(fill(l));
-      if (l.meta && !M.flags[l.meta]) return;
-      if (l.nometa && M.flags[l.nometa]) return;
-      print(fill(l.text), l.c || '');
-    });
+    const lines = (D.intro || []).filter(l => typeof l === 'string' || !((l.meta && !M.flags[l.meta]) || (l.nometa && M.flags[l.nometa])));
+    // 英語版は、行をまたいで切れた文をつなぐため、色の無い行はまとめて出す
+    if (EN) {
+      let buf = [];
+      const flushBuf = () => { if (buf.length) print(buf.join('\n')); buf = []; };
+      lines.forEach(l => { if (typeof l === 'string' || !l.c) buf.push(fill(typeof l === 'string' ? l : l.text)); else { flushBuf(); print(fill(l.text), l.c); } });
+      flushBuf();
+    } else lines.forEach(l => typeof l === 'string' ? print(fill(l)) : print(fill(l.text), l.c || ''));
     print('');
     print((EN ? '[ ' : '■ ') + T.classPrompt + (EN ? ' ]' : ''), 'w');
     const opts = D.classes.map(c => {
       const open = !c.unlock || M.flags[c.unlock];
       return open
-        ? { label: `${c.name}  ` + Object.keys(D.stats).map(k => stName(k) + c.stats[k]).join(' ') + ['hp', 'sp', 'luck'].filter(k => !HIDE.has(k)).map(k => ` ${LB[k].slice(0, 1)}${c[k]}`).join(''), fn: () => confirmClass(c) }
+        ? { label: EN
+            ? `${c.name}: ` + Object.keys(D.stats).map(k => `${stName(k)} ${c.stats[k]}`).concat(['hp', 'sp', 'luck'].filter(k => !HIDE.has(k)).map(k => `${LB[k]} ${c[k]}`)).join(', ')
+            : `${c.name}  ` + Object.keys(D.stats).map(k => stName(k) + c.stats[k]).join(' ') + ['hp', 'sp', 'luck'].filter(k => !HIDE.has(k)).map(k => ` ${LB[k].slice(0, 1)}${c[k]}`).join(''),
+          fn: () => confirmClass(c) }
         : { label: U.notYet, disabled: true };
     });
     opts.push({ label: U.back, fn: title, key: '0' });
