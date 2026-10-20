@@ -1,5 +1,5 @@
 'use strict';
-// NEXARIA WILDS 【作成中】 — 斜め見下ろし・ドット絵・精密エイム・スコープ
+// NEXARIA WILDS 【公開試遊版】 — 斜め見下ろし・ドット絵・精密エイム・スコープ
 // 設計: 資料/設計書_異世界転生シューター.md
 const W = 960, H = 540, T = 32, MW = 88, MH = 60, WALLH = 12;
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
@@ -93,8 +93,8 @@ const EN = {
 const STAGES = [
   { n: '春の花畑', biome: 'spring', wallStyle: 'tree', water: true, fl: ['#4f8a3c', '#559040'], wl: ['#2f6b34', '#245a2b'], acc: '#f9a8d4' },
   { n: '若葉の森', biome: 'forest', wallStyle: 'tree', fl: ['#2f6035', '#356a3a'], wl: ['#1f4d2a', '#143a1e'], acc: '#bef264' },
-  { n: '夕暮れの海岸', biome: 'beach', wallStyle: 'rock', fl: ['#dcc78c', '#e2cf96'], wl: ['#8b8478', '#6b6458'], acc: '#38bdf8' },
-  { n: '濃霧の入り江', biome: 'cove', wallStyle: 'rock', gim: 'fog', fl: ['#b4a574', '#bcad7c'], wl: ['#56606b', '#3d4650'], acc: '#67e8f9' },
+  { n: '夕暮れの海岸', biome: 'beach', wallStyle: 'rock', water: true, fl: ['#dcc78c', '#e2cf96'], wl: ['#8b8478', '#6b6458'], acc: '#38bdf8' },
+  { n: '濃霧の入り江', biome: 'cove', wallStyle: 'rock', water: true, gim: 'fog', fl: ['#b4a574', '#bcad7c'], wl: ['#56606b', '#3d4650'], acc: '#67e8f9' },
   { n: 'BOSS 砂漠の主', biome: 'desert', wallStyle: 'sand', water: true, gim: 'heat', fl: ['#d9ac60', '#dfb46a'], wl: ['#a8743a', '#85582a'], acc: '#f59e0b', boss: 'boss1' },
   { n: '岩山の稜線', biome: 'mountain', wallStyle: 'rock', gim: 'wind', fl: ['#82826f', '#8a8a77'], wl: ['#5d5f63', '#3f4146'], acc: '#cbd5e1' },
   { n: '針葉樹の山道', biome: 'pine', wallStyle: 'pine', fl: ['#617259', '#69795f'], wl: ['#1e3d2f', '#12281e'], acc: '#86efac' },
@@ -290,8 +290,23 @@ function sfx(f, d, ty, v, sl) {
 // ---------- ステージ生成 ----------
 function solid(tx, ty) { if (tx < 0 || ty < 0 || tx >= MW || ty >= MH) return true; const v = tiles[ty * MW + tx]; return v === 1 || v === 3 || v === 4; }
 function solidB(tx, ty) { if (tx < 0 || ty < 0 || tx >= MW || ty >= MH) return true; const v = tiles[ty * MW + tx]; return v === 1 || v === 4; } // 弾・視線(柵は通る)
-let decor = [], zones = [], roadH = 0, roadV = 0, camps = [];
-const zoneAt = (px, py) => { const tx = Math.floor(px / T), ty = Math.floor(py / T); if (tiles[ty * MW + tx] === 2) return '中央道路'; const z = zones.find(q => tx >= q.x0 && tx <= q.x1 && ty >= q.y0 && ty <= q.y1); return z ? z.name : ''; };
+let decor = [], zones = [], roadH = 0, roadV = 0, camps = [], fieldPOIs = [], routeTier = null, mission = null;
+let mapSeen = new Uint8Array(MW * MH), mapOpen = false;
+function revealMap() {
+  const px = Math.floor(P.x / T), py = Math.floor(P.y / T);
+  for (let dy = -12; dy <= 12; dy++) for (let dx = -12; dx <= 12; dx++) {
+    const x = px + dx, y = py + dy; if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
+    const d = Math.hypot(dx, dy), a = Math.atan2(dy, dx) - P.aimA;
+    if (d <= 5 || (d <= 12 && Math.cos(a) >= Math.cos(CONE))) mapSeen[y * MW + x] = 1;
+  }
+}
+function toggleMap() {
+  if (scene !== 'play') return;
+  if (!mapOpen) closeLoot(false);
+  mapOpen = !mapOpen; document.body.classList.toggle('map-open', mapOpen);
+  inp.down = inp.tfire = inp.rdown = false;
+}
+const zoneAt = (px, py) => { const tx = Math.floor(px / T), ty = Math.floor(py / T); if (tiles[ty * MW + tx] === 2) return routeTier[ty * MW + tx] === 2 ? '脇道・隠し物資' : '街道・巡回に注意'; const z = zones.find(q => tx >= q.x0 && tx <= q.x1 && ty >= q.y0 && ty <= q.y1); return z ? z.name : ''; };
 let blds = [], boxes = [];
 const inBldCell = c => { const x = c % MW, y = c / MW | 0; return blds.some(o => x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h); };
 // コンテナを開ける: 戦利品を数個落とす(建物内は多め・高価)
@@ -300,14 +315,20 @@ function openBox(bx) {
   const mult = (isNight() ? 1.25 : 1) * (hasT('lucky') ? 1.1 : 1); bx.contents = [];
   for (let i = 0; i < cnt; i++) {
     const r = rnd(), it = {};
-    if (r < .26) it.k = ['med', 'ammo', 'ammo', 'armor'][(rnd() * 4) | 0];
-    else if (r < .42) it.k = ['bomb', 'flash', 'cure', 'boost', 'od'][(rnd() * 5) | 0];
-    else if (r < .46) it.k = 'feather';
-    else { it.k = 'loot'; const big = rnd() < (bx.rich ? .12 : .04); it.v = Math.round((big ? 150 : 15 + rnd() * 40) * (1 + n * .15) * (bx.rich ? 1.4 : 1) * mult); it.m = 1; }
+    if (r < .34) it.k = ['med', 'ammo', 'ammo', 'armor'][(rnd() * 4) | 0];
+    else if (r < .48) it.k = ['bomb', 'flash', 'cure', 'boost', 'od'][(rnd() * 5) | 0];
+    else if (r < .52) it.k = 'feather';
+    else { it.k = 'loot'; const big = rnd() < (bx.rich ? .12 : .04); it.v = Math.round((big ? 150 : 15 + rnd() * 40) * (1 + n * .15) * (bx.rich ? 1.4 : 1) * mult * 1.3); it.m = 1; }   // 宝箱を減らした分、中身を ×1.3
+    // 建物の用途と地点で手に入るものを変える。探索先を選ぶ理由になる。
+    if (i === 0 && bx.theme) it.k = ({ housing: 'med', warehouse: 'ammo', energy: 'boost', lab: 'cure' })[bx.theme];
+    if (i === 0 && bx.field) it.k = bx.fieldRole === 0 ? 'med' : 'ammo';
+    if (i === 0 && bx.sideRoute) { it.k = 'loot'; it.v = Math.round((85 + n * 18) * mult); it.m = 1; }
     bx.contents.push(it);
   }
   bx.reveal = 0; showLoot(bx);
+  if (bx.fieldRole === 0 && mission && mission.kind === 'supply') completeMission();
 }
+function completeMission() { if (!mission || mission.done) return; mission.done = true; mission.progress = 0; toast('任務達成: ' + mission.name + '  脱出時 +' + mission.bonus + 'G', 3); sfx(900, .25, 'triangle', .08, 1.5); }
 // ---------- 戦利品パネル(コンテナを調べると開く。中身を選んで取る) ----------
 let lootBox = null;
 const lootEl = () => document.getElementById('lootp');
@@ -317,7 +338,7 @@ function showLoot(bx) { lootBox = bx; bx.closed = false; renderLoot(); }
 function closeLoot(byUser) { if (lootBox) { if (byUser) lootBox.closed = true; lootBox = null; } const el = lootEl(); if (el) el.style.display = 'none'; }
 function renderLoot() {
   const el = lootEl(); if (!el || !lootBox) return; const bx = lootBox, cs = bx.contents || [], rv = Math.min(cs.length, Math.floor(bx.reveal || 0));
-  let h = '<div class="lh">' + (bx.kind === 'bag' ? '戦利品の袋' : bx.rich ? '宝箱(豪華)' : '宝箱') + ' <small>' + (rv < cs.length ? '探索中…' : (cs.length ? cs.length + '個' : '空')) + '</small></div>';
+  let h = '<div class="lh">' + (bx.sideRoute ? '脇道の隠し物資' : bx.field || ({ housing: '住居の備蓄', warehouse: '弾薬庫', energy: '動力室', lab: '研究室' })[bx.theme] || (bx.kind === 'bag' ? '戦利品の袋' : bx.rich ? '宝箱(豪華)' : '宝箱')) + ' <small>' + (rv < cs.length ? '探索中…' : (cs.length ? cs.length + '個' : '空')) + '</small></div>';
   cs.forEach((it, k) => { if (k < rv) h += '<div class="lr"><canvas class="li" data-k="' + k + '"></canvas><span class="ln">' + itemName(it) + (it.k === 'loot' ? ' <small>' + it.v + 'G</small>' : '') + '</span><button onclick="G.take(' + k + ')">取る</button></div>'; else h += '<div class="lr dim"><span class="ln">…</span></div>'; });
   h += '<div class="lf"><button onclick="G.takeAll()">全部取る [F]</button><button onclick="G.closeLoot()">閉じる [Esc]</button></div>';
   el.innerHTML = h; el.style.display = 'block';
@@ -345,6 +366,46 @@ const ZNAMES = {
   snow: { housing: '雪の集落', warehouse: '吹きだまり', energy: '温泉', lab: '雪原の砦' },
   summit: { housing: '山頂の祠', warehouse: '氷柱の森', energy: '凍る泉', lab: '頂への階段' },
 };
+// 攻略資料の「近場の補給→目的地→危険地帯→脱出」を各面の固有地点に落とす。
+// 座標はマップ比率。実際の配置はBFSで到達できる屋外マスへ寄せる。
+const FIELD_PLAN = [
+  [['花畑の補給所', .20, .71], ['風車の記録庫', .73, .29], ['三つ橋の哨戒地', .61, .52]],
+  [['倒木の補給地', .24, .72], ['苔の石碑', .69, .25], ['古木の狩場', .36, .40]],
+  [['漂流物の浜', .22, .69], ['灯台の記録室', .70, .25], ['入り江の監視所', .77, .55]],
+  [['漁村の物資庫', .24, .70], ['桟橋の通信機', .72, .30], ['座礁船の待伏せ', .72, .59]],
+  [['宿場の水袋', .25, .70], ['砂中の観測記録', .70, .25], ['オアシスの主', .46, .50]],
+  [['山小屋の備蓄', .22, .72], ['稜線の見張り台', .72, .27], ['岩の狭路', .48, .50]],
+  [['木こりの物資', .24, .70], ['狩人の砦', .72, .25], ['倒木の谷', .40, .48]],
+  [['氷洞の備蓄', .22, .70], ['氷河観測所', .70, .27], ['クレバスの橋', .51, .49]],
+  [['雪洞の物資', .24, .71], ['砦の記録庫', .73, .27], ['吹雪の横断路', .48, .48]],
+  [['祠の備蓄', .23, .70], ['山頂の記録', .71, .27], ['氷晶核', .46, .50]],
+];
+const MISSION_PLAN = [
+  ['supply', '花畑の備蓄を確保', 60], ['log', '苔の石碑の記録を回収', 90],
+  ['activate', '灯台の通信機を起動', 120], ['supply', '漁村の物資を確保', 140],
+  ['boss', '砂漠の主を撃破', 200], ['activate', '見張り台の信号を送信', 170],
+  ['log', '狩人の砦の記録を回収', 190], ['activate', '氷河観測所を起動', 220],
+  ['supply', '雪洞の備蓄を確保', 240], ['boss', '白き王を撃破', 350],
+];
+// 出撃位置・入口名。海岸や峠など、面ごとに入って来る方向を変える。
+const FIELD_STARTS = [
+  [3, 42, '花畑の南門'], [3, 25, '森の西口'], [31, 42, '南の船着場'], [3, 10, '入り江の断崖口'],
+  [50, 42, '砂丘の東南口'], [3, 35, '山麓の西道'], [32, 3, '北の樹林口'],
+  [60, 13, '氷河の東岸'], [15, 42, '雪原の南西口'], [60, 39, '白き峰の東門'],
+];
+// 各面の導線。入口の位置と向きも変え、補給→危険地帯→記録地点を通る。
+const FIELD_ROUTES = [
+  [[[.05,.91],[.20,.71],[.37,.73],[.61,.52],[.73,.29],[.91,.13]], [[.20,.71],[.29,.35],[.73,.29]]],
+  [[[.05,.55],[.24,.72],[.16,.46],[.36,.40],[.51,.21],[.69,.25],[.88,.10]], [[.36,.40],[.55,.59],[.82,.71]]],
+  [[[.49,.91],[.40,.75],[.22,.69],[.42,.39],[.70,.25],[.88,.09]], [[.22,.69],[.77,.55],[.70,.25]]],
+  [[[.05,.22],[.28,.24],[.39,.54],[.24,.70],[.72,.59],[.78,.39],[.72,.30]], [[.39,.54],[.72,.30]]],
+  [[[.78,.91],[.70,.70],[.46,.50],[.25,.70],[.70,.25],[.90,.10]], [[.46,.50],[.75,.70],[.90,.83]]],
+  [[[.05,.76],[.22,.72],[.35,.48],[.48,.50],[.72,.27],[.90,.12]], [[.22,.72],[.55,.76],[.72,.27]]],
+  [[[.50,.07],[.48,.27],[.40,.48],[.24,.70],[.68,.68],[.72,.25],[.90,.12]], [[.40,.48],[.28,.27],[.72,.25]]],
+  [[[.94,.28],[.70,.27],[.51,.49],[.37,.61],[.22,.70]], [[.70,.27],[.36,.27],[.22,.70]]],
+  [[[.23,.91],[.24,.71],[.48,.48],[.73,.27],[.90,.13]], [[.24,.71],[.68,.73],[.73,.27]]],
+  [[[.94,.85],[.71,.72],[.46,.50],[.23,.70],[.71,.27],[.91,.10]], [[.46,.50],[.28,.25],[.71,.27]]],
+];
 // 置物: [種類, 個数, 通れない?]
 const DECOR_SET = {
   spring: [['tree', 26, 1], ['boulder', 10, 1], ['bush', 34, 0], ['flower', 150, 0], ['tuft', 120, 0], ['pebble', 20, 0]],
@@ -359,18 +420,42 @@ const DECOR_SET = {
   summit: [['ice', 30, 1], ['snowrock', 20, 1], ['snowpine', 10, 1], ['pebble', 14, 0]],
 };
 function genStage(n) {
-  const S = STAGES[n - 1]; seedv = n * 7919 + 13; tiles = new Uint8Array(MW * MH); blds = []; decor = []; zones = [];
+  const S = STAGES[n - 1]; seedv = n * 7919 + 13; tiles = new Uint8Array(MW * MH); routeTier = new Uint8Array(MW * MH); blds = []; decor = []; zones = [];
   for (let x = 0; x < MW; x++) { tiles[x] = 1; tiles[(MH - 1) * MW + x] = 1; }
   for (let y = 0; y < MH; y++) { tiles[y * MW] = 1; tiles[y * MW + MW - 1] = 1; }
-  const sx = 3, sy = MH - 4;
+  const [sx, sy] = FIELD_STARTS[n - 1];
   const near = (x, y) => Math.abs(x - sx) < 7 && Math.abs(y - sy) < 7;
   const set = (x, y, v) => { if (x > 0 && y > 0 && x < MW - 1 && y < MH - 1) tiles[y * MW + x] = v; };
   const get = (x, y) => (x < 0 || y < 0 || x >= MW || y >= MH) ? 1 : tiles[y * MW + x];
   const ri = (a, b) => a + (rnd() * (b - a + 1) | 0);
-  // 道(土の道・桟橋・雪道)。ボス面ではこの交差点が決戦場
+  // 面ごとの折れ道・枝道。ボス面は中央の決戦場へ通す。
   roadH = (MH >> 1) + ri(-3, 3); roadV = ((MW * .46) | 0) + ri(-4, 4);
-  for (let x = 1; x < MW - 1; x++) for (let d = -1; d <= 1; d++) set(x, roadH + d, 2);
-  for (let y = 1; y < MH - 1; y++) for (let d = -1; d <= 1; d++) set(roadV + d, y, 2);
+  const drawRoute = (points, tier) => { for (let i = 1; i < points.length; i++) {
+    const [ax, ay] = points[i - 1], [bx, by] = points[i];
+    const x0 = Math.round(ax * MW), y0 = Math.round(ay * MH), x1 = Math.round(bx * MW), y1 = Math.round(by * MH);
+    const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2;
+    for (let k = 0; k <= steps; k++) { const x = Math.round(x0 + (x1 - x0) * k / steps), y = Math.round(y0 + (y1 - y0) * k / steps); for (let d = -1; d <= 1; d++) for (const [xx, yy] of [[x + d, y], [x, y + d]]) { set(xx, yy, 2); if (xx > 0 && yy > 0 && xx < MW - 1 && yy < MH - 1 && (tier === 1 || routeTier[yy * MW + xx] === 0)) routeTier[yy * MW + xx] = tier; } }
+  } };
+  FIELD_ROUTES[n - 1].forEach((route, i) => drawRoute(route, i === 0 ? 1 : 2));
+  // 出撃地点から最初の道まで安全に合流できる短い小道。
+  drawRoute([[(sx + .5) / MW, (sy + .5) / MH], FIELD_ROUTES[n - 1][0][0]], 1);
+  // 入口ごとに足場の形を変え、道の左右へ遮蔽物を配置する。射線を確保するため主街道は塞がない。
+  const next = FIELD_ROUTES[n - 1][0][1], vx = next[0] * MW - sx, vy = next[1] * MH - sy, vl = Math.hypot(vx, vy), ux = vx / vl, uy = vy / vl;
+  for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+    const along = dx * ux + dy * uy, across = -dx * uy + dy * ux;
+    const entryShape = n % 3 === 0 ? Math.abs(along) <= 2 && Math.abs(across) <= 3 : n % 3 === 1 ? (along / 3) ** 2 + (across / 2.3) ** 2 <= 1 : Math.abs(along) <= 3 && Math.abs(across) <= 2 - Math.abs(along) * .25;
+    if (entryShape && get(sx + dx, sy + dy) === 0) set(sx + dx, sy + dy, 2);
+  }
+  const entranceProps = ['tree', 'tree', 'palm', 'boulder', 'cactus', 'boulder', 'pine', 'ice', 'snowpine', 'ice'];
+  for (const side of [-1, 1]) {
+    for (const across of [4, 5, 6]) {
+      const x = Math.round(sx + ux * 4 - uy * side * across), y = Math.round(sy + uy * 4 + ux * side * across);
+      if (get(x, y) !== 0) continue;
+      set(x, y, 4); decor.push({ k: entranceProps[n - 1], x: (x + .5) * T, y: (y + .5) * T, v: n + side + 4 }); break;
+    }
+  }
+  const signX = sx - uy * 2.2, signY = sy + ux * 2.2;
+  if (get(Math.round(signX), Math.round(signY)) !== 1) decor.push({ k: 'sign', x: (signX + .5) * T, y: (signY + .5) * T, t: n % SIGNS.length });
   const nearC = (x, y) => S.boss && Math.abs(x - roadV) < 9 && Math.abs(y - roadH) < 8;
   // 4つのエリア
   const Q = [[3, 3, roadV - 4, roadH - 4], [roadV + 4, 3, MW - 4, roadH - 4], [3, roadH + 4, roadV - 4, MH - 4], [roadV + 4, roadH + 4, MW - 4, MH - 4]];
@@ -383,6 +468,8 @@ function genStage(n) {
       const bx = ri(q[0], q[2] - bw), by = ri(q[1], q[3] - bh);
       if (near(bx, by) || near(bx + bw, by) || near(bx, by + bh) || near(bx + bw, by + bh)) continue;
       if (overlapB(bx, by, bw, bh, m)) continue;
+      let onRoute = false; for (let y = by; y < by + bh && !onRoute; y++) for (let x = bx; x < bx + bw; x++) if (get(x, y) === 2) { onRoute = true; break; }
+      if (onRoute) continue;
       for (let x = bx; x < bx + bw; x++) { set(x, by, 1); set(x, by + bh - 1, 1); }
       for (let y = by; y < by + bh; y++) { set(bx, y, 1); set(bx + bw - 1, y, 1); }
       const doors = [], sides = ['t', 'b', 'l', 'r'].sort(() => rnd() - .5).slice(0, ri(2, 3));
@@ -391,13 +478,14 @@ function genStage(n) {
         else { const dy = ri(by + 2, by + bh - 4), xx = sd === 'l' ? bx : bx + bw - 1; set(xx, dy, 0); set(xx, dy + 1, 0); doors.push([xx, dy]); }
       }
       if (bw >= 11) { const mx = bx + (bw >> 1); for (let y = by + 1; y < by + bh - 1; y++) set(mx, y, 1); const dy = ri(by + 1, by + bh - 3); set(mx, dy, 0); set(mx, dy + 1, 0); }
-      const b = { x: bx, y: by, w: bw, h: bh, doors }; blds.push(b); return b;
+      const b = { x: bx, y: by, w: bw, h: bh, doors, theme: currentBuildingType }; blds.push(b); return b;
     }
     return null;
   };
   const cons = [];
+  let currentBuildingType = 'housing';
   Q.forEach((q, qi) => {
-    const ty = types[qi]; zones.push({ name: NAMES[ty], x0: q[0] - 2, y0: q[1] - 2, x1: q[2] + 2, y1: q[3] + 2 });
+    const ty = types[qi]; currentBuildingType = ty; zones.push({ name: NAMES[ty], x0: q[0] - 2, y0: q[1] - 2, x1: q[2] + 2, y1: q[3] + 2 });
     if (ty === 'housing') { const k = S.boss ? ri(4, 5) : ri(6, 8); for (let i = 0; i < k; i++) placeB(q, ri(6, 9), ri(5, 7), 2); }
     else if (ty === 'warehouse') {
       for (let i = 0, k = ri(2, 3); i < k; i++) placeB(q, ri(13, 18), ri(7, 9), 3);
@@ -412,6 +500,11 @@ function genStage(n) {
       }
     } else { placeB(q, ri(12, 15), ri(8, 9), 3); placeB(q, ri(12, 15), ri(8, 9), 3); placeB(q, 6, 5, 3); placeB(q, 6, 5, 3); }
   });
+  // 建物内の用途が分かる備品。小型で移動と射線を塞がない。
+  for (const o of blds) {
+    const px = o.x + 2, py = o.y + 2;
+    if (get(px, py) === 0) decor.push({ k: 'interior', theme: o.theme, x: (px + .5) * T, y: (py + .5) * T });
+  }
   // 水辺・氷の割れ目
   const bm = S.biome;
   if (bm === 'spring') { const rx = roadV + 8 + ri(-1, 1); for (let y = 1; y < MH - 1; y++) { const cx = Math.round(rx + Math.sin(y / 6) * 2); for (let d = -2; d <= 2; d++) if (get(cx + d, y) === 0 && Math.abs(y - (roadH - 14)) > 1 && Math.abs(y - (roadH + 14)) > 1) set(cx + d, y, 3); } for (const by of [roadH - 14, roadH, roadH + 14]) { const bx = Math.round(rx + Math.sin(by / 6) * 2); for (let y = by - 1; y <= by + 1; y++) for (let x = bx - 4; x <= bx + 4; x++) if (get(x, y) === 3 || get(x, y) === 0) set(x, y, 2); decor.push({ k: 'landmark', v: 1, x: (bx + .5) * T, y: (by + .5) * T }); } }
@@ -431,6 +524,34 @@ function genStage(n) {
   }
   // 自然のかたまり(木立・岩場)。道・水・建物の出入口は避ける
   const inBld = (x, y, m) => blds.some(o => x >= o.x - m && x < o.x + o.w + m && y >= o.y - m && y < o.y + o.h + m);
+  // 面ごとの地形。中央道路は退路として残し、脇道の見通しと射線を変える。
+  const band = (fn, kind, width, gaps) => {
+    for (let y = 4; y < MH - 4; y++) {
+      if (gaps.some(g => Math.abs(y - g) < 3)) continue;
+      const bx = Math.round(fn(y));
+      for (let d = -width; d <= width; d++) {
+        const x = bx + d;
+        if (x > 3 && x < MW - 4 && get(x, y) === 0 && !inBld(x, y, 1) && !near(x, y) && !nearC(x, y)) set(x, y, kind);
+      }
+    }
+  };
+  if (n === 2) band(y => 17 + Math.sin(y / 4) * 4, 1, 1, [roadH - 12, roadH + 10]); // 木立の二つの抜け道
+  if (n === 3) {
+    band(y => 47 + Math.sin(y / 5) * 3, 3, 2, [roadH - 12, roadH + 10]);
+    for (const py of [roadH - 12, roadH + 10]) for (let x = 43; x <= 54; x++) for (let d = -1; d <= 1; d++) if (!inBld(x, py + d, 0) && get(x, py + d) !== 1) set(x, py + d, 2);
+  }
+  if (n === 4) {
+    band(y => 40 + Math.sin(y / 4) * 5, 3, 1, [roadH - 11, roadH + 12]);
+    for (const py of [roadH - 11, roadH + 12]) for (let x = 36; x <= 51; x++) for (let d = -1; d <= 1; d++) if (!inBld(x, py + d, 0) && get(x, py + d) !== 1) set(x, py + d, 2);
+  }
+  if (n === 6) band(y => 18 + y * .45 + Math.sin(y / 5) * 2, 1, 1, [roadH - 10, roadH + 11]); // 稜線の岩壁
+  if (n === 7) band(y => 44 - y * .32 + Math.sin(y / 5) * 2, 1, 1, [roadH - 13, roadH + 9]); // 倒木の谷
+  if (n === 8) band(y => 16 + y * .78 + Math.sin(y / 6) * 2, 3, 2, [roadH - 12, roadH + 9]); // クレバス
+  if (n === 9) for (const yy of [roadH - 13, roadH + 11]) for (let x = 10; x < MW - 8; x++) {
+    const y = yy + Math.round(Math.sin(x / 5) * 2);
+    if (x % 17 < 6 || Math.abs(x - roadV) < 4 || get(x, y) !== 0 || inBld(x, y, 1)) continue;
+    set(x, y, 1);
+  }
   for (let i = 0, cover = 26 + n; i < cover; i++) { const cw = ri(1, 3), chh = ri(1, 2), cx = ri(2, MW - 5), cy = ri(2, MH - 5); let ok = !(near(cx, cy) || nearC(cx, cy) || inBld(cx, cy, 2) || inBld(cx + cw, cy + chh, 2)); for (let a = -1; ok && a <= cw; a++) for (let b = -1; b <= chh; b++) if (get(cx + a, cy + b) !== 0) { ok = false; break; } if (!ok) continue; for (let a = 0; a < cw; a++) for (let b = 0; b < chh; b++) set(cx + a, cy + b, 1); }
   const openAny = () => { for (let tr = 0; tr < 60; tr++) { const x = ri(3, MW - 4), y = ri(3, MH - 4); if (get(x, y) === 0 && !near(x, y) && !nearC(x, y) && !inBld(x, y, 1)) return [x, y]; } return null; };
   // 置物(通れないもの=タイル4、通れるもの=飾り)
@@ -464,6 +585,9 @@ function genStage(n) {
 }
 function startStage(n, keep) {
   stageNo = n; const S = STAGES[n - 1]; const gen = genStage(n);
+  mapSeen = new Uint8Array(MW * MH); mapOpen = false; document.body.classList.remove('map-open');
+  for (const name in groundImages) delete groundImages[name]; // 次の面では前の面の大きな地面画像を解放
+  fieldImage(S.biome); fieldImage(roadTextureName(S)); if (S.water) fieldImage('water');
   if (!keep || !P) {
     P = { x: 0, y: 0, r: 11, hp: 100, max: 100, ap: 0, tier: 0, cur: 0, ammo: {}, rel: 0, cd: 0, bloom: 0, rec: 0, breath: 1, face: 1, anim: 0, hurt: 0, loot: 0, bleed: false, boost: 0, od: 0, scoped: 0, aimA: 0, aimD: 200, steady: false, pack: { med: 0, boost: 0, od: 0, cure: 0, bomb: 0, flash: 0 }, stat: {}, fe: 0 };
   }
@@ -471,20 +595,40 @@ function startStage(n, keep) {
   P.stat = { poison: 0, pt: 0, burn: 0, shock: 0, cold: 0, freeze: 0, resist: 0 };
   P.bleed = false;
   P.x = (gen.sx + .5) * T; P.y = (gen.sy + .5) * T; P.hp = Math.min(P.max, P.hp + (keep ? 30 + 15 * base.kitchen : 0)); P.rel = 0;
+  { const next = FIELD_ROUTES[n - 1][0][1], a = Math.atan2(next[1] * MH - gen.sy, next[0] * MW - gen.sx);
+    P.aimA = a; P.face = Math.cos(a) < 0 ? -1 : 1; P.padDir = a;
+    inp.mx = W / 2 + Math.cos(a) * 180; inp.my = H / 2 + Math.sin(a) * 180; inp.mouseT = 0; }
+  revealMap();
   for (const w of WEAPONS) if (w.unlock <= n && !P.ammo[w.id]) P.ammo[w.id] = { mag: magOf(w), res: w.res };
   if (!keep) { if (carry.armor > P.tier) { P.tier = carry.armor; P.ap = ARMOR[P.tier].max; } if (carry.ammo) for (const w of WEAPONS) { const a = P.ammo[w.id]; if (a && a.res !== Infinity) a.res = Math.round(a.res * 1.5); } carry = { ammo: 0, armor: 0 }; saveMeta(); }
   if (P.cur >= WEAPONS.length || WEAPONS[P.cur].unlock > n) P.cur = 0;
   closeLoot(false); rings = []; grenades = []; barrels = []; enemies = []; bullets = []; ebullets = []; items = []; parts = []; fxs = []; texts = []; portal = null; portals = []; boxes = [];
   // 敵配置(約4割は建物の中。建物内は見通しが悪く、近距離戦になる)
   const farAll = gen.cells.filter(c => dist[c] > 14), farIn = farAll.filter(inBldCell), farOut = farAll.filter(c => !inBldCell(c));
-  const place = type => { const pool = (rnd() < .42 && farIn.length) ? farIn : farOut, c = pool[(rnd() * pool.length) | 0], e = mkEnemy(type, ((c % MW) + .5) * T, ((c / MW | 0) + .5) * T); enemies.push(e); return e; };
-  const total = n === 1 ? 10 : Math.round(14 + 3 * n);
-  if (S.boss) { place(S.boss); const m = S.boss === 'boss1' ? ['drone', 8] : ['heavy', 5]; for (let i = 0; i < m[1]; i++)place(m[0]); if (S.boss === 'boss2') for (let i = 0; i < 8; i++)place('gunner'); }
-  else {
-    for (let i = 0; i < total; i++) { const r = rnd(); let ty = 'drone'; const pd = Math.max(.2, .6 - .05 * n); if (r > pd) ty = 'gunner'; if (n >= 3 && r > .85) ty = 'sniper'; if (n >= 4 && r > .93) ty = 'heavy'; if (r < pd * .3 && n >= 2) ty = 'gunner'; if (n >= 3 && r > .55 && r < .68) ty = 'beast'; place(ty); }
-  }
-  if (ELITES[n] && !S.boss) { const e = place(ELITES[n][0]); e.elite = ELITES[n][1]; e.hp = e.max = e.max * 3.5; e.r *= 1.2; e.ec = 3; }
   const cxy = c => ({ x: ((c % MW) + .5) * T, y: ((c / MW | 0) + .5) * T });
+  const chosenPOIs = [];
+  fieldPOIs = FIELD_PLAN[n - 1].map(([name, fx, fy], i) => {
+    const tx = i === 2 && S.boss ? roadV : fx * MW, ty = i === 2 && S.boss ? roadH : fy * MH;
+    let best = null, score = Infinity;
+    for (const c of farOut) {
+      const x = c % MW, y = c / MW | 0;
+      if (chosenPOIs.some(p => Math.hypot(x - p.tx, y - p.ty) < 11)) continue;
+      const v = Math.hypot(x - tx, y - ty) + (tiles[c] === 2 ? 1 : 0);
+      if (v < score) { score = v; best = c; }
+    }
+    const c = best == null ? farOut[0] : best;
+    const p = { name, role: i, tx: c % MW, ty: c / MW | 0, ...cxy(c) }; chosenPOIs.push(p); return p;
+  });
+  { const [kind, name, bonus] = MISSION_PLAN[n - 1]; mission = { kind, name, bonus, done: false, progress: 0 }; }
+  const mainPatrol = farOut.filter(c => routeTier[c] === 1 && dist[c] > 25 && !chosenPOIs.some(p => Math.hypot((c % MW) - p.tx, (c / MW | 0) - p.ty) < 5));
+  const place = (type, at) => { const pool = (rnd() < .42 && farIn.length) ? farIn : farOut, c = at == null ? pool[(rnd() * pool.length) | 0] : at, e = mkEnemy(type, ((c % MW) + .5) * T, ((c / MW | 0) + .5) * T); enemies.push(e); return e; };
+  const threatCell = fieldPOIs[2].ty * MW + fieldPOIs[2].tx;
+  const total = n === 1 ? 10 : Math.round(14 + 3 * n);
+  if (S.boss) { place(S.boss, threatCell); const m = S.boss === 'boss1' ? ['drone', 8] : ['heavy', 5]; for (let i = 0; i < m[1]; i++)place(m[0]); if (S.boss === 'boss2') for (let i = 0; i < 8; i++)place('gunner'); }
+  else {
+    for (let i = 0; i < total; i++) { if (n === 1 && i === 0) { place('gunner', threatCell); continue; } const r = rnd(); let ty = 'drone'; const pd = Math.max(.2, .6 - .05 * n); if (r > pd) ty = 'gunner'; if (n >= 3 && r > .85) ty = 'sniper'; if (n >= 4 && r > .93) ty = 'heavy'; if (r < pd * .3 && n >= 2) ty = 'gunner'; if (n >= 3 && r > .55 && r < .68) ty = 'beast'; const patrol = i < Math.min(4, 1 + (n / 3 | 0)) && mainPatrol.length; const c = patrol ? mainPatrol[(i * 47 + n * 17) % mainPatrol.length] : null; const e = place(ty, c); if (patrol) e.roadGuard = true; }
+  }
+  if (ELITES[n] && !S.boss) { const e = place(ELITES[n][0], threatCell); e.elite = ELITES[n][1]; e.hp = e.max = e.max * 3.5; e.r *= 1.2; e.ec = 3; }
   // 補給(地面)は少なめ。コンテナを探して集めるのが主役
   const outAll = gen.cells.filter(c => !inBldCell(c) && dist[c] > 4);
   // 脱出口: 屋外の遠い2か所
@@ -494,23 +638,31 @@ function startStage(n, keep) {
   portal = portals[0];
   // コンテナ: 建物の中(中身が良い)と屋外
   const wallish = c => { const x = c % MW, y = c / MW | 0; return solid(x + 1, y) || solid(x - 1, y) || solid(x, y - 1) || solid(x, y + 1); };
-  for (const o of blds) { const cells = gen.cells.filter(c => { const x = c % MW, y = c / MW | 0; return x > o.x && x < o.x + o.w - 1 && y > o.y && y < o.y + o.h - 1 && wallish(c); }); const k = 2 + (rnd() * 2 | 0); for (let i = 0; i < k && cells.length; i++) { const c = cells.splice((rnd() * cells.length) | 0, 1)[0]; boxes.push(Object.assign(cxy(c), { open: false, prog: 0, rich: true })); } }
-  for (const cp of camps) for (let i = 0; i < 2; i++) { const a = (i ? 2.4 : 5.2) + rnd() * .6; let bx2 = cp.x + Math.cos(a) * 46, by2 = cp.y + Math.sin(a) * 38; if (blocked(bx2, by2, 10)) { bx2 = cp.x + (i ? 24 : -24); by2 = cp.y + 30; } boxes.push({ x: bx2, y: by2, open: false, prog: 0, rich: rnd() < .35 }); }
-  { const ws = outAll.filter(c => wallish(c) && dist[c] > 6 && !blocked(cxy(c).x, cxy(c).y, 10)); for (let i = 0; i < 6 + (n >> 1) && ws.length; i++) { const c = ws.splice((rnd() * ws.length) | 0, 1)[0]; boxes.push(Object.assign(cxy(c), { open: false, prog: 0, rich: false })); } }
-  { const lc = gen.cells.filter(c => dist[c] > 10 && inBldCell(c)); const c = (lc.length ? lc : gen.cells)[(rnd() * (lc.length || gen.cells.length)) | 0]; items.push(Object.assign(cxy(c), { k: 'log' })); }
-  if (!keep) { clock.h += 2.5; if (clock.h >= 24) { clock.h -= 24; clock.day++; } saveClock(); }
+  for (const o of blds) { const cells = gen.cells.filter(c => { const x = c % MW, y = c / MW | 0; return x > o.x && x < o.x + o.w - 1 && y > o.y && y < o.y + o.h - 1 && wallish(c); }); const k = 1 + (rnd() < .45 ? 1 : 0); for (let i = 0; i < k && cells.length; i++) { const c = cells.splice((rnd() * cells.length) | 0, 1)[0]; boxes.push(Object.assign(cxy(c), { open: false, prog: 0, rich: true, theme: o.theme })); } }   // 宝箱が多すぎたので、建物は1〜2個(2026-10-20)
+  for (const cp of camps) for (let i = 0, nc = 1 + (rnd() < .4 ? 1 : 0); i < nc; i++) { const a = (i ? 2.4 : 5.2) + rnd() * .6; let bx2 = cp.x + Math.cos(a) * 46, by2 = cp.y + Math.sin(a) * 38; if (blocked(bx2, by2, 10)) { bx2 = cp.x + (i ? 24 : -24); by2 = cp.y + 30; } boxes.push({ x: bx2, y: by2, open: false, prog: 0, rich: rnd() < .35 }); }
+  { const ws = outAll.filter(c => wallish(c) && dist[c] > 6 && !blocked(cxy(c).x, cxy(c).y, 10)); for (let i = 0; i < 3 + (n >> 2) && ws.length; i++) { const c = ws.splice((rnd() * ws.length) | 0, 1)[0]; boxes.push(Object.assign(cxy(c), { open: false, prog: 0, rich: false })); } }
+  for (const p of fieldPOIs.slice(0, 2)) boxes.push({ x: p.x + 14, y: p.y + 12, open: false, prog: 0, rich: true, field: p.name, fieldRole: p.role });
+  // 脇道の奥には任意の高価な物資。主街道には巡回敵が多く、経路選択に差を作る。
+  { let branch = outAll.filter(c => routeTier[c] === 2 && dist[c] > 30 && chosenPOIs.every(p => Math.hypot((c % MW) - p.tx, (c / MW | 0) - p.ty) > 6));
+    if (!branch.length) branch = outAll.filter(c => routeTier[c] === 2 && dist[c] > 18 && chosenPOIs.every(p => Math.hypot((c % MW) - p.tx, (c / MW | 0) - p.ty) > 3));
+    if (branch.length) { const c = branch[(branch.length * .58) | 0], q = cxy(c); boxes.push({ ...q, open: false, prog: 0, rich: true, sideRoute: true }); } }
+  { const cap = 12 + n, spare = boxes.filter(b => !b.field && !b.sideRoute); for (let g = boxes.length; g > cap && spare.length; g--) boxes.splice(boxes.indexOf(spare.splice((rnd() * spare.length) | 0, 1)[0]), 1); }   // 1面の宝箱は 13〜22 個まで(2026-10-20 さらに削減)
+  items.push({ x: fieldPOIs[1].x - 14, y: fieldPOIs[1].y + 9, k: 'log' });
+  if (!keep && !hash.has('god')) { clock.h += 2.5; if (clock.h >= 24) { clock.h -= 24; clock.day++; } saveClock(); }
+  if (hash.has('god') && hash.has('day')) clock.h = 12;
   STORM_T = isStormDay() ? 180 : 300; if (isNight()) for (const e of enemies) if (!EN[e.type].boss) { e.hp *= 1.2; e.max *= 1.2; }
   { for (const cp of camps) if (rnd() < .6) { const bx3 = cp.x + (rnd() < .5 ? -1 : 1) * 56, by3 = cp.y + 8; if (!blocked(bx3, by3, 10)) barrels.push({ x: bx3, y: by3, hp: 30 }); } const ws2 = outAll.filter(c => wallish(c) && dist[c] > 8); for (let i = 0; i < 4 + (n >> 1) && ws2.length; i++) { const c = ws2.splice((Math.random() * ws2.length) | 0, 1)[0]; const q = cxy(c); if (!blocked(q.x, q.y, 10)) barrels.push({ x: q.x, y: q.y, hp: 30 }); } }
   if (stash && stash.stage === n) items.push({ x: stash.x, y: stash.y, k: 'stash' });
   P.still = 0; P.lastFire = -99;
   cam.x = P.x; cam.y = P.y; cam.z = 1.6;
   scene = 'play'; $('ov').style.display = 'none'; t = 0;
-  toast(`STAGE ${n}  ${S.n}`, 2.2); if (GIMMICK[n]) setTimeout(() => toast('【ギミック】' + GIMMICK[n], 3), 2300); if (stageNo === 1 && !keep) setTimeout(() => toast('戦利品を集めて、緑の出口で3秒立てば脱出', 3), 2300);
+  if (hash.has('audit')) console.log('FIELD_AUDIT ' + JSON.stringify({ stage: n, reachable: gen.cells.length, roadTiles: tiles.reduce((a, v) => a + (v === 2), 0), branchTiles: routeTier.reduce((a, v) => a + (v === 2), 0), roadGuards: enemies.filter(e => e.roadGuard).length, sideBoxes: boxes.filter(b => b.sideRoute).length, buildings: blds.length, themedBoxes: boxes.filter(b => b.theme).length, pois: fieldPOIs.map(p => ({ name: p.name, role: p.role, distance: dist[p.ty * MW + p.tx], box: boxes.some(b => Math.hypot(b.x - p.x, b.y - p.y) < 40), log: items.some(it => it.k === 'log' && Math.hypot(it.x - p.x, it.y - p.y) < 40) })), exits: portals.map(p => dist[(p.y / T | 0) * MW + (p.x / T | 0)]), bossAtThreat: !S.boss || enemies.some(e => e.type === S.boss && Math.hypot(e.x - fieldPOIs[2].x, e.y - fieldPOIs[2].y) < T) }));
+  toast(`STAGE ${n}  ${S.n}・${FIELD_STARTS[n - 1][2]}`, 2.2); if (GIMMICK[n]) setTimeout(() => toast('【ギミック】' + GIMMICK[n], 3), 2300); if (stageNo === 1 && !keep) setTimeout(() => toast('戦利品を集めて、緑の出口で3秒立てば脱出', 3), 2300);
 }
 const S_BOSS = () => !!STAGES[stageNo - 1].boss;
 function mkEnemy(type, x, y) {
   const d = EN[type], k = 1 + .12 * (stageNo - 1);
-  return { type, x, y, hp: d.hp * (d.boss ? 1 : k) * DF().hp, max: d.hp * (d.boss ? 1 : k) * DF().hp, r: d.r, spd: d.spd, alert: false, cd: R(.5, 2), burst: 0, bt: 0, aimT: 0, flash: 0, hy: (SPR.en[type] ? SPR.en[type].img.height * SPR.en[type].k * .42 : d.r), anim: Math.random() * 6, sd: Math.random() < .5 ? 1 : -1, st: 0, ph: 0, ang0: 0, face: 1, wander: Math.random() * 6 };
+  return { type, x, y, homeX: x, homeY: y, patrolX: x, patrolY: y, patrolWait: R(.5, 2), look: R(-Math.PI, Math.PI), hp: d.hp * (d.boss ? 1 : k) * DF().hp, max: d.hp * (d.boss ? 1 : k) * DF().hp, r: d.r, spd: d.spd, alert: false, cd: R(.5, 2), burst: 0, bt: 0, aimT: 0, flash: 0, hy: (SPR.en[type] ? SPR.en[type].img.height * SPR.en[type].k * .42 : d.r), hx: (SPR.en[type] ? Math.max(d.r, SPR.en[type].img.width * SPR.en[type].k * .34) : d.r), anim: Math.random() * 6, sd: Math.random() < .5 ? 1 : -1, st: 0, ph: 0, ang0: 0, face: 1, wander: Math.random() * 6 };
 }
 
 // ---------- 判定 ----------
@@ -518,7 +670,28 @@ function blocked(x, y, r) {
   const x0 = Math.floor((x - r) / T), x1 = Math.floor((x + r) / T), y0 = Math.floor((y - r) / T), y1 = Math.floor((y + r) / T);
   for (let a = x0; a <= x1; a++)for (let b = y0; b <= y1; b++)if (solid(a, b)) return true; return false;
 }
-function move(e, dx, dy) { if (!blocked(e.x + dx, e.y, e.r * .8)) e.x += dx; if (!blocked(e.x, e.y + dy, e.r * .8)) e.y += dy; }
+function move(e, dx, dy) {
+  const x0 = e.x, y0 = e.y, rr = e.r * .8; if (!blocked(e.x + dx, e.y, rr)) e.x += dx; if (!blocked(e.x, e.y + dy, rr)) e.y += dy;
+  if (e === P) return;
+  // 敵が木や岩に正面から当たって止まったら、斜め→真横の順に向きを変えて回り込む(回る向きは敵ごとに一定=左右に震えない)
+  const want = Math.hypot(dx, dy), got = Math.hypot(e.x - x0, e.y - y0);
+  if (want > .01 && got < want * .4) { const sd = e.sd || 1; for (const r of [sd * .8, sd * 1.57, -sd * .8, -sd * 1.57]) { const c = Math.cos(r), sn = Math.sin(r), nx = dx * c - dy * sn, ny = dx * sn + dy * c; if (!blocked(x0 + nx, y0 + ny, rr)) { e.x = x0 + nx; e.y = y0 + ny; break; } } e.stk = (e.stk || 0) + 1; } else if (e.stk) e.stk = Math.max(0, e.stk - 2);
+}
+// 経路の地図: プレイヤーのいるマスから全マスへの歩数(プレイヤーが別のマスに移るたびに作り直す)。障害物の向こうにいる敵はこれをたどって回り込む
+let flow = null, flowCell = -1;
+function updFlow() {
+  const pc = Math.floor(P.y / T) * MW + Math.floor(P.x / T); if (pc === flowCell && flow) return; flowCell = pc;
+  if (!flow || flow.length !== MW * MH) flow = new Int32Array(MW * MH); flow.fill(-1); if (pc < 0 || pc >= MW * MH) return;
+  const q = new Int32Array(MW * MH); let h = 0, tl = 0; q[tl++] = pc; flow[pc] = 0;
+  while (h < tl) { const c = q[h++], x = c % MW, y = (c / MW) | 0, d = flow[c] + 1; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay; if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue; const n = ny * MW + nx; if (flow[n] >= 0 || solid(nx, ny)) continue; flow[n] = d; q[tl++] = n; } }
+}
+function flowAng(e) {
+  if (!flow) return null; const x = Math.floor(e.x / T), y = Math.floor(e.y / T), c = y * MW + x; if (c < 0 || c >= MW * MH || flow[c] < 0) return null;
+  let best = flow[c], bx = 0, by = 0;
+  for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) { const nx = x + ax, ny = y + ay; if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue; if (ax && ay && (solid(x + ax, y) || solid(x, y + ay))) continue; const v = flow[ny * MW + nx]; if (v >= 0 && v < best) { best = v; bx = ax; by = ay; } }
+  if (!bx && !by) return null; return Math.atan2((y + by + .5) * T - e.y, (x + bx + .5) * T - e.x);
+}
+function walkClear(x0, y0, x1, y1, r) { const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / 12); for (let i = 1; i < n; i++) { const k = i / n; if (blocked(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, r)) return false; } return true; }
 function los(x0, y0, x1, y1) {
   const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / 12); for (let i = 1; i < n; i++) { const k = i / n; if (solidB(Math.floor((x0 + (x1 - x0) * k) / T), Math.floor((y0 + (y1 - y0) * k) / T))) return false; } return true;
 }
@@ -553,7 +726,7 @@ function fire() {
   P.bloom = Math.min(2, P.bloom + (w.id === 'sniper' ? .5 : .22));
   P.rec += rad(w.rec) * (Math.random() < .5 ? -1 : 1) * R(.5, 1) * (P.scoped > .5 ? .6 : 1) + (w.rec > 6 ? rad(w.rec) * 0.4 * (Math.random() < .5 ? 1 : -1) : 0);
   shake = Math.max(shake, w.id === 'sniper' ? 7 : w.id === 'shotgun' ? 5 : 1.5);
-  P.flash = .06; gunSnd(w.id);
+  P.flash = .06; gunSnd(w.id); alertNoise(P.x, P.y, (w.id === 'sniper' ? 610 : w.id === 'shotgun' ? 470 : 370) * (mods.sup ? .42 : 1));
   parts.push({ x: P.x, y: P.y, vx: -Math.cos(base) * 40 + R(-30, 30), vy: -Math.sin(base) * 40 + R(-30, 30), life: .4, col: '#facc15', sz: 2, shell: 1 });
   if (am.mag <= 0) reload();
 }
@@ -613,7 +786,7 @@ function ebul(x, y, a, sp, dmg, col, r) {
 
 // ---------- 更新 ----------
 function update(dt) {
-  if (scene !== 'play') return; t += dt; clock.h += dt / 37.5; if (clock.h >= 24) { clock.h -= 24; clock.day++; }
+  if (scene !== 'play' || mapOpen) return; t += dt; clock.h += dt / 37.5; if (clock.h >= 24) { clock.h -= 24; clock.day++; }
   if (toastT > 0) toastT -= dt;
   // 入力→移動
   let mx = 0, my = 0; const k = inp.keys;
@@ -625,9 +798,11 @@ function update(dt) {
   P.scoped = lerp(P.scoped, wantScope ? 1 : 0, Math.min(1, dt * 14));
   P.steady = !!(k.Space || inp.padSteady || G.botSteady) && P.scoped > .5 && P.breath > 0;
   P.breath = clamp(P.breath + (P.steady ? -dt / ((2.5 + .5 * up.gym) * CH().breath * (hasT('lung') ? 1.3 : 1)) : dt / 4), 0, 1); if (P.breath <= 0) P.steady = false;
-  const sp = 150 * CH().spd * weightMul() * statMul() * (hasT('haste') ? 1.06 : 1) * (hasG('boots') ? 1.08 : 1) * (1 - P.scoped * .55) * (P.boost > 0 ? 1.3 : 1);
+  const underfoot = routeTier[(P.y / T | 0) * MW + (P.x / T | 0)] || 0;
+  const sp = 150 * CH().spd * weightMul() * statMul() * (underfoot === 2 ? 1.05 : underfoot === 1 ? 1 : .91) * (hasT('haste') ? 1.06 : 1) * (hasG('boots') ? 1.08 : 1) * (1 - P.scoped * .55) * (P.boost > 0 ? 1.3 : 1);
   if (gimOf() === 'ice') { P.sv = P.sv || { x: 0, y: 0 }; P.sv.x = lerp(P.sv.x, mx * sp, Math.min(1, dt * 2.2)); P.sv.y = lerp(P.sv.y, my * sp, Math.min(1, dt * 2.2)); P.vx = P.sv.x; P.vy = P.sv.y; } else { P.sv = P.sv || { x: 0, y: 0 }; const ac = (mx || my) ? 1 - Math.exp(-dt * 16) : 1 - Math.exp(-dt * 22); P.sv.x = lerp(P.sv.x, mx * sp, ac); P.sv.y = lerp(P.sv.y, my * sp, ac); if (Math.abs(P.sv.x) < 1) P.sv.x = 0; if (Math.abs(P.sv.y) < 1) P.sv.y = 0; P.vx = P.sv.x; P.vy = P.sv.y; }
   move(P, P.vx * dt, P.vy * dt);
+  revealMap();
   P.still = (Math.hypot(P.vx, P.vy) < 6) ? P.still + dt : 0; P.camo = P.still > .6 && t - P.lastFire > 1.6;
   // 面のギミックと大嵐(時間が経つと体力が減る=早めの脱出を促す)
   if (gimOf() === 'heat' && P.tier < 2 && !G.god) { P.hp -= .4 * dt; if (P.hp <= 0) die(); }
@@ -661,7 +836,7 @@ function update(dt) {
       b.x += b.vx * dt / steps + windAt(t) * dt / steps; b.y += b.vy * dt / steps;
       if (solidB(Math.floor(b.x / T), Math.floor(b.y / T))) { b.life = 0; spark(b.x, b.y, '#cbd5e1'); break; }
       { let hb = false; for (const br of barrels) if (!br.dead && Math.hypot(br.x - b.x, br.y - b.y) < 13) { br.hp -= b.dmg; spark(b.x, b.y, '#fde047'); sfx(700, .05, 'square', .05); if (br.hp <= 0 && br.fuse == null) br.fuse = .05; b.life = 0; hb = true; break; } if (hb) break; }
-      for (const e of enemies) { if (e.hp <= 0 || b.hit.includes(e)) continue; if (((e.x - b.x) / (e.r + 3)) ** 2 + ((e.y - b.y) / ((e.hy || e.r) * (e.elite ? 1.2 : 1) + 3)) ** 2 < 1) { hitEnemy(e, b); b.hit.push(e); if (b.pierce-- <= 0) { b.life = 0; } break; } }
+      for (const e of enemies) { if (e.hp <= 0 || b.hit.includes(e)) continue; if (((e.x - b.x) / ((e.hx || e.r) * (e.elite ? 1.2 : 1) + 3)) ** 2 + ((e.y - b.y) / ((e.hy || e.r) * (e.elite ? 1.2 : 1) + 3)) ** 2 < 1) { hitEnemy(e, b); b.hit.push(e); if (b.pierce-- <= 0) { b.life = 0; } break; } }
     }
     b.life -= dt;
   }
@@ -673,11 +848,13 @@ function update(dt) {
   }
   ebullets = ebullets.filter(b => b.life > 0);
   // 敵
+  updFlow();
   for (const e of enemies) { if (e.rv > 0) e.rv -= dt; if (e.hp > 0) enemyAI(e, dt); }
   enemies = enemies.filter(e => e.hp > 0 || (e.dead = (e.dead || 0) + dt) < .01);
   // アイテム
-  for (const it of items) { if (it.deny > 0) it.deny -= dt; else if (Math.hypot(it.x - P.x, it.y - P.y) < 20) { if (pickup(it) === false) it.deny = 1.5; else it.got = true; } }
+  for (const it of items) { if (it.pop != null && it.pop < 1) it.pop = Math.min(1, it.pop + dt * 3); if (it.deny > 0) it.deny -= dt; else if (Math.hypot(it.x - P.x, it.y - P.y) < 20) { if (pickup(it) === false) it.deny = 1.5; else it.got = true; } }
   items = items.filter(i => !i.got);
+  if (mission && mission.kind === 'activate' && !mission.done) { const p = fieldPOIs[1]; if (Math.hypot(P.x - p.x, P.y - p.y) < 40) { mission.progress += dt; if (mission.progress >= 2.5) completeMission(); } else mission.progress = Math.max(0, mission.progress - dt); }
   updGrenades(dt);
   // 粒子
   for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; p.vx *= .92; p.vy *= .92; } parts = parts.filter(p => p.life > 0); for (const f of fxs) f.t += dt; fxs = fxs.filter(f => f.t < f.dur);
@@ -702,26 +879,35 @@ function hitEnemy(e, b) {
   e.rv = 2;
   const cls = EN[e.type].cls || 0; let dm = b.dmg, pass = true;
   const far = b.eff && Math.hypot(e.x - b.x0, e.y - b.y0) > b.eff; if (far) { dm *= .5; e.far = true; }
-  if (cls > 0) { pass = Math.random() < penChance(b.pen || 20, cls); if (!pass) dm *= .2; }
+  if (cls > 0) { pass = Math.random() < Math.max(.15, penChance(b.pen || 20, cls)); if (!pass) dm *= .4; }   // 装甲の敵でも必ず削れる(弾かれても4割)
   e.hp -= dm; e.flash = .1; e.alert = true; e.x += b.vx * .01; e.y += b.vy * .01; spark(b.x, b.y, pass ? '#fca5a5' : '#93c5fd');
   P.hm = .16; P.hmk = e.hp <= 0 ? 1 : 0;
   { const ba = Math.atan2(b.vy, b.vx) || 0; for (let i = 0; i < (pass ? 7 : 4); i++) { const sa = ba + R(-.7, .7), sp2 = R(60, 220); parts.push({ x: b.x, y: b.y, vx: Math.cos(sa) * sp2, vy: Math.sin(sa) * sp2, life: R(.2, .45), col: pass ? ['#ef4444', '#fca5a5', '#fff'][i % 3] : ['#93c5fd', '#e0f2fe'][i % 2], sz: R(1.5, 3.2) }); } rings.push({ x: b.x, y: b.y, r: 3, dr: pass ? 22 : 16, t: 0, dur: .16, col: pass ? '#fecaca' : '#bfdbfe', w: 2 }); }
   if (pass && (dm >= 60 || e.hp <= 0)) { ts = .15; tsT = e.hp <= 0 ? (EN[e.type].boss ? .45 : .07) : .04; }
-  texts.push({ x: e.x + R(-6, 6), y: e.y - e.r - 10, s: pass ? Math.round(dm) + (far ? '(遠)' : '') : '弾かれた', col: !pass ? '#93c5fd' : far ? '#fb923c' : dm >= 100 ? '#fde047' : '#fff', life: .6 });
+  texts.push({ x: e.x + R(-6, 6), y: e.y - e.r - 10, s: pass ? Math.round(dm) + (far ? '(遠)' : '') : '弾かれた -' + Math.round(dm), col: !pass ? '#93c5fd' : far ? '#fb923c' : dm >= 100 ? '#fde047' : '#fff', life: .6 });
   if (pass) { noise(.06, .22, 3800, 500); sfx(dm >= 100 ? 1250 : 680, .08, 'triangle', .08, 1.6); } else { sfx(1500, .09, 'square', .05, .6); noise(.04, .12, 8000, 3000); }
   if (e.hp <= 0) killEnemy(e);
 }
 function killEnemy(e) {
-  stats.kills[e.type] = (stats.kills[e.type] || 0) + 1; if (EN[e.type].boss) stats.boss[stageNo] = 1;
+  stats.kills[e.type] = (stats.kills[e.type] || 0) + 1; if (EN[e.type].boss) { stats.boss[stageNo] = 1; if (mission && mission.kind === 'boss') completeMission(); }
   fxs.push({ x: e.x, y: e.y, t: 0, dur: EN[e.type].boss ? .9 : .45, k: EN[e.type].boss ? 1.9 : e.type === 'heavy' ? 1.0 : .7 });
   lastKill = { x: e.x, y: e.y }; sfx(120, .3, 'sawtooth', .07, .3); sfx(62, .4, 'sine', .22, .4); noise(.3, .3, 1800, 120); rings.push({ x: e.x, y: e.y, r: 6, dr: EN[e.type].boss ? 120 : 46, t: 0, dur: EN[e.type].boss ? .6 : .3, col: '#fbbf24', w: 4 }); if (EN[e.type].boss) boomSnd(true); shake = Math.max(shake, EN[e.type].boss ? 14 : 3);
   for (let i = 0; i < (EN[e.type].boss ? 40 : 10); i++)parts.push({ x: e.x, y: e.y, vx: R(-160, 160), vy: R(-160, 160), life: R(.3, .8), col: ['#f87171', '#fbbf24', '#fff'][i % 3], sz: 3 });
   { const mult = (isNight() ? 1.25 : 1) * (hasT('lucky') ? 1.1 : 1), bag = [], val = EN[e.type].val || 10;
     if (e.elite) { for (let k = 0; k < 4; k++) bag.push({ k: 'loot', m: 1, v: Math.round(val * R(3, 6) * (1 + stageNo * .15) * mult) }); bag.push({ k: 'armor' }); toast('強敵「' + e.elite + '」を撃破!', 2); }
     bag.push({ k: 'loot', m: 1, v: Math.round(val * R(.7, 1.4) * mult) });
-    if (Math.random() < (EN[e.type].boss ? 1 : .22)) bag.push({ k: ['med', 'ammo', 'ammo', 'armor', 'boost', 'od', 'cure', 'bomb', 'bomb', 'flash'][(Math.random() * 10) | 0] });
+    if (Math.random() < (EN[e.type].boss ? 1 : .45)) bag.push({ k: ['med', 'med', 'ammo', 'ammo', 'ammo', 'armor', 'boost', 'od', 'cure', 'bomb', 'flash'][(Math.random() * 11) | 0] });   // 宝箱を減らした分、敵の落とし物を増やす(2026-10-20)
     if (Math.random() < (EN[e.type].boss ? 1 : .08)) bag.push({ k: 'feather' });
-    dropBag(e.x, e.y, bag); }
+    scatterDrops(e.x, e.y, bag); }
+}
+// 倒した敵の落とし物を足元にばらまく。歩いて触れると拾える(袋を開けて探す手間なし)
+function scatterDrops(x, y, list) {
+  list.forEach((it, i) => {
+    const a = i / list.length * Math.PI * 2 + Math.random() * .8, d = 14 + Math.random() * 14 + (list.length > 3 ? 10 : 0);
+    let ix = x + Math.cos(a) * d, iy = y + Math.sin(a) * d * .8; if (blocked(ix, iy, 6)) { ix = x; iy = y; }
+    items.push(Object.assign({}, it, { x: ix, y: iy, deny: .45, pop: 0, ox: x, oy: y }));
+    parts.push({ x: ix, y: iy, vx: 0, vy: -30, life: .4, col: '#fde68a', sz: 3 });
+  });
 }
 const PACKN = { med: '医療キット', boost: 'ブースト', od: 'オーバードライブ', cure: '解毒注射', bomb: '爆弾', flash: '閃光弾' }, PACKKEY = { med: 'H', boost: 'J', od: 'K', cure: 'L', bomb: 'G', flash: 'V' };
 function useItem(k) {
@@ -738,7 +924,7 @@ function throwG(kind) {
 const BLAST = { bomb: { r: 115, dmg: 150 }, barrel: { r: 100, dmg: 120 } };
 function explode(x, y, kind) {
   const B = BLAST[kind] || BLAST.bomb;
-  boomSnd(true); shake = Math.max(shake, 15); ts = .25; tsT = .14;
+  boomSnd(true); alertNoise(x, y, 600); shake = Math.max(shake, 15); ts = .25; tsT = .14;
   fxs.push({ x, y, t: 0, dur: .75, k: 2.5 });
   rings.push({ x, y, r: 8, dr: B.r * 1.6, t: 0, dur: .45, col: '#fbbf24', w: 5 }); rings.push({ x, y, r: 4, dr: B.r * 1.1, t: 0, dur: .3, col: '#ffffff', w: 3 });
   for (let i = 0; i < 46; i++) parts.push({ x, y, vx: R(-340, 340), vy: R(-340, 340), life: R(.4, 1), col: ['#f97316', '#fbbf24', '#ffffff', '#78716c'][i % 4], sz: R(2, 5) });
@@ -805,7 +991,7 @@ function pickup(it) {
   if (it.k === 'loot') { const cap = BAGS[bagLv].loot; if (P.loot >= cap) { toast('バッグがいっぱい(戦利品 ' + cap + 'G)', 1.4); return false; } it.v = Math.min(it.v, cap - P.loot); }
   sfx(880, .12, 'sine', .05, 1.5);
   if (it.k === 'loot') { P.loot += it.v; const nm = LOOT_NAMES[stageNo - 1][it.v >= 100 ? 1 : 0]; toast(nm + ' +' + it.v + 'G (持ち帰り前)', 1.4); }
-  if (it.k === 'log') { if (!logs[stageNo]) { logs[stageNo] = 1; try { localStorage.setItem('nx_logs', JSON.stringify(logs)); } catch (e) { } } toast('【記録 ' + stageNo + '】' + LOGS[stageNo - 1], 7); sfx(500, .3, 'sine', .05, 1.6); }
+  if (it.k === 'log') { if (!logs[stageNo]) { logs[stageNo] = 1; try { localStorage.setItem('nx_logs', JSON.stringify(logs)); } catch (e) { } } if (mission && mission.kind === 'log') completeMission(); toast('【記録 ' + stageNo + '】' + LOGS[stageNo - 1], 7); sfx(500, .3, 'sine', .05, 1.6); }
   if (it.k === 'ammo') { for (const w of WEAPONS) { const a = P.ammo[w.id]; if (a && a.res !== Infinity) a.res = Math.min(w.res * 2, a.res + Math.ceil(w.res * .5)); } toast('弾薬補給', 1.2); }
   if (it.k === 'armor') { const nt = Math.min(3, 1 + Math.floor(stageNo / 3.5)); if (nt > P.tier) P.tier = nt; P.ap = ARMOR[P.tier].max; toast('防具: ' + ARMOR[P.tier].n, 1.6); }
 }
@@ -813,18 +999,26 @@ function stageClear() {
   saveClock();
   if (P.fe) { tot.f += P.fe; toast_clear = P.fe; P.fe = 0; }
   stats.clears = (stats.clears || 0) + 1; if (isNight()) stats.nightClears = (stats.nightClears || 0) + 1;
-  bankedLoot = Math.round(P.loot * (1 + .1 * base.lab)); money += bankedLoot; P.loot = 0; saveMeta();
+  bankedLoot = Math.round(P.loot * (1 + .1 * base.lab)) + (mission && mission.done ? mission.bonus : 0); money += bankedLoot; P.loot = 0; saveMeta();
   scene = 'clear'; unlocked = Math.max(unlocked, Math.min(10, stageNo + 1)); try { localStorage.setItem('nx_unlock', unlocked); } catch (e) { }
   showOv(stageNo >= 10 ? 'end' : 'clear');
 }
 
 // ---------- 敵AI ----------
+function alertNoise(x, y, range) {
+  for (const e of enemies) { if (e.hp <= 0 || e.alert || EN[e.type].boss) continue; const d = Math.hypot(e.x - x, e.y - y); if (d > range) continue; e.investX = x; e.investY = y; e.investT = 4 + (1 - d / range) * 2; e.patrolWait = 0; }
+}
+function patrolPoint(e) {
+  for (let i = 0; i < 10; i++) { const x = e.homeX + R(-115, 115), y = e.homeY + R(-115, 115); if (!blocked(x, y, e.r) && los(e.x, e.y, x, y)) { e.patrolX = x; e.patrolY = y; return; } }
+  e.patrolX = e.homeX; e.patrolY = e.homeY;
+}
 function enemyAI(e, dt) {
   e.warn = Math.max(0, (e.warn || 0) - dt);
   if (e.stun > 0) { e.stun -= dt; e.anim += dt * 2; e.flash -= dt; return; }
   e.anim += dt * 8; e.flash -= dt; const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
   if (dx) e.face = dx > 0 ? 1 : -1;
-  const see = d < 460 * DF().sight * (mods.sup ? .65 : 1) * (P.camo && !EN[e.type].boss ? (hasT('ghost') ? .36 : .45) : 1) && los(e.x, e.y, P.x, P.y);
+  const facing = Math.atan2(Math.sin(a - e.look), Math.cos(a - e.look));
+  const see = d < 460 * DF().sight * (mods.sup ? .65 : 1) * (P.camo && !EN[e.type].boss ? (hasT('ghost') ? .36 : .45) : 1) && (e.alert || EN[e.type].boss || d < 100 || Math.abs(facing) < Math.PI * .42) && los(e.x, e.y, P.x, P.y);
   if (!e.alert && see) { e.alert = true; e.warn = .9; e.rv = .9; sfx(640, .12, 'triangle', .025, -.35); for (const o of enemies) if (!o.alert && Math.hypot(o.x - e.x, o.y - e.y) < 220) { o.alert = true; o.warn = .9; o.rv = .9; } }
   if (e.elite && e.alert) {
     e.dc = (e.dc == null ? 3 : e.dc) - dt;
@@ -839,9 +1033,16 @@ function enemyAI(e, dt) {
       if (e.dc <= 0 && d < 480) { e.dc = 4; for (let i = -3; i <= 3; i++) ebul(e.x, e.y, a + i * .17, 270, 10, '#fb7185', 4); sfx(260, .25, 'sawtooth', .07, .6); }
     }
   }
-  if (!e.alert) { e.wander += dt; if (Math.sin(e.wander) > .6) move(e, Math.cos(e.wander * 3) * 20 * dt, Math.sin(e.wander * 2) * 20 * dt); return; }
+  if (!e.alert) {
+    let tx, ty, speed;
+    if (e.investT > 0) { e.investT -= dt; tx = e.investX; ty = e.investY; speed = e.spd * .78; }
+    else { const dd = Math.hypot(e.patrolX - e.x, e.patrolY - e.y); if (dd < 22 || e.patrolWait < -5) { e.patrolWait = R(.5, 2); patrolPoint(e); } if (e.patrolWait > 0) { e.patrolWait -= dt; return; } e.patrolWait -= dt; tx = e.patrolX; ty = e.patrolY; speed = e.spd * .5; }
+    const ang = Math.atan2(ty - e.y, tx - e.x); e.look = ang; if (Math.hypot(tx - e.x, ty - e.y) > 20) move(e, Math.cos(ang) * speed * dt, Math.sin(ang) * speed * dt); if (e.stk > 40) { e.stk = 0; e.investT = 0; patrolPoint(e); } return;
+  }
+  e.look = a;
   e.cd -= dt;
-  const mv = (ang, sp) => move(e, Math.cos(ang) * sp * dt, Math.sin(ang) * sp * dt);
+  if (!(e.cwT > t)) { e.cw = walkClear(e.x, e.y, P.x, P.y, e.r * .8); e.cwT = t + .25; }
+  const mv = (ang, sp) => { if (!e.cw && Math.cos(ang - a) > .2) { const fa = flowAng(e); if (fa != null) ang = fa; } move(e, Math.cos(ang) * sp * dt, Math.sin(ang) * sp * dt); };
   const ty = e.type;
   if (ty === 'drone') { mv(a + Math.sin(e.anim * .5) * .5, e.spd); if (d < e.r + 12 && e.cd <= 0) { dmgPlayer(10, 8); e.cd = .8; } }
   else if (ty === 'beast') {
@@ -872,16 +1073,18 @@ function enemyAI(e, dt) {
 }
 function bossAI(e, dt, a, d, mv) {
   const lv = EN[e.type].boss, f = e.hp / e.max;
+  if (e.attackT > 0) { e.attackT -= dt; if (e.attackT <= 0) {
+    const aim = e.attackA;
+    if (e.attackKind === 0) { const count = lv === 1 ? 16 : 20; for (let i = 0; i < count; i++) ebul(e.x, e.y, i / count * Math.PI * 2 + e.ang0, 170, 8, '#f87171', 5); e.ang0 += .2; }
+    else if (e.attackKind === 1) { for (let i = -2; i <= 2; i++) ebul(e.x, e.y, aim + i * rad(9), lv === 1 ? 290 : 320, 10, '#fbbf24', 5); }
+    else if (lv === 2) { for (let i = 0; i < 10; i++) ebul(e.x, e.y, e.ang0 + i * .63, 210, 8, '#c084fc', 5); e.ang0 += .35; }
+    else for (let i = -1; i <= 1; i++) ebul(e.x, e.y, aim + i * rad(14), 350, 12, '#fb923c', 6);
+    e.cd = e.attackKind === 0 ? 2.1 : 1.55; sfx(105, .25, 'sawtooth', .075, .5);
+  } return; }
   if (d > 240) mv(a, e.spd); else if (d < 160) mv(a + Math.PI, e.spd * .8); else mv(a + Math.PI / 2 * e.sd, e.spd * .6);
   e.st -= dt; if (e.st <= 0) { e.sd *= -1; e.st = R(2, 4); }
   e.ph += dt; e.cd -= 0; // cdは上で減算済み
-  if (e.cd <= 0 && e.warn <= 0) {
-    const pick = Math.floor(e.ph) % 3;
-    if (pick === 0) { const n = lv === 1 ? 18 : 24; for (let i = 0; i < n; i++)ebul(e.x, e.y, i / n * Math.PI * 2 + e.ang0, 170, 9, '#f87171', 5); e.ang0 += .2; e.cd = 2.0; }
-    else if (pick === 1) { for (let i = -3; i <= 3; i++)ebul(e.x, e.y, a + i * rad(8), 320, 10, '#fbbf24', 5); e.cd = 1.2; }
-    else { if (lv === 2) { for (let i = 0; i < 10; i++)ebul(e.x, e.y, e.ang0 + i * .63, 220, 8, '#c084fc', 5); e.ang0 += .35; } else for (let i = -1; i <= 1; i++)ebul(e.x, e.y, a + i * rad(14), 380, 12, '#fb923c', 6); e.cd = 1.0; }
-    sfx(100, .2, 'sawtooth', .07, .5);
-  }
+  if (e.cd <= 0 && e.warn <= 0) { e.attackKind = Math.floor(e.ph) % 3; e.attackA = a; e.attackT = e.attackKind === 1 ? 1.0 : .8; e.cd = 1; e.rv = 1.4; sfx(520, .16, 'triangle', .055, -.5); }
   for (const th of [.66, .33]) if (f < th && !e['s' + th]) { e['s' + th] = 1; for (let i = 0; i < 3; i++) { const m = mkEnemy('drone', e.x + R(-40, 40), e.y + R(-40, 40)); m.alert = true; enemies.push(m); } toast('敵増援!', 1.2); }
 }
 // ---------- bot (テスト用) ----------
@@ -907,12 +1110,18 @@ function draw() {
   if (scene === 'title' || !tiles) return;
   const shx = (Math.random() - .5) * shake, shy = (Math.random() - .5) * shake; ctx.save(); ctx.translate(shx, shy);
   const hw = W / 2 / cam.z + T * 2, hh = H / 2 / cam.z + T * 3;
+  const visible = o => o.x > cam.x - hw && o.x < cam.x + hw && o.y > cam.y - hh && o.y < cam.y + hh;
   const tx0 = Math.max(0, Math.floor((cam.x - hw) / T)), tx1 = Math.min(MW - 1, Math.ceil((cam.x + hw) / T)), ty0 = Math.max(0, Math.floor((cam.y - hh) / T)), ty1 = Math.min(MH - 1, Math.ceil((cam.y + hh) / T));
   const tz = Math.ceil(T * cam.z) + 1;
+  drawOutskirts(S, Math.floor((cam.x - hw) / T), Math.ceil((cam.x + hw) / T), Math.floor((cam.y - hh) / T), Math.ceil((cam.y + hh) / T), tz);
   for (let y = ty0; y <= ty1; y++)for (let x = tx0; x <= tx1; x++) {
-    if (tiles[y * MW + x] === 1) continue; if (tiles[y * MW + x] === 2) { drawRoadTile(x, y, S); continue; }
+    // 木・岩などの障害物にも同じ地面を敷く。透明な画像の間が黒く抜けないようにする。
+    if (tiles[y * MW + x] === 2) { drawRoadTile(x, y, S); continue; }
+    if (tiles[y * MW + x] === 3 && S.biome === 'glacier') { drawCrevasseTile(x, y); continue; }
     if (tiles[y * MW + x] === 3 && S.water) { drawWaterTile(x, y, S); continue; }
     drawBiomeTile(x, y, S, Math.floor(sx(x * T)), Math.floor(sy(y * T)), tz);
+    const room = blds.find(o => x > o.x && x < o.x + o.w - 1 && y > o.y && y < o.y + o.h - 1);
+    if (room) { ctx.fillStyle = ({ housing: '#d8a877', warehouse: '#838b98', energy: '#57c7d1', lab: '#ac8ee1' })[room.theme]; ctx.globalAlpha = .22; ctx.fillRect(Math.floor(sx(x * T)), Math.floor(sy(y * T)), tz, tz); ctx.globalAlpha = 1; }
   }
   // 出口ポータル
   for (const portal of portals) { const X = sx(portal.x), Y = sy(portal.y), r = (22 + Math.sin(t * 5) * 2) * cam.z, col = portal.locked ? '#f87171' : '#4ade80'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(X, Y, r, r * .6, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = .2; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1;
@@ -921,13 +1130,14 @@ function draw() {
   // 影つきソート描画
   const list = [];
   for (let y = ty0; y <= ty1; y++)for (let x = tx0; x <= tx1; x++)if (tiles[y * MW + x] === 1) list.push({ y: (y + 1) * T, f: () => drawWall(x, y, S) });
-  for (let y = ty0; y <= ty1; y++) for (let x = tx0; x <= tx1; x++) if (tiles[y * MW + x] === 3 && !S.water) list.push({ y: (y + .5) * T, f: () => drawBarrier(x, y) });
+  for (let y = ty0; y <= ty1; y++) for (let x = tx0; x <= tx1; x++) if (tiles[y * MW + x] === 3 && !S.water && S.biome !== 'glacier') list.push({ y: (y + .5) * T, f: () => drawBarrier(x, y) });
   for (const d of decor) if (d.x > cam.x - hw && d.x < cam.x + hw && d.y > cam.y - hh && d.y < cam.y + hh) list.push({ y: d.y, f: () => drawDecor(d) });
-  for (const it of items) list.push({ y: it.y, f: () => drawItem(it) });
-  for (const bx of boxes) list.push({ y: bx.y, f: () => drawBox(bx) });
-  for (const g of grenades) list.push({ y: g.y, f: () => drawGrenade(g) });
-  for (const b of barrels) list.push({ y: b.y, f: () => drawBarrel(b) });
-  for (const e of enemies) { e.vis = radarVis(e); if (e.vis > 0) list.push({ y: e.y, f: () => { ctx.globalAlpha = e.vis; drawEnemy(e); ctx.globalAlpha = 1; if (e.tele > 0) { ctx.strokeStyle = 'rgba(239,68,68,' + (.4 + .5 * Math.sin(t * 40)) + ')'; ctx.lineWidth = 10 * cam.z / 1.4; ctx.beginPath(); ctx.moveTo(sx(e.x), sy(e.y)); ctx.lineTo(sx(e.x + Math.cos(e.da) * 300), sy(e.y + Math.sin(e.da) * 300)); ctx.stroke(); } if (e.stun > 0) { ctx.fillStyle = '#fde047'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★ ★ ★', sx(e.x), sy(e.y) - (e.r + 26) * cam.z / 1.1); } } }); }
+  for (const p of fieldPOIs) if (p.x > cam.x - hw && p.x < cam.x + hw && p.y > cam.y - hh && p.y < cam.y + hh) list.push({ y: p.y, f: () => drawFieldPOI(p) });
+  for (const it of items) if (visible(it)) list.push({ y: it.y, f: () => drawItem(it) });
+  for (const bx of boxes) if (visible(bx)) list.push({ y: bx.y, f: () => drawBox(bx) });
+  for (const g of grenades) if (visible(g)) list.push({ y: g.y, f: () => drawGrenade(g) });
+  for (const b of barrels) if (visible(b)) list.push({ y: b.y, f: () => drawBarrel(b) });
+  for (const e of enemies) { e.vis = radarVis(e); if (e.vis > 0 && visible(e)) list.push({ y: e.y, f: () => { ctx.globalAlpha = e.vis; drawEnemy(e); ctx.globalAlpha = 1; if (e.tele > 0) { ctx.strokeStyle = 'rgba(239,68,68,' + (.4 + .5 * Math.sin(t * 40)) + ')'; ctx.lineWidth = 10 * cam.z / 1.4; ctx.beginPath(); ctx.moveTo(sx(e.x), sy(e.y)); ctx.lineTo(sx(e.x + Math.cos(e.da) * 300), sy(e.y + Math.sin(e.da) * 300)); ctx.stroke(); } if (e.attackT > 0) { const pulse = .55 + .3 * Math.sin(t * 18), X = sx(e.x), Y = sy(e.y); ctx.strokeStyle = `rgba(251,113,133,${pulse})`; ctx.lineWidth = 3; ctx.beginPath(); if (e.attackKind === 1) { ctx.moveTo(X, Y); ctx.lineTo(sx(e.x + Math.cos(e.attackA) * 360), sy(e.y + Math.sin(e.attackA) * 360)); } else ctx.arc(X, Y, (e.attackKind === 0 ? 90 : 65) * cam.z, 0, 7); ctx.stroke(); ctx.fillStyle = '#ffe4e6'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('攻撃予告', X, Y - 45 * cam.z); } if (e.stun > 0) { ctx.fillStyle = '#fde047'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★ ★ ★', sx(e.x), sy(e.y) - (e.r + 26) * cam.z / 1.1); } } }); }
   list.push({ y: P.y, f: drawPlayer });
   list.sort((a, b) => a.y - b.y); for (const o of list) o.f();
   // 敵のレーザー
@@ -942,7 +1152,38 @@ function draw() {
   ctx.restore();
   drawRadarFog();
   drawGimmick();
-  drawScope(); drawHUD();
+  drawScope(); drawHUD(); drawTouchSticks(); if (mapOpen) drawTacticalMap();
+}
+function drawTacticalMap() {
+  const S = STAGES[stageNo - 1], B = BIOME[S.biome], k = Math.min(8, (W - 100) / MW, (H - 145) / MH), ox = (W - MW * k) / 2, oy = 72;
+  ctx.fillStyle = 'rgba(2,6,15,.88)'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#0b1726'; ctx.fillRect(ox - 19, oy - 45, MW * k + 38, MH * k + 90);
+  ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 2; ctx.strokeRect(ox - 19, oy - 45, MW * k + 38, MH * k + 90);
+  ctx.textAlign = 'left'; ctx.fillStyle = '#e0f2fe'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(`${stageNo}面 ${S.n}  探索地図`, ox, oy - 16);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(isTouch ? '地図ボタンで閉じる' : 'Tab / START で閉じる', ox + MW * k, oy - 17);
+  ctx.fillStyle = '#101b2a'; ctx.fillRect(ox, oy, MW * k, MH * k);
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+    const i = y * MW + x;
+    if (!mapSeen[i]) { if (routeTier[i] === 1 && (x + y) % 2 === 0) { ctx.fillStyle = '#344759'; ctx.fillRect(ox + x * k + 2, oy + y * k + 2, 4, 4); } continue; }
+    const tile = tiles[i]; ctx.fillStyle = tile === 2 ? B.path : tile === 3 ? (S.water ? B.water[0] : S.biome === 'glacier' ? '#123d5f' : '#816c4f') : tile === 1 || tile === 4 ? '#334155' : S.fl[0];
+    ctx.fillRect(ox + x * k, oy + y * k, k + .2, k + .2);
+    if (routeTier[i] === 2 && tile === 2 && (x + y) % 3 === 0) { ctx.fillStyle = '#fcd34d'; ctx.fillRect(ox + x * k + 3, oy + y * k + 3, 2, 2); }
+  }
+  const marker = (tx, ty, label, col) => { const x = ox + tx * k + k / 2, y = oy + ty * k + k / 2; ctx.fillStyle = '#08111f'; ctx.fillRect(x - 8, y - 8, 16, 16); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.strokeRect(x - 8, y - 8, 16, 16); ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.font = 'bold 12px sans-serif'; ctx.fillText(label, x, y + 4); };
+  for (const p of fieldPOIs) if (mapSeen[p.ty * MW + p.tx]) marker(p.tx, p.ty, ['+', 'i', '!'][p.role], ['#4ade80', '#67e8f9', '#fb7185'][p.role]);
+  for (const p of portals) { const x = p.x / T | 0, y = p.y / T | 0; if (mapSeen[y * MW + x]) marker(x, y, 'E', p.locked ? '#fb7185' : '#86efac'); }
+  for (const b of boxes) if (b.sideRoute && mapSeen[(b.y / T | 0) * MW + (b.x / T | 0)]) marker(b.x / T | 0, b.y / T | 0, '◆', '#fbbf24');
+  const px = ox + P.x / T * k, py = oy + P.y / T * k; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, 5, 0, 7); ctx.fill(); ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(P.aimA) * 13, py + Math.sin(P.aimA) * 13); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('灰点=主街道   明色=探索済   白=現在地', ox, oy + MH * k + 21);
+  ctx.fillText('+補給   i記録   !危険   E出口   ◆隠し物資', ox, oy + MH * k + 40);
+}
+function drawTouchSticks() {
+  if (!isTouch) return;
+  for (const id in tch) { const s = tch[id], v = s.k === 'l' ? inp.ls : inp.rs; if (!v) continue; const x = s.ox, y = s.oy;
+    ctx.strokeStyle = s.k === 'l' ? 'rgba(103,232,249,.7)' : 'rgba(251,191,36,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 46, 0, 7); ctx.stroke();
+    ctx.fillStyle = s.k === 'l' ? 'rgba(103,232,249,.45)' : 'rgba(251,191,36,.45)'; ctx.beginPath(); ctx.arc(x + v.x * 40, y + v.y * 40, 13, 0, 7); ctx.fill();
+  }
 }
 // ---------- 動物系FPS: バイオーム(春・森・海・砂漠・山・氷河・雪山)の描画 ----------
 const BIOME = {
@@ -972,12 +1213,46 @@ function biomeTileSet(S) {
   }
   return biomeTiles[b] = out;
 }
+const groundImages = {};
+function roadTextureName(S) { return ['beach', 'cove'].includes(S.biome) ? 'road_plank' : S.biome === 'desert' ? 'road_desert' : ['glacier', 'snow', 'summit'].includes(S.biome) ? 'road_snow' : 'road_earth'; }
+function fieldImage(name) {
+  let im = groundImages[name];
+  if (!im) { im = new Image(); im.src = 'assets/ground/' + name + '.png'; groundImages[name] = im; }
+  return im;
+}
+function drawFieldTexture(im, x, y, X, Y, size) {
+  if (!im.complete || !im.naturalWidth) return false;
+  const sx0 = ((x % 8 + 8) % 8) * im.naturalWidth / 8, sy0 = ((y % 8 + 8) % 8) * im.naturalHeight / 8;
+  ctx.drawImage(im, sx0, sy0, im.naturalWidth / 8, im.naturalHeight / 8, X, Y, size, size);
+  return true;
+}
+function drawOutskirts(S, x0, x1, y0, y1, tz) {
+  // マップ外が真っ黒な四角に見えないよう、境界の外にも暗い地表を数マス続ける。
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (x >= 0 && x < MW && y >= 0 && y < MH) continue;
+    const X = Math.floor(sx(x * T)), Y = Math.floor(sy(y * T));
+    drawBiomeTile(x, y, S, X, Y, tz);
+  }
+  const bx0 = sx(0), bx1 = sx(MW * T), by0 = sy(0), by1 = sy(MH * T), fade = 8 * T * cam.z;
+  const shade = (x0, y0, x1, y1, rect) => {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, 'rgba(5,7,13,.86)'); g.addColorStop(1, 'rgba(5,7,13,.12)');
+    ctx.fillStyle = g; ctx.fillRect(...rect);
+  };
+  if (bx0 > 0) shade(bx0 - fade, 0, bx0, 0, [0, 0, bx0, H]);
+  if (bx1 < W) shade(bx1 + fade, 0, bx1, 0, [bx1, 0, W - bx1, H]);
+  if (by0 > 0) shade(0, by0 - fade, 0, by0, [0, 0, W, by0]);
+  if (by1 < H) shade(0, by1 + fade, 0, by1, [0, by1, W, H - by1]);
+}
 function drawBiomeTile(x, y, S, tx, ty, tz) {
+  // 生成画像の連続部分を8マス単位で切り出す。花や貝殻がキャラより大きくならない縮尺。
+  if (drawFieldTexture(fieldImage(S.biome), x, y, tx, ty, tz)) return;
   const ts = biomeTileSet(S); ctx.drawImage(ts[hashT(x, y) % ts.length], tx, ty, tz, tz);
 }
 function drawWaterTile(x, y, S) {
   const B = BIOME[S.biome], X = Math.floor(sx(x * T)), Y = Math.floor(sy(y * T)), s = Math.ceil(T * cam.z) + 1, z = cam.z, h = hashT(x, y);
-  ctx.fillStyle = B.water[0]; ctx.fillRect(X, Y, s, s);
+  if (drawFieldTexture(fieldImage('water'), x, y, X, Y, s)) { ctx.fillStyle = B.water[0]; ctx.globalAlpha = .25; ctx.fillRect(X, Y, s, s); ctx.globalAlpha = 1; }
+  else { ctx.fillStyle = B.water[0]; ctx.fillRect(X, Y, s, s); }
   const w = Math.sin(t * 1.6 + x * .9 + y * .7); ctx.fillStyle = B.water[1]; ctx.globalAlpha = .45 + .25 * w; ctx.fillRect(X + ((h >> 3) & 15) * z, Y + ((h >> 7) & 15) * z, 12 * z, 2 * z); ctx.fillRect(X + ((h >> 5) & 15) * z, Y + (((h >> 9) & 15) + 8) % 30 * z, 9 * z, 2 * z); ctx.globalAlpha = 1;
   const W = (a, b) => tiles[b * MW + a] === 3, up = W(x, y - 1), dn = W(x, y + 1), lf = W(x - 1, y), rt = W(x + 1, y);
   ctx.fillStyle = 'rgba(255,255,255,.55)'; const f = Math.max(1, z * 1.5); if (!up) ctx.fillRect(X, Y, s, f); if (!dn) ctx.fillRect(X, Y + s - f, s, f); if (!lf) ctx.fillRect(X, Y, f, s); if (!rt) ctx.fillRect(X + s - f, Y, f, s);
@@ -1009,17 +1284,30 @@ function drawAmbient() {
 const phaseName = () => { const h = clock.h; return h < 5 || h >= 20.5 ? '夜' : h < 7.5 ? '朝焼け' : h < 10 ? '朝' : h < 16.5 ? '昼' : h < 19.5 ? '夕方' : '宵'; };
 function drawRoadTile(x, y, S) {
   const B = BIOME[S.biome], X = Math.floor(sx(x * T)), Y = Math.floor(sy(y * T)), s = Math.ceil(T * cam.z) + 1, h = hashT(x, y), z = cam.z;
-  ctx.fillStyle = B.path; ctx.fillRect(X, Y, s, s);
-  ctx.fillStyle = B.pathE; ctx.globalAlpha = .35; for (let i = 0; i < 4; i++) ctx.fillRect(X + ((h >> (i * 3)) & 15) * 1.8 * z, Y + ((h >> (i * 3 + 2)) & 15) * 1.8 * z, 3 * z, 1.5 * z); ctx.globalAlpha = 1;
-  if (B.plank) { ctx.fillStyle = 'rgba(0,0,0,.28)'; for (let i = 0; i < 4; i++) ctx.fillRect(X, Y + i * 8 * z, s, Math.max(1, z * .8)); ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(X, Y, s, 2 * z); }
+  const painted = drawFieldTexture(fieldImage(roadTextureName(S)), x, y, X, Y, s);
+  if (!painted) { ctx.fillStyle = B.path; ctx.fillRect(X, Y, s, s); ctx.fillStyle = B.pathE; ctx.globalAlpha = .35; for (let i = 0; i < 4; i++) ctx.fillRect(X + ((h >> (i * 3)) & 15) * 1.8 * z, Y + ((h >> (i * 3 + 2)) & 15) * 1.8 * z, 3 * z, 1.5 * z); ctx.globalAlpha = 1; }
+  if (B.plank && !painted) { ctx.fillStyle = 'rgba(0,0,0,.28)'; for (let i = 0; i < 4; i++) ctx.fillRect(X, Y + i * 8 * z, s, Math.max(1, z * .8)); ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(X, Y, s, 2 * z); }
   const R = (a, b) => tiles[b * MW + a] === 2, up = R(x, y - 1), dn = R(x, y + 1), lf = R(x - 1, y), rt = R(x + 1, y);
   ctx.fillStyle = B.pathE; const e = 3 * z; if (!up) ctx.fillRect(X, Y, s, e); if (!dn) ctx.fillRect(X, Y + s - e, s, e); if (!lf) ctx.fillRect(X, Y, e, s); if (!rt) ctx.fillRect(X + s - e, Y, e, s);
   if (!B.plank) { ctx.fillStyle = 'rgba(0,0,0,.08)'; if (y === roadH) ctx.fillRect(X, Y + s * .35, s, 2 * z), ctx.fillRect(X, Y + s * .65, s, 2 * z); if (x === roadV) ctx.fillRect(X + s * .35, Y, 2 * z, s), ctx.fillRect(X + s * .65, Y, 2 * z, s); }
+  if (routeTier[y * MW + x] === 2 && h % 3 === 0) { ctx.fillStyle = 'rgba(255,255,225,.65)'; ctx.fillRect(X + s * .4, Y + s * .4, Math.max(2, z * 2), Math.max(2, z * 2)); ctx.fillRect(X + s * .57, Y + s * .57, Math.max(2, z * 2), Math.max(2, z * 2)); }
 }
 // 画像の置物を、足元(X,Y)にそろえて、高さ s*hm で描く。画像が無ければ false(従来のコード描画へ)
 function propAt(id, X, Y, s, hm, v, filt) {
   const im = SPR.prop && SPR.prop[id]; if (!im) return false; const h = s * hm, w = im.width * h / im.height;
   ctx.save(); if (filt) ctx.filter = filt; if (v & 1) { ctx.translate(X, 0); ctx.scale(-1, 1); ctx.translate(-X, 0); } ctx.drawImage(im, X - w / 2, Y - h, w, h); ctx.restore(); return true;
+}
+function drawCrevasseTile(x, y) {
+  const X = Math.floor(sx(x * T)), Y = Math.floor(sy(y * T)), s = Math.ceil(T * cam.z) + 1;
+  ctx.fillStyle = '#0b263d'; ctx.fillRect(X, Y, s, s);
+  if (hashT(x, y) % 4 === 0) { ctx.fillStyle = '#1b5474'; ctx.fillRect(X + s * .18, Y + s * .42, s * .4, Math.max(1, cam.z)); }
+  ctx.strokeStyle = '#dff7ff'; ctx.lineWidth = Math.max(1, cam.z);
+  ctx.beginPath();
+  if (!solid(x, y - 1)) { ctx.moveTo(X, Y + s * .09); ctx.lineTo(X + s * .42, Y + s * .15); ctx.lineTo(X + s, Y + s * .08); }
+  if (!solid(x, y + 1)) { ctx.moveTo(X, Y + s * .91); ctx.lineTo(X + s * .56, Y + s * .84); ctx.lineTo(X + s, Y + s * .93); }
+  if (!solid(x - 1, y)) { ctx.moveTo(X + s * .09, Y); ctx.lineTo(X + s * .15, Y + s * .43); ctx.lineTo(X + s * .08, Y + s); }
+  if (!solid(x + 1, y)) { ctx.moveTo(X + s * .91, Y); ctx.lineTo(X + s * .85, Y + s * .57); ctx.lineTo(X + s * .92, Y + s); }
+  ctx.stroke();
 }
 function drawBarrier(x, y) {
   if (SPR.prop && SPR.prop.fence) { const Xb = sx((x + .5) * T), Yb = sy((y + .5) * T); shadow((x + .5) * T, (y + .5) * T, 8); propAt('fence', Xb, Yb + 9 * cam.z, T * cam.z, 1.0, 0); return; }
@@ -1028,7 +1316,20 @@ function drawBarrier(x, y) {
   ctx.fillStyle = '#6b4a2a'; ctx.fillRect(X - 14 * z, Y - 10 * z, 28 * z, 3 * z); ctx.fillRect(X - 14 * z, Y - 2 * z, 28 * z, 3 * z); ctx.fillStyle = '#8a6238'; ctx.fillRect(X - 2.5 * z, Y - 16 * z, 5 * z, 22 * z); ctx.fillStyle = '#a9824f'; ctx.fillRect(X - 2.5 * z, Y - 16 * z, 5 * z, 2 * z);
 }
 function tuftAt(g, X, Y, z, col) { g.fillStyle = col; g.fillRect(X - 3 * z, Y - 4 * z, z, 4 * z); g.fillRect(X, Y - 6 * z, z, 6 * z); g.fillRect(X + 3 * z, Y - 3 * z, z, 3 * z); }
+function propGround(X, Y, s, v, kind) {
+  // 画像の足元と地面を薄い色面と小さな草・雪・砂でつなぐ。
+  const snow = kind === 'snow', sand = kind === 'sand', ice = kind === 'ice';
+  ctx.fillStyle = snow ? 'rgba(203,225,232,.21)' : sand ? 'rgba(167,121,63,.18)' : ice ? 'rgba(113,205,224,.18)' : 'rgba(35,83,39,.21)';
+  ctx.beginPath(); ctx.ellipse(X, Y - s * .025, s * .43, s * .16, 0, 0, 7); ctx.fill();
+  const dots = snow ? ['#e8f3f5', '#b6d5da'] : sand ? ['#cda878', '#997b51'] : ice ? ['#9de4e8', '#65acbd'] : ['#4e9747', '#79ae5b'];
+  for (let i = 0; i < 3; i++) {
+    const a = (v * 7 + i * 11) % 17, dx = (i - 1) * s * .25 + (a % 3 - 1) * s * .035;
+    ctx.fillStyle = dots[(v + i) & 1];
+    ctx.fillRect(Math.round(X + dx), Math.round(Y - (a % 3) * s * .06), Math.max(1, s * .055), Math.max(1, s * .035));
+  }
+}
 function drawTree(X, Y, s, z, v, snow) {
+  propGround(X, Y, s, v, snow ? 'snow' : 'grass');
   if (SPR.prop && SPR.prop.tree) { sunShadow(X, Y, s * .5, s * 1.7); propAt(snow ? 'snowpine' : 'tree', X, Y, s, 1.9, v); return; }
   // 幹と、重なった丸い葉(濃→淡)。X,Yは足元の中心
   sunShadow(X, Y, s * .5, s * 1.7);
@@ -1038,6 +1339,7 @@ function drawTree(X, Y, s, z, v, snow) {
   if (snow) { ctx.fillStyle = '#f1f5f9'; ctx.beginPath(); ctx.arc(X, cy - s * .38, s * .36, Math.PI * 1.05, Math.PI * 1.95); ctx.fill(); }
 }
 function drawPine(X, Y, s, z, v, snow) {
+  propGround(X, Y, s, v, snow ? 'snow' : 'grass');
   if (SPR.prop && SPR.prop.pine) { sunShadow(X, Y, s * .45, s * 1.8); propAt(snow ? 'snowpine' : 'pine', X, Y, s, 1.9, v); return; }
   sunShadow(X, Y, s * .42, s * 1.8);
   ctx.fillStyle = '#4a3320'; ctx.fillRect(X - s * .07, Y - s * .4, s * .14, s * .4);
@@ -1045,6 +1347,7 @@ function drawPine(X, Y, s, z, v, snow) {
   for (const [w, yy, k] of layers) { ctx.fillStyle = g[(k + v) % 3 === 0 ? 0 : k]; ctx.beginPath(); ctx.moveTo(X - s * w, Y - s * (yy - .22)); ctx.lineTo(X, Y - s * (yy + .5)); ctx.lineTo(X + s * w, Y - s * (yy - .22)); ctx.closePath(); ctx.fill(); if (snow) { ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.moveTo(X - s * w * .62, Y - s * (yy + .02)); ctx.lineTo(X, Y - s * (yy + .5)); ctx.lineTo(X + s * w * .62, Y - s * (yy + .02)); ctx.closePath(); ctx.fill(); } }
 }
 function drawBoulder(X, Y, s, z, v, snow, tint) {
+  propGround(X, Y, s, v, snow ? 'snow' : tint ? 'sand' : 'grass');
   if (SPR.prop && SPR.prop.rock) { sunShadow(X, Y, s * .45, s * .9); propAt('rock', X, Y, s, .95, v, snow ? 'brightness(1.5) saturate(.4)' : tint ? 'sepia(.5) saturate(1.2) brightness(1.1)' : null); return; }
   sunShadow(X, Y, s * .52, s * 0.9);
   const c = tint || ['#7b7d84', '#8a8c92', '#6c6e75'][v % 3]; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(X - s * .48, Y); ctx.quadraticCurveTo(X - s * .56, Y - s * .55, X - s * .18, Y - s * .8); ctx.quadraticCurveTo(X + s * .15, Y - s * .95, X + s * .42, Y - s * .55); ctx.quadraticCurveTo(X + s * .6, Y - s * .12, X + s * .45, Y); ctx.closePath(); ctx.fill();
@@ -1053,11 +1356,13 @@ function drawBoulder(X, Y, s, z, v, snow, tint) {
   if (snow) { ctx.fillStyle = '#f1f5f9'; ctx.beginPath(); ctx.moveTo(X - s * .3, Y - s * .62); ctx.quadraticCurveTo(X, Y - s * .98, X + s * .38, Y - s * .55); ctx.quadraticCurveTo(X + s * .1, Y - s * .6, X - s * .3, Y - s * .62); ctx.fill(); }
 }
 function drawSandRock(X, Y, s, z, v) {
+  propGround(X, Y, s, v, 'sand');
   if (SPR.prop && SPR.prop.rock) { sunShadow(X, Y, s * .45, s * .9); propAt('rock', X, Y, s, .95, v, 'sepia(.85) saturate(1.8) brightness(1.15) hue-rotate(-8deg)'); return; }
   sunShadow(X, Y, s * .52, s * 1.0);
   const hgt = s * (.75 + (v % 3) * .12); ctx.fillStyle = '#9a6a34'; ctx.fillRect(X - s * .46, Y - hgt, s * .92, hgt); ctx.fillStyle = '#c18a47'; ctx.fillRect(X - s * .46, Y - hgt, s * .92, hgt * .3); ctx.fillStyle = '#7e5528'; for (let i = 1; i < 4; i++) ctx.fillRect(X - s * .46, Y - hgt + hgt * (.3 + i * .17), s * .92, Math.max(1, z * .8)); ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(X - s * .46, Y - hgt, s * .92, Math.max(1, z));
 }
 function drawIceBlock(X, Y, s, z, v) {
+  propGround(X, Y, s, v, 'ice');
   if (SPR.prop && SPR.prop.icecrystal) { sunShadow(X, Y, s * .45, s * 1.0); propAt('icecrystal', X, Y, s, 1.15, v); return; }
   sunShadow(X, Y, s * .5, s * 1.1);
   const hgt = s * (.85 + (v % 3) * .12); ctx.fillStyle = '#6fb8d8'; ctx.beginPath(); ctx.moveTo(X - s * .42, Y); ctx.lineTo(X - s * .36, Y - hgt * .7); ctx.lineTo(X - s * .08, Y - hgt); ctx.lineTo(X + s * .3, Y - hgt * .8); ctx.lineTo(X + s * .44, Y); ctx.closePath(); ctx.fill();
@@ -1065,19 +1370,34 @@ function drawIceBlock(X, Y, s, z, v) {
   ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(X - s * .3, Y - hgt * .5, Math.max(1, z), hgt * .35); ctx.fillStyle = 'rgba(30,80,130,.35)'; ctx.fillRect(X + s * .14, Y - hgt * .6, s * .3, hgt * .6);
 }
 function drawPalm(X, Y, s, z, v) {
+  propGround(X, Y, s, v, 'sand');
   if (SPR.prop && SPR.prop.palm) { sunShadow(X, Y, s * .4, s * 1.6); propAt('palm', X, Y, s, 1.9, v); return; }
   sunShadow(X, Y, s * .45, s * 1.6);
   ctx.strokeStyle = '#8a6238'; ctx.lineWidth = Math.max(2, s * .12); ctx.beginPath(); ctx.moveTo(X, Y); ctx.quadraticCurveTo(X + s * .15 * (v % 2 ? 1 : -1), Y - s * .7, X, Y - s * 1.25); ctx.stroke();
   ctx.fillStyle = '#2f9a4a'; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + v; ctx.beginPath(); ctx.ellipse(X + Math.cos(a) * s * .32, Y - s * 1.28 + Math.sin(a) * s * .12, s * .34, s * .08, a * .5, 0, 7); ctx.fill(); } ctx.fillStyle = '#3d2a14'; ctx.beginPath(); ctx.arc(X, Y - s * 1.2, s * .07, 0, 7); ctx.fill();
 }
 function drawCactus(X, Y, s, z, v) {
+  propGround(X, Y, s, v, 'sand');
   if (SPR.prop && SPR.prop.cactus) { sunShadow(X, Y, s * .35, s * 1.0); propAt('cactus', X, Y, s, 1.3, v); return; }
   sunShadow(X, Y, s * .35, s * 1.0);
   ctx.fillStyle = '#3d8a46'; ctx.fillRect(X - s * .1, Y - s * .95, s * .2, s * .95); ctx.fillRect(X - s * .34, Y - s * .62, s * .24, s * .1); ctx.fillRect(X - s * .34, Y - s * .8, s * .1, s * .28); ctx.fillRect(X + s * .1, Y - s * .5, s * .24, s * .1); ctx.fillRect(X + s * .24, Y - s * .72, s * .1, s * .32); ctx.fillStyle = '#5db266'; ctx.fillRect(X - s * .1, Y - s * .95, s * .06, s * .95); ctx.fillStyle = '#e5e7eb'; for (let i = 0; i < 4; i++) ctx.fillRect(X - s * .06, Y - s * (.2 + i * .2), 2, 2);
 }
+function drawFieldPOI(p) {
+  const X = sx(p.x), Y = sy(p.y), z = cam.z / 1.6;
+  const col = ['#4ade80', '#67e8f9', '#fb7185'][p.role];
+  ctx.save();
+  ctx.fillStyle = 'rgba(1,12,20,.78)'; ctx.fillRect(X - 5 * z, Y - 34 * z, 10 * z, 25 * z);
+  ctx.fillStyle = col; ctx.fillRect(X - 5 * z, Y - 34 * z, 10 * z, 8 * z);
+  ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, z); ctx.beginPath(); ctx.ellipse(X, Y + 4 * z, 16 * z, 7 * z, 0, 0, 7); ctx.stroke();
+  ctx.font = 'bold ' + Math.round(11 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#021018'; ctx.fillRect(X - 65 * z, Y - 57 * z, 130 * z, 18 * z);
+  ctx.fillStyle = col; ctx.fillText(p.name, X, Y - 44 * z);
+  if (p.role === 1 && mission && mission.kind === 'activate' && !mission.done) { ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, z * 2); ctx.beginPath(); ctx.arc(X, Y + 4 * z, 21 * z, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * mission.progress / 2.5); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText('通信機 2.5秒', X, Y - 64 * z); }
+  ctx.restore();
+}
 function drawDecor(d) {
   const S = STAGES[stageNo - 1], X = sx(d.x), Y = sy(d.y) + 12 * cam.z, s = T * cam.z, z = cam.z / 1.4, v = d.v | 0, k = d.k;
-  if (k === 'landmark') { ctx.save(); ctx.translate(X, Y); if (v === 1) { ctx.fillStyle = '#6b4428'; ctx.fillRect(-s * 2.8, -s * .12, s * 5.6, s * .24); ctx.fillStyle = '#c49456'; for (let i = -2; i <= 2; i++) ctx.fillRect(i * s, -s * .18, s * .85, s * .16); ctx.fillStyle = '#f8fafc'; ctx.font = 'bold ' + Math.round(9 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('橋', 0, -s * .5); } else { ctx.fillStyle = v === 5 ? '#9b6c35' : '#526b90'; ctx.beginPath(); ctx.arc(0, 0, s * .75, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = v === 5 ? '#fbbf24' : '#a5f3fc'; ctx.beginPath(); ctx.arc(0, -s * .35, s * .42, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold ' + Math.round(11 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(v === 5 ? 'オアシス' : '氷晶核', 0, -s); } ctx.restore(); return; }
+  if (k === 'interior') { const col = ({ housing: '#e9ad7b', warehouse: '#9ca3af', energy: '#22d3ee', lab: '#c4b5fd' })[d.theme]; ctx.fillStyle = '#233044'; ctx.fillRect(X - 8 * z, Y - 8 * z, 16 * z, 8 * z); ctx.fillStyle = col; ctx.fillRect(X - 6 * z, Y - 13 * z, 12 * z, 6 * z); ctx.fillStyle = '#fff8'; ctx.fillRect(X - 4 * z, Y - 11 * z, 4 * z, 2 * z); return; }
   const PM = { campfire: ['campfire', .62], tent: ['tent', .85], crates: ['crates', .6], logseat: ['stump', .42], sign: ['sign', .6] };
   if (PM[k] && SPR.prop[PM[k][0]]) { if (k === 'campfire') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g0 = ctx.createRadialGradient(X, Y - 6 * z, 0, X, Y - 2 * z, 90 * z); g0.addColorStop(0, 'rgba(251,146,60,.30)'); g0.addColorStop(1, 'rgba(251,146,60,0)'); ctx.fillStyle = g0; ctx.beginPath(); ctx.ellipse(X, Y - 2 * z, 90 * z, 60 * z, 0, 0, 7); ctx.fill(); ctx.restore(); } sunShadow(X, Y, s * .35, s * .6); dprop(PM[k][0], d.x, d.y + 6, PM[k][1]); return; }
   if (k === 'tree') drawTree(X, Y, s, z, v, false);
@@ -1120,9 +1440,10 @@ const SIGNS = ['巣穴→', '←川', '危険', 'エサ場', '見張り', '←�
 
 function drawWall(tx, ty, S) {
   const s = Math.ceil(T * cam.z) + 1, X = Math.floor(sx(tx * T)), Y = Math.floor(sy(ty * T)), z = cam.z / 1.4, h = hashT(tx, ty), v = h % 3, cx = X + s / 2, by = Y + s - s * .04, st = S.wallStyle;
-  if (st === 'tree') drawTree(cx, by, s, z, h % 5, false);
-  else if (st === 'pine') drawPine(cx, by, s, z, h % 5, false);
-  else if (st === 'snowpine') drawPine(cx, by, s, z, h % 5, true);
+  const treeS = s * (.82 + ((h >> 4) & 7) * .04), treeX = cx + (((h >> 8) & 7) - 3) * s * .02;
+  if (st === 'tree') drawTree(treeX, by, treeS, z, h % 5, false);
+  else if (st === 'pine') drawPine(treeX, by, treeS, z, h % 5, false);
+  else if (st === 'snowpine') drawPine(treeX, by, treeS, z, h % 5, true);
   else if (st === 'sand') drawSandRock(cx, by, s, z, h % 5);
   else if (st === 'ice') drawIceBlock(cx, by, s, z, h % 5);
   else drawBoulder(cx, by, s, z, h % 5, false, (S.biome === 'beach' || S.biome === 'cove') ? ['#8b8478', '#9a9286', '#7a7468'][v] : null);
@@ -1166,7 +1487,7 @@ function drawPlayer() {
 }
 function enemyImg(e, es) {
   e.flipv = false; if (es.frames) return es.frames[beastDir(e)]; if (!es.views) return es.img;
-  const fa = e.fa != null ? e.fa : Math.atan2(P.y - e.y, P.x - e.x), sn = Math.sin(fa);
+  const fa = e.fa != null ? e.fa : e.look, sn = Math.sin(fa);
   if (sn > .55) return es.views.front; if (sn < -.55) return es.views.back; e.flipv = Math.cos(fa) < 0; return es.views.side;
 }
 function drawEnemy(e) {
@@ -1177,7 +1498,10 @@ function drawEnemy(e) {
   else if (!img) { ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(sx(e.x), sy(e.y), e.r * cam.z, 0, 7); ctx.fill(); }
   else if (d.spr === 'dr') { spr(img, e.x, e.y - 6 + Math.sin(e.anim * .6) * 2, e.face < 0); } else spr(img, e.x, e.y + (d.boss ? 18 : 0), e.face < 0, d.boss ? 0 : Math.abs(Math.sin(e.anim)) * 1.2);
   if (e.flash > 0) { ctx.globalAlpha = .6; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sx(e.x), sy(e.y), e.r * cam.z, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
-  if (e.alert && (e.hp < e.max || e.elite)) { const w = Math.max(24, e.r * 2) * cam.z, X = sx(e.x) - w / 2, Y = sy(e.y) - (e.r + 22) * cam.z / (d.boss ? 1 : 1.1); ctx.fillStyle = '#000a'; ctx.fillRect(X, Y, w, 4); ctx.fillStyle = d.boss ? '#f43f5e' : '#f87171'; ctx.fillRect(X, Y, w * clamp(e.hp / e.max, 0, 1), 4); }
+  // 体力ゲージ: 絵の頭の上に出す。減った分は白く残り、少し遅れて縮む(当たったことが分かる)
+  e.lag = e.lag == null ? e.hp : Math.max(e.hp, e.lag - Math.max(e.max * .6, 40) * (1 / 60));
+  if (e.alert && (e.hp < e.max || e.elite)) { const sh = es ? es.img.height * es.k * (e.elite ? 1.25 : 1) : e.r * 2, w = Math.max(28, e.r * 2.2, es ? es.img.width * es.k * .7 : 0) * cam.z, X = sx(e.x) - w / 2, Y = sy(e.y) - (sh / 2 + 9) * cam.z;
+    ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(X - 1, Y - 1, w + 2, 6); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(X, Y, w * clamp(e.lag / e.max, 0, 1), 4); ctx.fillStyle = d.boss ? '#f43f5e' : e.hp / e.max < .3 ? '#ef4444' : '#f87171'; ctx.fillRect(X, Y, w * clamp(e.hp / e.max, 0, 1), 4); }
 }
 function drawBox(bx) {
   const X = sx(bx.x), Y = sy(bx.y) + 6 * cam.z, z = cam.z / 1.4, has = bx.contents && bx.contents.length, op = bx.open;
@@ -1204,6 +1528,11 @@ function groundGlow(x, y, col, r) {
   ctx.strokeStyle = col; ctx.globalAlpha = .35 + .25 * p; ctx.lineWidth = Math.max(1, k * .8); ctx.beginPath(); ctx.ellipse(X, Y, r * 1.05 * k, r * .5 * k, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
 }
 function drawItem(it) {
+  // 落とし物は敵の位置から弧を描いて飛び出す(0.33秒)
+  if (it.pop != null && it.pop < 1) { const k = it.pop, hx = it.x, hy = it.y; it.x = it.ox + (hx - it.ox) * k; it.y = it.oy + (hy - it.oy) * k - Math.sin(k * Math.PI) * 16; try { drawItem0(it); } finally { it.x = hx; it.y = hy; } return; }
+  drawItem0(it);
+}
+function drawItem0(it) {
   if (it.k === 'stash') { shadow(it.x, it.y, 10); const X = sx(it.x), Y = sy(it.y) - 6 * cam.z / 1.4, z = cam.z / 1.4; ctx.fillStyle = '#7c2d12'; ctx.fillRect(X - 11 * z, Y - 7 * z, 22 * z, 15 * z); ctx.fillStyle = '#b45309'; ctx.fillRect(X - 11 * z, Y - 7 * z, 22 * z, 5 * z); ctx.fillStyle = '#fbbf24'; ctx.fillRect(X - 2 * z, Y - 3 * z, 4 * z, 5 * z); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1.5; ctx.globalAlpha = .6 + Math.sin(t * 5) * .3; ctx.strokeRect(X - 13 * z, Y - 9 * z, 26 * z, 19 * z); ctx.globalAlpha = 1; ctx.fillStyle = '#fde68a'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('遺失物 ' + (stash ? stash.loot : 0) + 'G', X, Y - 14 * z); return; }
   const ik = it.k === 'loot' ? (it.v >= 300 ? 'core' : it.v >= 100 ? 'crystal' : it.v >= 40 ? 'board' : 'part') : it.k, ii = SPR.item[ik];
   const gcol = { med: '#4ade80', ammo: '#fbbf24', armor: '#60a5fa', boost: '#22d3ee', od: '#f43f5e', cure: '#a78bfa', feather: '#e5e7eb', bomb: '#f97316', flash: '#fde047', log: '#22d3ee', loot: it.v >= 100 ? '#e879f9' : '#fbbf24' }[it.k] || '#ffffff';
@@ -1219,10 +1548,10 @@ function drawRadarFog() {
   const lo = P.aimA - CONE, hi = P.aimA + CONE;
   // 前方以外: 曇り(近くは晴れ、遠いほど濃い)
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.moveTo(X, Y); ctx.arc(X, Y, Math.max(W, H) * 2, lo, hi); ctx.closePath(); ctx.clip('evenodd');
-  const g1 = ctx.createRadialGradient(X, Y, N * .3, X, Y, N * 1.15); g1.addColorStop(0, 'rgba(8,14,26,0)'); g1.addColorStop(1, 'rgba(8,14,26,.72)'); ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H); ctx.restore();
+  const g1 = ctx.createRadialGradient(X, Y, N * .3, X, Y, N * 1.15); g1.addColorStop(0, 'rgba(8,14,26,0)'); g1.addColorStop(1, 'rgba(8,14,26,.60)'); ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H); ctx.restore();
   // 前方60度: 遠くまで見える(端で曇る)
   ctx.save(); ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, F * 1.3, lo, hi); ctx.closePath(); ctx.clip();
-  const g2 = ctx.createRadialGradient(X, Y, F * .5, X, Y, F * 1.05); g2.addColorStop(0, 'rgba(8,14,26,0)'); g2.addColorStop(1, 'rgba(8,14,26,.72)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H); ctx.restore();
+  const g2 = ctx.createRadialGradient(X, Y, F * .5, X, Y, F * 1.05); g2.addColorStop(0, 'rgba(8,14,26,0)'); g2.addColorStop(1, 'rgba(8,14,26,.64)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H); ctx.restore();
   ctx.strokeStyle = 'rgba(103,232,249,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X + Math.cos(lo) * N * .5, Y + Math.sin(lo) * N * .5); ctx.lineTo(X + Math.cos(lo) * F * .8, Y + Math.sin(lo) * F * .8); ctx.moveTo(X + Math.cos(hi) * N * .5, Y + Math.sin(hi) * N * .5); ctx.lineTo(X + Math.cos(hi) * F * .8, Y + Math.sin(hi) * F * .8); ctx.stroke();
   // 見えない敵の「ping」(撃たれた直後だけ位置が分かる)
   for (const e of enemies) { if (e.vis > 0 || !(e.rv > 0)) continue; const ex = sx(e.x), ey = sy(e.y); if (ex < 0 || ex > W || ey < 0 || ey > H) continue; const k = clamp(1 - e.rv / 1.4, 0, 1); ctx.strokeStyle = `rgba(248,113,113,${Math.max(0, e.rv / 1.4)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex, ey, (6 + k * 16) * cam.z / 1.6, 0, 7); ctx.stroke(); }
@@ -1265,13 +1594,15 @@ function drawRadarHUD() {
   ctx.fillStyle = 'rgba(103,232,249,.16)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, rr, P.aimA - CONE, P.aimA + CONE); ctx.closePath(); ctx.fill();
   const sw = t * 2.2; ctx.strokeStyle = 'rgba(103,232,249,.7)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sw) * rr, cy + Math.sin(sw) * rr); ctx.stroke();
   for (const e of enemies) { if (!(e.vis > 0)) continue; const dx = (e.x - P.x) / (R * 1.7) * rr, dy = (e.y - P.y) / (R * 1.7) * rr; if (dx * dx + dy * dy > rr * rr) continue; ctx.fillStyle = e.elite ? '#fbbf24' : EN[e.type].boss ? '#f43f5e' : '#f87171'; const sz = EN[e.type].boss ? 4 : e.elite ? 3.2 : 2.4; ctx.beginPath(); ctx.arc(cx + dx, cy + dy, sz, 0, 7); ctx.fill(); }
+  for (const p of fieldPOIs) { const a = Math.atan2(p.y - P.y, p.x - P.x), d = Math.min(rr - 5, Math.hypot(p.x - P.x, p.y - P.y) / (R * 1.7) * rr); ctx.fillStyle = ['#4ade80', '#67e8f9', '#fb7185'][p.role]; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.fillText(['+', 'i', '!'][p.role], cx + Math.cos(a) * d, cy + Math.sin(a) * d + 3); }
   // 脱出口の方向
   if (portal) { const a = Math.atan2(portal.y - P.y, portal.x - P.x), dd = Math.min(rr - 4, Math.hypot(portal.x - P.x, portal.y - P.y) / (R * 1.7) * rr); ctx.fillStyle = portal.locked ? '#f87171' : '#4ade80'; ctx.fillRect(cx + Math.cos(a) * dd - 2.5, cy + Math.sin(a) * dd - 2.5, 5, 5); }
   if (stash && stash.stage === stageNo) { const a = Math.atan2(stash.y - P.y, stash.x - P.x), dd = Math.min(rr - 4, Math.hypot(stash.x - P.x, stash.y - P.y) / (R * 1.7) * rr); ctx.fillStyle = '#fbbf24'; ctx.fillRect(cx + Math.cos(a) * dd - 2, cy + Math.sin(a) * dd - 2, 4, 4); ctx.strokeStyle = '#fbbf24'; ctx.strokeRect(cx + Math.cos(a) * dd - 3.5, cy + Math.sin(a) * dd - 3.5, 7, 7); }
   ctx.fillStyle = '#67e8f9'; ctx.beginPath(); ctx.arc(cx, cy, 2.6, 0, 7); ctx.fill();
   // 向き(エイム方向)
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(P.aimA) * 14, cy + Math.sin(P.aimA) * 14); ctx.stroke();
-  ctx.fillStyle = '#9ca3af'; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText('RADAR', cx, cy + rr + 12);
+  ctx.fillStyle = '#9ca3af'; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText(isTouch ? 'RADAR' : 'RADAR  Tab:地図', cx + 12, cy + rr + 12);
+  ctx.fillStyle = '#cbd5e1'; ctx.fillText('+補給  i記録  !危険', cx + 18, cy - rr - 10);
 }
 function drawHUD() {
   if (isTouch) { const mh = $('mobilehud'), a0 = P.ammo[curW().id]; mh.textContent = `HP ${Math.ceil(P.hp)}/${P.max}${P.bleed ? ' 出血!' : ''}  弾 ${a0.mag}/${a0.res === Infinity ? '∞' : a0.res}  医療 ${P.pack.med}  戦利品 ${P.loot}G`; }
@@ -1293,9 +1624,10 @@ function drawHUD() {
   ctx.textAlign = 'left'; ctx.font = '12px monospace'; for (let i = 0; i < WEAPONS.length; i++) { const u = WEAPONS[i].unlock <= stageNo; ctx.fillStyle = i === P.cur ? '#fde047' : u ? '#94a3b8' : '#334155'; ctx.fillText((i + 1) + (u ? WEAPONS[i].name.slice(0, 3) : '---'), W - 226 + i * 44, H - 66); }
   ctx.textAlign = 'center'; ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 110, 8, 220, 24); ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 13px monospace';
   ctx.fillText(`STAGE ${stageNo}/10  敵 ${enemies.length}`, W / 2, 25); ctx.font = '10px monospace'; ctx.fillStyle = isNight() ? '#a5b4fc' : '#fde68a'; ctx.textAlign = 'right'; ctx.fillText(clockStr() + ' ' + phaseName() + (isNight() ? '(敵+20%/戦利品+25%)' : '') + (isStormDay() ? ' 嵐の日' : ''), W - 12, 14); ctx.textAlign = 'center'; ctx.font = 'bold 13px monospace';
+  if (mission) { ctx.fillStyle = '#000b'; ctx.fillRect(W / 2 - 205, H - 50, 410, 20); ctx.fillStyle = mission.done ? '#86efac' : '#fde68a'; ctx.font = 'bold 12px sans-serif'; ctx.fillText((mission.done ? '✓ 任務完了  ' : '◇ 任務  ') + mission.name + (mission.done ? '  +' + mission.bonus + 'G' : ''), W / 2, H - 36); }
   { const lim = S_BOSS() ? STORM_T * 1.5 : STORM_T, rest = Math.max(0, lim - t); ctx.font = '11px monospace'; ctx.fillStyle = rest < 40 ? '#f87171' : '#a5b4fc'; ctx.fillText(rest > 0 ? '大嵐まで ' + Math.floor(rest / 60) + ':' + String(Math.floor(rest % 60)).padStart(2, '0') : '大嵐!(体力が減る)', W / 2, 40); ctx.font = 'bold 13px monospace'; }
   if (P.scoped > .5) { ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 80, H - 30, 160, 12); ctx.fillStyle = '#67e8f9'; ctx.fillRect(W / 2 - 80, H - 30, 160 * P.breath, 12); ctx.fillStyle = '#fff'; ctx.font = '10px monospace'; ctx.fillText('息止め [Space]', W / 2, H - 21); }
-  const bs = enemies.find(e => EN[e.type].boss && e.hp > 0); if (bs) { ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 200, 38, 400, 12); ctx.fillStyle = '#f43f5e'; ctx.fillRect(W / 2 - 198, 40, 396 * clamp(bs.hp / bs.max, 0, 1), 8); }
+  const bs = enemies.find(e => EN[e.type].boss && e.hp > 0 && e.vis > 0); if (bs) { ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 200, 38, 400, 12); ctx.fillStyle = '#f43f5e'; ctx.fillRect(W / 2 - 198, 40, 396 * clamp(bs.hp / bs.max, 0, 1), 8); }
   { const st = P.stat, a = []; if (st.freeze > 0) a.push('凍結'); else if (st.cold > 0) a.push('冷気x' + st.cold); if (st.poison > 0) a.push('毒x' + st.poison); if (st.burn > 0) a.push('点火'); if (st.shock > 0) a.push('感電'); if (st.resist > 0) a.push('耐性' + Math.ceil(st.resist)); if (a.length) { ctx.fillStyle = '#c4b5fd'; ctx.textAlign = 'left'; ctx.font = 'bold 12px monospace'; ctx.fillText(a.join(' '), 14, 100); } }
   if (P.boost > 0 || P.od > 0) { ctx.fillStyle = '#22d3ee'; ctx.textAlign = 'left'; ctx.fillText((P.boost > 0 ? '' : '') + (P.boost > 0 ? 'BOOST ' : '') + (P.od > 0 ? 'OVERDRIVE' : ''), 14, 84); }
   if (toastT > 0) {
@@ -1305,7 +1637,7 @@ function drawHUD() {
     ctx.fillStyle = `rgba(255,255,255,${a})`; ls.forEach((l, i) => ctx.fillText(l, W / 2, 90 + i * 24));
   }
   if (portal) { const a = Math.atan2(portal.y - P.y, portal.x - P.x); ctx.fillStyle = portal.locked ? '#f87171' : '#4ade80'; ctx.save(); ctx.translate(W / 2 + Math.cos(a) * 120, H / 2 + Math.sin(a) * 120); ctx.rotate(a); ctx.fillRect(-8, -2, 16, 4); ctx.fillRect(4, -6, 4, 12); ctx.restore(); }
-  ctx.fillStyle = '#fbbf24'; ctx.font = '10px monospace'; ctx.textAlign = 'left'; ctx.fillText('作成中', 14, H - 28);
+  ctx.fillStyle = '#fbbf24'; ctx.font = '10px monospace'; ctx.textAlign = 'left'; ctx.fillText('試遊版', 14, H - 28);
 }
 
 // ---------- オーバーレイ ----------
@@ -1389,8 +1721,8 @@ function drawTitleScene(g) {
 function showOv(kind) {
   const o = $('ov'), b = $('obox'); o.style.display = 'flex'; let h = '';
   if (kind === 'title') {
-    h = `<h1>NEXARIA WILDS</h1><div class="wip">【作成中】動物たちの森 ドット絵・脱出シューター</div><p>${STORY_INTRO.split(String.fromCharCode(10)).join('<br>')}</p>
-    <p style="color:#9ca3af;font-size:12px">PC: WASD移動 / マウス照準 / 左クリック射撃 / <b>右クリック長押し or Q = スコープ</b> / Space 息止め(スコープ中) / R 装填 / 1-5 or ホイール 武器切替<br>スマホ: 横向き / 左=移動 右=照準 / 射撃ボタン(スコープ中は右を離しても発射) / 装備ボタン<br>コントローラ: 左スティック=移動 右スティック=照準 RT/R2=射撃 LT/L2=スコープ L3=息止め X/□=装填 Y/△・LB/L1=武器 RB/R1=爆弾 B/○=医療 十字(上=ブースト 右=解毒 左=閃光 下=戦利品全部) / メニューは十字+A/× / F9で配列変更・F10で診断表示<br>目的: 戦利品◆を集め、緑の出口に3秒立って<b>脱出</b>。死ぬと持ち出した戦利品を失う。弾かれる敵には貫通力の高い武器を。</p>
+    h = `<h1>NEXARIA WILDS</h1><div class="wip">【公開試遊版】動物たちの森 ドット絵・脱出シューター</div><p>${STORY_INTRO.split(String.fromCharCode(10)).join('<br>')}</p>
+    <p style="color:#9ca3af;font-size:12px">PC: WASD移動 / マウス照準 / 左クリック射撃 / <b>右クリック長押し or Q = スコープ</b> / Space 息止め(スコープ中) / R 装填 / 1-5 or ホイール 武器切替 / Tab 地図<br>スマホ: 横向き / 左=移動 右=照準 / 射撃ボタン(スコープ中は右を離しても発射) / 地図・装備ボタン<br>コントローラ: 左スティック=移動 右スティック=照準 RT/R2=射撃 LT/L2=スコープ L3=息止め X/□=装填 Y/△・LB/L1=武器 RB/R1=爆弾 B/○=医療 START=地図 十字(上=ブースト 右=解毒 左=閃光 下=戦利品全部) / メニューは十字+A/× / F9で配列変更・F10で診断表示<br>目的: 戦利品◆を集め、緑の出口に3秒立って<b>脱出</b>。各面の任務を達成して脱出すると追加報酬。街道は巡回に注意、脇道には隠し物資。死ぬと持ち出した戦利品を失う。</p>
     <p style="color:#fbbf24">所持金 ${money}G</p>`;
     { const got = Object.keys(logs).map(Number).sort((a, b) => a - b); h += `<details style="margin:6px 0;color:#9ca3af"><summary>回収した記録 ${got.length}/10(各面に1つ、水色の「LOG」)</summary>${got.map(n => '<p style="font-size:12px">【' + n + '】' + LOGS[n - 1] + '</p>').join('') || '<p style="font-size:12px">まだ無い</p>'}</details>`; }
     h += `<div><button class="b" onclick="G.start(1)">出撃(1面から)</button><button class="b" onclick="G.hide(hideNPC)">隠れ家(強化・改造・依頼)</button></div><div id="sel">`;
@@ -1436,7 +1768,7 @@ function showOv(kind) {
       const got = Object.keys(logs).map(Number).sort((a, b) => a - b); h += `<p style="color:#fbbf24;margin:8px 0 2px"><b>集めた記録 ${got.length}/10</b></p>` + (got.map(n => '<p style="font-size:12px">【' + n + '】' + LOGS[n - 1] + '</p>').join('') || '<p style="font-size:12px">まだ無い</p>');
     }
     h += '<div style="margin-top:10px"><button class="b" onclick="G.title()">戻る</button><button class="b" onclick="G.start(1)">出撃(1面から)</button></div>';
-  } else if (kind === 'clear') h =`<h1>EXTRACTED — STAGE ${stageNo}</h1><p>${STAGES[stageNo - 1].n} から脱出した。<br>戦利品 <b style="color:#fbbf24">+${bankedLoot}G</b>(所持金 ${money}G)${stageNo + 1 === 2 ? '<br>SMGを解禁。' : stageNo + 1 === 3 ? '<br>ショットガンを解禁。' : stageNo + 1 === 4 ? '<br>アサルトライフルを解禁。' : stageNo === 4 ? '<br>次は第5面、ボス「砂漠の主サンドマザー」だ。' : ''}</p><button class="b" onclick="G.start(${stageNo + 1},1)">次の面へ(装備を持ち越す)</button><button class="b" onclick="G.title()">隠れ家へ戻る</button>`;
+  } else if (kind === 'clear') h =`<h1>EXTRACTED — STAGE ${stageNo}</h1><p>${STAGES[stageNo - 1].n} から脱出した。<br>戦利品と任務報酬 <b style="color:#fbbf24">+${bankedLoot}G</b>(所持金 ${money}G)${mission && mission.done ? '<br>任務達成: ' + mission.name + ' +' + mission.bonus + 'G' : '<br>任務未達成: 次の出撃でも挑戦できる'}${stageNo + 1 === 2 ? '<br>SMGを解禁。' : stageNo + 1 === 3 ? '<br>ショットガンを解禁。' : stageNo + 1 === 4 ? '<br>アサルトライフルを解禁。' : stageNo === 4 ? '<br>次は第5面、ボス「砂漠の主サンドマザー」だ。' : ''}</p><button class="b" onclick="G.start(${stageNo + 1},1)">次の面へ(装備を持ち越す)</button><button class="b" onclick="G.title()">隠れ家へ戻る</button>`;
   else if (kind === 'dead') h = `<h1 style="color:#f87171">YOU DIED</h1><p>${droppedStash ? `持っていた戦利品 ${lostLoot}G とバッグの中身は、死んだ場所に<b>遺失物</b>として残った。<br>同じ面(${stash.stage}面)で取りに戻れる。ただし、取り戻す前に新しく死ぬと古い遺失物は消える。` : '持ち出した荷物は無かった。'}<br>隠れ家で立て直して、もう一度転生する。</p><button class="b" onclick="G.start(${stageNo})">この面で再出撃</button><button class="b" onclick="G.title()">隠れ家へ</button>`;
   else if (kind === 'end') h = `<h1>THE END</h1><p>山頂の王「白き王」は、静かに膝をついた。氷の玉座の奥で、最後の記録が開く。<br>あの日、森で倒れていた人間のアキラを、最後の泉の力で助けたのは、白き王だった。王は、その代償に、世界を雪で閉ざしていたのだ。<br>ミオが微笑む。「ありがとう。もう、春になるよ」――雪が光の粒になって溶け、彼女の姿も、朝の光に消えた。</p><p style="color:#fbbf24">戦利品 +${bankedLoot}G(所持金 ${money}G)</p><p style="color:#9ca3af">(試作版の仮エンディング)</p><button class="b" onclick="G.title()">隠れ家へ</button>`;
   if (kind === 'title') h = '<canvas id="tcv" width="192" height="106" style="width:100%;image-rendering:pixelated;border:1px solid #22d3ee;margin-bottom:8px"></canvas>' + h;
@@ -1464,7 +1796,8 @@ cv.addEventListener('wheel', e => { e.preventDefault(); swap(e.deltaY > 0 ? 1 : 
 function swap(d) { if (scene !== 'play') return; let n = P.cur; for (let i = 0; i < 5; i++) { n = (n + d + 5) % 5; if (WEAPONS[n].unlock <= stageNo) break; } setW(n); }
 function setW(n) { if (scene !== 'play' || WEAPONS[n].unlock > stageNo || n === P.cur) return; P.cur = n; P.rel = 0; P.cd = .2; sfx(300, .06, 'triangle', .04); }
 addEventListener('keydown', e => {
-  inp.keys[e.code] = true; if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+  inp.keys[e.code] = true; if (e.code === 'Space' || e.code === 'Tab' && scene === 'play' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (scene === 'play' && (e.code === 'Tab' || mapOpen)) { if (!e.repeat && (e.code === 'Tab' || e.code === 'Escape')) toggleMap(); return; }
   if (scene === 'play') { if (e.code === 'KeyH') useItem('med'); if (e.code === 'KeyJ') useItem('boost'); if (e.code === 'KeyK') useItem('od'); if (e.code === 'KeyF') G.takeAll(); if (e.code === 'Escape') G.closeLoot(); if (e.code === 'KeyL') useItem('cure'); if (e.code === 'KeyG') useItem('bomb'); if (e.code === 'KeyV') useItem('flash'); if (e.code === 'KeyM') { bgmOn = !bgmOn; toast(bgmOn ? 'BGM ON' : 'BGM OFF', 1); } } if (e.code === 'KeyQ') inp.tog = !inp.tog; if (e.code === 'KeyR' && scene === 'play') reload();
   if (/^Digit[1-5]$/.test(e.code)) setW(+e.code.slice(5) - 1);
 });
@@ -1490,12 +1823,16 @@ $('bReload').addEventListener('touchstart', e => { e.preventDefault(); if (scene
 $('bMed').addEventListener('touchstart', e => { e.preventDefault(); useItem('med'); }, { passive: false });
 $('bBoost').addEventListener('touchstart', e => { e.preventDefault(); useItem(P && P.pack && P.pack.boost > 0 ? 'boost' : 'od'); }, { passive: false });
 $('bBomb').addEventListener('touchstart', e => { e.preventDefault(); useItem(P && P.pack && P.pack.bomb > 0 ? 'bomb' : 'flash'); }, { passive: false });
+$('bMap').addEventListener('pointerdown', e => { e.preventDefault(); toggleMap(); });
 $('bSwap').addEventListener('touchstart', e => { e.preventDefault(); swap(1); }, { passive: false });
 $('bFire').addEventListener('touchstart', e => { e.preventDefault(); inp.tfire = true; }, { passive: false });
 for (const ev of ['touchend', 'touchcancel']) $('bFire').addEventListener(ev, e => { e.preventDefault(); inp.tfire = false; }, { passive: false });
 
 // ---------- ループ ----------
 let last = performance.now();
+const perf = { frames: 0, acc: 0, draw: 0, fps: 0 };
+const perfOn = hash.has('perf');
+function perfTick(dt, drawMs) { if (!perfOn) return; perf.frames++; perf.acc += dt; perf.draw += drawMs; if (perf.acc < 1) return; perf.fps = Math.round(perf.frames / perf.acc); const el = $('perfHud'); if (el) { el.textContent = `${perf.fps} FPS / 描画 ${(perf.draw / perf.frames).toFixed(1)}ms / 敵 ${enemies.length} / 箱 ${boxes.length} / ${innerWidth}×${innerHeight}`; el.style.color = perf.fps < 40 ? '#fca5a5' : '#bbf7d0'; } perf.frames = 0; perf.acc = 0; perf.draw = 0; }
 
 // ---------- ゲームパッド(Xbox/PS/Switchなど標準配列) ----------
 // 左スティック=移動 右スティック=照準 RT=射撃 LT=スコープ(押している間) L3=息止め R3=スコープ切替
@@ -1547,6 +1884,7 @@ function pollPad(dt) {
   const lx = dz(pad.axes[0] || 0, .2), ly = dz(pad.axes[1] || 0, .2), rx = dz(pad.axes[2] || 0, .2), ry = dz(pad.axes[3] || 0, .2);
   padSt.sx = lx; padSt.sy = ly;
   if (scene !== 'play') { if (padSt.rep > 0) padSt.rep -= dt; const stickDir = Math.abs(lx) > .6 || Math.abs(ly) > .6; const pr = i => press(i) || (stickDir && padSt.rep <= 0 && (i === 13 ? ly > .6 : i === 12 ? ly < -.6 : i === 15 ? lx > .6 : i === 14 ? lx < -.6 : false)); if (stickDir && padSt.rep <= 0) padSt.rep = .22; padMenuNav(pad, b, pr); if (!stickDir) padSt.rep = 0; padSt.prev = pad.buttons.map(x => x.pressed); return; }
+  if (mapOpen) { if (press(9)) toggleMap(); padSt.prev = pad.buttons.map(x => x.pressed); return; }
   const lm0 = Math.hypot(lx, ly), rm0 = Math.hypot(rx, ry); if (lm0 > .3 || rm0 > .3 || pad.buttons.some(x => x.pressed)) padSt.act = performance.now(); if (rm0 > .15) P.padDir = Math.atan2(ry, rx); else if (lm0 > .3) P.padDir = Math.atan2(ly, lx);
   const lm = Math.hypot(lx, ly); inp.padLs = lm > 0 ? { x: lx / Math.max(1, lm), y: ly / Math.max(1, lm), mag: Math.min(1, lm) } : null;
   const rm = Math.hypot(rx, ry); if (rm > .15) inp.rs = { x: rx, y: ry, mag: Math.min(1, rm), pad: true }; else if (inp.rs && inp.rs.pad) inp.rs = null;
@@ -1556,11 +1894,11 @@ function pollPad(dt) {
   if (press(5)) useItem(P.pack && P.pack.bomb > 0 ? 'bomb' : 'flash'); if (press(1)) useItem('med');
   if (press(12)) useItem(P.pack && P.pack.boost > 0 ? 'boost' : 'od'); if (press(15)) useItem('cure'); if (press(14)) useItem('flash');
   if (press(13) || (press(0) && lootBox)) G.takeAll();
-  if (press(9)) G.closeLoot();
+  if (press(9)) { if (lootBox) G.closeLoot(); else toggleMap(); }
   padSt.prev = pad.buttons.map(x => x.pressed);
 }
-function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; try { pollPad(dt); } catch (err) { padBadge('🎮 エラー: ' + err.message); } if (tsT > 0) tsT -= dt; else ts = 1; try { update(dt * ts); draw(); } catch (err) { if (!frame.err) { frame.err = 1; console.error(err); padBadge('エラー: ' + err.message); } } requestAnimationFrame(frame); }
+function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; try { pollPad(dt); } catch (err) { padBadge('🎮 エラー: ' + err.message); } if (tsT > 0) tsT -= dt; else ts = 1; try { update(dt * ts); const drawStart = performance.now(); draw(); perfTick(dt, performance.now() - drawStart); } catch (err) { if (!frame.err) { frame.err = 1; console.error(err); padBadge('エラー: ' + err.message); } } requestAnimationFrame(frame); }
 G.step = (n, dt) => { for (let i = 0; i < n; i++)update(dt || 1 / 60); draw(); };
-if (hash.has('stage')) { G.start(+hash.get('stage') || 1); if (hash.has('center')) { P.x = (roadV + .5) * T; P.y = (roadH + .5) * T; cam.x = P.x; cam.y = P.y; } if (hash.has('scope')) { G.botScope = true; } } else showOv('title');
+if (hash.has('stage')) { G.start(+hash.get('stage') || 1); if (hash.has('center')) { P.x = (roadV + .5) * T; P.y = (roadH + .5) * T; cam.x = P.x; cam.y = P.y; } if (hash.has('poi')) { const p = fieldPOIs[+hash.get('poi') | 0]; if (p) { P.x = p.x; P.y = p.y + T; cam.x = P.x; cam.y = P.y; } } if (hash.has('scope')) { G.botScope = true; } } else showOv('title');
 if (hash.has('w')) { const wi = +hash.get('w'); if (scene === 'play') { for (const w of WEAPONS) if (!P.ammo[w.id]) P.ammo[w.id] = { mag: magOf(w), res: w.res }; P.cur = wi; } }
 requestAnimationFrame(frame);

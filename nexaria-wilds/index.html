@@ -10,7 +10,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>NEXARIA WILDS【作成中】</title>
+<title>NEXARIA WILDS【公開試遊版】</title>
 <style>
 html,body{margin:0;height:100%;background:#05070d;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:"Hiragino Sans","Yu Gothic",sans-serif;color:#dff}
 #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
@@ -42,18 +42,24 @@ button.padf,.npc.padf{outline:3px solid #fde047;outline-offset:2px}
 .say{background:#0b1626;border-left:3px solid #22d3ee;padding:8px 10px;margin:6px 0;font-size:14px}
 .qrow{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #164e63;padding:4px 0;gap:8px}
 .tb{position:fixed;z-index:4;display:none;width:64px;height:64px;border-radius:50%;border:2px solid #67e8f9;background:#0e749066;color:#fff;font-size:13px}
+.tb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#perfHud{position:fixed;z-index:8;top:calc(env(safe-area-inset-top,0px) + 5px);right:calc(env(safe-area-inset-right,0px) + 8px);background:#06101ce8;border:1px solid #164e63;padding:4px 6px;font:11px monospace;pointer-events:none;display:none}
 #bScope{right:18px;bottom:130px}#bReload{right:98px;bottom:150px}#bSwap{right:98px;bottom:70px}#bMed{right:18px;bottom:210px}#bBoost{right:98px;bottom:230px}#bBomb{right:178px;bottom:150px}
 body.touch .tb{display:block}
+body.map-open .tb:not(#bMap){pointer-events:none;opacity:.3}
 #bFire{right:18px;bottom:48px;background:#b91c1caa;border-color:#fecaca}
+#bMap{left:8px;top:42px;width:54px;height:42px;border-radius:8px}
 #mobilehud,#rotateHint{display:none}
 @media (orientation:landscape) and (max-height:600px){
-  body.touch .tb{width:52px;height:52px;font-size:11px;right:auto;bottom:auto}
-  body.touch #bFire{right:8px;bottom:8px;width:70px;height:70px;font-weight:bold;font-size:15px}
-  body.touch #bScope{right:86px;bottom:8px}body.touch #bReload{right:146px;bottom:8px}body.touch #bSwap{right:206px;bottom:8px}
-  body.touch #bMed{right:8px;bottom:86px}body.touch #bBoost{right:68px;bottom:86px}body.touch #bBomb{right:128px;bottom:86px}
-  body.touch #mobilehud{display:block;position:fixed;z-index:4;top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);background:#06101cdd;border:1px solid #164e63;color:#fff;padding:4px 8px;font:bold 14px monospace;pointer-events:none}
+  body.touch .tb{width:clamp(40px,13vh,52px);height:clamp(40px,13vh,52px);font-size:11px;right:auto;bottom:auto}
+  body.touch #bFire{right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);width:clamp(56px,18vh,70px);height:clamp(56px,18vh,70px);font-weight:bold;font-size:15px}
+  body.touch #bScope{right:calc(env(safe-area-inset-right,0px) + 86px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}body.touch #bReload{right:calc(env(safe-area-inset-right,0px) + 146px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}body.touch #bSwap{right:calc(env(safe-area-inset-right,0px) + 206px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
+  body.touch #bMed{right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}body.touch #bBoost{right:calc(env(safe-area-inset-right,0px) + 68px);bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}body.touch #bBomb{right:calc(env(safe-area-inset-right,0px) + 128px);bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}
+  body.touch #bMap{left:calc(env(safe-area-inset-left,0px) + 6px);right:auto;top:calc(env(safe-area-inset-top,0px) + 32px);bottom:auto;width:48px;height:34px;border-radius:6px}
+  body.touch #mobilehud{display:block;position:fixed;z-index:4;top:calc(env(safe-area-inset-top,0px) + 2px);left:calc(env(safe-area-inset-left,0px) + 4px);max-width:58vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#06101cdd;border:1px solid #164e63;color:#fff;padding:4px 8px;font:bold clamp(10px,2.5vh,14px) monospace;pointer-events:none}
   body.touch #padbadge{bottom:auto!important;top:2px;left:auto!important;right:4px;transform:none!important;font-size:10px!important;max-width:42vw;overflow:hidden;white-space:nowrap}
-  body.touch #lootp{top:28px;right:8px;width:min(38vw,262px);max-height:70vh}
+  body.touch #lootp{top:calc(env(safe-area-inset-top,0px) + 28px);right:calc(env(safe-area-inset-right,0px) + 8px);width:min(38vw,262px);max-height:calc(100vh - 175px);box-sizing:border-box}
+  body.touch #lootp .lf{position:sticky;bottom:0;background:#06101c;padding-top:4px}
 }
 @media (max-width:600px) and (orientation:portrait){
   #rotateHint{display:flex;position:fixed;inset:0;z-index:12;align-items:center;justify-content:center;background:#050b15f2;text-align:center;padding:24px;box-sizing:border-box;font:bold 20px sans-serif;line-height:1.7}
@@ -67,12 +73,14 @@ body.touch .tb{display:block}
 <div id="lootp"></div>
 <div id="padbadge" style="position:fixed;left:50%;transform:translateX(-50%);bottom:6px;z-index:9;display:none;background:#0b1626cc;border:1px solid #67e8f9;color:#e0f2fe;font-size:12px;padding:3px 10px;pointer-events:none"></div>
 <div id="mobilehud"></div><div id="rotateHint">📱 画面を横向きにしてください<br>横向きで移動・照準・射撃を操作できます</div>
+<div id="perfHud"></div>
 <button class="tb" id="bScope">SCOPE</button>
 <button class="tb" id="bReload">装填</button>
 <button class="tb" id="bSwap">武器</button>
 <button class="tb" id="bMed">医療</button>
 <button class="tb" id="bBoost">強化</button>
 <button class="tb" id="bBomb">爆弾</button>
+<button class="tb" id="bMap">地図</button>
 <button class="tb" id="bFire">射撃</button>
 <script src="akira_sprite.js"></script>
 <script src="enemy_sprites.js"></script>
@@ -89,6 +97,8 @@ body.touch .tb{display:block}
 <script src="chars.js"></script>
 <script src="weapon_sprites.js"></script>
 <script src="game.js"></script>
+<script src="realism.js"></script>
+<script>if(location.hash.includes('perf'))document.getElementById('perfHud').style.display='block';</script>
 <script src="shell.js"></script>
 </body>
 </html>
