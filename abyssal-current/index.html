@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta name="robots" content="noindex, nofollow, noarchive">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071727">
+  <meta name="description" content="12の深海を突破する横スクロールシューティング。20種の機械海獣、12体のボス、10種の武器。ゲームパッド・スマホ対応。">
+  <title>ABYSSAL CURRENT — 深海機兵</title>
+  <link rel="stylesheet" href="style.css?v=2cb725c1bfe2">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div><span class="eyebrow">ARCADE SHOOTER / ORIGINAL GAME</span><h1>ABYSSAL <em>CURRENT</em></h1></div>
+      <div class="toolbar"><button id="autoButton" class="iconButton" type="button" aria-pressed="false">連射 OFF</button><button id="fullscreenButton" class="iconButton" type="button">全画面</button><button id="pauseButton" class="iconButton" type="button">一時停止</button><button id="soundButton" class="iconButton" type="button" aria-label="サウンド切り替え">♪ ON</button></div>
+    </header>
+    <div class="gameFrame" id="gameFrame">
+      <canvas id="game" width="960" height="540" aria-label="横スクロールシューティングゲーム"></canvas>
+      <div class="scanlines" aria-hidden="true"></div>
+      <div id="overlay" class="overlay">
+        <div class="panel" id="panel"></div>
+      </div>
+      <div class="touchControls" id="touchControls" aria-label="タッチ操作">
+        <div class="dpad"><button data-key="ArrowUp">▲</button><div><button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button></div></div>
+        <div class="actions"><button id="burstTouch" type="button" aria-label="特殊攻撃 オーバードライブ" disabled>DRIVE</button><button id="weaponTouch" aria-label="武器切替">武器</button><button data-key="KeyX">BOMB</button><button data-key="Space">SHOT</button></div>
+      </div>
+    </div>
+    <footer class="help"><span>移動 <b>矢印 / WASD</b></span><span>攻撃 <b>Space / Z</b></span><span>ボム <b>X</b></span><span>特殊攻撃 <b>C</b>・精密移動 <b>Shift</b></span><span>武器 <b>Q / E・1〜0</b></span><span>停止 <b>P</b></span></footer>
+    <div class="weaponBar" id="weaponBar" aria-label="武器選択"></div>
+  </main>
+  <script src="prepared-assets.js?v=a28ce52e699a"></script>
+  <script src="content.js?v=f90d735df432"></script>
+  <script src="atlas-layouts.js?v=f557ca9638ec"></script>
+  <script src="puppet.js?v=b180f87fd741"></script>
+  <script src="encounters.js?v=b1275c33491a"></script>
+  <script src="audio.js?v=837095ab4f24"></script>
+  <script src="projectiles.js?v=7af03159ef8c"></script>
+  <script src="game-v2.js?v=7bef7778746b"></script>
+<script src="shell.js"></script>
+</body>
+</html>
