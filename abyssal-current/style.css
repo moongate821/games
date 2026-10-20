@@ -11,3 +11,5 @@ button:focus-visible { outline:3px solid #e9c47c; outline-offset:3px; }
 @media(pointer:coarse) and (orientation:landscape){body{display:block}.shell{width:100%;padding:3px 8px}.masthead{margin:0 0 5px;align-items:center}.eyebrow{display:none}.masthead h1{font-size:15px}.toolbar .iconButton{font-size:10px;padding:4px 7px}.gameFrame{width:min(100%,calc((100dvh - 90px)*16/9));margin:0 auto}.gamepadHelp{display:none}.weaponBar{margin:5px auto 0;max-width:720px;grid-template-columns:repeat(10,minmax(0,1fr))}.weaponBar button{font-size:8px;padding:4px 1px}.weaponBar button small{display:none}.touchControls{bottom:28px}.touchControls button{opacity:.8}.touchControls .actions button{width:45px;height:45px}.touchControls .actions button:last-child{width:50px;height:50px}}
 
 .overlay{z-index:5}.overlay:not(.hidden) ~ .touchControls{visibility:hidden;pointer-events:none}
+
+.weaponBar button.locked{opacity:.36;cursor:default;background:#061922;box-shadow:none}.weaponBar button.locked small{color:#a1adb3;letter-spacing:.1em}

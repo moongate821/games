@@ -59,5 +59,22 @@ window.AbyssalProjectiles=(()=>{
   // The solid center remains visible against both bright and dark scenery.
   g.shadowBlur=0;g.fillStyle='#fff7e5';g.beginPath();g.arc(0,0,Math.max(1.3,r*.28),0,TAU);g.fill();g.restore();
  }
- return {player,enemy};
+ function pickup(g,v,time){
+  const weapon=v.type==='weapon',armor=v.type==='armor',c=weapon?'#ffd278':armor?'#77dbff':'#8dffcf',bob=Math.sin(time*3+v.x*.01)*3;
+  g.save();g.translate(v.x,v.y+bob);g.shadowColor=c;g.shadowBlur=12;
+  g.save();g.rotate(time*(weapon?1.5:-.8));g.strokeStyle=c+'66';g.lineWidth=1;g.beginPath();g.arc(0,0,22,.15,2.3);g.arc(0,0,22,3.3,5.4);g.stroke();g.restore();
+  if(weapon){
+   polygon(g,[[-20,-5],[-11,-12],[11,-12],[20,-5],[20,5],[11,12],[-11,12],[-20,5]],'#453324',c);
+   polygon(g,[[-12,-6],[-7,-18],[-2,-9],[2,-9],[7,-18],[12,-6],[12,6],[7,18],[2,9],[-2,9],[-7,18],[-12,6]],'#153e4c',c);
+   polygon(g,[[10,0],[0,-7],[-10,0],[0,7]],'#fff0b9',c);
+  }else if(armor){
+   polygon(g,[[-13,-14],[13,-14],[14,3],[8,14],[0,19],[-8,14],[-14,3]],'#173a59',c);
+   polygon(g,[[-8,-8],[8,-8],[8,3],[0,12],[-8,3]],'#56c4e5','#d9ffff');line(g,-5,0,5,0,'#fff',3);line(g,0,-5,0,5,'#fff',3);
+  }else{
+   polygon(g,[[0,-19],[11,-8],[14,6],[0,19],[-14,6],[-11,-8]],'#184d44',c);
+   polygon(g,[[0,-14],[7,0],[0,14],[-7,0]],'#c5ffe4','#fff');line(g,-10,-7,10,7,c,1);line(g,10,-7,-10,7,c,1);
+  }
+  g.shadowBlur=0;g.fillStyle=c;g.font='bold 9px Consolas,"Yu Gothic",sans-serif';g.textAlign='center';g.fillText(weapon?'NEW WEAPON':armor?'ARMOR':'POWER UP',0,34);g.restore();
+ }
+ return {player,enemy,pickup};
 })();

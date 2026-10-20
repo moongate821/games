@@ -9,7 +9,7 @@ window.ABYSSAL_CONTENT = (() => {
   const zoneNames = ['珊瑚の墓場','熱水の裂け目','硝子の海溝','沈没艦隊','翡翠の藻海','水晶大聖堂','暗黒の縦穴','雷鳴の海底都市','白骨回廊','機巧海底工場','王冠の宮殿','深淵の中枢'];
   const zoneEN = ['CORAL GRAVE','THERMAL RIFT','GLASS TRENCH','WRECK FLEET','JADE KELP','CRYSTAL CATHEDRAL','BLACK CHASM','THUNDER CITY','BONE CORRIDOR','CLOCKWORK WORKS','CROWN PALACE','ABYSSAL CORE'];
   const colors = ['#65dfd2','#ffad73','#9adeff','#bfa088','#89eb9c','#c1a2ff','#817bce','#7ccaff','#e9d5ac','#f3bd72','#ec91ca','#ff8986'];
-  const stages = zoneNames.map((name,i)=>({id:i,name,en:zoneEN[i],color:colors[i],boss:i,sheet:`backgrounds${1+Math.floor(i/3)}`,row:i%3,props:`props${1+Math.floor(i/6)}`,propRow:i%6,duration:40+i*1.2,enemies:Array.from({length:6},(_,n)=>(i*2+n)%20)}));
+  const stages = zoneNames.map((name,i)=>({id:i,name,en:zoneEN[i],color:colors[i],boss:i,sheet:`backgrounds${1+Math.floor(i/3)}`,row:i%3,props:`props${1+Math.floor(i/6)}`,propRow:i%6,duration:72+i*2,enemies:Array.from({length:6},(_,n)=>(i*2+n)%20)}));
   const weapons = [
     ['パルス','PULSE','#79f8e5',.13,'高速の前方連射'],
     ['ワイド','WIDE','#ffc879',.25,'5方向に広がる扇状弾'],

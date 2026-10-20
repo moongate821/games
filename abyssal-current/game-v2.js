@@ -5,12 +5,14 @@
   const W=960,H=540,TAU=Math.PI*2,keys=new Set(),rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   let state='loading',world=null,t=0,last=0,weapon=0,selectedStage=0,galleryKind='enemies',galleryPage=0,muted=false,serial=0,assetReport;
-  let autoFire=false;
+  let autoFire=false,unlocked=new Set([0]);
   let best=0;try{best=Number(localStorage.getItem('abyssal-v2-best'))||0;}catch{}
   const weaponBar=document.getElementById('weaponBar');
   weaponBar.innerHTML=C.weapons.map(w=>`<button data-weapon="${w.id}" title="${w.description}"><small>${(w.id+1)%10}</small>${w.name}</button>`).join('');
   weaponBar.addEventListener('click',e=>{const b=e.target.closest('[data-weapon]');if(b)selectWeapon(+b.dataset.weapon);});
-  function selectWeapon(id){weapon=(id+10)%10;weaponBar.querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('selected',i===weapon);b.setAttribute('aria-pressed',String(i===weapon));});if(world)world.player.fire=0;}
+  function refreshWeapons(){weaponBar.querySelectorAll('button').forEach((b,i)=>{const owned=unlocked.has(i);b.disabled=!owned;b.classList.toggle('locked',!owned);b.classList.toggle('selected',i===weapon);b.setAttribute('aria-pressed',String(i===weapon));b.title=owned?C.weapons[i].description:'武装カプセルを入手すると解放';b.innerHTML=`<small>${owned?(i+1)%10:'LOCK'}</small>${C.weapons[i].name}`;});}
+  function selectWeapon(id){id=(id+10)%10;if(!unlocked.has(id))return;weapon=id;refreshWeapons();if(world)world.player.fire=0;}
+  function cycleWeapon(direction){for(let n=1;n<=10;n++){const id=(weapon+direction*n+100)%10;if(unlocked.has(id)){selectWeapon(id);return;}}}
   selectWeapon(0);
   const show=html=>{panel.innerHTML=html;overlay.classList.remove('hidden');};
   const hide=()=>overlay.classList.add('hidden');
@@ -18,8 +20,8 @@
   addEventListener('keydown',()=>AbyssalAudio.unlock());
   function sound(freq,duration=.08,type='sine',volume=.035){if(!muted)AbyssalAudio.unlock()?.ping(freq,duration,type,volume);}
   function attackSound(id){if(!muted)AbyssalAudio.unlock()?.attack(id,world?.player.level||1);}
-  function title(){state='title';show(`<div class="kicker">TWELVE SEAS EXPEDITION</div><h2>ABYSSAL <span>CURRENT</span></h2><p class="jp">深海機兵 ― 十二海域</p><div class="feature"><span>12面 / 12ボス</span><span>敵20種の行動</span><span>攻撃10種</span><span>関節アニメーション</span></div><p>機械海獣の中枢を破壊せよ。<br>連続撃破でスコア倍率UP。ゲージ満タンで特殊攻撃！<br>武器は出撃中も自由に切り替えられます。</p><div class="menuButtons"><button class="primary" data-action="campaign">第1海域から出撃</button><button data-action="missions">海域・武器を選ぶ</button><button data-action="gallery">動く機体図鑑</button></div>${assetReport?.missing.length?'<p class="small">素材制作中：一部の機体・背景は仮素材です。図鑑で確認できます。</p>':''}`);}
-  function missions(){state='missions';show(`<div class="kicker">MISSION SELECT</div><h2>海域を<span>選択</span></h2><div class="missionGrid">${C.stages.map(s=>`<button data-stage="${s.id}" class="${selectedStage===s.id?'selected':''}"><b>${String(s.id+1).padStart(2,'0')}</b> ${s.name}</button>`).join('')}</div><p>装備：<strong style="color:${C.weapons[weapon].color}">${C.weapons[weapon].name}</strong> — 画面下のボタンで変更</p><div class="menuButtons"><button class="primary" data-action="practice">この海域から出撃</button><button data-action="boss">この海域のボスと戦う</button><button data-action="title">戻る</button></div>`);}
+  function title(){unlocked=new Set([0]);weapon=0;refreshWeapons();state='title';show(`<div class="kicker">TWELVE SEAS EXPEDITION</div><h2>ABYSSAL <span>CURRENT</span></h2><p class="jp">深海機兵 ― 十二海域</p><div class="feature"><span>12面 / 12ボス</span><span>敵20種の行動</span><span>攻撃10種</span><span>関節アニメーション</span></div><p>機械海獣の中枢を破壊せよ。<br>連続撃破でスコア倍率UP。ゲージ満タンで特殊攻撃！<br>武装カプセルを拾って武器を解放。入手した武器を切り替えて戦おう。</p><div class="menuButtons"><button class="primary" data-action="campaign">第1海域から出撃</button><button data-action="missions">海域・武器を選ぶ</button><button data-action="gallery">動く機体図鑑</button></div>${assetReport?.missing.length?'<p class="small">素材制作中：一部の機体・背景は仮素材です。図鑑で確認できます。</p>':''}`);}
+  function missions(){state='missions';show(`<div class="kicker">MISSION SELECT</div><h2>海域を<span>選択</span></h2><div class="missionGrid">${C.stages.map(s=>`<button data-stage="${s.id}" class="${selectedStage===s.id?'selected':''}"><b>${String(s.id+1).padStart(2,'0')}</b> ${s.name}</button>`).join('')}</div><p>パルスで出撃。武装カプセルを拾い、使える武器を増やそう。</p><div class="menuButtons"><button class="primary" data-action="practice">この海域から出撃</button><button data-action="boss">この海域のボスと戦う</button><button data-action="title">戻る</button></div>`);}
   function gallery(){state='gallery';hide();document.getElementById('galleryControls').hidden=false;updateGalleryControls();}
   function updateGalleryControls(){document.getElementById('galleryControls').innerHTML=`<button data-gkind="enemies" class="${galleryKind==='enemies'?'selected':''}">小型敵20種</button><button data-gkind="bosses" class="${galleryKind==='bosses'?'selected':''}">ボス12種</button><button data-gkind="player" class="${galleryKind==='player'?'selected':''}">自機</button><button data-gkind="stages" class="${galleryKind==='stages'?'selected':''}">背景12面</button><button data-gpage="-1">◀</button><button data-gpage="1">▶</button><button data-action="title">戻る</button>`;}
   const galleryControls=document.createElement('div');galleryControls.id='galleryControls';galleryControls.className='galleryControls';galleryControls.hidden=true;canvas.parentElement.insertAdjacentElement('afterend',galleryControls);
@@ -31,12 +33,13 @@
       if(a==='title')title();if(a==='missions')missions();if(a==='gallery')gallery();if(a==='campaign')start(0);if(a==='practice')start(selectedStage);if(a==='boss')start(selectedStage,true);if(a==='resume')pause();if(a==='restart')start(world.startStage,world.bossOnly);if(a==='next')nextStage();}
   });
   function start(stage,bossOnly=false){
+    unlocked=new Set([0]);weapon=0;refreshWeapons();
     world={stage,startStage:stage,bossOnly,elapsed:0,scroll:0,score:0,spawn:1.2,kills:0,sequence:0,uid:0,chain:0,chainTimer:0,bestChain:0,burst:0,energy:35,boss:null,bossSpawned:false,clear:0,shake:0,flash:0,
       enemies:[],shots:[],hostile:[],particles:[],effects:[],pickups:[],debris:[],player:{x:125,y:270,r:11,hp:4,maxHP:4,lives:3,inv:2,fire:0,bomb:0,level:1,tilt:0}};
-    world.plan=AbyssalEncounters.plan(stage,C.stages[stage].duration,C.stages[stage].enemies);world.eventIndex=0;world.waveIndex=0;world.groups={};world.notice=null;
+    world.upgradesThisStage=0;world.plan=AbyssalEncounters.plan(stage,C.stages[stage].duration,C.stages[stage].enemies);world.eventIndex=0;world.waveIndex=0;world.groups={};world.notice=null;
     state='playing';hide();galleryControls.hidden=true;keys.clear();if(bossOnly)spawnBoss();sound(520,.18,'triangle');
   }
-  function nextStage(){if(world.stage===11||world.bossOnly){finish(true);return;}const p=world.player,score=world.score,lives=p.lives,hp=Math.min(4,p.hp+1),level=p.level,energy=world.energy,startStage=world.startStage;start(world.stage+1);world.startStage=startStage;world.score=score;world.player.lives=lives;world.player.hp=hp;world.player.level=level;world.energy=energy;}
+  function nextStage(){if(world.stage===11||world.bossOnly){finish(true);return;}const p=world.player,score=world.score,lives=p.lives,hp=Math.min(4,p.hp+1),level=p.level,energy=world.energy,owned=[...unlocked],equipped=weapon,startStage=world.startStage;start(world.stage+1);world.startStage=startStage;world.score=score;world.player.lives=lives;world.player.hp=hp;world.player.level=level;world.energy=energy;unlocked=new Set(owned);selectWeapon(equipped);}
   function finish(won){state=won?'victory':'gameover';best=Math.max(best,world.score);try{localStorage.setItem('abyssal-v2-best',best);}catch{}show(`<div class="kicker">${won?'MISSION COMPLETE':'SIGNAL LOST'}</div><h2>${won?'海域<span>制圧</span>':'GAME <span>OVER</span>'}</h2><p>SCORE ${world.score.toLocaleString()} / BEST ${best.toLocaleString()}</p><div class="menuButtons"><button class="primary" data-action="restart">もう一度出撃</button><button data-action="missions">海域を選択</button><button data-action="title">タイトル</button></div>`);}
   function pause(){if(state==='playing'){state='paused';keys.clear();show('<div class="kicker">SYSTEM HOLD</div><h2>PAUSED</h2><div class="menuButtons"><button class="primary" data-action="resume">再開する</button><button data-action="title">タイトルへ戻る</button></div>');}else if(state==='paused'){state='playing';hide();last=performance.now();}}
   document.getElementById('pauseButton').onclick=pause;
@@ -44,11 +47,11 @@
   document.getElementById('autoButton').onclick=e=>{autoFire=!autoFire;e.currentTarget.textContent=autoFire?'連射 ON':'連射 OFF';e.currentTarget.setAttribute('aria-pressed',String(autoFire));};
   document.getElementById('burstTouch').onclick=activateBurst;
   document.getElementById('fullscreenButton').onclick=()=>{const el=document.querySelector('.shell');if(document.fullscreenElement)document.exitFullscreen?.();else el.requestFullscreen?.().catch(()=>{});};
-  document.getElementById('weaponTouch').onclick=()=>selectWeapon(weapon+1);
+  document.getElementById('weaponTouch').onclick=()=>cycleWeapon(1);
   addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;
     if(e.code==='KeyP'||e.code==='Escape'){if(state==='gallery'){galleryControls.hidden=true;title();}else pause();}
     if(e.code==='KeyC')activateBurst();
-    if(e.code==='KeyQ')selectWeapon(weapon-1);if(e.code==='KeyE')selectWeapon(weapon+1);if(/^Digit[0-9]$/.test(e.code))selectWeapon((+e.code.slice(5)+9)%10);
+    if(e.code==='KeyQ')cycleWeapon(-1);if(e.code==='KeyE')cycleWeapon(1);if(/^Digit[0-9]$/.test(e.code))selectWeapon((+e.code.slice(5)+9)%10);
     if(e.code==='Enter'){if(state==='title')start(0);else if(state==='paused')pause();else if(state==='clear')nextStage();else if(state==='gameover'||state==='victory')start(world.startStage,world.bossOnly);}
   });
   addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();if(state==='playing')pause();});
@@ -75,7 +78,7 @@
       if(buttons[0]||buttons[2]||buttons[7])padKeys.add('Space');if(buttons[1]||buttons[3])padKeys.add('KeyX');
       if(pressed(6))activateBurst();
       if(buttons[10])padKeys.add('ShiftLeft');
-      if(pressed(4))selectWeapon(weapon-1);if(pressed(5))selectWeapon(weapon+1);
+      if(pressed(4))cycleWeapon(-1);if(pressed(5))cycleWeapon(1);
       if(pressed(9)){padKeys.clear();pause();}
     }else{
       if(pressed(9)){if(state==='paused')pause();else if(state==='title')start(0);}
@@ -100,6 +103,7 @@
   function damage(e,amount,x=e.x,y=e.y){if(e.dead)return;e.hp-=amount;e.flash=.16;particles(x,y,'#ffcc85',2);if(e.hp>0)return;
     e.dead=true;world.kills++;world.chain++;world.chainTimer=3.6;world.bestChain=Math.max(world.bestChain,world.chain);world.energy=clamp(world.energy+(e.isBoss?30:7),0,100);world.score+=(e.isBoss?3500+(world.stage*400):e.def.score)*Math.min(4,1+Math.floor(world.chain/5));particles(e.x,e.y,e.isBoss?'#ffac67':'#75ecdf',e.isBoss?65:15,e.isBoss?2:1);sound(e.isBoss?80:150,e.isBoss?.7:.08,'sawtooth',.045);
     if(e.entry){const group=e.entry.group;world.groups[group]=(world.groups[group]||0)+1;if(world.groups[group]===e.entry.count){world.score+=800;world.notice={name:'編隊撃破 +800',until:world.elapsed+1.6};world.pickups.push({x:clamp(e.x,80,870),y:e.y,type:'power',life:9});}}
+    if(!e.isBoss&&world.kills%12===0&&world.upgradesThisStage<2&&unlocked.size<10&&!world.pickups.some(v=>v.type==='weapon')){const id=C.weapons.find(w=>!unlocked.has(w.id)).id;world.pickups.push({x:clamp(e.x,80,870),y:clamp(e.y,110,430),type:'weapon',weaponId:id,life:14});}
     for(let col=0;col<4;col++)detach(e,col);
     if(e.isBoss){world.clear=3;world.hostile=[];world.shake=12;}
     else if(world.kills%7===0)world.pickups.push({x:e.x,y:e.y,type:world.kills%14===0?'armor':'power',life:9});
@@ -220,10 +224,11 @@
     for(const e of world.effects){e.life-=dt;if(e.kind==='beam'&&p.x<e.tx&&Math.abs(p.y-e.y)<12)hitPlayer();}
     for(const v of world.particles){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vx*=.98;v.vy*=.98;}
     for(const v of world.debris){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=100*dt;v.a+=v.spin*dt;}
-    for(const v of world.pickups){v.life-=dt;const reach=dist(v,p);if(reach<135){v.x+=(p.x-v.x)*dt*4;v.y+=(p.y-v.y)*dt*4;}else v.x-=45*dt;if(dist(v,p)<25){v.life=0;if(v.type==='armor'){p.hp=Math.min(4,p.hp+1);sound(800,.14);}else{const old=p.level;p.level=Math.min(3,p.level+1);if(p.level>old&&!muted)AbyssalAudio.unlock()?.upgrade(p.level);else sound(800,.14);}world.score+=200;}}
+    for(const v of world.pickups){v.life-=dt;const reach=dist(v,p);if(reach<135){v.x+=(p.x-v.x)*dt*4;v.y+=(p.y-v.y)*dt*4;}else v.x-=45*dt;if(dist(v,p)<25){v.life=0;if(v.type==='weapon'){unlocked.add(v.weaponId);world.upgradesThisStage++;selectWeapon(v.weaponId);world.notice={name:`新武装：${C.weapons[v.weaponId].name}`,until:world.elapsed+3};if(!muted)AbyssalAudio.unlock()?.upgrade(3);particles(p.x,p.y,'#ffd67e',25);}
+      else if(v.type==='armor'){p.hp=Math.min(4,p.hp+1);sound(800,.14);}else{const old=p.level;p.level=Math.min(3,p.level+1);if(p.level>old&&!muted)AbyssalAudio.unlock()?.upgrade(p.level);else sound(800,.14);}world.score+=200;}}
     world.enemies=world.enemies.filter(e=>!e.dead&&e.x>-120);world.shots=world.shots.filter(s=>!s.dead&&s.life>0&&s.x<W+180&&s.y>20&&s.y<H);world.hostile=world.hostile.filter(s=>!s.dead&&s.life>0&&s.x>-30&&s.x<W+50&&s.y>40&&s.y<H-40);
     for(const name of ['effects','particles','debris','pickups'])world[name]=world[name].filter(v=>v.life>0);
-    if(world.clear>0){world.clear-=dt;if(world.clear<=0){if(world.stage===11||world.bossOnly)finish(true);else{state='clear';show(`<div class="kicker">ZONE ${world.stage+1} CLEARED</div><h2>海域<span>制圧</span></h2><p>次の海域：${C.stages[world.stage+1].name}</p><button class="primary" data-action="next">次の海域へ Enter</button>`);}}}
+    if(world.clear>0){world.clear-=dt;if(world.clear<=0){if(world.stage===11||world.bossOnly)finish(true);else nextStage();}}
   }
   const text=(s,x,y,size=14,color='#e2fbff',align='left')=>{g.fillStyle=color;g.font=`bold ${size}px Consolas,"Yu Gothic",sans-serif`;g.textAlign=align;g.fillText(s,x,y);g.textAlign='left';};
   const circle=(x,y,r,color)=>{g.fillStyle=color;g.beginPath();g.arc(x,y,Math.max(0,r),0,TAU);g.fill();};
@@ -296,12 +301,13 @@
     if(weapon===9)for(let i=0;i<3;i++){let a=t*2+i*TAU/3;R.draw(g,{id:0},p.x+Math.cos(a)*40,p.y+Math.sin(a)*35,26,t+i,'player');}
     for(const v of world.debris){g.save();g.globalAlpha=clamp(v.life,0,1);g.translate(v.x,v.y);g.rotate(v.a);R.image(g,v.img,v.size,v.size);g.restore();}
     for(const v of world.particles){g.globalAlpha=clamp(v.life/v.max,0,1);circle(v.x,v.y,v.size,v.color);}g.globalAlpha=1;
-    for(const v of world.pickups){circle(v.x,v.y,13,v.type==='armor'?'#346c86':'#724539');text(v.type==='armor'?'A':'P',v.x,v.y+5,15,'#fff5bf','center');}
+    for(const v of world.pickups)AbyssalProjectiles.pickup(g,v,t);
     scenery(world.stage,world.scroll,true);terrain(world.scroll,true);water(world.stage,world.scroll);
     if(held('ShiftLeft')||held('ShiftRight')){g.strokeStyle='#fff';g.lineWidth=1;g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.stroke();circle(p.x,p.y,2,'#fff');}
     hud();
   }
   function hud(){const p=world.player,z=C.stages[world.stage],w=C.weapons[weapon];g.fillStyle='#031725eb';g.fillRect(0,0,W,50);g.fillRect(0,H-40,W,40);text('SCORE',18,19,10,'#79b3bd');text(String(world.score).padStart(8,'0'),18,39,18);text(`${String(world.stage+1).padStart(2,'0')} / 12  ${z.en}`,W/2,31,15,z.color,'center');text(`BEST ${best}`,W-18,29,12,'#a7cdd2','right');text(`LIVES ${p.lives}`,18,H-15,13);text('ARMOR',120,H-15,11,'#86b7c0');for(let i=0;i<4;i++){g.fillStyle=i<p.hp?'#78e4dd':'#284651';g.fillRect(172+i*15,H-25,11,14);}text(`${w.en}  Lv.${p.level}`,280,H-15,14,w.color);text('Q / E : WEAPON',W-18,H-15,11,'#8ab9c6','right');
+    if(world.clear>0&&!world.bossOnly&&world.stage<11){text('海域制圧',W/2,210,28,'#bfffee','center');text(`${C.stages[world.stage+1].name}へ自動航行 ${Math.ceil(world.clear)}`,W/2,245,16,'#ffdfad','center');}
     if(world.chain>1){text(`${world.chain} CHAIN ×${Math.min(4,1+Math.floor(world.chain/5))}`,164,22,12,'#ffdc9e');g.fillStyle='#f3cb75';g.fillRect(164,31,95*world.chainTimer/3.6,3);}
     const ready=world.energy>=100;g.fillStyle='#163f50';g.fillRect(535,H-25,130,11);g.fillStyle=ready?'#baffee':'#42bdcf';g.fillRect(535,H-25,130*world.energy/100,11);text(world.burst>0?'OVERDRIVE':ready?'C / LT : READY':`DRIVE ${Math.floor(world.energy)}%`,600,H-29,10,ready?'#d5ffcf':'#8bcbd4','center');
     const burstButton=document.getElementById('burstTouch');burstButton.disabled=!ready||world.burst>0;burstButton.classList.toggle('ready',ready);
@@ -320,6 +326,6 @@
   show('<div class="kicker">INITIALIZING</div><h2>素材を読込中</h2>');
   R.load(C.sheets).then(report=>{assetReport=report;title();}).catch(error=>{show('<h2>読み込みエラー</h2><p>画像データを再構築してください。</p>');console.error(error);});
   // Read-only diagnostics support content and gameplay verification.
-  window.abyssalStatus=()=>({state,stage:world?.stage,weapon,player:world?{...world.player}:null,enemies:world?.enemies.length,shots:world?.shots.length,hostile:world?.hostile.length,effects:world?.effects.length,combat:world?{chain:world.chain,bestChain:world.bestChain,energy:world.energy,burst:world.burst}:null,finite:world?[...world.enemies,...world.shots,...world.hostile].every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.r)):true,boss:world?.boss?{name:world.boss.def.name,hp:world.boss.hp,broken:[...world.boss.broken]}:null,encounter:{spawned:world?.eventIndex,waves:world?.waveIndex,notice:world?.notice?.name,warnings:world?.enemies.filter(e=>e.warning).length,breakable:world?.hostile.filter(s=>s.breakable).length},audio:AbyssalAudio.get()?.status(),gamepad:{connected:padIndex!==null,index:padIndex},content:{enemies:C.enemies.length,bosses:C.bosses.length,stages:C.stages.length,weapons:C.weapons.length},assets:assetReport});
+  window.abyssalStatus=()=>({state,stage:world?.stage,weapon,player:world?{...world.player}:null,enemies:world?.enemies.length,shots:world?.shots.length,hostile:world?.hostile.length,effects:world?.effects.length,unlocked:[...unlocked],combat:world?{chain:world.chain,bestChain:world.bestChain,energy:world.energy,burst:world.burst}:null,finite:world?[...world.enemies,...world.shots,...world.hostile].every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.r)):true,boss:world?.boss?{name:world.boss.def.name,hp:world.boss.hp,broken:[...world.boss.broken]}:null,encounter:{spawned:world?.eventIndex,waves:world?.waveIndex,notice:world?.notice?.name,warnings:world?.enemies.filter(e=>e.warning).length,breakable:world?.hostile.filter(s=>s.breakable).length},audio:AbyssalAudio.get()?.status(),gamepad:{connected:padIndex!==null,index:padIndex},content:{enemies:C.enemies.length,bosses:C.bosses.length,stages:C.stages.length,weapons:C.weapons.length},assets:assetReport});
   requestAnimationFrame(frame);
 })();
