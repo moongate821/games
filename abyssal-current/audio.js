@@ -25,7 +25,7 @@ window.AbyssalAudio=(()=>{
    o.connect(f);f.connect(v);v.connect(p);p.connect(bus);o.start(at);o.stop(at+duration);o.onended=()=>{o.disconnect();f.disconnect();v.disconnect();p.disconnect();voices--;};
   }
   function sequence(at,s,stage=0,level=1,boss=false){
-   const bpm=boss?166:148+(stage%3)*4,unit=60/bpm/4,bar=Math.floor(s/16),beat=s%16;
+   const phase=boss===true?1:Number(boss)||0,bpm=phase?158+phase*12:148+(stage%3)*4,unit=60/bpm/4,bar=Math.floor(s/16),beat=s%16;
    const roots=[0,-3,-5,-2],root=40+[0,2,-2,5][Math.floor(stage/3)%4]+roots[bar%4];
    // Kick, backbeat snare, offbeat cymbal and fills.
    if(beat%4===0||(boss&&beat===14))tone(at,145,.16,.48,'sine',music,42);
@@ -38,6 +38,8 @@ window.AbyssalAudio=(()=>{
    const melody=melodies[(stage+Math.floor(bar/4))%4],note=root+12+melody[Math.floor(beat/2)];
    if(beat%2===0){tone(at,hz(note),unit*1.8,.075,'square',music,hz(note),.15,true);if(level>=2)tone(at,hz(note+7),unit*1.7,.032,'triangle',music,hz(note+7),-.45,true);}
    if(level>=3||boss){const arp=[0,7,12,15][beat%4];tone(at,hz(root+24+arp),unit*.8,.045,'triangle',music,hz(root+24+arp),beat%2?.65:-.65,true);}
+   if(phase>=2&&beat%2===1)tone(at,hz(root+12),unit*.7,.055,'sawtooth',music,hz(root+12),-.3);
+   if(phase===3&&beat%4===2){tone(at,160,.12,.28,'sine',music,40);hiss(at,.08,.08,4500);}
    if(beat%8===0)for(const n of [0,7,12])tone(at,hz(root+12+n),unit*7,.024,'sawtooth',music,hz(root+12+n),n===0?-.6:.6);
    return unit;
   }
