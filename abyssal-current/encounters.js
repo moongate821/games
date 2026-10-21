@@ -1,11 +1,11 @@
 /* Deterministic encounter choreography; times are seconds from zone start. */
 window.AbyssalEncounters=(()=>{
- const names=['蛇行編隊','V字編隊','交差進入','旋回離脱','待伏せ突進','海底砲台','上下挟撃','重装護衛'];
+ const names=['蛇行編隊','V字編隊','交差進入','旋回離脱','待伏せ突進','海底砲台','上下挟撃','重装護衛','高速散布隊'];
  const orders=[[0,1,2,4,5,3,6,7],[1,5,0,6,4,7,2,3],[2,0,3,5,7,4,1,6]];
  function plan(stage,duration,ids){
   const events=[],waves=[];let time=.45;
   for(let wave=0;time<duration-5;wave++){
-   const kind=orders[stage%3][(wave+Math.floor(stage/3))%8],count=kind===5?4:kind===7?5:kind===4?3:kind===1?7:6;
+   const kind=wave%4===2?8:orders[stage%3][(wave+Math.floor(stage/3))%8],count=(kind===8?6:kind===5?4:kind===7?7:kind===4?5:kind===1?10:9)+Math.floor(stage/4);
    const base=155+((wave*73+stage*37)%210),group=wave;
    waves.push({time:time-.8,name:names[kind],kind,base,group});
    for(let slot=0;slot<count;slot++){
@@ -14,7 +14,7 @@ window.AbyssalEncounters=(()=>{
     if(kind===7&&slot===0)id=8;
     events.push({time:time+slot*(kind===1?.1:.28),kind,slot,count,base,group,id});
    }
-   time+=kind===7?5.2:4.0;
+   time+=(kind===7?4.2:3.1)-Math.min(.6,stage*.05);
   }
   return {events,waves};
  }
@@ -29,6 +29,7 @@ window.AbyssalEncounters=(()=>{
   if(k===5){x=1030-a*100;y=448;}
   if(k===6)y=s%2?360+Math.sin(a*1.5)*35:145-Math.sin(a*1.5)*35;
   if(k===7){x=1030-a*(s===0?95:130);y=s===0?270:270+(s%2?1:-1)*(45+Math.floor(s/2)*37);}
+  if(k===8){x=1030-a*(320+stage*6);y=base+Math.sin(a*4+s*.7)*85;}
   return {x,y:Math.max(90,Math.min(448,y))};
  }
  return {plan,pose,names};
