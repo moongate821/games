@@ -59,6 +59,7 @@ window.AbyssalAudio=(()=>{
    if([3,6,7,10].includes(id))hiss(at,dur,.22,id===10?450:1800,fx);
    if(level>=2)tone(at+.018,base*1.5,dur*.9,.045,'sawtooth',fx,base*.4,-.4);
    if(level>=3){tone(at+.035,base*2,dur,.04,'triangle',fx,base*.6,.5);hiss(at,.09,.045,5000,fx,.35);}
+   if(level>=4)tone(at+.05,base*3,dur,.035,'square',fx,base,.2);
    if(id>=6||id===3){tone(at,65+level*10,.2,.13,'sine',fx,28);}
   }
   function explosion(level=1,at=ctx.currentTime){tone(at,120,.5,.3,'sine',fx,25);hiss(at,.4+level*.1,.26,650,fx);if(level>=2)hiss(at+.07,.3,.12,2300,fx,-.5);if(level>=3)tone(at+.1,310,.32,.08,'sawtooth',fx,40,.5);}

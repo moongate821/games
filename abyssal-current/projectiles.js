@@ -60,7 +60,7 @@ window.AbyssalProjectiles=(()=>{
   g.shadowBlur=0;g.fillStyle='#fff7e5';g.beginPath();g.arc(0,0,Math.max(1.3,r*.28),0,TAU);g.fill();g.restore();
  }
  function pickup(g,v,time){
-  const weapon=v.type==='weapon',armor=v.type==='armor',speed=v.type==='speed',c=speed?'#efb2ff':weapon?'#ffd278':armor?'#77dbff':'#8dffcf',bob=Math.sin(time*3+v.x*.01)*3;
+  const weapon=v.type==='weapon',armor=v.type==='armor',speed=v.type==='speed',c=speed?'#efb2ff':weapon?'#ffd278':armor?'#77dbff':'#8dffcf',bob=0;
   g.save();g.translate(v.x,v.y+bob);g.shadowColor=c;g.shadowBlur=12;
   g.save();g.rotate(time*(weapon?1.5:-.8));g.strokeStyle=c+'66';g.lineWidth=1;g.beginPath();g.arc(0,0,22,.15,2.3);g.arc(0,0,22,3.3,5.4);g.stroke();g.restore();
   if(weapon){

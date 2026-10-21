@@ -35,11 +35,11 @@
   function start(stage,bossOnly=false){
     unlocked=new Set([0]);weapon=0;refreshWeapons();
     world={stage,startStage:stage,bossOnly,elapsed:0,scroll:0,score:0,spawn:1.2,kills:0,sequence:0,uid:0,chain:0,chainTimer:0,bestChain:0,burst:0,energy:35,boss:null,bossSpawned:false,clear:0,shake:0,flash:0,
-      enemies:[],shots:[],hostile:[],particles:[],effects:[],pickups:[],debris:[],player:{x:125,y:270,r:11,hp:4,maxHP:4,lives:3,inv:2,fire:0,bomb:0,level:1,speedLevel:0,tilt:0}};
+      enemies:[],shots:[],hostile:[],particles:[],effects:[],pickups:[],debris:[],player:{x:125,y:270,r:11,hp:2,maxHP:2,lives:3,inv:2,fire:0,bomb:0,level:1,speedLevel:0,tilt:0}};
     world.upgradesThisStage=0;world.plan=AbyssalEncounters.plan(stage,C.stages[stage].duration,C.stages[stage].enemies);world.eventIndex=0;world.waveIndex=0;world.groups={};world.notice=null;
     state='playing';hide();galleryControls.hidden=true;keys.clear();if(bossOnly)spawnBoss();sound(520,.18,'triangle');
   }
-  function nextStage(){if(world.stage===11||world.bossOnly){finish(true);return;}const p=world.player,score=world.score,lives=p.lives,hp=Math.min(4,p.hp+1),level=p.level,speedLevel=p.speedLevel,energy=world.energy,owned=[...unlocked],equipped=weapon,startStage=world.startStage;start(world.stage+1);world.startStage=startStage;world.score=score;world.player.lives=lives;world.player.hp=hp;world.player.level=level;world.player.speedLevel=speedLevel;world.energy=energy;unlocked=new Set(owned);selectWeapon(equipped);}
+  function nextStage(){if(world.stage===11||world.bossOnly){finish(true);return;}const p=world.player,score=world.score,lives=p.lives,hp=Math.min(p.maxHP,p.hp+1),level=p.level,speedLevel=p.speedLevel,energy=world.energy,owned=[...unlocked],equipped=weapon,startStage=world.startStage;start(world.stage+1);world.startStage=startStage;world.score=score;world.player.lives=lives;world.player.hp=hp;world.player.level=level;world.player.speedLevel=speedLevel;world.energy=energy;unlocked=new Set(owned);selectWeapon(equipped);}
   function finish(won){state=won?'victory':'gameover';best=Math.max(best,world.score);try{localStorage.setItem('abyssal-v2-best',best);}catch{}show(`<div class="kicker">${won?'MISSION COMPLETE':'SIGNAL LOST'}</div><h2>${won?'海域<span>制圧</span>':'GAME <span>OVER</span>'}</h2><p>SCORE ${world.score.toLocaleString()} / BEST ${best.toLocaleString()}</p><div class="menuButtons"><button class="primary" data-action="restart">もう一度出撃</button><button data-action="missions">海域を選択</button><button data-action="title">タイトル</button></div>`);}
   function pause(){if(state==='playing'){state='paused';keys.clear();show('<div class="kicker">SYSTEM HOLD</div><h2>PAUSED</h2><div class="menuButtons"><button class="primary" data-action="resume">再開する</button><button data-action="title">タイトルへ戻る</button></div>');}else if(state==='paused'){state='playing';hide();last=performance.now();}}
   document.getElementById('pauseButton').onclick=pause;
@@ -114,16 +114,17 @@
   function shot(x,y,vx,vy,extra={}){world.shots.push({id:++serial,x,y,ox:x,oy:y,vx,vy,t:0,life:2,r:4,damage:1,kind:weapon,level:world.player.level,color:C.weapons[weapon].color,hit:new Set(),...extra});}
   function fire(){const p=world.player,w=C.weapons[weapon],x=p.x+30,y=p.y,scale=1+(p.level-1)*.2;p.fire=w.cooldown;
     const add=(vx,vy,extra={})=>shot(x,y,vx,vy,{damage:scale,...extra});
-    if(weapon===0){add(720,0);if(p.level>=3){shot(x,y-9,700,0,{damage:.6,color:w.color});shot(x,y+9,700,0,{damage:.6,color:w.color});}}
-    if(weapon===1)for(let i=-2;i<=2;i++)add(Math.cos(i*.19)*580,Math.sin(i*.19)*580,{damage:.7*scale});
-    if(weapon===2)add(1300,0,{damage:.6*scale,pierce:true,r:6,life:.85,length:90});
-    if(weapon===3){add(280,-75,{homing:true,damage:3*scale,r:5,life:3});shot(x,y+10,280,75,{homing:true,damage:3*scale,r:5,life:3,color:w.color});}
-    if(weapon===4)add(500,0,{wave:true,pierce:true,damage:1.8*scale,r:12,life:2.2});
-    if(weapon===5)for(let i=0;i<2;i++)add(650,0,{helix:true,phase:i*Math.PI,damage:1.1*scale,r:5});
-    if(weapon===6)for(let i=-4;i<=4;i++)add(Math.cos(i*.12)*rand(470,700),Math.sin(i*.12)*650,{damage:2*scale,life:.55,r:5});
-    if(weapon===7)add(90,0,{mine:true,life:1.5,damage:9*scale,r:10});
-    if(weapon===8){let from={x,y},used=new Set();for(let n=0;n<4;n++){let target=living().filter(e=>!used.has(e)&&dist(e,from)<(n?190:360)).sort((a,b)=>dist(a,from)-dist(b,from))[0];if(!target)break;used.add(target);world.effects.push({kind:'lightning',x:from.x,y:from.y,tx:target.x,ty:target.y,life:.16,max:.16,color:w.color});damage(target,(4-n*.7)*scale);from={x:target.x,y:target.y};}if(!used.size)add(500,0,{damage:2,r:7});}
-    if(weapon===9){for(let i=0;i<3;i++){const a=t*2+i*TAU/3;shot(p.x+Math.cos(a)*40,p.y+Math.sin(a)*35,610,Math.sin(a)*45,{damage:1.1*scale,color:w.color});}}
+    const lv=p.level;
+    if(weapon===0){for(let i=0;i<lv;i++)shot(x,y+(i-(lv-1)/2)*11,720,0,{damage:scale,r:3+lv*.5});}
+    if(weapon===1)for(let i=-lv;i<=lv;i++)add(Math.cos(i*.15)*580,Math.sin(i*.15)*580,{damage:.7*scale});
+    if(weapon===2)for(let i=0;i<(lv===4?3:1);i++)shot(x,y+(i-(lv===4?1:0))*16,1300,0,{damage:.6*scale,pierce:true,r:4+lv,life:.85,length:65+lv*20});
+    if(weapon===3)for(let i=0;i<lv+1;i++)shot(x,y+(i-lv/2)*10,280,(i-lv/2)*100,{homing:true,damage:2.4*scale,r:5,life:3});
+    if(weapon===4){add(500,0,{wave:true,pierce:true,damage:1.8*scale,r:8+lv*3,life:2.2});if(lv===4)shot(x,y,500,0,{wave:true,wavePhase:Math.PI,pierce:true,damage:scale,r:14,life:2.2});}
+    if(weapon===5)for(let i=0;i<lv+1;i++)add(650,0,{helix:true,phase:i*TAU/(lv+1),damage:scale,r:4+lv*.5});
+    if(weapon===6)for(let i=-(lv+2);i<=lv+2;i++)add(Math.cos(i*.1)*rand(470,700),Math.sin(i*.1)*650,{damage:1.5*scale,life:.4+lv*.07,r:5});
+    if(weapon===7){add(90,0,{mine:true,life:1.5,damage:9*scale,r:8+lv*2,blastRadius:80+lv*20});if(lv===4)shot(x,y-28,140,0,{mine:true,life:1.7,damage:6*scale,r:12,blastRadius:130});}
+    if(weapon===8){let from={x,y},used=new Set();for(let n=0;n<lv+2;n++){let target=living().filter(e=>!used.has(e)&&dist(e,from)<(n?160+lv*20:330+lv*30)).sort((a,b)=>dist(a,from)-dist(b,from))[0];if(!target)break;used.add(target);world.effects.push({kind:'lightning',x:from.x,y:from.y,tx:target.x,ty:target.y,life:.16,max:.16,color:w.color});damage(target,Math.max(1,4-n*.5)*scale);from={x:target.x,y:target.y};}if(!used.size)add(500,0,{damage:2*scale,r:5+lv});}
+    if(weapon===9){for(let i=0;i<lv+2;i++){const a=t*2+i*TAU/(lv+2);shot(p.x+Math.cos(a)*40,p.y+Math.sin(a)*35,610,Math.sin(a)*45,{damage:scale,color:w.color,r:3+lv*.5});}}
     attackSound(weapon);
   }
   function activateBurst(){
@@ -134,8 +135,8 @@
     if(!muted)AbyssalAudio.unlock()?.overdrive(world.player.level);
     return true;
   }
-  function bomb(){const p=world.player;p.bomb=.8;shot(p.x+15,p.y+12,260,140,{kind:10,color:'#ffd18b',r:7,damage:8,life:1.8,gravity:170,bomb:true});attackSound(10);}
-  function explode(s){if(s.exploded)return;s.exploded=true;s.dead=true;const radius=s.mine?105:80;world.effects.push({kind:'ring',x:s.x,y:s.y,r:radius,life:.35,max:.35,color:s.color});particles(s.x,s.y,s.color,20);for(const e of living())if(dist(s,e)<radius+e.r)damage(e,s.damage);if(!muted)AbyssalAudio.unlock()?.explosion(world.player.level);}
+  function bomb(){const p=world.player;p.bomb=.8-(p.level-1)*.08;shot(p.x+15,p.y+12,260,140,{kind:10,color:'#ffd18b',r:7,damage:8*(1+(p.level-1)*.2),blastRadius:70+p.level*10,life:1.8,gravity:170,bomb:true});attackSound(10);}
+  function explode(s){if(s.exploded)return;s.exploded=true;s.dead=true;const radius=s.blastRadius||(s.mine?105:80);world.effects.push({kind:'ring',x:s.x,y:s.y,r:radius,life:.35,max:.35,color:s.color});particles(s.x,s.y,s.color,20);for(const e of living())if(dist(s,e)<radius+e.r)damage(e,s.damage);if(!muted)AbyssalAudio.unlock()?.explosion(world.player.level);}
   function spawnEnemy(entry){const def=C.enemies[entry.id],pose=AbyssalEncounters.pose({entry},0,world.stage);world.enemies.push({id:++serial,def,entry,...pose,base:pose.y,r:def.size*.27,hp:def.hp*(1+world.stage*.04),maxHP:def.hp,t:0,fire:entry.kind===8?.05:entry.kind===4?1.8:1.2+entry.slot*.13,flash:0,dead:false,volley:0,warning:null});}
   function enemyAttack(e){
     const a=e.warning.angle,x=e.x-18,y=e.y,k=e.entry.kind,speed=145+world.stage*3;
@@ -220,7 +221,7 @@
     for(const s of world.shots){if(s.dead)continue;s.t+=dt;s.life-=dt;
       if(s.homing){const target=nearest(s.x,s.y);if(target){let a=Math.atan2(target.y-s.y,target.x-s.x);s.vx+=(Math.cos(a)*410-s.vx)*Math.min(1,dt*4);s.vy+=(Math.sin(a)*410-s.vy)*Math.min(1,dt*4);}}
       if(s.gravity)s.vy+=s.gravity*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;
-      if(s.wave)s.y=s.oy+Math.sin(s.t*8)*45;if(s.helix)s.y=s.oy+Math.sin(s.t*13+s.phase)*26;
+      if(s.wave)s.y=s.oy+Math.sin(s.t*8+(s.wavePhase||0))*45;if(s.helix)s.y=s.oy+Math.sin(s.t*13+s.phase)*26;
       if(s.mine&&(s.life<=0||living().some(e=>dist(e,s)<e.r+65))){explode(s);continue;}
       if(s.bomb&&(s.life<=0||s.y>470)){explode(s);continue;}
       for(const e of living()){if(s.hit.has(e.id))continue;
@@ -233,9 +234,9 @@
     for(const e of world.effects){e.life-=dt;if(e.kind==='beam'&&p.x<e.tx&&Math.abs(p.y-e.y)<12)hitPlayer();}
     for(const v of world.particles){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vx*=.98;v.vy*=.98;}
     for(const v of world.debris){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=100*dt;v.a+=v.spin*dt;}
-    for(const v of world.pickups){v.life-=dt;const reach=dist(v,p);if(reach<135){v.x+=(p.x-v.x)*dt*4;v.y+=(p.y-v.y)*dt*4;}else v.x-=45*dt;if(dist(v,p)<25){v.life=0;if(v.type==='weapon'){unlocked.add(v.weaponId);world.upgradesThisStage++;selectWeapon(v.weaponId);world.notice={name:`新武装：${C.weapons[v.weaponId].name}`,until:world.elapsed+3};if(!muted)AbyssalAudio.unlock()?.upgrade(3);particles(p.x,p.y,'#ffd67e',25);}
+    for(const v of world.pickups){v.life-=dt;if(dist(v,p)<25){v.life=0;if(v.type==='weapon'){unlocked.add(v.weaponId);world.upgradesThisStage++;selectWeapon(v.weaponId);world.notice={name:`新武装：${C.weapons[v.weaponId].name}`,until:world.elapsed+3};if(!muted)AbyssalAudio.unlock()?.upgrade(3);particles(p.x,p.y,'#ffd67e',25);}
       else if(v.type==='speed'){p.speedLevel=Math.min(3,p.speedLevel+1);world.notice={name:`SPEED UP ${p.speedLevel}/3`,until:world.elapsed+2};sound(1100,.18,'triangle');particles(p.x,p.y,'#efb2ff',20);}
-      else if(v.type==='armor'){p.hp=Math.min(4,p.hp+1);sound(800,.14);}else{const old=p.level;p.level=Math.min(3,p.level+1);if(p.level>old&&!muted)AbyssalAudio.unlock()?.upgrade(p.level);else sound(800,.14);}world.score+=200;}}
+      else if(v.type==='armor'){p.hp=Math.min(p.maxHP,p.hp+1);sound(800,.14);}else{const old=p.level;p.level=Math.min(4,p.level+1);if(p.level>old&&!muted)AbyssalAudio.unlock()?.upgrade(p.level);else sound(800,.14);}world.score+=200;}}
     world.enemies=world.enemies.filter(e=>!e.dead&&e.x>-120);world.shots=world.shots.filter(s=>!s.dead&&s.life>0&&s.x<W+180&&s.y>20&&s.y<H);world.hostile=world.hostile.filter(s=>!s.dead&&s.life>0&&s.x>-30&&s.x<W+50&&s.y>40&&s.y<H-40);
     for(const name of ['effects','particles','debris','pickups'])world[name]=world[name].filter(v=>v.life>0);
     if(world.clear>0){world.clear-=dt;if(world.clear<=0){if(world.stage===11||world.bossOnly)finish(true);else nextStage();}}
@@ -316,7 +317,7 @@
     if(held('ShiftLeft')||held('ShiftRight')){g.strokeStyle='#fff';g.lineWidth=1;g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.stroke();circle(p.x,p.y,2,'#fff');}
     hud();
   }
-  function hud(){const p=world.player,z=C.stages[world.stage],w=C.weapons[weapon];g.fillStyle='#031725eb';g.fillRect(0,0,W,50);g.fillRect(0,H-40,W,40);text('SCORE',18,19,10,'#79b3bd');text(String(world.score).padStart(8,'0'),18,39,18);text(`${String(world.stage+1).padStart(2,'0')} / 12  ${z.en}`,W/2,31,15,z.color,'center');text(`BEST ${best}`,W-18,29,12,'#a7cdd2','right');text(`LIVES ${p.lives}`,18,H-15,13);text('ARMOR',120,H-15,11,'#86b7c0');for(let i=0;i<4;i++){g.fillStyle=i<p.hp?'#78e4dd':'#284651';g.fillRect(172+i*15,H-25,11,14);}text(`${w.en}  Lv.${p.level}`,280,H-15,14,w.color);text(`SPD ${p.speedLevel}/3  Q/E`,W-18,H-15,11,'#8ab9c6','right');
+  function hud(){const p=world.player,z=C.stages[world.stage],w=C.weapons[weapon];g.fillStyle='#031725eb';g.fillRect(0,0,W,50);g.fillRect(0,H-40,W,40);text('SCORE',18,19,10,'#79b3bd');text(String(world.score).padStart(8,'0'),18,39,18);text(`${String(world.stage+1).padStart(2,'0')} / 12  ${z.en}`,W/2,31,15,z.color,'center');text(`BEST ${best}`,W-18,29,12,'#a7cdd2','right');text(`LIVES ${p.lives}`,18,H-15,13);text('ARMOR',120,H-15,11,'#86b7c0');for(let i=0;i<p.maxHP;i++){g.fillStyle=i<p.hp?'#78e4dd':'#284651';g.fillRect(172+i*15,H-25,11,14);}text(`${w.en}  Lv.${p.level}/4`,280,H-15,14,w.color);text(`SPD ${p.speedLevel}/3  Q/E`,W-18,H-15,11,'#8ab9c6','right');
     if(world.clear>0&&!world.bossOnly&&world.stage<11){text('海域制圧',W/2,210,28,'#bfffee','center');text(`${C.stages[world.stage+1].name}へ自動航行 ${Math.ceil(world.clear)}`,W/2,245,16,'#ffdfad','center');}
     if(world.chain>1){text(`${world.chain} CHAIN ×${Math.min(4,1+Math.floor(world.chain/5))}`,164,22,12,'#ffdc9e');g.fillStyle='#f3cb75';g.fillRect(164,31,95*world.chainTimer/3.6,3);}
     const ready=world.energy>=100;g.fillStyle='#163f50';g.fillRect(535,H-25,130,11);g.fillStyle=ready?'#baffee':'#42bdcf';g.fillRect(535,H-25,130*world.energy/100,11);text(world.burst>0?'OVERDRIVE':ready?'C / LT : READY':`DRIVE ${Math.floor(world.energy)}%`,600,H-29,10,ready?'#d5ffcf':'#8bcbd4','center');
