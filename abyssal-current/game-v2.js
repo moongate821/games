@@ -201,6 +201,7 @@
     const moveSpeed=held('ShiftLeft')||held('ShiftRight')?140:280+p.speedLevel*35;
     let dx=(held('ArrowRight')||held('KeyD')?1:0)-(held('ArrowLeft')||held('KeyA')?1:0),dy=(held('ArrowDown')||held('KeyS')?1:0)-(held('ArrowUp')||held('KeyW')?1:0);const len=Math.hypot(dx,dy)||1;
     p.x=clamp(p.x+dx/len*dt*moveSpeed,35,W-45);p.y=clamp(p.y+dy/len*dt*moveSpeed,82,H-72);p.tilt+=(dy*.12-p.tilt)*Math.min(1,dt*9);
+    if(p.inv<=0&&world.clear<=0&&touchesScenery(p))hitPlayer();
     if((autoFire||held('Space')||held('KeyZ'))&&p.fire<=0)fire();if(held('KeyX')&&p.bomb<=0)bomb();
     world.chainTimer=Math.max(0,world.chainTimer-dt);if(!world.chainTimer)world.chain=0;
     if(world.burst>0){world.burst=Math.max(0,world.burst-dt);for(const e of living())if(targetOf(e).x>p.x&&Math.abs(targetOf(e).y-p.y)<targetOf(e).r+30)strike(e,32*dt*(1+(p.level-1)*.2),targetOf(e).x,targetOf(e).y,true);
@@ -242,7 +243,7 @@
     for(const e of world.effects){e.life-=dt;if(e.kind==='beam'&&p.x<e.tx&&Math.abs(p.y-e.y)<12)hitPlayer();}
     for(const v of world.particles){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vx*=.98;v.vy*=.98;}
     for(const v of world.debris){v.life-=dt;v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=100*dt;v.a+=v.spin*dt;}
-    for(const v of world.pickups){v.life-=dt;if(dist(v,p)<25){v.life=0;if(v.type==='weapon'){unlocked.add(v.weaponId);world.upgradesThisStage++;selectWeapon(v.weaponId);world.notice={name:`新武装：${C.weapons[v.weaponId].name}`,until:world.elapsed+3};if(!muted)AbyssalAudio.unlock()?.upgrade(3);particles(p.x,p.y,'#ffd67e',25);}
+    for(const v of world.pickups){v.life-=dt;v.x-=dt*60*.9;if(v.x < -30)v.life=0;if(v.life>0&&dist(v,p)<25){v.life=0;if(v.type==='weapon'){unlocked.add(v.weaponId);world.upgradesThisStage++;selectWeapon(v.weaponId);world.notice={name:`新武装：${C.weapons[v.weaponId].name}`,until:world.elapsed+3};if(!muted)AbyssalAudio.unlock()?.upgrade(3);particles(p.x,p.y,'#ffd67e',25);}
       else if(v.type==='speed'){p.speedLevel=Math.min(3,p.speedLevel+1);world.notice={name:`SPEED UP ${p.speedLevel}/3`,until:world.elapsed+2};sound(1100,.18,'triangle');particles(p.x,p.y,'#efb2ff',20);}
       else if(v.type==='armor'){p.hp=Math.min(p.maxHP,p.hp+1);sound(800,.14);}else{const old=p.level;p.level=Math.min(4,p.level+1);if(p.level>old&&!muted)AbyssalAudio.unlock()?.upgrade(p.level);else sound(800,.14);}world.score+=200;}}
     world.enemies=world.enemies.filter(e=>!e.dead&&e.x>-120);world.shots=world.shots.filter(s=>!s.dead&&s.life>0&&s.x<W+180&&s.y>20&&s.y<H);world.hostile=world.hostile.filter(s=>!s.dead&&s.life>0&&s.x>-30&&s.x<W+50&&s.y>40&&s.y<H-40);
@@ -271,13 +272,33 @@
       g.fillStyle=i%3===0?'#041c29':z.color+'26';g.beginPath();g.ellipse(x,y,1+i%5,.5+i%2,0,0,TAU);g.fill();
     }
   }
-  function scenery(stage,scroll,front=false){
-    const z=C.stages[stage],spacing=front?347:253,speed=front?.9:.9;
-    // Fixed world indices keep silhouettes and scale continuous at wrap boundaries.
-    const first=Math.floor(scroll*speed/spacing)-1;
+  function sceneryProps(stage,scroll,front=false){
+    const spacing=front?347:253,first=Math.floor(scroll*.9/spacing)-1,props=[];
+    const depth=world&&world.stage===stage?Math.min(3,world.elapsed/C.stages[stage].duration*4):0;
     for(let i=first;i<first+7;i++){
-      const n=((i%17)+17)%17,x=i*spacing-scroll*speed+Math.sin(i*9)*42;
-      const depth=world&&world.stage===stage?Math.min(3,world.elapsed/C.stages[stage].duration*4):0;const size=(front?100+n%3*17:92+n%4*15)*(1+depth*.1),y=seabed(x,scroll)+(front?34:8),col=n%3===0?1:0;
+      const n=((i%17)+17)%17,x=i*spacing-scroll*.9+Math.sin(i*9)*42;
+      const size=(front?100+n%3*17:92+n%4*15)*(1+depth*.1),y=seabed(x,scroll)+(front?34:8),col=n%3===0?1:0;
+      props.push({i,x,y,size,col});
+    }return props;
+  }
+  // Sample the same animated sprite alpha used for drawing, so transparent corners are safe.
+  const obstacleCanvas=document.createElement('canvas');obstacleCanvas.width=32;obstacleCanvas.height=32;
+  const obstacleG=obstacleCanvas.getContext('2d',{willReadFrequently:true});
+  function touchesScenery(p){
+    const z=C.stages[world.stage];obstacleG.clearRect(0,0,32,32);obstacleG.save();obstacleG.translate(16-p.x,16-p.y);
+    let nearby=false;
+    for(const front of [false,true])for(const q of sceneryProps(world.stage,world.scroll,front)){
+      if(Math.abs(q.x-p.x)>q.size*.65+p.r||p.y+p.r<q.y-q.size||p.y-p.r>q.y)continue;
+      nearby=true;R.prop(obstacleG,z.props,z.propRow,q.col,q.x,q.y,q.size,t+q.i);
+    }
+    obstacleG.restore();if(!nearby)return false;
+    const pixels=obstacleG.getImageData(0,0,32,32).data;
+    for(let y=5;y<28;y++)for(let x=5;x<28;x++)if((x-16)**2+(y-16)**2<=p.r*p.r&&pixels[(y*32+x)*4+3]>100)return true;
+    return false;
+  }
+  function scenery(stage,scroll,front=false){
+    const z=C.stages[stage];
+    for(const {i,x,y,size,col} of sceneryProps(stage,scroll,front)){
       contactShadow(x,y-2,size*.46,.7);
       g.save();g.filter=front?'brightness(0.62) saturate(0.7)':'brightness(0.78) saturate(0.75)';
       R.prop(g,z.props,z.propRow,col,x,y,size,t+i);g.restore();
