@@ -1,10 +1,10 @@
-import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261024d';
-import {chooseBotMove} from './ai.js?v=20261024d';
-import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261024d';
-import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024d';
-import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261024d';
-import {initFleetFx,playMoveFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261024d';
-import {wireModel} from './fleet-models.js?v=20261024d';
+import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261024f';
+import {chooseBotMove} from './ai.js?v=20261024f';
+import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261024f';
+import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024f';
+import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261024f';
+import {initFleetFx,playMoveFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261024f';
+import {wireModel} from './fleet-models.js?v=20261024f';
 
 const glyph={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
 const els=Object.fromEntries(['boards','newGame','undo','mode','difficulty','difficultyWrap','toggleAuto','theme','themePreview','themeTitle','themeDescription','themeSource','showMoves','moveToggleState','claimDraw','status','detail','gameTime','moveNo','captureNo','checkNo','captureWhite','captureBlack','history','copyLog','promotionDialog','promotionChoices','view2d','view3d','viewer','viewport','world','cameraInfo','topView','resetView','layerFocus','layerFocusWrap','focusNotice','focusMessage','showAllLayers','bgmSelect','bgmVolume','gameMode','fleetSe','seWrap','rulesChess','rulesFleet','captureLabel','checkLabel','capturedTitle','capturedWhiteLabel','capturedBlackLabel'].map(x=>[x,document.getElementById(x)]));
@@ -17,12 +17,12 @@ const RULES={
 const R=()=>RULES[fleetMode?'fleet':'chess'];
 const FLEET_CLASS={k:'DN',q:'PL',r:'BB',b:'CV',n:'TB',p:'FR'};
 const iconCache=new Map();
-// 銀河覇権のワイヤーフレーム艦を、平面表示用の小さな画像にする(斜め上から見下ろす。白は艦首が上、黒は下)
+// 銀河覇権のワイヤーフレーム艦を、平面表示用の小さな画像にする(真上から少し手前に傾けて見る。艦首は真っ直ぐ相手側: 白は上、黒は下)
 function shipIcon(kind,who){
   const key=kind+who;if(iconCache.has(key))return iconCache.get(key);
   const m=wireModel(FLEET_CLASS[kind],who==='w'?'empire':'republic'),S=96,c=document.createElement('canvas');c.width=c.height=S;
-  const g=c.getContext('2d'),k=kind==='p'||kind==='n'?66:kind==='q'?60:84,dir=who==='w'?-1:1,yaw=.35,cy=Math.cos(yaw),sy=Math.sin(yaw);
-  const pr=([x,y,z])=>{const X=x*cy+z*sy,Z=-x*sy+z*cy;return[S/2+X*k*dir*-1,S/2+Z*k*.9*dir-y*k*.45];};
+  const g=c.getContext('2d'),k=kind==='p'||kind==='n'?80:kind==='q'?72:92,dir=who==='w'?-1:1;
+  const pr=([x,y,z])=>[S/2-x*k*dir,S/2+z*k*.92*dir-y*k*.35];
   const P=m.v.map(pr),col=who==='w'?['#ffc45a','#fff2c8']:['#5ab8ff','#d6f6ff'];
   g.lineCap='round';
   for(const [list,cl,w,blur] of [[m.e,col[0],1.4,0],[m.acc,col[1],1.6,6]]){g.strokeStyle=cl;g.lineWidth=w;g.shadowColor=cl;g.shadowBlur=blur;g.beginPath();for(const [a,b] of list){g.moveTo(...P[a]);g.lineTo(...P[b]);}g.stroke();}

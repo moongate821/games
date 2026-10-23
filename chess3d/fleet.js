@@ -3,7 +3,7 @@
 //  ・3回目の攻撃で撃沈。撃沈した手だけ、攻撃した艦がそのマスへ進む(途中の攻撃では位置は動かない)。
 //  ・キングは「旗艦」。防御3枚(FLAG_HP)を3回の攻撃ではがされると撃沈され、その側の負け。
 //  ・チェック・チェックメイト・キャスリング・アンパッサンはなし。
-import {coord,id,valid,side,opponent,label,vectors,rookDirs,bishopDirs,knightDirs} from './engine.js?v=20261024d';
+import {coord,id,valid,side,opponent,label,vectors,rookDirs,bishopDirs,knightDirs} from './engine.js?v=20261024f';
 
 export const SHIP_HP=3, FLAG_HP=3;
 // 駒 → 艦種(銀河覇権の艦種ID)。白=星冠帝国軍(empire)、黒=地球星域防衛軍(republic)
@@ -99,7 +99,10 @@ export function fleetPlay(s,m){
   n.turn=opponent(who);n.ep=-1;n.last=info;
   if(info.sink&&target.toLowerCase()==='k')n.result=`${FACTION_NAME[who]}の勝ち（旗艦撃沈）`;
   else if(!fleetMoves(n).length)n.result='引き分け（動ける艦がない）';
-  else if(n.halfmove>=150)n.result='引き分け（150手動きなし）';
+  else if(n.halfmove>=JUDGE_QUIET||n.fullmove>JUDGE_TOTAL){   // 判定: 残った戦力(防御の残りも含む)が大きい側の勝ち
+    const w=fleetPower(n,'w'),b=fleetPower(n,'b'),why=n.halfmove>=JUDGE_QUIET?'攻撃なし50往復':'200往復';
+    n.result=Math.abs(w-b)<50?`引き分け（${why}・戦力互角）`:`${FACTION_NAME[w>b?'w':'b']}の判定勝ち（${why}・残存戦力 ${Math.round(Math.max(w,b))}対${Math.round(Math.min(w,b))}）`;
+  }
   return n;
 }
 export function fleetMoveText(s,m){
@@ -109,14 +112,30 @@ export function fleetMoveText(s,m){
   const t=s.board[m.to].toLowerCase(),left=s.hp[m.to]-1;
   return `${name} ${label(m.from)}が ${SHIP_NAME[t]} ${label(m.to)}を攻撃 ${left>0?`(防御残り${left})`:'→撃沈'}`;
 }
+export const JUDGE_QUIET=100, JUDGE_TOTAL=200;
+// 残存戦力: 艦の価値×防御の残り割合。旗艦は500として数える
+export function fleetPower(s,who){
+  let v=0;for(let i=0;i<192;i++){const p=s.board[i];if(p!=='.'&&side(p)===who){const t=p.toLowerCase();v+=(t==='k'?500:VAL[t])*s.hp[i]/hpOf(t);}}
+  return v;
+}
 export function flagshipHp(s,who){
   const i=s.board.indexOf(who==='w'?'K':'k');return i<0?0:s.hp[i];
 }
 
 // ---- AI(1手読み+相手の最善の返し) ----
 const VAL={p:100,n:300,b:330,r:500,q:900,k:2500};
+// 終盤に逃げる旗艦を追い詰められず引き分けばかりになったため(手強い同士16局すべて引分)、
+// 艦が減るほど「敵旗艦に近づく・敵旗艦の逃げ道を減らす・旗艦を射程に入れる」を重く見る。
+function kingFreedom(s,k,who){
+  const c=coord(k);let n=0;
+  for(const [dx,dy,dz] of vectors){const x=c.x+dx,y=c.y+dy,z=c.z+dz;if(valid(x,y,z)&&side(s.board[id(x,y,z)])!==who)n++;}
+  return n;
+}
 function evalFleet(s){   // 黒が有利なら正
-  let score=0;
+  let score=0,count=0;
+  const kings={w:s.board.indexOf('K'),b:s.board.indexOf('k')};
+  for(let i=0;i<192;i++)if(s.board[i]!=='.')count++;
+  const late=Math.max(0,Math.min(1,(24-count)/18));   // 32隻→0、6隻以下→1
   for(let i=0;i<192;i++){
     const p=s.board[i];if(p==='.')continue;
     const t=p.toLowerCase(),who=side(p),c=coord(i);
@@ -124,23 +143,33 @@ function evalFleet(s){   // 黒が有利なら正
     if(t==='k'&&s.hp[i]<hpOf(t))worth-=(hpOf(t)-s.hp[i])*250;   // 旗艦が削られると大きく減点
     const center=(3.5-Math.abs(c.x-3.5))+(3.5-Math.abs(c.y-3.5));
     if(t!=='k')worth+=center*3+(t==='p'?(who==='b'?7-c.y:c.y)*6:0);
+    const ek=kings[opponent(who)];
+    if(t!=='k'&&ek>=0){const e=coord(ek),d=Math.max(Math.abs(e.x-c.x),Math.abs(e.y-c.y),Math.abs(e.z-c.z));worth+=(7-d)*(3+28*late);}
     score+=(who==='b'?1:-1)*worth;
   }
   score+=(s.hits.b-s.hits.w)*18;
+  for(const who of ['w','b']){
+    const ek=kings[opponent(who)],sign=who==='b'?1:-1;if(ek<0)continue;
+    score+=sign*(26-kingFreedom(s,ek,opponent(who)))*(2+10*late);
+    if(raw(s,who).some(m=>m.to===ek))score+=sign*(40+120*late);
+  }
   return score;
 }
+// 終局の勝者(旗艦撃沈・判定勝ちとも、結果の文に勝った軍の名前が入る)。黒の勝ちなら正
+export const winnerOf=r=>!r||!r.includes('勝ち')?null:r.startsWith(FACTION_NAME.w)?'w':'b';
+const resultScore=r=>{const w=winnerOf(r);return w==='b'?1e6:w==='w'?-1e6:0;};
 export function chooseFleetMove(s,difficulty='strong'){
   const moves=fleetMoves(s);if(!moves.length)return null;
   const max=s.turn==='b';let best=max?-Infinity:Infinity,pick=moves[0];
   for(const m of moves){
     const a=fleetPlay(s,m);let score;
-    if(a.result)score=a.result.includes('勝ち')?(max?1e6:-1e6):0;
+    if(a.result)score=resultScore(a.result);
     else if(difficulty==='easy')score=evalFleet(a);
     else{
       let worst=max?Infinity:-Infinity;
       for(const r of fleetMoves(a)){
         const b=fleetPlay(a,r);
-        const v=b.result?(b.result.includes('勝ち')?(max?-1e6:1e6):0):evalFleet(b);
+        const v=b.result?resultScore(b.result):evalFleet(b);
         worst=max?Math.min(worst,v):Math.max(worst,v);
       }
       score=worst*.85+evalFleet(a)*.15;

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {wireModel} from './fleet-models.js?v=20261024d';
+import {wireModel} from './fleet-models.js?v=20261024f';
 
 const files={k:'king',q:'queen',r:'rook',b:'bishop',n:'knight',p:'pawn'};
 const folders={druid:'celtic-pieces-lite',standard:'standard-pieces',lattice:'lattice-pieces',crown:'crown-pieces'};
@@ -48,7 +48,7 @@ function makeTeamMaterial(source,side){
 
 // 艦隊運用モード: 銀河覇権のワイヤーフレーム艦。白=星冠帝国軍(琥珀)、黒=地球星域防衛軍(青)
 const FLEET_CLASS={k:'DN',q:'PL',r:'BB',b:'CV',n:'TB',p:'FR'};
-const FLEET_SIZE={k:1.02,q:.78,r:.92,b:.86,n:.62,p:.58};   // マス幅に対する艦の長さ
+const FLEET_SIZE={k:1.22,q:.95,r:1.1,b:1.04,n:.8,p:.76};   // マス幅に対する艦の長さ
 const FLEET_COL={white:[0xffc45a,0xfff0c0],black:[0x5ab8ff,0xd0f4ff]};
 function fleetObject(kind,side){
   const m=wireModel(FLEET_CLASS[kind],side==='white'?'empire':'republic');
@@ -61,8 +61,13 @@ function fleetObject(kind,side){
 }
 function addFleetPiece(cell,kind,side){
   const group=new THREE.Group(),ship=fleetObject(kind,side);
-  ship.position.y=.18;   // 盤から少し浮かせる
-  group.add(ship);pieces.add(group);
+  const HOVER=.62;ship.position.y=HOVER;   // 盤から浮かせる(艦の長さに対する高さ)
+  // 真下の光の輪と、艦と盤をつなぐ浮遊の光線(浮いていることが分かるように)
+  const col=FLEET_COL[side][0],ring=[],N=24;
+  for(let i=0;i<N;i++){const a=i/N*Math.PI*2,b=(i+1)/N*Math.PI*2;ring.push(Math.cos(a)*.22,0,Math.sin(a)*.22,Math.cos(b)*.22,0,Math.sin(b)*.22);}
+  ring.push(0,0,0,0,HOVER-.04,0);
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(ring,3));
+  group.add(ship,new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.45})));pieces.add(group);
   entries.push({cell,group,height:1,footprint:1/FLEET_SIZE[kind],kind,side,fleet:true});
 }
 function addPiece(cell,kind,side){
