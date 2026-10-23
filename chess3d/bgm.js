@@ -17,6 +17,9 @@ export const TRACKS=[
   {id:'castle',name:'古城の回廊',bpm:76,root:50,scale:'harmonic',prog:[0,5,3,4,0,3,4,0],pad:'square',padGain:.03,arpWave:'sawtooth',arp:[0,1,2,3,2,1,0,1,2,3,2,1,3,2,1,0],lead:{wave:'sawtooth',density:.3,range:[7,13],gain:.035},bass:'long',drums:'none',seed:71},
   {id:'snow',name:'雪の朝',bpm:60,root:55,scale:'major',prog:[0,4,5,3,0,4,3,0],pad:'sine',padGain:.07,arpWave:'triangle',arp:[0,-1,1,-1,2,-1,1,-1,3,-1,2,-1,1,-1,2,-1],lead:{wave:'sine',density:.4,range:[10,17],gain:.09,bell:true},bass:'long',drums:'none',seed:83},
   {id:'neon',name:'ネオン都市',bpm:112,root:42,scale:'minor',prog:[0,0,5,6,0,0,3,4],pad:'sawtooth',padGain:.04,arpWave:'sawtooth',arp:[0,0,2,0,1,1,2,1,0,0,2,0,3,3,2,1],lead:{wave:'square',density:.35,range:[7,14],gain:.04},bass:'drive',drums:'four',seed:97},
+  {id:'fleet-battle',name:'艦隊運用 · 交戦',bpm:132,root:40,scale:'phrygian',prog:[0,0,1,0,5,5,6,4],pad:'sawtooth',padGain:.045,arpWave:'sawtooth',arp:[0,0,2,0,1,0,2,3,0,0,2,0,3,2,1,2],lead:{wave:'square',density:.42,range:[7,14],gain:.045},bass:'drive',drums:'four',seed:131},
+  {id:'fleet-cruise',name:'艦隊運用 · 星間航行',bpm:96,root:45,scale:'minor',prog:[0,5,3,6,0,5,4,4],pad:'sawtooth',padGain:.04,arpWave:'triangle',arp:[0,-1,1,2,-1,1,2,3,0,-1,1,2,-1,3,2,1],lead:{wave:'triangle',density:.35,range:[7,15],gain:.06},bass:'eighth',drums:'pulse',seed:149},
+  {id:'fleet-flag',name:'艦隊運用 · 旗艦の誓い',bpm:74,root:43,scale:'dorian',prog:[0,3,4,0,5,3,6,4],pad:'square',padGain:.03,arpWave:'sawtooth',arp:[0,-1,1,-1,2,-1,3,-1,2,-1,1,-1,0,-1,2,-1],lead:{wave:'sawtooth',density:.3,range:[7,13],gain:.04},bass:'long',drums:'march',seed:163},
   {id:'victory',name:'静かな勝利',bpm:88,root:48,scale:'major',prog:[0,4,5,3,0,4,3,4],pad:'triangle',padGain:.07,arpWave:'sine',arp:[0,-1,1,-1,2,-1,3,-1,2,-1,1,-1,2,-1,1,-1],lead:{wave:'triangle',density:.5,range:[7,16],gain:.08},bass:'long',drums:'soft',seed:101}
 ];
 

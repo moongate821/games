@@ -116,3 +116,33 @@ body[data-theme="crown"] .inspiration-card{background:linear-gradient(155deg,#33
 .inspiration-card img{height:auto;max-height:260px;object-fit:contain;object-position:center;padding:6px}
 @media(max-width:1300px){.inspiration-card img{height:auto}}
 .bgm-status{font-size:11px;color:#9fe9dd;min-width:9em}
+
+/* ---- 艦隊運用モード(2026-10-24) ----
+   盤・背景の画像は assets/fleet/ に置くと自動で使われる(Geminiに依頼中。無いときはグラデーションで代用)。 */
+body[data-mode="fleet"]{background:url(assets/fleet/bg-space.webp) center/cover fixed,radial-gradient(ellipse at 50% 0%,#18244a 0%,#070b1a 60%,#02040a 100%)}
+body[data-mode="fleet"] .square.light{background:url(assets/fleet/tile-light.webp) center/cover,linear-gradient(145deg,#1c3354,#132743)}
+body[data-mode="fleet"] .square.dark{background:url(assets/fleet/tile-dark.webp) center/cover,linear-gradient(145deg,#0c1830,#081224)}
+body[data-mode="fleet"] .square:not(.void){box-shadow:inset 0 0 0 1px #4fa3ff2e}
+body[data-mode="fleet"] .plane,body[data-mode="fleet"] .plane[data-level],body[data-mode="fleet"] .chessboard{border:22px solid transparent!important;border-image:url(assets/fleet/board-frame.webp) 7% / 22px stretch!important;background:#050a18!important;box-shadow:0 0 24px #2a7fff44,0 12px 34px #000a!important}
+body[data-mode="fleet"] .layer-card,body[data-mode="fleet"] .viewer,body[data-mode="fleet"] .card,body[data-mode="fleet"] .status-card,body[data-mode="fleet"] .controlbar,body[data-mode="fleet"] .viewbar{background:linear-gradient(155deg,#14203ae0,#0a1226eb)!important;border-color:#3a5f8f!important}
+body[data-mode="fleet"] .layer-card{border-top:3px solid #ffb84a!important}
+body[data-mode="fleet"] .cell3d.light{background:#1c3a63e6!important}
+body[data-mode="fleet"] .cell3d.dark{background:#0a1a33e6!important}
+body[data-mode="fleet"] .inspiration-card{display:none}
+body[data-mode="fleet"] .square.light{background:url(assets/fleet/tile-light.webp) center/cover,linear-gradient(145deg,#1c3354,#132743)!important}
+body[data-mode="fleet"] .square.dark{background:url(assets/fleet/tile-dark.webp) center/cover,linear-gradient(145deg,#0c1830,#081224)!important}
+body[data-mode="fleet"] .viewport{background:url(assets/fleet/bg-space.webp) center/cover,radial-gradient(circle at 50% 55%,#152a4a 0,#081226 58%,#030812 100%)}
+.piece.ship,.piece3d.ship{background:none!important;border:0!important;box-shadow:none!important;text-shadow:none}
+.piece.ship:before,.piece3d.ship:before{display:none}
+.piece.ship img{width:118%;height:118%;object-fit:contain;filter:drop-shadow(0 0 4px #000)}
+.piece3d.ship img{width:100%;height:100%;object-fit:contain}
+.captured-piece.ship{background:#0b1426;border-color:#36557a}.captured-piece.ship img{width:100%;height:100%;object-fit:contain}
+.hp-pips{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);display:flex;gap:2px;pointer-events:none;z-index:2}
+.hp-pips i{width:6px;height:6px;border-radius:50%;background:#7fd0ff;box-shadow:0 0 5px #7fd0ff}
+.hp-pips.white i{background:#ffd27a;box-shadow:0 0 5px #ffb340}
+.hp-pips.flag i{width:7px;height:7px;outline:1px solid #fff8}
+.hp-pips i.lost{background:#2a2f3c;box-shadow:none}
+.cell3d .hp-pips{bottom:2%;transform:translateX(-50%) translateZ(20px)}
+.fleet-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+body[data-mode="fleet"]{overflow-x:hidden}
+body[data-mode="fleet"] .square.capture:after,body[data-mode="fleet"] .cell3d.capture:after{border-color:#ff5d5d;box-shadow:0 0 10px #ff4d4d}

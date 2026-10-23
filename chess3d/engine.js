@@ -183,3 +183,4 @@ export function moveText(s,m) {
   if(m.castle) return coord(m.to).x===6?'O-O':'O-O-O';
   return `${TYPES[p.toLowerCase()]} ${label(m.from)}→${label(m.to)}${s.board[m.to]!=='.'||m.enPassant?' ×':''}${m.promotion?'='+TYPES[m.promotion]:''}`;
 }
+export {vectors,rookDirs,bishopDirs,knightDirs};

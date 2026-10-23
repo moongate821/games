@@ -1,11 +1,49 @@
-import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261012i';
-import {chooseBotMove} from './ai.js?v=20261012i';
-import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261012i';
-import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261012i';
+import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261024d';
+import {chooseBotMove} from './ai.js?v=20261024d';
+import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261024d';
+import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024d';
+import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261024d';
+import {initFleetFx,playMoveFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261024d';
+import {wireModel} from './fleet-models.js?v=20261024d';
 
 const glyph={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-const els=Object.fromEntries(['boards','newGame','undo','mode','difficulty','difficultyWrap','toggleAuto','theme','themePreview','themeTitle','themeDescription','themeSource','showMoves','moveToggleState','claimDraw','status','detail','gameTime','moveNo','captureNo','checkNo','captureWhite','captureBlack','history','copyLog','promotionDialog','promotionChoices','view2d','view3d','viewer','viewport','world','cameraInfo','topView','resetView','layerFocus','layerFocusWrap','focusNotice','focusMessage','showAllLayers','bgmSelect','bgmVolume'].map(x=>[x,document.getElementById(x)]));
-let states=[initial()], log=[], selected=-1, lastMove=null, thinking=false, botTimer=null,botWorker=null,botRun=0;
+const els=Object.fromEntries(['boards','newGame','undo','mode','difficulty','difficultyWrap','toggleAuto','theme','themePreview','themeTitle','themeDescription','themeSource','showMoves','moveToggleState','claimDraw','status','detail','gameTime','moveNo','captureNo','checkNo','captureWhite','captureBlack','history','copyLog','promotionDialog','promotionChoices','view2d','view3d','viewer','viewport','world','cameraInfo','topView','resetView','layerFocus','layerFocusWrap','focusNotice','focusMessage','showAllLayers','bgmSelect','bgmVolume','gameMode','fleetSe','seWrap','rulesChess','rulesFleet','captureLabel','checkLabel','capturedTitle','capturedWhiteLabel','capturedBlackLabel'].map(x=>[x,document.getElementById(x)]));
+// ---- ゲームモード(三次元チェス / 艦隊運用モード) ----
+let fleetMode=localStorage.getItem('threeLayerChess.gameMode')==='fleet';
+const RULES={
+  chess:{initial,legalMoves,play,inCheck,canClaimDraw,moveText},
+  fleet:{initial:fleetInitial,legalMoves:s=>fleetMoves(s),play:fleetPlay,inCheck:()=>false,canClaimDraw:()=>false,moveText:fleetMoveText}
+};
+const R=()=>RULES[fleetMode?'fleet':'chess'];
+const FLEET_CLASS={k:'DN',q:'PL',r:'BB',b:'CV',n:'TB',p:'FR'};
+const iconCache=new Map();
+// 銀河覇権のワイヤーフレーム艦を、平面表示用の小さな画像にする(斜め上から見下ろす。白は艦首が上、黒は下)
+function shipIcon(kind,who){
+  const key=kind+who;if(iconCache.has(key))return iconCache.get(key);
+  const m=wireModel(FLEET_CLASS[kind],who==='w'?'empire':'republic'),S=96,c=document.createElement('canvas');c.width=c.height=S;
+  const g=c.getContext('2d'),k=kind==='p'||kind==='n'?66:kind==='q'?60:84,dir=who==='w'?-1:1,yaw=.35,cy=Math.cos(yaw),sy=Math.sin(yaw);
+  const pr=([x,y,z])=>{const X=x*cy+z*sy,Z=-x*sy+z*cy;return[S/2+X*k*dir*-1,S/2+Z*k*.9*dir-y*k*.45];};
+  const P=m.v.map(pr),col=who==='w'?['#ffc45a','#fff2c8']:['#5ab8ff','#d6f6ff'];
+  g.lineCap='round';
+  for(const [list,cl,w,blur] of [[m.e,col[0],1.4,0],[m.acc,col[1],1.6,6]]){g.strokeStyle=cl;g.lineWidth=w;g.shadowColor=cl;g.shadowBlur=blur;g.beginPath();for(const [a,b] of list){g.moveTo(...P[a]);g.lineTo(...P[b]);}g.stroke();}
+  const url=c.toDataURL();iconCache.set(key,url);return url;
+}
+function pieceBody(el,p,index,s){
+  const who=side(p),type=p.toLowerCase();
+  if(!fleetMode){el.textContent=glyph[type];return;}
+  el.classList.add('ship');el.textContent='';
+  const img=document.createElement('img');img.src=shipIcon(type,who);img.alt='';el.append(img);
+  el.title=`${FACTION_NAME[who]} ${SHIP_NAME[type]} 防御 ${s.hp[index]}`;
+}
+function hpPips(cell,p,index,s){
+  if(!fleetMode||p==='.')return;
+  const max=p.toLowerCase()==='k'?FLAG_HP:3,hp=s.hp[index],box=document.createElement('span');
+  box.className=`hp-pips ${side(p)==='w'?'white':'black'}${p.toLowerCase()==='k'?' flag':''}`;box.setAttribute('aria-label',`防御 ${hp}/${max}`);
+  for(let i=0;i<max;i++){const d=document.createElement('i');if(i>=hp)d.className='lost';box.append(d);}
+  cell.append(box);
+}
+function cellEl(index){return viewMode==='3d'?els.world.querySelector(`.cell3d[data-index="${index}"]`):els.boards.querySelector(`.square[data-index="${index}"]`);}
+let states=[R().initial()], log=[], selected=-1, lastMove=null, thinking=false, botTimer=null,botWorker=null,botRun=0;
 let clockStartedAt=null, elapsedMs=0;
 let autoPaused=false;
 let showLegalMoves=localStorage.getItem('threeLayerChess.showMoves')!=='off';
@@ -29,14 +67,14 @@ function updateClock(){
 function stopClock(){if(clockStartedAt!==null){elapsedMs+=Date.now()-clockStartedAt;clockStartedAt=null;}updateClock();}
 
 function drawBoards(){
-  const s=current(), moves=!showLegalMoves||selected<0?[]:legalMoves(s).filter(m=>m.from===selected);
+  const s=current(), moves=!showLegalMoves||selected<0?[]:R().legalMoves(s).filter(m=>m.from===selected);
   els.boards.replaceChildren();
   for(const z of [1,2,0]){
     const card=document.createElement('section'); card.className='layer-card';
     const heading=document.createElement('div');heading.className='layer-title';heading.innerHTML=`<h2>${LEVELS[z]}</h2><span>${z===1?'8 × 8 · 主戦場':'6 × 6 · 周辺戦場'}</span>`;
     const board=document.createElement('div');board.className='chessboard';board.setAttribute('role','grid');board.setAttribute('aria-label',LEVELS[z]);
     for(let y=7;y>=0;y--)for(let x=0;x<8;x++){
-      const sq=document.createElement('button');sq.type='button';sq.className=`square ${(x+y)%2?'light':'dark'}`;
+      const sq=document.createElement('button');sq.type='button';sq.dataset.index=id(x,y,z);sq.className=`square ${(x+y)%2?'light':'dark'}`;
       const index=id(x,y,z),p=s.board[index], here=moves.filter(m=>m.to===index), name=`${LEVELS[z]} ${'abcdefgh'[x]}${y+1}`;
       sq.setAttribute('aria-label',`${name}${p!=='.'?' '+(side(p)==='w'?'白':'黒')+TYPES[p.toLowerCase()]:''}${here.length?' 移動可能':''}`);
       if(!valid(x,y,z)){sq.classList.add('void');sq.disabled=true;}
@@ -46,7 +84,7 @@ function drawBoards(){
         if(here.length)sq.classList.add(p!=='.'||here[0].enPassant?'capture':'move');
         sq.addEventListener('click',()=>onSquare(index));
         if(p!=='.'){
-          const piece=document.createElement('span');piece.className=`piece ${side(p)==='w'?'white':'black'}`;piece.dataset.piece=p.toLowerCase();piece.textContent=glyph[p.toLowerCase()];sq.append(piece);
+          const piece=document.createElement('span');piece.className=`piece ${side(p)==='w'?'white':'black'}`;piece.dataset.piece=p.toLowerCase();pieceBody(piece,p,index,s);sq.append(piece);hpPips(sq,p,index,s);
         }
         if(z===1){const label=document.createElement('small');label.className='coord';label.textContent=`${'abcdefgh'[x]}${y+1}`;sq.append(label);}
       }
@@ -68,10 +106,10 @@ function applyTheme(){
   const t=THEMES[pieceTheme];
   els.themePreview.src=t.preview;els.themePreview.alt=t.alt;els.themeTitle.textContent=t.title;
   els.themeDescription.textContent=t.desc;els.themeSource.href=t.href;els.themeSource.textContent=t.link;
-  setPieceTheme(pieceTheme);
+  setPieceTheme(fleetMode?'fleet':pieceTheme);
 }
 function draw3D(){
-  const s=current(), moves=!showLegalMoves||selected<0?[]:legalMoves(s).filter(m=>m.from===selected);
+  const s=current(), moves=!showLegalMoves||selected<0?[]:R().legalMoves(s).filter(m=>m.from===selected);
   const focus=els.layerFocus.value;
   els.focusNotice.hidden=focus==='all';
   if(focus!=='all')els.focusMessage.textContent=`${LEVELS[Number(focus)]}のみ表示中。ほかの2段は非表示です。`;
@@ -96,7 +134,7 @@ function draw3D(){
         if(here.length)cell.classList.add(p!=='.'||here[0].enPassant?'capture':'move');
         cell.addEventListener('click',e=>{if(e.detail===0)onSquare(index);});
         if(p!=='.'){
-          const piece=document.createElement('span');piece.className=`piece3d ${side(p)==='w'?'white':'black'}`;piece.dataset.piece=p.toLowerCase();piece.textContent=glyph[p.toLowerCase()];cell.append(piece);
+          const piece=document.createElement('span');piece.className=`piece3d ${side(p)==='w'?'white':'black'}`;piece.dataset.piece=p.toLowerCase();pieceBody(piece,p,index,s);cell.append(piece);hpPips(cell,p,index,s);
         }
       }
       plane.append(cell);
@@ -113,9 +151,10 @@ function showView(mode){
   if(mode==='3d')draw3D();
 }
 function render(){
-  const s=current(), check=inCheck(s,s.turn), who=s.turn==='w'?'白':'黒';
+  const s=current(), check=R().inCheck(s,s.turn), who=fleetMode?FACTION_NAME[s.turn]:s.turn==='w'?'白':'黒';
   updateClock();
   els.status.textContent=s.result||`${who}の手番${check?' · チェック':''}`;
+  if(fleetMode&&!s.result){const pip=n=>'●'.repeat(n)+'○'.repeat(FLAG_HP-n);els.status.textContent+=`  旗艦 帝国${pip(flagshipHp(s,'w'))} 共和${pip(flagshipHp(s,'b'))}`;}
   els.detail.textContent=s.result?'対局終了。新しい対局を始めるか、1手戻せます。':els.mode.value==='auto'&&autoPaused?'AI同士の対局を一時停止しています。':thinking?`${who}AIが考えています…`:selected>=0?(showLegalMoves?'青いマスを選ぶと移動します。':'移動先表示はOFFです。移動先のマスを選んでください。'):`${who}の駒を選択してください。`;
   els.showMoves.checked=showLegalMoves;
   els.moveToggleState.textContent=showLegalMoves?'ON':'OFF';
@@ -127,27 +166,33 @@ function render(){
     if(!taken.length){container.textContent='なし';continue;}
     for(const type of taken){
       const piece=document.createElement('span');piece.className=`captured-piece ${team==='w'?'black':'white'}`;
-      piece.textContent=glyph[type.toLowerCase()];piece.title=TYPES[type.toLowerCase()];
+      if(fleetMode){const img=document.createElement('img');img.src=shipIcon(type.toLowerCase(),team==='w'?'b':'w');img.alt='';piece.classList.add('ship');piece.append(img);piece.title=SHIP_NAME[type.toLowerCase()];}else{piece.textContent=glyph[type.toLowerCase()];piece.title=TYPES[type.toLowerCase()];}
       container.append(piece);
     }
   }
   els.checkNo.textContent=log.filter(x=>x.check).length;
   els.undo.disabled=states.length<=1;
-  els.claimDraw.hidden=!!s.result||!canClaimDraw(s)||!humanTurn();
+  els.claimDraw.hidden=!!s.result||!R().canClaimDraw(s)||!humanTurn();
   els.difficultyWrap.hidden=els.mode.value==='human';
   els.toggleAuto.hidden=els.mode.value!=='auto';
   els.toggleAuto.disabled=!!s.result;
   els.toggleAuto.textContent=autoPaused?'再開':'一時停止';
   els.history.replaceChildren();
   if(!log.length){const li=document.createElement('li');li.className='empty';li.textContent='対局が始まるとここに表示されます。';els.history.append(li);}
-  else for(const entry of log){const li=document.createElement('li');li.textContent=`${entry.side==='w'?'白':'黒'} ${entry.text}${entry.check?' ＋':''}`;els.history.append(li);}
+  else for(const entry of log){const li=document.createElement('li');li.textContent=`${entry.side==='w'?'白':'黒'} ${entry.text}${entry.check&&!fleetMode?' ＋':''}`;els.history.append(li);}
   els.history.scrollTop=els.history.scrollHeight;
   if(viewMode==='3d')draw3D();else drawBoards();
 }
 function commit(m){
   if(clockStartedAt===null)clockStartedAt=Date.now();
-  const s=current(), notation=moveText(s,m), captured=m.enPassant?'p':s.board[m.to].toLowerCase();
-  const n=play(s,m);states.push(n);log.push({side:s.turn,text:notation,capture:captured!=='.',captured:captured==='.'?null:captured,check:inCheck(n,n.turn)});
+  const s=current(), notation=R().moveText(s,m);
+  let captured=m.enPassant?'p':s.board[m.to].toLowerCase();
+  const n=R().play(s,m);
+  if(fleetMode){
+    if(!n.last.sink)captured='.';
+    playMoveFx(n.last,cellEl(m.from),cellEl(m.to));
+  }
+  states.push(n);log.push({side:s.turn,text:notation,capture:captured!=='.',captured:captured==='.'?null:captured,check:fleetMode?!!m.attack:inCheck(n,n.turn)});
   if(n.result)stopClock();
   lastMove=m;selected=-1;thinking=false;render();
   if(botTurn()&&!n.result)scheduleBot();
@@ -155,7 +200,7 @@ function commit(m){
 function onSquare(index){
   const s=current();if(s.result||thinking||!humanTurn())return;
   if(selected>=0){
-    const options=legalMoves(s).filter(m=>m.from===selected&&m.to===index);
+    const options=R().legalMoves(s).filter(m=>m.from===selected&&m.to===index);
     if(options.length){
       if(options.some(m=>m.promotion)){choosePromotion(options);return;}
       commit(options[0]);return;
@@ -166,7 +211,7 @@ function onSquare(index){
 function choosePromotion(options){
   els.promotionChoices.replaceChildren();
   for(const type of ['q','r','b','n']){
-    const button=document.createElement('button');button.type='button';button.textContent=TYPES[type];
+    const button=document.createElement('button');button.type='button';button.textContent=fleetMode?SHIP_NAME[type]:TYPES[type];
     button.addEventListener('click',()=>{els.promotionDialog.close();commit(options.find(m=>m.promotion===type));});
     els.promotionChoices.append(button);
   }
@@ -180,6 +225,7 @@ function scheduleBot(){
   botTimer=setTimeout(()=>{
     botTimer=null;
     if(current().turn!==turn||current().result||run!==botRun||!botTurn()||autoPaused)return;
+    if(fleetMode){const m=chooseFleetMove(current(),els.difficulty.value==='easy'?'easy':'strong');if(m)commit(m);return;}
     try{
       const worker=new Worker(new URL('./bot-worker.js',import.meta.url),{type:'module'});
       botWorker=worker;
@@ -199,7 +245,7 @@ function scheduleBot(){
       const m=chooseBotMove(current(),els.difficulty.value);
       if(m)commit(m);
     }
-  },300);
+  },fleetMode?1100:300);
 }
 function cancelBot(){
   if(botTimer)clearTimeout(botTimer);
@@ -207,7 +253,7 @@ function cancelBot(){
   if(botWorker){botWorker.terminate();botWorker=null;}
   botRun++;thinking=false;
 }
-function reset(){cancelBot();states=[initial()];log=[];selected=-1;lastMove=null;clockStartedAt=null;elapsedMs=0;autoPaused=false;render();if(botTurn())scheduleBot();}
+function reset(){cancelBot();states=[R().initial()];log=[];selected=-1;lastMove=null;clockStartedAt=null;elapsedMs=0;autoPaused=false;render();if(botTurn())scheduleBot();}
 els.newGame.addEventListener('click',reset);
 els.mode.addEventListener('change',reset);
 els.theme.addEventListener('change',()=>{pieceTheme=els.theme.value;localStorage.setItem('threeLayerChess.theme',pieceTheme);applyTheme();render();});
@@ -259,13 +305,34 @@ els.undo.addEventListener('click',()=>{
   lastMove=null;selected=-1;render();
   if(botTurn())scheduleBot();
 });
-els.claimDraw.addEventListener('click',()=>{if(!canClaimDraw(current()))return;const s={...current(),result:'引き分け（申告）'};states.push(s);selected=-1;stopClock();render();});
+els.claimDraw.addEventListener('click',()=>{if(!R().canClaimDraw(current()))return;const s={...current(),result:'引き分け（申告）'};states.push(s);selected=-1;stopClock();render();});
 els.copyLog.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(log.map((x,i)=>`${i+1}. ${x.side==='w'?'白':'黒'} ${x.text}`).join('\n'));els.copyLog.textContent='コピーしました';setTimeout(()=>els.copyLog.textContent='コピー',1800);}catch{els.copyLog.textContent='コピー不可';}});
 setInterval(updateClock,1000);
 window.addEventListener('piece-models-ready',()=>syncPieceModels(camera));
 window.addEventListener('piece-models-resize',()=>syncPieceModels(camera));
 initPieceModels(els.viewport,els.viewer);
+initFleetFx();
+function applyMode(){
+  document.body.dataset.mode=fleetMode?'fleet':'chess';
+  els.gameMode.value=fleetMode?'fleet':'chess';
+  els.theme.disabled=fleetMode;els.seWrap.hidden=!fleetMode;els.fleetSe.checked=fleetSe();
+  els.rulesChess.hidden=fleetMode;els.rulesFleet.hidden=!fleetMode;
+  els.captureLabel.textContent=fleetMode?'撃沈':'取った駒';els.checkLabel.textContent=fleetMode?'攻撃':'チェック';
+  els.capturedTitle.textContent=fleetMode?'撃沈した艦':'取った駒';
+  els.capturedWhiteLabel.textContent=fleetMode?'星冠帝国軍(白)が撃沈':'白が取った駒';
+  els.capturedBlackLabel.textContent=fleetMode?'地球星域防衛軍(黒)が撃沈':'黒が取った駒';
+  const lg=document.querySelector('.legend');if(lg)lg.innerHTML=fleetMode?'<i class="mark move"></i>移動先 <i class="mark capture"></i>攻撃できる艦 <i class="mark selected"></i>選択中':'<i class="mark move"></i>移動先 <i class="mark capture"></i>取れる駒 <i class="mark selected"></i>選択中';
+  setPieceTheme(fleetMode?'fleet':pieceTheme);
+}
+els.gameMode.addEventListener('change',()=>{
+  fleetMode=els.gameMode.value==='fleet';localStorage.setItem('threeLayerChess.gameMode',fleetMode?'fleet':'chess');
+  applyMode();
+  if(els.bgmSelect.value!=='off'){const want=fleetMode?'fleet-battle':'forest';els.bgmSelect.value=want;setBgm(want);}
+  reset();
+});
+els.fleetSe.addEventListener('change',()=>setFleetSe(els.fleetSe.checked));
 applyTheme();
+applyMode();
 render();
 
 {

@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0d1427">
   <title>三次元チェス 実験版</title>
-  <link rel="stylesheet" href="style.css?v=20261012i">
+  <link rel="stylesheet" href="style.css?v=20261024d">
 </head>
 <body>
   <main class="shell">
@@ -21,12 +21,14 @@
       <div class="top-actions"><div class="game-clock"><span>対局時間</span><time id="gameTime" datetime="PT0S">00:00</time></div><button id="newGame" class="primary">新しい対局</button><button id="undo">1手戻す</button></div>
     </header>
     <section class="controlbar" aria-label="対局設定">
+      <label>ゲーム <select id="gameMode"><option value="chess">三次元チェス</option><option value="fleet">艦隊運用モード</option></select></label>
       <label>対戦相手 <select id="mode"><option value="human">2人で対局</option><option value="bot">AI（黒）</option><option value="auto">AI同士で対局</option></select></label>
       <label id="difficultyWrap" hidden>AIの強さ <select id="difficulty"><option value="strong">手強い · 相手の返しを読む</option><option value="easy">練習 · 1手ずつ考える</option><option value="deep">深読み · 3半手（試験用）</option></select></label>
       <button id="toggleAuto" hidden>一時停止</button>
       <label>駒と盤 <select id="theme"><option value="druid">ドルイドの森</option><option value="standard">標準チェス</option><option value="lattice">クラシック象牙</option><option value="crown">王宮の宝石</option></select></label>
       <label>BGM <select id="bgmSelect"></select></label>
       <label class="bgm-volume">音量 <input id="bgmVolume" type="range" min="0" max="100" step="5" aria-label="BGMの音量"></label><span id="bgmStatus" class="bgm-status" aria-live="polite"></span>
+      <label class="move-toggle" id="seWrap" hidden><input id="fleetSe" type="checkbox" checked><span>効果音</span></label>
       <span class="separator"></span>
       <label class="move-toggle"><input id="showMoves" type="checkbox" checked><span>移動先を表示</span><strong id="moveToggleState">ON</strong></label>
       <span class="legend"><i class="mark move"></i>移動先 <i class="mark capture"></i>取れる駒 <i class="mark selected"></i>選択中</span>
@@ -47,24 +49,25 @@
       </div>
       <aside class="sidebar">
         <div class="card captured-card" aria-label="取った駒の置き場">
-          <h3>取った駒</h3>
-          <div class="captured-side"><strong>白が取った駒</strong><div id="captureWhite" class="captured-pieces" aria-live="polite">なし</div></div>
-          <div class="captured-side"><strong>黒が取った駒</strong><div id="captureBlack" class="captured-pieces" aria-live="polite">なし</div></div>
+          <h3 id="capturedTitle">取った駒</h3>
+          <div class="captured-side"><strong id="capturedWhiteLabel">白が取った駒</strong><div id="captureWhite" class="captured-pieces" aria-live="polite">なし</div></div>
+          <div class="captured-side"><strong id="capturedBlackLabel">黒が取った駒</strong><div id="captureBlack" class="captured-pieces" aria-live="polite">なし</div></div>
         </div>
         <div class="inspiration-card">
           <img id="themePreview" src="assets/celtic-pieces-lite/preview-fit.png" alt="MeshyのCeltic King Chess">
           <div><p class="small-title">MESHY PIECE MODELS</p><h3 id="themeTitle">Celtic Chess</h3><p id="themeDescription">6種類の駒を個別に軽量化し、立体表示で使用しています。平面表示は判別しやすい記号駒です。</p><a id="themeSource" href="https://www.meshy.ai/ja/3d-models/Celtic-King-Chess-019a2147-62cc-747c-90bd-b81086ae0a5f" target="_blank" rel="noopener noreferrer">Meshyのキングを見る ↗</a></div>
         </div>
-        <div class="status-card"><p class="small-title">対局状況</p><h2 id="status">白の手番</h2><p id="detail">駒を選択してください。</p><div class="mini-stats"><div><strong id="moveNo">1</strong><small>手目</small></div><div><strong id="captureNo">0</strong><small>取った駒</small></div><div><strong id="checkNo">0</strong><small>チェック</small></div></div></div>
+        <div class="status-card"><p class="small-title">対局状況</p><h2 id="status">白の手番</h2><p id="detail">駒を選択してください。</p><div class="mini-stats"><div><strong id="moveNo">1</strong><small>手目</small></div><div><strong id="captureNo">0</strong><small id="captureLabel">取った駒</small></div><div><strong id="checkNo">0</strong><small id="checkLabel">チェック</small></div></div></div>
         <div class="card"><div class="card-head"><h3>着手履歴</h3><button id="copyLog" class="text-button">コピー</button></div><ol id="history" class="history"><li class="empty">対局が始まるとここに表示されます。</li></ol></div>
-        <div class="card rules"><h3>この試作のルール</h3><p>中央8×8、上段・下段は6×6。白黒とも中央から開始します。ルークは縦横上下、ビショップは2軸の斜め、クイーンは空間斜めも移動。ナイトは立体L字、キングは隣接マスへ動きます。</p><p>ポーンは中央盤内を進みます。キャスリング、アンパッサン、昇格に対応しています。試作独自のルールで、作品の公式ルールではありません。</p><p>立体盤で奥のマスを選びにくいときは「表示層」で1段ずつ表示できます。</p><a href="../銀河英雄伝説_三次元チェス調査.md">調査・設計資料を見る</a></div>
+        <div class="card rules" id="rulesFleet" hidden><h3>艦隊運用モード</h3><p>駒は銀河覇権の艦隊です。白=星冠帝国軍、黒=地球星域防衛軍。キング=旗艦(超弩級艦)、クイーン=惑星型戦闘艦、ルーク=戦艦、ビショップ=空母、ナイト=雷撃艇、ポーン=護衛艦。動き方はチェスと同じです。</p><p>敵艦のマスへ動くと<b>攻撃</b>。どの艦も防御(バリヤー)が3枚あり、1回の攻撃で1枚はがれます。3回目の攻撃で<b>撃沈</b>し、攻撃した艦がそのマスへ進みます(撃沈しないときは元の位置のまま)。</p><p><b>旗艦を3回攻撃して撃沈した側の勝ち</b>。チェック・キャスリング・アンパッサンはありません。マスの下の点が残りの防御です。</p></div>
+        <div class="card rules" id="rulesChess"><h3>この試作のルール</h3><p>中央8×8、上段・下段は6×6。白黒とも中央から開始します。ルークは縦横上下、ビショップは2軸の斜め、クイーンは空間斜めも移動。ナイトは立体L字、キングは隣接マスへ動きます。</p><p>ポーンは中央盤内を進みます。キャスリング、アンパッサン、昇格に対応しています。試作独自のルールで、作品の公式ルールではありません。</p><p>立体盤で奥のマスを選びにくいときは「表示層」で1段ずつ表示できます。</p><a href="../銀河英雄伝説_三次元チェス調査.md">調査・設計資料を見る</a></div>
       </aside>
     </section>
     <footer>AIと立体表示は試験用です。立体駒はMeshyのCC0公開モデルを軽量化したものです。盤はブラウザ描画です。</footer>
   </main>
   <dialog id="promotionDialog"><form method="dialog"><h2>ポーンを昇格</h2><p>変更する駒を選んでください。</p><div id="promotionChoices" class="promotion-choices"></div></form></dialog>
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-  <script type="module" src="main.js?v=20261012i"></script>
+  <script type="module" src="main.js?v=20261024d"></script>
 <script src="shell.js"></script>
 </body>
 </html>

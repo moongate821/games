@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
+import {wireModel} from './fleet-models.js?v=20261024d';
 
 const files={k:'king',q:'queen',r:'rook',b:'bishop',n:'knight',p:'pawn'};
 const folders={druid:'celtic-pieces-lite',standard:'standard-pieces',lattice:'lattice-pieces',crown:'crown-pieces'};
@@ -45,7 +46,27 @@ function makeTeamMaterial(source,side){
   return material;
 }
 
+// 艦隊運用モード: 銀河覇権のワイヤーフレーム艦。白=星冠帝国軍(琥珀)、黒=地球星域防衛軍(青)
+const FLEET_CLASS={k:'DN',q:'PL',r:'BB',b:'CV',n:'TB',p:'FR'};
+const FLEET_SIZE={k:1.02,q:.78,r:.92,b:.86,n:.62,p:.58};   // マス幅に対する艦の長さ
+const FLEET_COL={white:[0xffc45a,0xfff0c0],black:[0x5ab8ff,0xd0f4ff]};
+function fleetObject(kind,side){
+  const m=wireModel(FLEET_CLASS[kind],side==='white'?'empire':'republic');
+  const make=(edges,color,opacity)=>{const pos=[];for(const [a,b] of edges)pos.push(...m.v[a],...m.v[b]);
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    return new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity,depthTest:true}));};
+  const [hull,glow]=FLEET_COL[side];
+  const root=new THREE.Group();root.add(make(m.e,hull,.6),make(m.acc,glow,1));
+  return root;
+}
+function addFleetPiece(cell,kind,side){
+  const group=new THREE.Group(),ship=fleetObject(kind,side);
+  ship.position.y=.18;   // 盤から少し浮かせる
+  group.add(ship);pieces.add(group);
+  entries.push({cell,group,height:1,footprint:1/FLEET_SIZE[kind],kind,side,fleet:true});
+}
 function addPiece(cell,kind,side){
+  if(activeTheme==='fleet')return addFleetPiece(cell,kind,side);
   const source=models.get(`${activeTheme}:${kind}`);
   if(!source)return;
   const root=source.scene.clone(true);
@@ -81,12 +102,12 @@ function drawFrame(){
   camera.updateProjectionMatrix();
   refreshEntries();
   const fit=parseFloat(getComputedStyle(viewport.querySelector('.world')).getPropertyValue('--fit'))||1;
-  for(const {cell,group,height,footprint,kind,side} of entries){
+  for(const {cell,group,height,footprint,kind,side,fleet} of entries){
     const rect=cell.getBoundingClientRect();
     // Keep model size tied to the actual square and zoom, not its projected
     // bounding box, which changes with both tilt and horizontal rotation.
     const size=cell.offsetWidth*latestCameraState.zoom;
-    const scale=Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
+    const scale=fleet?size/footprint:Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
     group.scale.setScalar(Math.max(0.001,scale));
     group.rotation.x=THREE.MathUtils.degToRad(90-latestCameraState.tilt);
     group.rotation.y=THREE.MathUtils.degToRad(-latestCameraState.yaw)+(side==='white'?Math.PI:0);
@@ -136,10 +157,10 @@ export async function initPieceModels(viewportElement,viewerElement){
 }
 
 export function setPieceTheme(theme){
-  if(!folders[theme]||theme===activeTheme)return;
+  if((!folders[theme]&&theme!=='fleet')||theme===activeTheme)return;
   activeTheme=theme;
   pieces.clear();entries=[];
-  if(ready&&models.has(`${theme}:king`))syncPieceModels(latestCameraState);
+  if(ready&&(theme==='fleet'||models.has(`${theme}:king`)))syncPieceModels(latestCameraState);
 }
 
 export function syncPieceModels(cameraState){
