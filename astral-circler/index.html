@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/shell-192.png">
+
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アストラル・サークラー</title>
+<style>
+:root{--ac:#5aa0ff;--glow:color-mix(in srgb,var(--ac) 40%,transparent)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#03040a;color:#d8e6ff;font-family:"Yu Gothic UI","Meiryo",sans-serif;transition:background 1s}
+#app{max-width:1340px;margin:0 auto;padding:8px}
+.panel{background:linear-gradient(180deg,#0b1230cc,#060a1ccc);border:1px solid var(--ac);border-radius:10px;box-shadow:0 0 14px var(--glow),inset 0 0 18px #0006}
+#top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 14px 8px 96px}
+#logo{font-weight:900;letter-spacing:.18em;color:var(--ac);text-shadow:0 0 10px var(--ac);font-size:15px}
+#stinfo{flex:1;min-width:200px;display:flex;flex-direction:column}
+#stname{font-size:18px;color:#fff;text-shadow:0 0 8px var(--ac)}
+#stsub{font-size:12px;color:#9fb0e0}
+#bgmui{display:flex;align-items:center;gap:8px;font-size:12px}
+#trk{color:var(--ac);min-width:150px}
+input[type=range]{accent-color:var(--ac);width:90px}
+button{background:linear-gradient(180deg,#1a2870,#0e1850);color:#e4eeff;border:1px solid var(--ac);border-radius:6px;padding:6px 12px;cursor:pointer;font:inherit}
+button:hover{box-shadow:0 0 10px var(--glow);filter:brightness(1.25)}
+button:disabled{opacity:.4;cursor:default;box-shadow:none}
+#main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:8px;margin-top:8px}
+@media(max-width:900px){#main{grid-template-columns:1fr}}
+#field{padding:6px}
+canvas#cv{width:100%;display:block;border-radius:8px;cursor:crosshair}
+aside{display:flex;flex-direction:column;gap:8px}
+#hud{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px}
+.stat{text-align:center;background:#0006;border-radius:6px;padding:4px}
+.stat small{display:block;color:#8fa4e0;font-size:11px}
+.stat b{font-size:20px;color:#fff;text-shadow:0 0 8px var(--ac)}
+#ctl{grid-column:1/-1;display:flex;gap:6px}
+#ctl button{flex:1}
+#go{font-weight:700;background:linear-gradient(180deg,var(--ac),#0e1850);color:#000}
+#cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+.card{display:flex;align-items:center;gap:4px;background:#0a1030;border:2px solid #2a3a8a;border-radius:8px;padding:2px 4px;cursor:pointer;font-size:11px;line-height:1.3}
+.card.on{border-color:#fff;background:#18246a;box-shadow:0 0 10px var(--glow)}
+.card canvas{width:46px;height:46px;flex:none}
+.card b{display:block;font-size:11.5px}
+.card small{color:#8fa4e0}
+#skills{display:flex;flex-direction:column;gap:5px;padding:8px}
+.sk{position:relative;overflow:hidden;text-align:left}
+.sk i{position:absolute;left:0;top:0;bottom:0;background:#000a;width:0}
+.sk span{position:relative}
+#info{padding:8px 10px;font-size:12.5px;line-height:1.6;min-height:110px}
+#msg{color:#ffd34d;min-height:1.4em;font-weight:700}
+#codex{position:fixed;inset:0;display:none;z-index:20;background:radial-gradient(ellipse at 50% 0%,#1a2470 0%,#03040a 75%);overflow:auto;padding:16px}
+#cdxhead{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#cdxhead h2{margin:0;color:var(--ac);letter-spacing:.2em;text-shadow:0 0 12px var(--ac);font-size:20px}
+#cdxprog{color:#ffd34d;font-weight:700}
+#cdxbar{flex:1;min-width:120px;height:8px;background:#000a;border-radius:4px;overflow:hidden;border:1px solid #2a3a8a}
+#cdxbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),#ffd34d)}
+#cdxtabs{max-width:1100px;margin:12px auto 0;display:flex;gap:6px}
+.cdxtab.on{background:var(--ac);color:#000;font-weight:700}
+#cdxnote{max-width:1100px;margin:8px auto;color:#9fb0e0;font-size:12px}
+#cdxgrid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.cdxcard{border:1px solid var(--ac);border-radius:10px;background:#070b20ee;padding:10px;box-shadow:0 0 10px var(--glow)}
+.cdxcard.lock{border-color:#2a3a8a;box-shadow:none;opacity:.8}
+.cdxrow{display:flex;align-items:center;justify-content:center;gap:4px}
+.cdxrow canvas{width:72px;height:72px}
+.cdxrow span{font-size:22px;color:#8fa4e0}
+.cdxtxt b{display:block;font-size:15px;color:#fff;margin-top:4px}
+.cdxtxt small,.cdxtxt em{color:#9fb0e0;font-style:normal;font-size:11px;margin-right:8px}
+.cdxtxt p{margin:4px 0;font-size:12.5px;line-height:1.6}
+.cdxtxt .tip{color:#ffd9a0}
+.cdxtxt .hint{color:#7a8ac8}
+#over,#select{position:fixed;inset:0;display:none;z-index:9}
+#over{background:#000d;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-size:28px;text-shadow:0 0 14px var(--ac)}
+#obtns{display:flex;gap:10px;font-size:16px}
+#select{background:radial-gradient(ellipse at 50% 0%,#14206a 0%,#03040a 70%);overflow:auto;padding:20px}
+#hero{max-width:1200px;margin:0 auto 14px;height:230px;border-radius:12px;border:1px solid #2a3a8a;background:linear-gradient(180deg,#0000 35%,#03040add),url(img/title.jpg) center/cover;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:10px;box-shadow:0 0 24px #5aa0ff55}
+#select h1{margin:0 0 4px;text-align:center;letter-spacing:.3em;color:#7ab0ff;text-shadow:0 0 16px #5aa0ff;font-size:26px}
+#select p{text-align:center;color:#9fb0e0;margin:0 0 16px;font-size:13px}
+#sgrid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.st{border:1px solid var(--c);border-radius:10px;background:#070b20;cursor:pointer;overflow:hidden;position:relative;box-shadow:0 0 10px color-mix(in srgb,var(--c) 30%,transparent)}
+.st:hover{transform:translateY(-2px);box-shadow:0 0 22px var(--c)}
+.st canvas{width:100%;display:block}
+.st div{padding:6px 8px;font-size:12px}
+.st b{display:block;font-size:14px;color:#fff}
+.st small{color:#9fb0e0;display:block}
+.st em{font-style:normal;color:var(--c);font-size:11px}
+.st .ck{position:absolute;right:8px;top:6px;color:#7cff9a;font-weight:900;text-shadow:0 0 6px #000}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top" class="panel">
+  <div id="logo">ASTRAL CIRCLER</div>
+  <div id="stinfo"><b id="stname">―</b><span id="stsub"></span></div>
+  <div id="bgmui"><span id="trk">♪ ―</span><input id="vol" type="range" min="0" max="100" value="50"><button id="mute">音 ON</button><button id="cdxbtn">説明書 [H]</button><button id="selbtn">ステージ選択</button></div>
+ </div>
+ <div id="main">
+  <div id="field" class="panel"><canvas id="cv"></canvas></div>
+  <aside>
+   <div id="hud" class="panel">
+    <div class="stat"><small>魔力</small><b id="mana">0</b></div>
+    <div class="stat"><small>中枢環</small><b id="hp">0</b></div>
+    <div class="stat"><small>WAVE</small><b><span id="wave">0</span>/10</b></div>
+    <div id="ctl"><button id="go">ウェーブ開始 [Space]</button><button id="spd">速度 ×1</button></div>
+   </div>
+   <div id="cards" class="panel"></div>
+   <div id="skills" class="panel"></div>
+   <div id="info" class="panel"><div id="msg"></div><div id="detail"></div></div>
+  </aside>
+ </div>
+</div>
+<div id="select"><button id="cdx2" style="position:absolute;right:16px;top:12px;z-index:2">説明書</button><div id="hero"><h1>ASTRAL CIRCLER</h1><p>回路術師よ、守るべき世界を選べ(全20ステージ・各10ウェーブ)</p></div><div id="sgrid"></div></div>
+<div id="over"><div id="overtxt"></div><div id="obtns"></div></div>
+<script src="stages.js"></script>
+<script src="bgm.js"></script>
+<div id="codex"><div id="cdxhead"><h2>魔法陣の説明書</h2><span id="cdxprog"></span><div id="cdxbar"><i></i></div><button id="cdxclose">閉じる [H]</button></div>
+ <div id="cdxtabs"><button class="cdxtab on" data-s="f">合成</button><button class="cdxtab" data-s="b">魔法陣</button><button class="cdxtab" data-s="c">連鎖</button></div>
+ <p id="cdxnote">陣を重ねて合成したり、連鎖をつなぐと、説明書のページが開放されていく。</p><div id="cdxgrid"></div></div>
+<script src="game.js"></script>
+<script src="codex.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>
