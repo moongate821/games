@@ -29,7 +29,8 @@ button{background:linear-gradient(180deg,#1a2870,#0e1850);color:#e4eeff;border:1
 button:hover{box-shadow:0 0 10px var(--glow);filter:brightness(1.25)}
 button:disabled{opacity:.4;cursor:default;box-shadow:none}
 #main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:8px;margin-top:8px}
-@media(max-width:900px){#main{grid-template-columns:1fr}}
+@media(max-width:900px){#main{grid-template-columns:minmax(0,1fr)}}
+aside,#field{min-width:0}
 #field{padding:6px}
 canvas#cv{width:100%;display:block;border-radius:8px;cursor:crosshair}
 aside{display:flex;flex-direction:column;gap:8px}
@@ -88,6 +89,72 @@ aside{display:flex;flex-direction:column;gap:8px}
 .st small{color:#9fb0e0;display:block}
 .st em{font-style:normal;color:var(--c);font-size:11px}
 .st .ck{position:absolute;right:8px;top:6px;color:#7cff9a;font-weight:900;text-shadow:0 0 6px #000}
+
+/* ---- スマホ・タブレット対応 ---- */
+html,body{-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+canvas#cv{touch-action:manipulation}
+#rot{display:none}
+@media(max-width:700px){
+ #app{padding:4px}
+ #top{padding:6px 8px 6px 84px;gap:6px}
+ #logo,#stsub{display:none}
+ #stinfo{min-width:0;flex:1}
+ #stname{font-size:14px}
+ #bgmui{width:100%;justify-content:space-between;gap:6px;flex-wrap:wrap}
+ #bgmui button{white-space:nowrap}
+ #detail small{display:none}
+ #top{padding-left:76px}
+ #trk{min-width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+ #bgmui button{padding:6px 8px;font-size:12px}
+ input[type=range]{width:64px}
+ #main{gap:4px;margin-top:4px}
+ #field{padding:3px}
+ #hud{padding:4px;gap:4px}
+ .stat b{font-size:16px}
+ #cards{display:flex;overflow-x:auto;padding:4px;gap:4px;-webkit-overflow-scrolling:touch}
+ .card{flex:0 0 auto;min-width:128px}
+ #skills{flex-direction:row;overflow-x:auto;padding:4px;gap:4px}
+ .sk{flex:0 0 auto;padding:8px 10px;font-size:12px}
+ #info{font-size:12px;min-height:56px;padding:6px 8px}
+ #hero{height:150px}
+ #sgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+ .st div{padding:4px 6px;font-size:11px}
+ .st b{font-size:12px}
+ #select{padding:10px}
+ #cdxgrid{grid-template-columns:1fr}
+ #codex{padding:8px}
+ #cdxhead h2{font-size:16px}
+}
+@media(max-width:700px) and (orientation:portrait){
+ #rot{display:block;text-align:center;color:#ffd34d;font-size:12px;margin:0 0 10px}
+}
+@media(max-height:520px) and (orientation:landscape){
+ #app{padding:3px;max-width:none}
+ #top{padding:3px 8px 3px 84px;gap:8px}
+ #logo,#stsub{display:none}
+ #stname{font-size:13px}
+ #trk{min-width:80px}
+ #bgmui button{padding:4px 8px;font-size:12px}
+ #main{grid-template-columns:minmax(0,1fr) 280px;margin-top:3px;gap:4px;height:calc(100vh - 46px)}
+ #field{display:flex;align-items:center;justify-content:center;padding:2px;overflow:hidden;min-height:0}
+ canvas#cv{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:864/528}
+ aside{overflow-y:auto;max-height:100%;gap:4px}
+ #hud{padding:4px;gap:4px}
+ .stat{padding:2px}
+ .stat b{font-size:15px}
+ #cards{padding:4px;gap:4px}
+ .card canvas{width:34px;height:34px}
+ .card{font-size:10px;padding:2px}
+ .card b{font-size:10.5px}
+ #skills{padding:4px;gap:3px}
+ .sk{padding:5px 8px;font-size:12px}
+ #info{min-height:0;font-size:11px;padding:5px 7px}
+ #hero{height:110px}
+}
+@media(min-width:701px) and (max-width:1100px) and (orientation:landscape) and (min-height:521px){
+ #main{grid-template-columns:minmax(0,1fr) 300px}
+}
 </style>
 </head>
 <body>
@@ -95,7 +162,7 @@ aside{display:flex;flex-direction:column;gap:8px}
  <div id="top" class="panel">
   <div id="logo">ASTRAL CIRCLER</div>
   <div id="stinfo"><b id="stname">―</b><span id="stsub"></span></div>
-  <div id="bgmui"><span id="trk">♪ ―</span><input id="vol" type="range" min="0" max="100" value="50"><button id="mute">音 ON</button><button id="cdxbtn">説明書 [H]</button><button id="selbtn">ステージ選択</button></div>
+  <div id="bgmui"><span id="trk">♪ ―</span><input id="vol" type="range" min="0" max="100" value="79"><button id="mute">音 ON</button><button id="cdxbtn">説明書 [H]</button><button id="selbtn">ステージ選択</button></div>
  </div>
  <div id="main">
   <div id="field" class="panel"><canvas id="cv"></canvas></div>
@@ -112,7 +179,7 @@ aside{display:flex;flex-direction:column;gap:8px}
   </aside>
  </div>
 </div>
-<div id="select"><button id="cdx2" style="position:absolute;right:16px;top:12px;z-index:2">説明書</button><div id="hero"><h1>ASTRAL CIRCLER</h1><p>回路術師よ、守るべき世界を選べ(全20ステージ・各10ウェーブ)</p></div><div id="sgrid"></div></div>
+<div id="select"><button id="cdx2" style="position:absolute;right:16px;top:12px;z-index:2">説明書</button><div id="hero"><h1>ASTRAL CIRCLER</h1><p>回路術師よ、守るべき世界を選べ(全20ステージ・各10ウェーブ)</p></div><p id="rot">📱 スマホは横向きにすると大きく遊べます</p><div id="sgrid"></div></div>
 <div id="over"><div id="overtxt"></div><div id="obtns"></div></div>
 <script src="stages.js"></script>
 <script src="bgm.js"></script>

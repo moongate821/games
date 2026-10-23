@@ -27,12 +27,17 @@ const BGM=(()=>{
   T('星喰いの門',51,'harm',118,3,2,'brass'),
   T('崩壊特異点',55,'harm',144,2,3,'full')
  ];
+ let an0=null,an1=null;
  let ac=null,master,mus,sfx,noise,timer=null,cur=null,step=0,nextT=0,arpA=[],arpB=[],mel=[],vol=.5,muted=false,bossOn=false;
  const mtof=m=>440*Math.pow(2,(m-69)/12);
  function init(){
   if(ac){if(ac.state==='suspended')ac.resume();return ac}
   ac=new(window.AudioContext||window.webkitAudioContext)();
-  master=ac.createGain();master.gain.value=.9;master.connect(ac.destination);
+  master=ac.createGain();master.gain.value=.9;
+  // 音割れ防止のリミッター(出力は必ずここを通す)と、音量を測るための分析ノード
+  const lim=ac.createDynamicsCompressor();lim.threshold.value=-8;lim.knee.value=6;lim.ratio.value=12;lim.attack.value=.003;lim.release.value=.2;
+  an0=ac.createAnalyser();an0.fftSize=2048;an1=ac.createAnalyser();an1.fftSize=2048;
+  master.connect(an0);master.connect(lim);lim.connect(ac.destination);lim.connect(an1);
   mus=ac.createGain();mus.gain.value=0;sfx=ac.createGain();sfx.gain.value=1;sfx.connect(master);
   // 大きなホール風リバーブ
   const len=ac.sampleRate*3.8,ir=ac.createBuffer(2,len,ac.sampleRate);
@@ -145,6 +150,8 @@ const BGM=(()=>{
   duck(sec){if(!ac||!cur)return;const g=mus.gain,t=ac.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(muted?0:vol*.25,t+.1);g.linearRampToValueAtTime(muted?0:vol,t+sec)},
   setVol(v){vol=v;if(ac&&!muted)mus.gain.setTargetAtTime(vol,ac.currentTime,.05)},
   toggleMute(){muted=!muted;if(ac)mus.gain.setTargetAtTime(muted?0:vol,ac.currentTime,.05);return muted},
-  ctx(){return ac},sfxBus(){return sfx}
+  ctx(){return ac},sfxBus(){return sfx},
+  // 開発用:出力の音量(dBFS)。pre=リミッター前、post=最終出力
+  level(){const f=n=>{const b=new Float32Array(n.fftSize);n.getFloatTimeDomainData(b);let q=0,p=0;for(const v of b){q+=v*v;const w=Math.abs(v);if(w>p)p=w}return{rms:20*Math.log10(Math.sqrt(q/b.length)+1e-9),peak:20*Math.log10(p+1e-9)}};return ac&&an0?{pre:f(an0),post:f(an1)}:null}
  };
 })();

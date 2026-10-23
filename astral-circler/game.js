@@ -2,6 +2,9 @@ const $=s=>document.querySelector(s);
 const cv=$('#cv'),ctx=cv.getContext('2d');
 const CS=48,COLS=18,ROWS=11;cv.width=COLS*CS;cv.height=ROWS*CS;
 const TAU=Math.PI*2;
+const TOUCH=matchMedia('(pointer:coarse)').matches,LITE=TOUCH;   // スマホ・タブレット: 軽量描画と、2回タップで設置
+const tl=s=>TOUCH?s.replace(/\s*\[[A-Za-z ]+\]/g,''):s;
+let pend=null;
 // ---------- 画像素材(img/) ----------
 const IMG={};let imgLoaded=0;
 const SPR={sprite:'en01',drone:'en02',reaper:'en03',splitter:'en04',golem:'en05',shielder:'en06',phantom:'en07',boss:'en08'};
@@ -133,7 +136,7 @@ function bolt(a,b,col,life=.25){
  addFx(life,(c,k)=>{c.save();c.globalCompositeOperation='lighter';c.lineJoin='round';
   for(const[w,al,cl]of[[6,.2,col],[3,.5,col],[1.2,1,'#fff']]){c.strokeStyle=cl;c.globalAlpha=(1-k)*al;c.lineWidth=w;c.beginPath();p.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.stroke()}c.restore()});
 }
-function burst(x,y,col,n=10,sp=120,life=.5,size=2.5){for(let i=0;i<n;i++){const a=Math.random()*TAU,s=Math.random()*sp;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:life*(.5+Math.random()*.6),max:life,col,size:size*(.5+Math.random())})}}
+function burst(x,y,col,n=10,sp=120,life=.5,size=2.5){if(LITE)n=Math.ceil(n*.5);for(let i=0;i<n;i++){const a=Math.random()*TAU,s=Math.random()*sp;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:life*(.5+Math.random()*.6),max:life,col,size:size*(.5+Math.random())})}}
 // ---------- 戦闘 ----------
 function lvMul(tw){return 1+.6*(tw.lv-1)}
 function dmg(e,a,els){
@@ -148,7 +151,7 @@ function kill(e){
  for(const k in sk)sk[k].cd=Math.max(0,sk[k].cd-.6);
  burst(e.x,e.y,D.col,e.type==='boss'?80:12,e.type==='boss'?320:130,.6);
  ring(e.x,e.y,4,e.type==='boss'?120:26,D.col,.4,2);
- snd('kill',320+Math.random()*120,.08,'triangle',.025,-200);
+ snd('kill',320+Math.random()*120,.08,'triangle',.05,-200);
  if(e.type==='splitter'){for(const t of towers)if(Math.hypot(t.x-e.x,t.y-e.y)<CS*2.5){t.dis=3;ring(t.x,t.y,4,36,'#7cff9a',.5,3);hurt(t,15)}}
  if(curSrc&&!inBurst)chainBurst(curSrc);
  if(e.type==='boss'){BGM.boss(enemies.some(x=>x.type==='boss'&&!x.dead));shake=Math.max(shake,18);snd('boss',90,.8,'sawtooth',.08,-50)}
@@ -186,7 +189,7 @@ function bigCircle(c,cx,cy,R,t,a){
 function finale(){
  finaleCd=FINALE_CD;if(codexAdd('c:4'))setTimeout(()=>codexNew('c:4'),3200);const W=cv.width,H=cv.height,cx=W/2,cy=H/2,Rm=Math.max(W,H)*.52;
  shake=Math.max(shake,34);
- tone('sine',90,0,1.5,.55,28);tone('sawtooth',110,0,.8,.05,1760);noiseHit(0,1.8,.5,7000,180);
+ tone('sine',90,0,1.5,.3,28);tone('sawtooth',110,0,.8,.04,1760);noiseHit(0,1.8,.28,7000,180);
  [220,277.2,329.6,440,554.4,659.3].forEach((f,i)=>tone('sawtooth',f,.15+i*.05,2.2,.035,f*1.02));
  tone('triangle',880,.9,1.6,.05,1760);BGM.duck(3);
  addFx(3.8,(c,k)=>{
@@ -457,9 +460,9 @@ function end(win){
  $('#over').style.display='flex';
 }
 $('#selbtn').onclick=openSelect;
-$('#vol').oninput=e=>BGM.setVol(e.target.value/100*.8);
+$('#vol').oninput=e=>BGM.setVol(e.target.value/100*.7);
 $('#mute').onclick=()=>{$('#mute').textContent=BGM.toggleMute()?'音 OFF':'音 ON'};
-BGM.setVol(.4);
+BGM.setVol(.55);
 // ---------- スキル ----------
 function useSkill(k){
  const s=sk[k];if(over||s.cd>0)return;s.cd=s.max;
@@ -499,6 +502,7 @@ cv.addEventListener('contextmenu',e=>{e.preventDefault();pick(null)});
 cv.addEventListener('click',e=>{
  if(over)return;const{c,r}=cellAt(e);if(c<0||r<0||c>=COLS||r>=ROWS)return;
  const tw=towerAt(c,r);
+ if(TOUCH&&sel){if(!pend||pend.c!==c||pend.r!==r){pend={c,r};mouse={c,r};msg('もう一度タップで決定(別のマスをタップで移動)');return}pend=null}
  if(sel){
   const D=TD[sel];
   if(!tw){
@@ -521,7 +525,7 @@ cv.addEventListener('click',e=>{
   relink();info();
  }else{picked=tw||null;info()}
 });
-function pick(k){sel=sel===k?null:k;picked=null;document.querySelectorAll('.card').forEach(el=>el.classList.toggle('on',el.dataset.k===sel));info()}
+function pick(k){sel=sel===k?null:k;picked=null;pend=null;if(TOUCH)mouse={c:-1,r:-1};document.querySelectorAll('.card').forEach(el=>el.classList.toggle('on',el.dataset.k===sel));info()}
 function sell(){if(!picked)return;const D=T(picked);const v=Math.floor((D.cost||80)*.6*picked.lv);mana+=v;ring(picked.x,picked.y,4,40,'#fff',.4,3);towers=towers.filter(t=>t!==picked);picked=null;relink();info();msg(`売却 +${v}`)}
 window.addEventListener('keydown',e=>{
  if(e.code==='Space'){e.preventDefault();startWave()}
@@ -554,7 +558,7 @@ function info(){
  else h+='陣を選んで設置。隣り合う陣は光の線で連結し、攻撃速度が上がり、発動が仲間へ連鎖。連結中の陣が敵を倒すとチェイン・バーストが全員から放たれます。敵も陣を攻撃してきます(壊れた陣は建て直し、傷ついた陣は選んで修理 [F])。';
  const nm=k=>TD[k]?TD[k].n.split('・')[0]:'他の陣';
  h+='<br><small>合成表: '+Object.values(FD).map(f=>`${nm(f.from[0])}+${nm(f.from[1])}=${f.n}`).join(' / ')+'</small>';
- $('#detail').innerHTML=h;
+ $('#detail').innerHTML=tl(h);
 }
 info();
 // ---------- ループ ----------
@@ -597,7 +601,7 @@ function draw(t){
  const BI=IMG['bg'+stage];if(BI){c.drawImage(BI,0,0,W,H);const dm=STAGES[stage].dim;if(dm){c.fillStyle=`rgba(0,0,0,${dm})`;c.fillRect(0,0,W,H)}}
  if(shake>0)c.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
  if(!BI)for(const s of stars){c.globalAlpha=.3+.4*Math.sin(t*1.5+s.p);c.fillStyle=pal.star;c.fillRect(s.x,s.y,s.s,s.s)}
- drawDeco(c,t,STAGES[stage].deco,pal,W,H,STAGES[stage].P);
+ if(!LITE)drawDeco(c,t,STAGES[stage].deco,pal,W,H,STAGES[stage].P);
  c.globalAlpha=1;
  // 格子
  c.strokeStyle=pal.grid;c.lineWidth=1;c.globalAlpha=BI?.3:1;
@@ -680,3 +684,4 @@ function draw(t){
 }
 requestAnimationFrame(frame);
 openSelect();
+if(TOUCH){document.querySelectorAll('#go,#cdxbtn,.sk span').forEach(el=>el.textContent=tl(el.textContent));document.querySelectorAll('.card b').forEach(el=>el.textContent=el.textContent.replace(/^\d\s*/,''))}
