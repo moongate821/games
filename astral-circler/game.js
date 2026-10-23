@@ -419,6 +419,16 @@ function startWave(){
  queue.sort((a,b)=>a.t-b.t);
  msg(`WAVE ${wave} 開始`+(wave===WPS||(wave===5&&stage>=2)?'  ボス出現!':''));snd('wave',440,.4,'triangle',.05,440);
 }
+// ---------- 次ウェーブの予告 ----------
+function forecast(){
+ const el=document.getElementById('fc');if(!el)return;
+ if(over||wave>=WPS||!cleared){el.textContent=wave>=WPS?'最終ウェーブ進行中':'';return}
+ const w=wave+1,u=stage*TUNE.us+w*TUNE.uw,pool=['sprite'];
+ if(u>=1.5)pool.push('drone');if(u>=2.5)pool.push('reaper');if(u>=4)pool.push('golem');if(u>=5)pool.push('splitter');if(u>=6.5)pool.push('shielder');if(u>=8)pool.push('phantom');
+ const cnt=Math.round((TUNE.c0+w*TUNE.c1+stage*TUNE.c2)*TUNE.cnt),boss=w===WPS||(w===5&&stage>=2);
+ el.innerHTML=`次 WAVE ${w}: ${cnt}体 / ${pool.map(k=>ED[k].n).join('・')}${boss?' <b style="color:#ff6a8a">+ボス</b>':''}`;
+}
+setInterval(forecast,250);
 // ---------- ステージ・進行 ----------
 function cleared_get(){try{return JSON.parse(localStorage.getItem('asc_clear')||'[]')}catch(e){return[]}}
 function cleared_add(i){try{const a=cleared_get();if(!a.includes(i)){a.push(i);localStorage.setItem('asc_clear',JSON.stringify(a))}}catch(e){}}

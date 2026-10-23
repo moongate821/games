@@ -63,11 +63,11 @@ function pickEl(){const w=P('affinity')?[4,4,1,1,1]:[2,2,2,1,3];let r=Math.rando
 function pick(){if(!bag.length)bag=mkBag();let l=bag.pop();if(Math.random()<.07*P('lucky'))l=Math.min(4,l+2);return{e:pickEl(),lv:l};}
 let aimV=0,lastAim=225,dropRot=0;let curW=0;function newSpin(){return(Math.random()<.5?-1:1)*(.5+Math.random()*.3);}
 function dropSpin(){return Math.max(-1.1,Math.min(1.1,curW+aimV*.05));}
-let pool=0,chainT=0,ceilOff=0,spinA=0;const SPX=225,SPY=BY1-115,SPL=64;const CHAIN_WIN=80;
+let found={};let pool=0,chainT=0,ceilOff=0,spinA=0;const SPX=225,SPY=BY1-115,SPL=64;const CHAIN_WIN=80;
 function chainMul(c){return 1+.5*(c-1)+Math.max(0,c-4)*.5;}
 function endChain(cash){if(pool>0){const v=cash?Math.round(pool*1.3):pool;score+=v;floaters.push({x:225,y:360,txt:(cash?'CASH OUT +':'CHAIN +')+v,life:70,big:true});tone(cash?880:520,.25,'triangle',.1);pool=0;}chain=0;chainT=0;}
 function cashout(){if(pool>0&&!over&&!picking&&started)endChain(true);}
-function reset(){curW=newSpin();spinA=0;pool=0;chainT=0;ceilOff=0;snaps=[];rwC=0;syC=0;bolts=[];slit=null;slitT=0;windT=0;windF=0;balls=[];parts=[];rings=[];floaters=[];incoming=[];perks={};bag=mkBag();cur=pick();nxt=pick();nxt2=pick();hold=null;holdUsed=false;aimX=225;cool=0;chain=0;score=0;stage=1;stageStart=0;need=needFor(1);drops=0;over=false;shake=0;zoom=0;flash=0;t=0;freeze=0;picking=false;offers=[];maxLv=0;comboShow=0;comboN=0;}
+function reset(){found={};curW=newSpin();spinA=0;pool=0;chainT=0;ceilOff=0;snaps=[];rwC=0;syC=0;bolts=[];slit=null;slitT=0;windT=0;windF=0;balls=[];parts=[];rings=[];floaters=[];incoming=[];perks={};bag=mkBag();cur=pick();nxt=pick();nxt2=pick();hold=null;holdUsed=false;aimX=225;cool=0;chain=0;score=0;stage=1;stageStart=0;need=needFor(1);drops=0;over=false;shake=0;zoom=0;flash=0;t=0;freeze=0;picking=false;offers=[];maxLv=0;comboShow=0;comboN=0;}
 reset();
 
 // ---- 音 ----
@@ -166,7 +166,7 @@ function react(a,b){
   const ea=a.e,eb=b.e,lo=Math.min(ea,eb),hi=Math.max(ea,eb),tm=Math.max(a.lv,b.lv),x=(a.x+b.x)/2,y=(a.y+b.y)/2;
   if(ea===eb&&ea!==6&&a.lv===b.lv){merge(a,b);return true;}
   const cat=1+.75*P('catalyst');
-  const award=(base,txt)=>{a.dead=b.dead=true;chain++;chainT=0;comboN=chain;comboShow=60;const mul=chainMul(chain),pts=Math.round(base*mul*cat);if(chain>=3)pool+=pts;else score+=pts;mergeSnd(tm,chain-1);floaters.push({x,y:y-a.r,txt:txt+' +'+pts+(chain>1?' ×'+mul.toFixed(1):''),life:55,big:tm>=3});freeze=Math.min(5,1+tm);shake=Math.max(shake,3+tm*1.5);crackStones(x,y,40+tm*10);};
+  const award=(base,txt)=>{a.dead=b.dead=true;if(!found[txt]){found[txt]=1;const bn=40+stage*20;score+=bn;floaters.push({x:225,y:BY0+70,txt:'NEW RECIPE '+txt+' +'+bn,life:90,big:true});tone(1200,.4,'sine',.07,.5);}chain++;chainT=0;comboN=chain;comboShow=60;const mul=chainMul(chain),pts=Math.round(base*mul*cat);if(chain>=3)pool+=pts;else score+=pts;mergeSnd(tm,chain-1);floaters.push({x,y:y-a.r,txt:txt+' +'+pts+(chain>1?' ×'+mul.toFixed(1):''),life:55,big:tm>=3});freeze=Math.min(5,1+tm);shake=Math.max(shake,3+tm*1.5);crackStones(x,y,40+tm*10);};
   if(lo===0&&hi===1&&a.lv===b.lv){award(PTS[tm]+20,'蒸気');for(const o of balls)if(!o.dead&&Math.hypot(o.x-x,o.y-y)<90)o.vy-=3;rings.push({x,y,r:30,life:1,col:'#cde'});burst(x,y,200,22,4);tone(900,.3,'sine',.06,.4);return true;}
   if(lo===1&&hi===2){award(PTS[tm],'草');const nb=mk(x,y,tm,'jelly',5);nb.touch=0;nb.sc=.5;nb.scv=.05;balls.push(nb);burst(x,y,110,14);return true;}
   if(lo===0&&hi===3){award(PTS[tm]+30,'爆発');const rad=40+tm*14;for(const o of balls){if(o.dead)continue;const d=Math.hypot(o.x-x,o.y-y);if(d<rad+o.r){if(o.kind==='stone'){o.hp-=2;if(o.hp<=0)shatter(o);}else if(o.kind==='jelly'&&o.lv<tm){o.dead=true;burst(o.x,o.y,EH[o.e],8);score+=PTS[o.lv]>>1;}else{const dd=d||1;o.vx+=(o.x-x)/dd*5;o.vy+=(o.y-y)/dd*5;}}}rings.push({x,y,r:20,life:1,col:'#fa4'});burst(x,y,30,36,7);shake=14;tone(70,.5,'sawtooth',.16,.5);return true;}
@@ -405,9 +405,12 @@ function ui(){chainPanel();g.fillStyle=BGM.mode===5?'#34465c':'#4a6a9a';g.fillRe
   g.fillStyle='#1a2a3c';g.fillRect(BX0,89,BX1-BX0,8);g.fillStyle='#6fb6ff';g.fillRect(BX0,89,(BX1-BX0)*pr,8);
   // 下: パーク一覧と進化表
   g.textAlign='left';g.font='bold 12px sans-serif';let px=BX0;
-  for(const p of PERKS){if(P(p.id)){g.fillStyle='#ffd34a';g.fillText(p.ic+(P(p.id)>1?'×'+P(p.id):''),px,BY1+20);px+=g.measureText(p.ic+'×2').width+10;}}
-  for(let i=0;i<7;i++)body({kind:'jelly',lv:1,e:i},BX0+18+i*54,BY1+37,12,{});
-  g.fillStyle='#bde';g.font='11px sans-serif';g.textAlign='center';g.fillText('火+水=蒸気(同段階で消える)  地+水=草  風+火=爆発  火+地=溶岩',CW/2,CH-20);g.fillStyle='#8aa0b8';g.font='10px sans-serif';g.fillText('同じ元素・同じ段階(●)=育つ / 連鎖3〜はPOOL(線を越えると失う)。B=確定×1.3 / C=ホールド',CW/2,CH-7);
+  for(const p of PERKS){if(P(p.id)){g.fillStyle='#ffd34a';g.fillText(p.ic+(P(p.id)>1?'×'+P(p.id):''),px,BY1+16);px+=g.measureText(p.ic+'×2').width+10;}}
+  for(let i=0;i<7;i++)body({kind:'jelly',lv:1,e:i},BX0+18+i*54,BY1+37,11,{});
+  g.textAlign='center';g.font='11px sans-serif';
+  const RC=[['蒸気','火+水'],['草','地+水'],['爆発','風+火'],['溶岩','火+地']];let rx=BX0;
+  for(const [n,f] of RC){g.fillStyle=found[n]?'#ffe066':'#bde';const s=(found[n]?'✓':'')+f+'='+n;g.textAlign='left';g.fillText(s,rx,CH-17);rx+=g.measureText(s).width+14;}
+  g.textAlign='center';g.fillStyle='#8aa0b8';g.font='10px sans-serif';g.fillText('同元素・同段階で育つ / 蒸気は消える / 連鎖3〜はPOOL(線越えで失う) B=確定×1.3 C=ホールド',CW/2,CH-5);
 }
 function overlay(a,b,c){g.fillStyle='rgba(4,8,16,.8)';g.fillRect(0,0,CW,CH);g.textAlign='center';g.fillStyle='#fff';g.font='bold 38px sans-serif';g.fillText(a,CW/2,CH/2-30);g.font='17px sans-serif';g.fillStyle='#9cd0ff';g.fillText(b,CW/2,CH/2+8);g.font='13px sans-serif';g.fillText(c,CW/2,CH/2+38);
   if(over&&Object.keys(perks).length){g.fillStyle='#ffd34a';g.fillText('取得パーク: '+PERKS.filter(p=>P(p.id)).map(p=>p.n+(P(p.id)>1?'×'+P(p.id):'')).join(' / '),CW/2,CH/2+70);}}
