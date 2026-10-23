@@ -26,6 +26,7 @@
 - 翡翠の約束: https://moongate821.github.io/games/hisui/ — 作者の小説が原作。翡翠の首飾りがつなぐ縁を、浮世絵の絵本ゲームに。結末は40種類。
 - 世界の果てで君を探す: https://moongate821.github.io/games/sekai/ — 作者の小説が原作。いなくなった君を探す旅を、油絵の絵本ゲームに。結末は40種類。
 - 君に逢うために: https://moongate821.github.io/games/kimi/ — 作者の小説が原作。雨の夜の祈りからやり直す二度目の人生を、ポップなコミック調の絵本ゲームに。結末は40種類。
+- JELLY ROGUE: https://moongate821.github.io/games/jelly-rogue/ — スイカ型の物理合体にステージ制と3択パークを足した落ち物。回転する球が相手を弾き、連鎖をつなぐほど点が伸びる(でも危ない)。
 - RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。赤い敵の車が行進してくる、ひとり用サバイバー。
 - 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
