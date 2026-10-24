@@ -88,6 +88,48 @@ let shots=[],paused=false;
 let curSrc=null,inBurst=false,ovl=0,barrier=0,linkCut=0;
 let towers=[],enemies=[],zones=[],parts=[],fx=[],queue=[],cleared=true;
 const sk={nova:{cd:0,max:70},surge:{cd:0,max:50},stasis:{cd:0,max:45},harvest:{cd:0,max:40},barrier:{cd:0,max:60}};
+// ステージ内で拾う刻印。効果量は突破したウェーブに応じて上がる。
+const SIGILS=[
+ {id:'link',name:'共鳴の糸',desc:p=>`連結している陣のダメージ +${8*p}%`},
+ {id:'lens',name:'星屑のレンズ',desc:p=>`すべての陣の射程 +${6*p}%`},
+ {id:'weak',name:'看破の眼',desc:p=>`弱点属性への追加ダメージ +${10*p}%`},
+ {id:'chain',name:'連鎖の鐘',desc:p=>`チェイン・バーストの威力 +${15*p}%、範囲 +${8*p}%`},
+ {id:'harvest',name:'収穫の杯',desc:p=>`撃破時の魔力 +${2*p}`},
+ {id:'repair',name:'再生の輪',desc:p=>`ウェーブ突破時の陣の回復量 +${10*p}%`},
+ {id:'guard',name:'守護の石',desc:p=>`陣が受けるダメージ -${8*p}%`},
+ {id:'skill',name:'時詠みの砂',desc:p=>`スキルの再使用時間 -${8*p}%`}
+];
+const SIGIL_RANK=['','通常','希少','伝説'];
+let sigils=[],lootOffer=null;
+function readSigilArchive(){try{const v=JSON.parse(localStorage.getItem('asc_sigils')||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return{}}}
+let sigilArchive=readSigilArchive(),equippedSigil='';
+try{equippedSigil=localStorage.getItem('asc_sigil_equip')||''}catch(e){}
+if(!SIGILS.some(s=>s.id===equippedSigil&&sigilArchive[s.id]>=1))equippedSigil='';
+function sigilPower(id){const s=sigils.find(x=>x.id===id);return s?s.rank:0}
+function renderSigils(){const el=$('#relicbar');el.textContent='刻印: '+(sigils.length?sigils.map(x=>SIGILS.find(s=>s.id===x.id).name+'【'+SIGIL_RANK[x.rank]+'】').join(' / '):'なし')}
+function renderArchive(){
+ const grid=$('#archivegrid');grid.replaceChildren();
+ for(const s of SIGILS){const rank=Math.max(0,Math.min(3,Math.floor(Number(sigilArchive[s.id])||0))),b=document.createElement('button');b.className='archiveitem'+(equippedSigil===s.id?' on':'');b.disabled=!rank;
+  b.innerHTML=`<b>${rank?s.name:'未発見の刻印'} ${rank?'【'+SIGIL_RANK[rank]+'】':''}</b><small>${rank?s.desc(rank):'ウェーブ突破時の報酬で発見'}</small>`;
+  b.onclick=()=>{equippedSigil=s.id;try{localStorage.setItem('asc_sigil_equip',s.id)}catch(e){}renderArchive()};grid.appendChild(b)}
+ $('#archivebtn').textContent=`刻印の記録 ${Object.keys(sigilArchive).filter(id=>sigilArchive[id]>=1).length}/${SIGILS.length}`;
+}
+function openArchive(){renderArchive();$('#archive').style.display='flex';$('#archiveclose').focus()}
+function closeArchive(){$('#archive').style.display='none'}
+$('#archivebtn').onclick=openArchive;$('#archiveclose').onclick=closeArchive;
+$('#archiveclear').onclick=()=>{equippedSigil='';try{localStorage.removeItem('asc_sigil_equip')}catch(e){}renderArchive()};
+function offerSigil(){
+ const rank=wave>=8?3:wave>=5?2:1,pool=SIGILS.filter(s=>!sigilPower(s.id)),options=[];
+ while(options.length<3&&pool.length)options.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+ lootOffer={rank,options};const box=$('#lootcards');box.replaceChildren();
+ for(const s of options){const b=document.createElement('button');b.className='lootcard';b.innerHTML=`<span class="rarity">${SIGIL_RANK[rank]}の刻印</span><b>${s.name}</b><span>${s.desc(rank)}</span>`;b.onclick=()=>chooseSigil(s.id);box.appendChild(b)}
+ $('#loot').style.display='flex';box.querySelector('button')?.focus();
+}
+function chooseSigil(id){
+ if(!lootOffer||!lootOffer.options.some(s=>s.id===id))return;
+ const s=SIGILS.find(x=>x.id===id),rank=lootOffer.rank;sigils.push({id,rank});if(rank>(sigilArchive[id]||0)){sigilArchive[id]=rank;try{localStorage.setItem('asc_sigils',JSON.stringify(sigilArchive))}catch(e){}}
+ lootOffer=null;$('#loot').style.display='none';renderSigils();msg(`${s.name} を装備した!`);snd('lv',850,.3,'triangle',.05,500);
+}
 const stars=Array.from({length:90},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,s:Math.random()*1.5+.3,p:Math.random()*6}));
 // ---------- 音 ----------
 const sndLast={};
@@ -141,13 +183,14 @@ function burst(x,y,col,n=10,sp=120,life=.5,size=2.5){if(LITE)n=Math.ceil(n*.5);f
 function lvMul(tw){return 1+.6*(tw.lv-1)}
 function dmg(e,a,els){
  if(e.dead)return;const D=ED[e.type];let m=1;
- if(els&&els.length){let weak=els.some(x=>D.weak.includes(x));if(weak)m=1.5;else if(els.every(x=>D.res.includes(x)))m=.6}
+ if(els&&els.length){let weak=els.some(x=>D.weak.includes(x));if(weak)m=1.5+sigilPower('weak')*.1;else if(els.every(x=>D.res.includes(x)))m=.6}
+ if(curSrc&&curSrc.links.length)m*=1+sigilPower('link')*.08;
  if(e.vuln>0)m*=1.25;
  if(e.guard&&e.type!=='shielder')m*=.75;
  e.hp-=a*m;e.hit=.12;if(e.hp<=0)kill(e);
 }
 function kill(e){
- if(e.dead)return;e.dead=true;const D=ED[e.type];mana+=D.mana*(1+(e.sc-1)*TUNE.mr);
+ if(e.dead)return;e.dead=true;const D=ED[e.type];mana+=D.mana*(1+(e.sc-1)*TUNE.mr)+sigilPower('harvest')*2;
  for(const k in sk)sk[k].cd=Math.max(0,sk[k].cd-.6);
  burst(e.x,e.y,D.col,e.type==='boss'?80:12,e.type==='boss'?320:130,.6);
  ring(e.x,e.y,4,e.type==='boss'?120:26,D.col,.4,2);
@@ -239,8 +282,8 @@ let timers=[];
 function chainBurst(origin){
  const seen=new Set([origin]);let q=[{t:origin,d:0}];
  while(q.length){const{t,d}=q.shift();if(d>4)break;
-  timers.push({at:gt+d*.08,fn:()=>{inBurst=true;addCombo(t.x,t.y);const D=T(t);ring(t.x,t.y,4,CS*1.3,D.col,.4,3);
-   for(const e of inRange(t.x,t.y,CS*1.3))dmg(e,12*Math.pow(.85,d),D.el);inBurst=false}});
+  timers.push({at:gt+d*.08,fn:()=>{inBurst=true;addCombo(t.x,t.y);const D=T(t),r=CS*(1.3+sigilPower('chain')*.08);ring(t.x,t.y,4,r,D.col,.4,3);
+   for(const e of inRange(t.x,t.y,r))dmg(e,12*(1+sigilPower('chain')*.15)*Math.pow(.85,d),D.el);inBurst=false}});
   for(const n of t.links)if(!seen.has(n)){seen.add(n);q.push({t:n,d:d+1})}}
 }
 const towerMax=tw=>Math.round((tw.fused?170:100)*TUNE.thp*(1+.4*(tw.lv-1)));
@@ -248,7 +291,7 @@ function refreshHp(tw){const m=towerMax(tw);tw.hp=Math.min(m,tw.hp+(m-tw.maxHp))
 function nearestTower(x,y,r){let b=null,bd=r*r;for(const t of towers){const d=(t.x-x)**2+(t.y-y)**2;if(d<bd){bd=d;b=t}}return b}
 function hurt(tw,a,quiet){
  if(!towers.includes(tw))return;
- tw.hp-=a;tw.lastHit=gt;tw.flash=Math.max(tw.flash,.6);
+ tw.hp-=a*(1-sigilPower('guard')*.08);tw.lastHit=gt;tw.flash=Math.max(tw.flash,.6);
  if(!quiet){burst(tw.x,tw.y,'#ff5060',6,100,.4,2.5);snd('thit',160,.12,'square',.03,-60)}
  if(tw.hp<=0)breakTower(tw);
 }
@@ -311,7 +354,7 @@ function explode(x,y,r,a,els,col,vuln){
 }
 function updTower(tw,dt){
  const D=T(tw);tw.rot+=dt;tw.flash=Math.max(0,tw.flash-dt*2.5);
- tw.R=D.range*CS*(1+.08*(tw.lv-1))*(1+.12*tw.prism)*(tw.kind==='hyper'?1.5:1);
+ tw.R=D.range*CS*(1+.08*(tw.lv-1))*(1+.12*tw.prism)*(tw.kind==='hyper'?1.5:1)*(1+sigilPower('lens')*.06);
  const kind=tw.kind==='hyper'?tw.sub:tw.kind;
  if(tw.dis>0){tw.dis-=dt;return}
  if(D.range===0)return;
@@ -408,7 +451,7 @@ function updEnemy(e,dt){
 }
 // ---------- ウェーブ ----------
 function startWave(){
- if(over||wave>=WPS)return;wave++;cleared=false;
+ if(over||lootOffer||!cleared||wave>=WPS)return;wave++;cleared=false;
  const sc=(TUNE.w0+TUNE.w1*wave)*(1+TUNE.sf*stage)*TUNE.hp*(stage===19?TUNE.fin:1),u=stage*TUNE.us+wave*TUNE.uw;
  const pool=['sprite'];if(u>=1.5)pool.push('drone');if(u>=2.5)pool.push('reaper');if(u>=4)pool.push('golem');if(u>=5)pool.push('splitter');if(u>=6.5)pool.push('shielder');if(u>=8)pool.push('phantom');
  const cnt=Math.round((TUNE.c0+wave*TUNE.c1+stage*TUNE.c2)*TUNE.cnt),gap=Math.max(.55,1.1-stage*.015-wave*.01);
@@ -422,7 +465,9 @@ function startWave(){
 // ---------- 次ウェーブの予告 ----------
 function forecast(){
  const el=document.getElementById('fc');if(!el)return;
- if(over||wave>=WPS||!cleared){el.textContent=wave>=WPS?'最終ウェーブ進行中':'';return}
+ if(over){el.textContent='';return}
+ if(!cleared){el.textContent=`WAVE ${wave} 進行中 · 残り ${queue.length+enemies.length}体`;return}
+ if(wave>=WPS){el.textContent='';return}
  const w=wave+1,u=stage*TUNE.us+w*TUNE.uw,pool=['sprite'];
  if(u>=1.5)pool.push('drone');if(u>=2.5)pool.push('reaper');if(u>=4)pool.push('golem');if(u>=5)pool.push('splitter');if(u>=6.5)pool.push('shielder');if(u>=8)pool.push('phantom');
  const cnt=Math.round((TUNE.c0+w*TUNE.c1+stage*TUNE.c2)*TUNE.cnt),boss=w===WPS||(w===5&&stage>=2);
@@ -430,10 +475,10 @@ function forecast(){
 }
 setInterval(forecast,250);
 // ---------- ステージ・進行 ----------
-function cleared_get(){try{return JSON.parse(localStorage.getItem('asc_clear')||'[]')}catch(e){return[]}}
+function cleared_get(){try{const a=JSON.parse(localStorage.getItem('asc_clear')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
 function cleared_add(i){try{const a=cleared_get();if(!a.includes(i)){a.push(i);localStorage.setItem('asc_clear',JSON.stringify(a))}}catch(e){}}
 function loadStage(i){
- stage=i;const S=STAGES[i];pal=S.pal;buildPath(S.wp);
+ stage=i;const S=STAGES[i];pal=S.pal;buildPath(S.wp);paused=false;pend=null;lootOffer=null;sigils=equippedSigil&&sigilArchive[equippedSigil]>=1?[{id:equippedSigil,rank:Math.max(1,Math.min(3,sigilArchive[equippedSigil]))}]:[];$('#loot').style.display='none';closeArchive();renderSigils();
  mana=TUNE.m0+i*TUNE.m1;hp=20;wave=0;gt=0;over=false;shake=0;sel=null;picked=null;curSrc=null;inBurst=false;ovl=0;barrier=0;linkCut=0;timers=[];shots=[];combo=0;comboLv=0;finaleCd=0;
  towers=[];enemies=[];zones=[];parts=[];fx=[];queue=[];cleared=true;
  for(const k in sk)sk[k].cd=0;
@@ -445,7 +490,7 @@ function loadStage(i){
  BGM.init();BGM.start(i);info();msg(`STAGE ${i+1}  ${S.name}`);
 }
 function openSelect(){
- over=true;BGM.stop();$('#over').style.display='none';
+ over=true;paused=false;pend=null;lootOffer=null;$('#loot').style.display='none';BGM.stop();$('#over').style.display='none';renderArchive();
  const done=cleared_get();
  const g=$('#sgrid');g.innerHTML='';
  STAGES.forEach((S,i)=>{
@@ -461,7 +506,7 @@ function openSelect(){
  $('#select').style.display='block';
 }
 function end(win){
- over=true;BGM.boss(false);const last=stage>=STAGES.length-1,box=$('#obtns');box.innerHTML='';
+ over=true;lootOffer=null;$('#loot').style.display='none';BGM.boss(false);const last=stage>=STAGES.length-1,box=$('#obtns');box.innerHTML='';
  if(win)cleared_add(stage);
  $('#overtxt').textContent=win?(last?'全ステージ制覇!  世界は救われた':`STAGE ${stage+1} クリア!`):'中枢環が崩壊した…';
  const add=(t,f)=>{const b=document.createElement('button');b.textContent=t;b.onclick=f;box.appendChild(b)};
@@ -475,7 +520,7 @@ $('#mute').onclick=()=>{$('#mute').textContent=BGM.toggleMute()?'音 OFF':'音 O
 BGM.setVol(.55);
 // ---------- スキル ----------
 function useSkill(k){
- const s=sk[k];if(over||s.cd>0)return;s.cd=s.max;
+ const s=sk[k];if(over||lootOffer||s.cd>0)return;s.cd=s.max*(1-sigilPower('skill')*.08);
  const W=cv.width,H=cv.height,core=pts[pts.length-1];
  if(k==='nova'){
   shake=Math.max(shake,22);snd('big',60,1.2,'sawtooth',.09,-20);
@@ -484,7 +529,7 @@ function useSkill(k){
    for(let i=0;i<4;i++){c.lineWidth=2+i;c.save();c.translate(W/2,H/2);c.rotate(t*(i%2?-1:1)*2);poly(c,[3,5,6,8][i],Math.min(W,H)*(.25+i*.12)*g,0);c.stroke();c.restore()}
    c.beginPath();c.arc(W/2,H/2,Math.max(W,H)*t*.9,0,TAU);c.lineWidth=14*(1-t);c.stroke();
    c.globalAlpha=Math.max(0,.5-t)*1.2;c.fillStyle='#fff';c.fillRect(0,0,W,H);c.restore()});
-  setTimeout(()=>{for(const e of enemies){dmg(e,300,[]);e.stun=Math.max(e.stun,5);burst(e.x,e.y,'#ffe9a0',8,160,.6)}},450);
+  timers.push({at:gt+.45,fn:()=>{for(const e of enemies){dmg(e,300,[]);e.stun=Math.max(e.stun,5);burst(e.x,e.y,'#ffe9a0',8,160,.6)}}});
   msg('超新星崩壊!');
  }else if(k==='surge'){
   ovl=10;for(const t of towers){ring(t.x,t.y,4,70,'#ffd34d',.8,4);t.flash=1}
@@ -538,6 +583,8 @@ cv.addEventListener('click',e=>{
 function pick(k){sel=sel===k?null:k;picked=null;pend=null;if(TOUCH)mouse={c:-1,r:-1};document.querySelectorAll('.card').forEach(el=>el.classList.toggle('on',el.dataset.k===sel));info()}
 function sell(){if(!picked)return;const D=T(picked);const v=Math.floor((D.cost||80)*.6*picked.lv);mana+=v;ring(picked.x,picked.y,4,40,'#fff',.4,3);towers=towers.filter(t=>t!==picked);picked=null;relink();info();msg(`売却 +${v}`)}
 window.addEventListener('keydown',e=>{
+ if($('#archive').style.display==='flex'){if(e.key==='Escape')closeArchive();return}
+ if(lootOffer){if(e.key>='1'&&e.key<='3')chooseSigil(lootOffer.options[+e.key-1]?.id);return}
  if(e.code==='Space'){e.preventDefault();startWave()}
  else if(e.key>='1'&&e.key<='7')pick(Object.keys(TD)[e.key-1]);
  else if(e.key==='Escape')pick(null);
@@ -575,11 +622,12 @@ info();
 let last=performance.now(),infoT=0;
 function frame(now){
  let dt=Math.min(.05,(now-last)/1000);last=now;
- if(!over&&!paused){for(let s=0;s<speed;s++)step(dt)}
+ if(!over&&!paused&&!lootOffer){for(let s=0;s<speed&&!lootOffer;s++)step(dt)}
  draw(now/1000);
  msgT-=dt;if(msgT<0&&$('#msg').textContent)$('#msg').textContent='';
  infoT+=dt;if(infoT>.5){infoT=0;info()}
  $('#mana').textContent=Math.floor(mana);$('#hp').textContent=Math.max(0,hp)+(barrier?` (膜${barrier})`:'');$('#wave').textContent=wave;
+ $('#go').disabled=over||paused||!!lootOffer||!cleared||wave>=WPS;
  document.querySelectorAll('.sk').forEach(b=>{const s=sk[b.dataset.k];b.querySelector('i').style.width=(s.cd/s.max*100)+'%';b.disabled=s.cd>0});
  requestAnimationFrame(frame);
 }
@@ -603,7 +651,7 @@ if(linkCut>0){linkCut-=dt;if(linkCut<=0)relink()}
  parts=parts.filter(p=>p.life>0);
  for(const f of fx)f.life-=dt;fx=fx.filter(f=>f.life>0);
  shake=Math.max(0,shake-dt*30);
- if(wave>0&&!cleared&&!queue.length&&!enemies.length){cleared=true;if(wave>=WPS&&hp>0){end(true)}else{const b=25+wave*3+stage*2;mana+=b;for(const t of towers)t.hp=Math.min(t.maxHp,t.hp+t.maxHp*.3);msg(`WAVE ${wave} 突破  魔力+${b}  陣の耐久が少し回復`)}}
+ if(wave>0&&!cleared&&!queue.length&&!enemies.length){cleared=true;if(wave>=WPS&&hp>0){end(true)}else if(hp>0){const b=25+wave*3+stage*2;mana+=b;for(const t of towers)t.hp=Math.min(t.maxHp,t.hp+t.maxHp*(.3+sigilPower('repair')*.1));msg(`WAVE ${wave} 突破  魔力+${b}  陣の耐久が少し回復`);if(wave===2||wave===5||wave===8)offerSigil()}}
 }
 function draw(t){
  const c=ctx,W=cv.width,H=cv.height;c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.globalAlpha=1;

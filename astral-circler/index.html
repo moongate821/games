@@ -41,6 +41,22 @@ aside{display:flex;flex-direction:column;gap:8px}
 #ctl{grid-column:1/-1;display:flex;gap:6px}
 #ctl button{flex:1}
 #go{font-weight:700;background:linear-gradient(180deg,var(--ac),#0e1850);color:#000}
+#relicbar{grid-column:1/-1;font-size:12px;line-height:1.5;color:#d7caff;min-height:18px}
+#loot{position:fixed;inset:0;z-index:15;display:none;align-items:center;justify-content:center;background:#02040be8;padding:16px}
+#archive{position:fixed;inset:0;z-index:16;display:none;align-items:center;justify-content:center;background:#02040bee;padding:16px}
+#archivebox{width:min(720px,100%);max-height:90vh;overflow:auto;padding:18px}
+#archivebox h2{margin:0 0 6px;color:#ffe29a}#archivebox p{color:#afc1e8;font-size:13px}
+#archivegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.archiveitem{text-align:left;padding:10px;background:#101939;border:1px solid #52659e}.archiveitem.on{border-color:#ffe29a;box-shadow:0 0 10px #ffd57766}.archiveitem:disabled{opacity:.5}
+.archiveitem b,.archiveitem small{display:block}.archiveitem small{color:#b8c9ef;font-size:11px;line-height:1.4}
+#lootbox{width:min(760px,100%);padding:20px;text-align:center}
+#lootbox h2{margin:0 0 6px;color:#ffe29a;text-shadow:0 0 12px #ffca6a88}
+#lootbox p{margin:0 0 16px;color:#afc1e8;font-size:14px}
+#lootcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lootcard{min-height:160px;padding:14px;text-align:left;background:linear-gradient(160deg,#18265a,#080d26);border:2px solid #75aaff;display:flex;flex-direction:column;gap:9px}
+.lootcard:hover,.lootcard:focus-visible{border-color:#ffe29a;box-shadow:0 0 20px #ffd57766}
+.lootcard .rarity{font-size:12px;color:#ffd276}.lootcard b{font-size:17px;color:#fff}.lootcard span:last-child{font-size:13px;line-height:1.5;color:#cddcff}
+@media(max-width:600px){#lootcards,#archivegrid{grid-template-columns:1fr}.lootcard{min-height:0}#lootbox{max-height:95vh;overflow:auto}}
 #cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
 .card{display:flex;align-items:center;gap:4px;background:#0a1030;border:2px solid #2a3a8a;border-radius:8px;padding:2px 4px;cursor:pointer;font-size:11px;line-height:1.3}
 .card.on{border-color:#fff;background:#18246a;box-shadow:0 0 10px var(--glow)}
@@ -171,7 +187,7 @@ canvas#cv{touch-action:manipulation}
     <div class="stat"><small>魔力</small><b id="mana">0</b></div>
     <div class="stat"><small>中枢環</small><b id="hp">0</b></div>
     <div class="stat"><small>WAVE</small><b><span id="wave">0</span>/10</b></div>
-    <div id="ctl"><button id="go">ウェーブ開始 [Space]</button><button id="spd">速度 ×1</button></div><div id="fc" style="grid-column:1/-1;font-size:12px;color:var(--ac,#9cd0ff);min-height:16px"></div>
+    <div id="ctl"><button id="go">ウェーブ開始 [Space]</button><button id="spd">速度 ×1</button></div><div id="fc" style="grid-column:1/-1;font-size:12px;color:var(--ac,#9cd0ff);min-height:16px"></div><div id="relicbar">刻印: なし</div>
    </div>
    <div id="cards" class="panel"></div>
    <div id="skills" class="panel"></div>
@@ -179,8 +195,10 @@ canvas#cv{touch-action:manipulation}
   </aside>
  </div>
 </div>
-<div id="select"><button id="cdx2" style="position:absolute;right:16px;top:12px;z-index:2">説明書</button><div id="hero"><h1>ASTRAL CIRCLER</h1><p>回路術師よ、守るべき世界を選べ(全20ステージ・各10ウェーブ)</p></div><p id="rot">📱 スマホは横向きにすると大きく遊べます</p><div id="sgrid"></div></div>
+<div id="select"><button id="archivebtn" style="position:absolute;left:16px;top:12px;z-index:2">刻印の記録</button><button id="cdx2" style="position:absolute;right:16px;top:12px;z-index:2">説明書</button><div id="hero"><h1>ASTRAL CIRCLER</h1><p>回路術師よ、守るべき世界を選べ(全20ステージ・各10ウェーブ)</p></div><p id="rot">📱 スマホは横向きにすると大きく遊べます</p><div id="sgrid"></div></div>
 <div id="over"><div id="overtxt"></div><div id="obtns"></div></div>
+<div id="loot"><div id="lootbox" class="panel" role="dialog" aria-modal="true" aria-labelledby="loottitle"><h2 id="loottitle">刻印をひとつ選ぶ</h2><p>このステージの間、選んだ効果が続きます</p><div id="lootcards"></div></div></div>
+<div id="archive"><div id="archivebox" class="panel" role="dialog" aria-modal="true" aria-labelledby="archivetitle"><h2 id="archivetitle">刻印の記録</h2><p>獲得した刻印の最高品質を記録します。ひとつ選ぶと次のステージへ持ち込めます。</p><div id="archivegrid"></div><button id="archiveclear">持ち込みなし</button> <button id="archiveclose">閉じる</button></div></div>
 <script src="stages.js"></script>
 <script src="bgm.js"></script>
 <div id="codex"><div id="cdxhead"><h2>魔法陣の説明書</h2><span id="cdxprog"></span><div id="cdxbar"><i></i></div><button id="cdxclose">閉じる [H]</button></div>
