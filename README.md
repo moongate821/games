@@ -29,10 +29,10 @@
 - 君に逢うために: https://moongate821.github.io/games/kimi/ — 作者の小説が原作。雨の夜の祈りからやり直す二度目の人生を、ポップなコミック調の絵本ゲームに。結末は40種類。
 - ASTRAL CIRCLER ― 魔法陣タワーディフェンス: https://moongate821.github.io/games/astral-circler/ — 浮遊都市の中枢環を魔法陣で守るSFタワーディフェンス。全20ステージ・魔法陣7種と合成・連鎖コンボ。ウェーブで刻印を拾い、最高品質を記録して次の戦いへ持ち込めます。PC・スマホ対応。
 - 霧の灯台: https://moongate821.github.io/games/kiri-lighthouse/ — 迷子を灯台へ導く、霧と光のタワーディフェンス。全12面、灯りの組み合わせ、4夜を渡るランと日替わりの夜。祈りと漂流物を選んで、夜明けを迎えよう。PC・スマホ対応。
-- ALCHEMY DROP: https://moongate821.github.io/games/alchemy-drop/ — 火・水・地・風・金の元素球を育て、反応(蒸気・草・爆発・溶岩)でさばく落ち物。ステージ制と3択パーク、連鎖のPOOL、BGM4曲。【工事中】
-- GRAVITY CORE: https://moongate821.github.io/games/gravity-core/ — 中心の核へ、ぷるぷるのスライム球を撃ち込む放射状重力の合体パズル。核は回り、反重力で盤面をゆさぶる。【工事中】
-- JELLY ROGUE: https://moongate821.github.io/games/jelly-rogue/ — スイカ型の物理合体にステージ制と3択パークを足した落ち物。回転する球が相手を弾き、連鎖をつなぐほど点が伸びる(でも危ない)。
-- RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。赤い敵の車が行進してくる、ひとり用サバイバー。
+- ALCHEMY DROP: https://moongate821.github.io/games/alchemy-drop/ — 火・水・地・風・金の元素球を育て、蒸気・草・爆発・溶岩・雨雲・磁嵐の反応で盤面を変える落ち物。ステージ制と3択パーク、連鎖のPOOL、BGM4曲。【工事中】
+- GRAVITY CORE: https://moongate821.github.io/games/gravity-core/ — 中心の核へ、ぷるぷるのスライム球を撃ち込む放射状重力の合体パズル。素早い合体で得点と反重力の充電を稼ぎ、回る核に挑む。【工事中】
+- JELLY ROGUE: https://moongate821.github.io/games/jelly-rogue/ — スイカ型の物理合体にステージ制と3択パークを足した落ち物。連鎖を伸ばし、ジャックポットの高倍率を狙う(でも危ない)。
+- RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。連鎖で敵の増援を妨害し、赤い車の進軍を止めるひとり用サバイバー。
 - 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
 - NEON RIDER ― 光の轍: https://moongate821.github.io/games/neonrider/ — 光の道を走る疑似3Dのバイクレース(Tron×AKIRA 風)。全30コース、バイク5台。

@@ -47,7 +47,7 @@ const PERKS=[
  {id:'sync',n:'共鳴シンクロ',d:'Eキーで、離れた同じ高レベルの2球を電撃で強制合体。1ステージに1回',ic:'ϟ',max:2},
  {id:'slime',n:'スライム化',d:'球がやわらかくなり、少しめり込んで合体。隙間にもぐる',ic:'~',max:2},
  {id:'sniper',n:'スナイパー',d:'3投ごとに高速の重い弾。タワーを貫いて深くで合体',ic:'➤',max:2},
- {id:'catalyst',n:'触媒',d:'反応(蒸気・草・爆発・溶岩)の得点が大きく伸びる',ic:'⚗',max:3},
+ {id:'catalyst',n:'触媒',d:'元素どうしの反応で得られる点数が大きく伸びる',ic:'⚗',max:3},
  {id:'affinity',n:'火と水の親和',d:'火・水の球が出やすくなり、蒸気や反応を狙いやすい',ic:'♨',max:2},
  {id:'soft',n:'ふんわり',d:'重力が弱くなり、置き方を調整しやすい',ic:'☁',max:2,lock:4}
 ];
@@ -171,6 +171,17 @@ function react(a,b){
   if(lo===1&&hi===2){award(PTS[tm],'草');const nb=mk(x,y,tm,'jelly',5);nb.touch=0;nb.sc=.5;nb.scv=.05;balls.push(nb);burst(x,y,110,14);return true;}
   if(lo===0&&hi===3){award(PTS[tm]+30,'爆発');const rad=40+tm*14;for(const o of balls){if(o.dead)continue;const d=Math.hypot(o.x-x,o.y-y);if(d<rad+o.r){if(o.kind==='stone'){o.hp-=2;if(o.hp<=0)shatter(o);}else if(o.kind==='jelly'&&o.lv<tm){o.dead=true;burst(o.x,o.y,EH[o.e],8);score+=PTS[o.lv]>>1;}else{const dd=d||1;o.vx+=(o.x-x)/dd*5;o.vy+=(o.y-y)/dd*5;}}}rings.push({x,y,r:20,life:1,col:'#fa4'});burst(x,y,30,36,7);shake=14;tone(70,.5,'sawtooth',.16,.5);return true;}
   if(lo===0&&hi===2){award(PTS[tm],'溶岩');const nb=mk(x,y,tm,'jelly',6);nb.touch=0;nb.sc=.5;nb.scv=.05;balls.push(nb);burst(x,y,20,14);return true;}
+  if(lo===1&&hi===3){
+    award(PTS[tm]+20,'雨雲');
+    const nearby=balls.filter(o=>o!==a&&o!==b&&!o.dead&&o.kind==='jelly'&&o.e<5&&o.e!==1&&o.lv<=tm&&Math.hypot(o.x-x,o.y-y)<140).sort((u,v)=>Math.hypot(u.x-x,u.y-y)-Math.hypot(v.x-x,v.y-y));
+    for(const o of nearby.slice(0,2)){o.e=1;o.sq=.25;burst(o.x,o.y,210,8);floaters.push({x:o.x,y:o.y-o.r,txt:'水に変化',life:45});}
+    rings.push({x,y,r:30,life:1,col:'#8df'});burst(x,y,205,18,4);return true;
+  }
+  if(lo===3&&hi===4){
+    award(PTS[tm]+30,'磁嵐');
+    for(const o of balls){if(o===a||o===b||o.dead||o.kind!=='jelly')continue;const dx=x-o.x,dy=y-o.y,d=Math.hypot(dx,dy);if(d>1&&d<170){const force=5*(1-d/200);o.vx+=dx/d*force;o.vy+=dy/d*force;o.sq=.18;}}
+    rings.push({x,y,r:30,life:1,col:'#9ff'});burst(x,y,175,24,5);return true;
+  }
   if(ea===6&&eb!==6)meltBy(a,b);else if(eb===6&&ea!==6)meltBy(b,a);
   return false;
 }
@@ -379,7 +390,7 @@ function draw(){
   g.restore();
   if(flash>.02){g.fillStyle='rgba(255,255,255,'+Math.min(.6,flash)+')';g.fillRect(0,0,CW,CH);}
   ui();
-  if(!started)overlay('ALCHEMY DROP','クリック / タップ / Enter で開始','元素を合わせて育て・反応させる → 目標達成 → パーク選択 → 岩に負けるな');
+  if(!started)overlay('ALCHEMY DROP','クリック / タップ / Enter で開始','同元素は合体、異元素は反応。連鎖中のPOOLはBで確定');
   else if(over)overlay('GAME OVER','STAGE '+stage+'   SCORE '+score+'   最大段階 '+(maxLv+1),'クリック / Enter でリトライ');
   else if(picking)pickUI();
 }
@@ -408,9 +419,8 @@ function ui(){chainPanel();g.fillStyle=BGM.mode===5?'#34465c':'#4a6a9a';g.fillRe
   for(const p of PERKS){if(P(p.id)){g.fillStyle='#ffd34a';g.fillText(p.ic+(P(p.id)>1?'×'+P(p.id):''),px,BY1+16);px+=g.measureText(p.ic+'×2').width+10;}}
   for(let i=0;i<7;i++)body({kind:'jelly',lv:1,e:i},BX0+18+i*54,BY1+37,11,{});
   g.textAlign='center';g.font='11px sans-serif';
-  const RC=[['蒸気','火+水'],['草','地+水'],['爆発','風+火'],['溶岩','火+地']];let rx=BX0;
-  for(const [n,f] of RC){g.fillStyle=found[n]?'#ffe066':'#bde';const s=(found[n]?'✓':'')+f+'='+n;g.textAlign='left';g.fillText(s,rx,CH-17);rx+=g.measureText(s).width+14;}
-  g.textAlign='center';g.fillStyle='#8aa0b8';g.font='10px sans-serif';g.fillText('同元素・同段階で育つ / 蒸気は消える / 連鎖3〜はPOOL(線越えで失う) B=確定×1.3 C=ホールド',CW/2,CH-5);
+  const RC=[['蒸気','火+水'],['草','地+水'],['爆発','風+火'],['溶岩','火+地'],['雨雲','水+風'],['磁嵐','風+金']];
+  RC.forEach(([n,f],i)=>{g.fillStyle=found[n]?'#ffe066':'#bde';const s=(found[n]?'✓':'')+f+'='+n;g.textAlign='left';g.fillText(s,BX0+(i%3)*120,CH-18+Math.floor(i/3)*14);});
 }
 function overlay(a,b,c){g.fillStyle='rgba(4,8,16,.8)';g.fillRect(0,0,CW,CH);g.textAlign='center';g.fillStyle='#fff';g.font='bold 38px sans-serif';g.fillText(a,CW/2,CH/2-30);g.font='17px sans-serif';g.fillStyle='#9cd0ff';g.fillText(b,CW/2,CH/2+8);g.font='13px sans-serif';g.fillText(c,CW/2,CH/2+38);
   if(over&&Object.keys(perks).length){g.fillStyle='#ffd34a';g.fillText('取得パーク: '+PERKS.filter(p=>P(p.id)).map(p=>p.n+(P(p.id)>1?'×'+P(p.id):'')).join(' / '),CW/2,CH/2+70);}}

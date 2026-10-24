@@ -27,29 +27,31 @@ const R=[10,14,19,25,32,40,49,59,70,82];
 const PTS=[10,20,40,80,160,320,640,1280,2560,5000];
 const HUE=[350,25,50,100,165,195,225,265,300,330];
 const GRAV=.3,SUB=4,DT=1/SUB;
-let balls,parts,rings,floaters,bag,cur,nxt,ang,cool,chain,score,over,shake,t,freeze,rev,revCd,spin,best=+(localStorage.getItem('gc_best')||0),started=false,mute=false,acc=0,last=0,lastImp=0,maxLv,shots=0,lvl=1;
+let balls,parts,rings,floaters,bag,cur,nxt,ang,cool,chain,score,over,shake,t,freeze,rev,revCd,spin,best=+(localStorage.getItem('gc_best')||0),started=false,mute=false,acc=0,last=0,lastImp=0,maxLv,shots=0,lvl=1,precisionUsed=false;
 function mkBag(){const a=[0,0,0,1,1,1,2,2,3,3];for(let i=9;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function pick(){if(!bag.length)bag=mkBag();return bag.pop();}
-function reset(){balls=[];parts=[];rings=[];floaters=[];bag=mkBag();cur=pick();nxt=pick();ang=-Math.PI/2;cool=0;chain=0;score=0;over=false;shake=0;t=0;freeze=0;rev=0;revCd=0;spin=.012;maxLv=0;shots=0;lvl=1;}
+function reset(){balls=[];parts=[];rings=[];floaters=[];bag=mkBag();cur=pick();nxt=pick();ang=-Math.PI/2;cool=0;chain=0;score=0;over=false;shake=0;t=0;freeze=0;rev=0;revCd=0;spin=.012;maxLv=0;shots=0;lvl=1;precisionUsed=false;}
 reset();
 let AC;function tone(f,d=.12,type='sine',v=.07,slide=0){if(mute)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),a=AC.createGain(),n=AC.currentTime;o.type=type;o.frequency.setValueAtTime(f,n);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),n+d);a.gain.setValueAtTime(v,n);a.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(a);a.connect(AC.destination);o.start();o.stop(n+d);}catch(e){}}
 const SC=[0,2,4,7,9,12,14,16,19,21,24,26];
-function mk(x,y,lv){return{x,y,vx:0,vy:0,lv,r:R[lv],m:R[lv]*R[lv],ang:0,touch:-1,over:0,sc:1,scv:0,sq:0,sqv:0,sqa:0,dead:false,wob:.4,ph:Math.random()*6.28};}
+function mk(x,y,lv){return{x,y,vx:0,vy:0,lv,r:R[lv],m:R[lv]*R[lv],ang:0,touch:-1,over:0,sc:1,scv:0,sq:0,sqv:0,sqa:0,dead:false,wob:.4,ph:Math.random()*6.28,age:0,shotId:0};}
 function burst(x,y,h,n,sp=3){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=1+Math.random()*sp;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:25+Math.random()*25,h});}}
 function shoot(){
   if(cool>0||over)return;
   const r=R[cur],px=CX+Math.cos(ang)*(RING-8),py=CY+Math.sin(ang)*(RING-8);
-  const b=mk(px,py,cur);b.vx=-Math.cos(ang)*5;b.vy=-Math.sin(ang)*5;b.sq=-.2;b.sqa=ang;balls.push(b);
+  const b=mk(px,py,cur);b.vx=-Math.cos(ang)*5;b.vy=-Math.sin(ang)*5;b.sq=-.2;b.sqa=ang;b.shotId=shots+1;balls.push(b);precisionUsed=false;
   cur=nxt;nxt=pick();cool=30;chain=0;tone(200,.08,'square',.04,.6);shots++;if(shots%20===0){lvl++;spin*=1.18;shake=Math.max(shake,6);floaters.push({x:CX,y:CY-CORE-24,txt:'LEVEL '+lvl+' — 核が速くなる',life:90});tone(330,.3,'triangle',.1);tone(495,.4,'triangle',.08);}
 }
 function skill(){if(revCd>0||over||!started)return;rev=70;revCd=420;shake=8;tone(110,.4,'sawtooth',.12,2);rings.push({x:CX,y:CY,r:CORE,life:1,col:'#8af'});}
 function merge(a,b){
   a.dead=b.dead=true;chain++;const lv=a.lv,x=(a.x*a.m+b.x*b.m)/(a.m+b.m),y=(a.y*a.m+b.y*b.m)/(a.m+b.m);
-  const rv=rev>0?2:1,pts=Math.round(PTS[lv]*(1+.5*(chain-1))*rv);score+=pts;tone(261*Math.pow(2,SC[Math.min(chain-1,11)]/12),.35,'triangle',.1);
-  floaters.push({x,y:y-a.r,txt:'+'+pts+(chain>1?' ×'+chain:'')+(rv>1?' 反重力×2':''),life:50});rings.push({x,y,r:R[lv],life:1,col:'hsl('+HUE[lv]+',90%,70%)'});burst(x,y,HUE[lv],10+lv*3,3+lv*.4);
+  const quick=!precisionUsed&&((a.shotId===shots&&a.age<90)||(b.shotId===shots&&b.age<90));
+  if(quick){precisionUsed=true;revCd=Math.max(0,revCd-60);}
+  const rv=rev>0?2:1,pts=Math.round(PTS[lv]*(1+.5*(chain-1))*rv*(quick?1.5:1));score+=pts;tone(261*Math.pow(2,SC[Math.min(chain-1,11)]/12),.35,'triangle',.1);
+  floaters.push({x,y:y-a.r,txt:(quick?'QUICK! ':'')+'+'+pts+(chain>1?' ×'+chain:'')+(rv>1?' 反重力×2':''),life:50});rings.push({x,y,r:R[lv],life:1,col:'hsl('+HUE[lv]+',90%,70%)'});burst(x,y,HUE[lv],10+lv*3,3+lv*.4);
   freeze=Math.min(6,1+(lv>>1));shake=Math.max(shake,2+lv*1.5);
   if(lv===9){shake=20;burst(x,y,320,60,8);floaters.push({x,y:y-40,txt:'MAX!!',life:80});return;}
-  const nb=mk(x,y,lv+1);nb.vx=(a.vx*a.m+b.vx*b.m)/(a.m+b.m);nb.vy=(a.vy*a.m+b.vy*b.m)/(a.m+b.m);nb.touch=0;nb.sc=.5;nb.scv=.05;nb.wob=1;
+  const nb=mk(x,y,lv+1);nb.vx=(a.vx*a.m+b.vx*b.m)/(a.m+b.m);nb.vy=(a.vy*a.m+b.vy*b.m)/(a.m+b.m);nb.touch=0;nb.sc=.5;nb.scv=.05;nb.wob=1;nb.shotId=a.shotId===shots||b.shotId===shots?shots:0;nb.age=Math.min(a.age,b.age);
   const rad=nb.r*2;for(const o of balls){if(o.dead||o===nb)continue;const dx=o.x-x,dy=o.y-y,d=Math.hypot(dx,dy);if(d<rad&&d>1){const f=(1-d/rad)*2*(30/Math.sqrt(o.m));o.vx+=dx/d*f;o.vy+=dy/d*f;}}
   balls.push(nb);maxLv=Math.max(maxLv,lv+1);
 }
@@ -92,7 +94,7 @@ function update(){
   if(t%600===0)spin=-spin*1.0; // 10秒ごとに回転が逆向きになる
   for(let s=0;s<SUB;s++)step();
   balls=balls.filter(b=>!b.dead);
-  for(const b of balls){b.touch>=0&&b.touch++;const d=Math.hypot(b.x-CX,b.y-CY);if(b.touch>=45&&d+b.r>LINE)b.over++;else b.over=Math.max(0,b.over-2);
+  for(const b of balls){b.age++;b.touch>=0&&b.touch++;const d=Math.hypot(b.x-CX,b.y-CY);if(b.touch>=45&&d+b.r>LINE)b.over++;else b.over=Math.max(0,b.over-2);
     if(b.over>=90){over=true;tone(70,1.2,'sawtooth',.16);if(score>best){best=score;try{localStorage.setItem('gc_best',best)}catch(e){}}break;}}
 }
 function body(lv,x,y,r,o={}){
@@ -188,6 +190,7 @@ function draw(){
   g.textAlign='left';g.fillStyle='#6fd8ff';g.font='bold 11px '+MONO;g.fillText('SCORE',18,26);g.fillStyle='#fff';g.font='bold 26px '+MONO;g.fillText(score,18,54);g.fillStyle='#6f9fc8';g.font='11px '+MONO;g.fillText('BEST '+best,18,72);
   g.fillStyle='#ffd25a';g.font='bold 12px '+MONO;g.fillText('LV '+lvl+'  NEXT LV '+(20-shots%20)+'発',18,90);
   g.textAlign='center';g.fillStyle='#6fd8ff';g.font='bold 11px '+MONO;g.fillText('NEXT',CW-56,26);body(nxt,CW-56,56,Math.min(R[nxt],22),{});
+  g.textAlign='left';g.fillStyle='#8feeff';g.font='bold 11px '+MONO;g.fillText('QUICK MERGE  発射後1.5秒以内: 得点×1.5 / 反重力の充電+1秒',18,CH-68);
   hudPanel(8,CH-58,CW-136,50);
   g.textAlign='left';g.fillStyle=revCd>0?'#667':'#7ff0d0';g.font='bold 12px '+MONO;g.fillText('ANTI-GRAVITY [Space] '+(revCd>0?'CHARGING '+Math.ceil(revCd/60)+'s':'READY')+'  使用中の合体は得点×2',18,CH-38);
   g.fillStyle='#1a2a44';g.fillRect(18,CH-30,CW-160,4);g.fillStyle=revCd>0?'#4a7cff':'#7ff0d0';g.fillRect(18,CH-30,(CW-160)*(1-revCd/420),4);

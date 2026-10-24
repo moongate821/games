@@ -27,12 +27,13 @@ const THEMES = [
 const themeOfFloor = f => THEMES[(Math.max(1, f) - 1) % THEMES.length];
 
 // ---------- スキル ----------
-const SKILL_ORDER = ['lance', 'smoke', 'drift', 'guard'];
+const SKILL_ORDER = ['lance', 'smoke', 'drift', 'guard', 'jammer'];
 const SK = {
   lance: { name: 'フラッグ・ランス', color: '#ffd45a', dark: '#654514', desc: lv => `${lanceSec(lv)}秒ごとに、敵1台へ自動ダメージ`, short: '自動攻撃' },
   smoke: { name: '煙幕タンク', color: '#c78cff', dark: '#4a2870', desc: lv => `燃料がたまる速さ +${lv * 40}%` + (lv >= 3 ? '・スピンが3段階に' : '') + (lv >= 4 ? '・範囲が広がる' : ''), short: '煙幕' },
   drift: { name: 'ドリフト・タイヤ', color: '#58caff', dark: '#18476d', desc: lv => `車の落ちる速さが ${lv * 12}% ゆっくり`, short: '落下' },
   guard: { name: 'ガード・バンパー', color: '#a0ed6d', dark: '#3b662b', desc: lv => `負けそうな時、上の敵と車を一掃(合計${lv}回)`, short: '救済' },
+  jammer: { name: 'チェーン・ジャマー', color: '#61e8df', dark: '#145b61', desc: lv => `2連鎖以上で次の増援を${(lv * 1.2).toFixed(1)}秒遅らせる`, short: '増援妨害' },
 };
 const lanceSec = lv => 14 - lv * 2;                                  // Lv1=12秒 … Lv5=4秒
 const MAXLV = 5;
@@ -290,9 +291,9 @@ function drawPanel(ctx, P, px, t) {
     T(s.name, px + 20, y + 14, 12, '#fff', 'left', 150);
     for (let j = 0; j < MAXLV; j++) { ctx.fillStyle = j < lv ? s.color : 'rgba(255,255,255,.2)'; ctx.fillRect(px + W - 8 - (MAXLV - j) * 12, y + 5, 9, 9); }
   });
-  T(`消去 ${st.cleared || 0}  撃破 ${st.kills}  玉突き ${st.crashes}  最大連鎖 ${P.maxChain}`, px, 524, 12, c, 'left', W);
-  P.hints.forEach((h, i) => T(h, px, 544 + i * 15, 11, sub));
-  T('P 停止  M ミュート', px + 150, 575, 11, sub);
+  T(`消去 ${st.cleared || 0}  撃破 ${st.kills}  玉突き ${st.crashes}  最大連鎖 ${P.maxChain}`, px, 539, 12, c, 'left', W);
+  P.hints.forEach((h, i) => T(h, px, 556 + i * 15, 11, sub));
+  T('P 停止  M ミュート', px + 150, 590, 11, sub);
 }
 
 function drawPick(ctx, P, t) {
@@ -310,6 +311,7 @@ function drawPick(ctx, P, t) {
     if (k === 'lance') { ctx.fillStyle = '#654514'; ctx.beginPath(); ctx.moveTo(b.w / 2, 36); ctx.lineTo(b.w / 2 + 11, 74); ctx.lineTo(b.w / 2, 66); ctx.lineTo(b.w / 2 - 11, 74); ctx.closePath(); ctx.fill(); }
     else if (k === 'smoke') { ctx.fillStyle = '#4a2870'; for (const [dx, dy, r] of [[-9, 6, 11], [9, 6, 10], [0, -6, 13]]) { ctx.beginPath(); ctx.arc(b.w / 2 + dx, 56 + dy, r, 0, TAU); ctx.fill(); } }
     else if (k === 'drift') { ctx.strokeStyle = '#18476d'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(b.w / 2, 56, 15, .4, TAU - .4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(b.w / 2 + 18, 44); ctx.lineTo(b.w / 2 + 6, 46); ctx.lineTo(b.w / 2 + 14, 56); ctx.closePath(); ctx.fillStyle = '#18476d'; ctx.fill(); }
+    else if (k === 'jammer') { ctx.strokeStyle = '#145b61'; ctx.lineWidth = 4; for (let n = 0; n < 3; n++) { ctx.beginPath(); ctx.arc(b.w / 2, 56, 7 + n * 8, -1.1, 1.1); ctx.stroke(); } }
     else { ctx.fillStyle = '#3b662b'; ctx.beginPath(); ctx.moveTo(b.w / 2, 34); ctx.lineTo(b.w / 2 + 17, 44); ctx.lineTo(b.w / 2 + 13, 70); ctx.lineTo(b.w / 2, 78); ctx.lineTo(b.w / 2 - 13, 70); ctx.lineTo(b.w / 2 - 17, 44); ctx.closePath(); ctx.fill(); }
     DG.text(ctx, s.name, b.w / 2, 112, 19, '#fff', 'center', { maxW: b.w - 16 });
     DG.text(ctx, s.short, b.w / 2, 134, 12, s.color, 'center');
@@ -403,7 +405,7 @@ const R = DG.smokechain = {
   tagline: ['', ''], howto: ['', ''], sampleTypes: [{ c: 0 }],
   theme: { title: '#7fd4ff', titleStroke: '#0a1c4a', glass: 'rgba(4,8,28,.68)', line: 'rgba(90,180,255,.95)', grid: 'rgba(110,170,255,.12)', danger: 'rgba(255,60,90,.15)', card: 'rgba(6,10,34,.82)', msgBg: 'rgba(6,10,34,.82)', msgText: '#bfe0ff', flash: 'rgba(200,170,255,A)' },
   init(P) {
-    P.stat = { floor: 1, flags: 0, kills: 0, killsFloor: 0, xp: 0, lv: 1, pendingLv: 0, skills: { lance: 0, smoke: 0, drift: 0, guard: 0 }, fuel: 0, sflags: 1, sblasts: 0, crashes: 0, cleared: 0,
+    P.stat = { floor: 1, flags: 0, kills: 0, killsFloor: 0, xp: 0, lv: 1, pendingLv: 0, skills: { lance: 0, smoke: 0, drift: 0, guard: 0, jammer: 0 }, fuel: 0, sflags: 1, sblasts: 0, crashes: 0, cleared: 0,
       waveNo: 0, waveT: TUNE.first, lanceT: 0, guardUsed: 0, bossAlive: false, bossQueued: false, bossT: 0, gen: 0, blast: false, chainTurn: 0, pick: null };
   },
   makePiece, drawCell, drawPieceGlow, drawPanel, drawPick, drawMenu, pickKey, tapPick, updatePick,
@@ -439,6 +441,10 @@ const R = DG.smokechain = {
   },
   beforeSpawn(P) {
     const st = P.stat;
+    if (st.chainTurn >= 2 && st.skills.jammer > 0 && !st.bossAlive) {
+      st.waveT = Math.min(waveInterval(P), st.waveT + st.skills.jammer * 1.2);
+      P.say(`${st.chainTurn}連鎖! 増援を妨害`, 1.8, 4);
+    }
     if (st.chainTurn >= 3 && st.sflags < 3) { st.sflags++; Sfx.grow(); P.say(`${st.chainTurn}連鎖! S旗をゲット(${st.sflags}/3)`, 2.5, 6); }
     st.chainTurn = 0;
     if (st.skills.lance > 0 && st.lanceT >= lanceSec(st.skills.lance) && enemies(P).length) {      // 自動攻撃
