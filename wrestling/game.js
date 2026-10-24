@@ -36,9 +36,41 @@ function gamePointer(clientX, clientY) {
 }
 const wasPressed = (...c) => c.some((k) => pressed[k]);
 
-// ---------- 音(合成。画像・音声ファイル無し) ----------
+// ---------- 音(効果音は合成、BGMは専用音源) ----------
 const Snd = {
-  ac: null, resume() { try { if (!this.ac) this.ac = new (window.AudioContext || window.webkitAudioContext)(); if (this.ac.state === 'suspended') this.ac.resume(); } catch (e) {} },
+  ac: null, bgmOn: true, bgmTimer: null, bgmMode: '', tracks: null, playPending: false,
+  resume() {
+    try {
+      if (!this.ac) this.ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ac.state === 'suspended') this.ac.resume();
+    } catch (e) {}
+    if (!this.tracks) {
+      this.tracks = { menu: new Audio('assets/music/title.m4a'), match: new Audio('assets/music/match.m4a') };
+      for (const track of Object.values(this.tracks)) { track.loop = true; track.preload = 'none'; }
+      this.tracks.menu.volume = 0.28; this.tracks.match.volume = 0.23;
+    }
+    if (!this.bgmTimer) this.bgmTimer = setInterval(() => this.musicTick(), 150);
+    this.musicTick();
+  },
+  toggleBgm() {
+    this.bgmOn = !this.bgmOn;
+    if (this.bgmOn) this.resume(); else if (this.tracks) for (const track of Object.values(this.tracks)) track.pause();
+    try { localStorage.setItem('super-ring-bgm', this.bgmOn ? 'on' : 'off'); } catch (e) {}
+  },
+  musicTick() {
+    if (!this.tracks || SIM) return;
+    const mode = state === 'match' ? 'match' : 'menu';
+    if (mode !== this.bgmMode) {
+      for (const track of Object.values(this.tracks)) track.pause();
+      this.bgmMode = mode; this.playPending = false; this.tracks[mode].currentTime = 0;
+    }
+    if (!this.bgmOn || document.hidden) { this.tracks[mode].pause(); return; }
+    const track = this.tracks[mode];
+    if (track.paused && !this.playPending) {
+      this.playPending = true;
+      Promise.resolve(track.play()).catch(() => {}).finally(() => { this.playPending = false; });
+    }
+  },
   tone(f0, f1, dur, type, vol) { const a = this.ac; if (!a || SIM) return; const o = a.createOscillator(), g = a.createGain(); o.type = type || 'square'; o.frequency.setValueAtTime(f0, a.currentTime); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), a.currentTime + dur); g.gain.setValueAtTime(vol || 0.12, a.currentTime); g.gain.exponentialRampToValueAtTime(0.0008, a.currentTime + dur); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + dur + 0.02); },
   noise(dur, vol, hi) { const a = this.ac; if (!a || SIM) return; const n = Math.floor(a.sampleRate * dur), b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const s = a.createBufferSource(); s.buffer = b; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = hi || 2500; const g = a.createGain(); g.gain.value = vol || 0.3; s.connect(f).connect(g).connect(a.destination); s.start(); },
   hit(p) { this.noise(0.12, 0.35 + p * 0.05, 3000); this.tone(180, 60, 0.12, 'square', 0.1); },
@@ -52,6 +84,8 @@ const Snd = {
   boom() { this.noise(0.6, 0.7, 500); this.tone(70, 25, 0.5, 'sine', 0.45); this.tone(900, 120, 0.25, 'sawtooth', 0.1); },
   zap() { this.tone(2400, 300, 0.25, 'sawtooth', 0.1); this.noise(0.15, 0.2, 6000); },
 };
+try { Snd.bgmOn = localStorage.getItem('super-ring-bgm') !== 'off'; } catch (e) {}
+document.addEventListener('visibilitychange', () => Snd.musicTick());
 
 // ---------- 画像・データ ----------
 const SPRITE_POSES_ON = !new URLSearchParams(location.search).has('classicSprites');
@@ -880,8 +914,21 @@ function drawLock() {
 
 // ---------- 画面: 選択・結果 ----------
 let state = 'loading', sel = 0, selCpu = 0, titleT = 0, helpOn = false, helpNo = 1;
+let selectMode = 'play', watchFirst = null, titleChoice = 0;
+const BGM_RECTS = { title: { x: 390, y: 454, w: 180, h: 42 }, select: { x: 622, y: 12, w: 154, h: 30 }, match: { x: 410, y: 54, w: 140, h: 30 }, result: { x: 410, y: 54, w: 140, h: 30 } };
+const inRect = (x, y, b) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+function enterSelect(mode) { selectMode = mode; watchFirst = null; sel = 0; state = 'select'; Snd.menu(); }
+function titleAction() { enterSelect(titleChoice === 0 ? 'play' : 'watch'); }
 const hbRect = () => state === 'match' ? { x: W / 2 - 76, y: H - 40, w: 152, h: 30 } : { x: W - 168, y: 12, w: 152, h: 30 };
 function handleTap(x, y) {
+  if (inRect(x, y, BGM_RECTS[state])) { Snd.toggleBgm(); return; }
+  if (state === 'title') {
+    if (inRect(x, y, { x: 325, y: 315, w: 310, h: 58 })) { titleChoice = 0; titleAction(); }
+    else if (inRect(x, y, { x: 325, y: 385, w: 310, h: 58 })) { titleChoice = 1; titleAction(); }
+    return;
+  }
+  if (state === 'select' && inRect(x, y, { x: 92, y: 12, w: 150, h: 32 })) { state = 'title'; Snd.menu(); return; }
+  if (state === 'match' && M && !M.p[0].human && inRect(x, y, { x: 410, y: 88, w: 140, h: 28 })) { M = null; state = 'title'; Snd.menu(); return; }
   if (state === 'match' && M && M.lock && M.lock.a.human && !helpOn) {   // 技の選択メニュー: 項目をタップ
     const L = M.lock, n = L.items.length, h0 = 30, y0 = 112, w0 = 330, x0 = W / 2 - w0 / 2;
     if (x >= x0 - 10 && x <= x0 + w0 + 10 && y >= y0 && y < y0 + n * h0) { chooseLock(Math.floor((y - y0) / h0)); return; }
@@ -890,13 +937,48 @@ function handleTap(x, y) {
   const hb = hbRect(); if ((state === 'select' || state === 'match') && x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) { openHelp(); return; }
   if (state === 'select') { const cols = 5, cw = 150, ch = 98, ox = (W - cols * cw) / 2, oy = 84; const c = Math.floor((x - ox) / cw), r = Math.floor((y - oy) / ch); if (c >= 0 && c < cols && r >= 0 && r < 4) { const i = r * cols + c; if (i === sel) startFromSelect(); else { sel = i; Snd.menu(); } } else if (y > 480) startFromSelect(); }
   else if (state === 'result') { state = 'select'; M = null; }
-  else if (state === 'title') { state = 'select'; Snd.menu(); }
 }
 function openHelp() { helpOn = true; helpNo = state === 'match' && M ? M.p[0].no : sel + 1; Snd.menu(); }
-function startFromSelect() { let c; do { c = 1 + Math.floor(rnd() * 20); } while (c === sel + 1); newMatch(sel + 1, c, false); }
+function startFromSelect() {
+  if (selectMode === 'watch') {
+    if (watchFirst === null) { watchFirst = sel + 1; sel = (sel + 1) % 20; Snd.menu(); return; }
+    if (watchFirst === sel + 1) { Snd.menu(); return; }
+    newMatch(watchFirst, sel + 1, true); return;
+  }
+  let c; do { c = 1 + Math.floor(rnd() * 20); } while (c === sel + 1); newMatch(sel + 1, c, false);
+}
+function drawBgmButton() {
+  const b = BGM_RECTS[state]; if (!b) return;
+  ctx.fillStyle = 'rgba(12,18,48,.88)'; ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = Snd.bgmOn ? '#ffe070' : '#7a88a0'; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.fillStyle = Snd.bgmOn ? '#ffe070' : '#c4cad4'; ctx.textAlign = 'center'; ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('♪ BGM ' + (Snd.bgmOn ? 'ON' : 'OFF'), b.x + b.w / 2, b.y + b.h / 2 + 6);
+}
+function drawTitle() {
+  if (bg) ctx.drawImage(bg, 0, 0); else { ctx.fillStyle = '#090b1e'; ctx.fillRect(0, 0, W, H); }
+  ctx.fillStyle = 'rgba(2,5,22,.78)'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.shadowColor = '#f24481'; ctx.shadowBlur = 35; ctx.fillStyle = '#ffcf55';
+  ctx.textAlign = 'center'; ctx.font = 'italic 900 94px sans-serif'; ctx.fillText('SUPER RING', W / 2, 137); ctx.restore();
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 38px sans-serif'; ctx.fillText('超人プロレス', W / 2, 190);
+  ctx.fillStyle = '#b9ccf4'; ctx.font = 'bold 17px sans-serif'; ctx.fillText('20人のレスラーが激突。リングの頂点へ。', W / 2, 222);
+  for (const [no, x, flip] of [[1, 116, 1], [5, 844, -1]]) {
+    const im = IMG.body[no]; if (!im) continue;
+    const h = 312, w = h * im.width / im.height;
+    ctx.save(); ctx.translate(x, 438); ctx.scale(flip, 1); ctx.globalAlpha = 0.88; ctx.drawImage(im, -w / 2, -h, w, h); ctx.restore();
+  }
+  for (const [i, label] of ['1P 対 AI で遊ぶ', 'AI 対 AI を観戦'].entries()) {
+    const y = 315 + i * 70, active = i === titleChoice;
+    ctx.fillStyle = active ? 'rgba(192,42,70,.96)' : 'rgba(20,32,76,.94)'; ctx.fillRect(325, y, 310, 58);
+    ctx.strokeStyle = active ? '#ffe070' : '#7e9fd2'; ctx.lineWidth = 3; ctx.strokeRect(325, y, 310, 58);
+    ctx.textAlign = 'center'; ctx.font = 'bold 24px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(label, W / 2, y + 38);
+  }
+  ctx.fillStyle = '#d8e1ff'; ctx.font = '14px sans-serif'; ctx.fillText('画面タップで音楽開始　 /　↑↓ + 決定　 /　M: BGM切替', W / 2, 524);
+}
 function drawSelect() {
   ctx.fillStyle = '#0c0c24'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#ffe070'; ctx.font = 'bold 34px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SUPER RING 超人プロレス 【作成中】', W / 2, 46); ctx.fillStyle = '#ccd'; ctx.font = '16px sans-serif'; ctx.fillText('レスラーを選んでください(矢印+Z / タップ)  相手はランダム', W / 2, 72);
+  ctx.fillStyle = '#ffe070'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SUPER RING 超人プロレス', 435, 46); ctx.fillStyle = '#ccd'; ctx.font = '16px sans-serif';
+  ctx.fillText(selectMode === 'watch' ? (watchFirst === null ? '観戦: 先攻レスラーを選んでください' : '観戦: 対戦相手を選んでください') : 'レスラーを選んでください(矢印+Z / タップ)  相手はランダム', W / 2, 72);
+  ctx.fillStyle = '#182552'; ctx.fillRect(92, 12, 150, 32); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(92, 12, 150, 32); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('← タイトルへ', 167, 34);
   const cols = 5, cw = 150, ch = 98, ox = (W - cols * cw) / 2, oy = 84;
   for (let i = 0; i < 20; i++) {
     const c = i % cols, r = Math.floor(i / cols), x = ox + c * cw, y = oy + r * ch, on = i === sel; const im = IMG.face[i + 1];
@@ -907,6 +989,7 @@ function drawSelect() {
   const st = w.stats; ctx.fillText(`${w.name}(${w.type})  力${st['力']} 速${st['速']} 技${st['技']} 耐${st['耐']} 気${st['気']}`, 30, 528);
   ctx.textAlign = 'right'; ctx.fillStyle = '#ff80f0'; ctx.font = '14px sans-serif'; const names = w.specials.map((id) => DATA.master.find((m) => m.id === id).name).join(' / '); ctx.fillText('必殺: ' + names, W - 30, 528);
   ctx.textAlign = 'center'; ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('試合: ←→移動 Z弱打 X強打 C組み付き(倒れた相手にはカバー) ↑+X ロープ反動 V必殺(ゲージがたまると組みで出せる)', W / 2, 504);
+  if (selectMode === 'watch') { ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText(watchFirst === null ? '先攻を決定すると、次に対戦相手を選べます' : '先攻: ' + DATA.wrestlers[String(watchFirst)].name + '　　別のレスラーを決定すると観戦開始', W / 2, 484); }
 }
 function drawResult() {
   const o = M.over; ctx.fillStyle = 'rgba(0,0,20,.7)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; const w = o.winner;
@@ -996,22 +1079,30 @@ function frame(ts) {
 }
 function update(dt) {
   titleT += dt;
+  if (wasPressed('KeyM')) Snd.toggleBgm();
   if (helpOn) {
     if (wasPressed('ArrowRight')) { helpNo = helpNo % 20 + 1; Snd.menu(); } if (wasPressed('ArrowLeft')) { helpNo = (helpNo + 18) % 20 + 1; Snd.menu(); }
     if (wasPressed('KeyH', 'Escape', 'KeyZ', 'Enter', 'Space')) { helpOn = false; if (state === 'select') sel = helpNo - 1; Snd.menu(); }
     return;
   }
   if (wasPressed('KeyH') && (state === 'select' || state === 'match')) { openHelp(); return; }
-  if (state === 'select') {
+  if (state === 'title') {
+    if (wasPressed('ArrowUp', 'ArrowDown')) { titleChoice = 1 - titleChoice; Snd.menu(); }
+    if (wasPressed('KeyZ', 'Enter', 'Space')) titleAction();
+  } else if (state === 'select') {
+    if (wasPressed('Escape')) { state = 'title'; Snd.menu(); return; }
     if (wasPressed('ArrowRight')) { sel = (sel + 1) % 20; Snd.menu(); } if (wasPressed('ArrowLeft')) { sel = (sel + 19) % 20; Snd.menu(); }
     if (wasPressed('ArrowDown')) { sel = (sel + 5) % 20; Snd.menu(); } if (wasPressed('ArrowUp')) { sel = (sel + 15) % 20; Snd.menu(); }
     if (wasPressed('KeyZ', 'Enter', 'Space')) startFromSelect();
-  } else if (state === 'match') { stepMatch(dt); stepFx(dt); stepPoses(dt); stepRef(dt); }
+  } else if (state === 'match') {
+    if (M && !M.p[0].human && wasPressed('Escape')) { M = null; state = 'title'; return; }
+    stepMatch(dt); stepFx(dt); stepPoses(dt); stepRef(dt);
+  }
   else if (state === 'result') { stepFx(dt); stepPoses(dt); if (wasPressed('KeyZ', 'Enter', 'Space')) { state = 'select'; M = null; } }
 }
 function render0() {
   if (state === 'loading') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('読み込み中…', W / 2, H / 2); return; }
-  if (state === 'select') drawSelect(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
+  if (state === 'title') drawTitle(); else if (state === 'select') drawSelect(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
 }
 
 // ---------- 起動・試験 ----------
@@ -1024,7 +1115,7 @@ function fastSim(sec, a, b) {
 }
 window.__pw = { startAct, startLock, fastSim, get M() { return M; }, newMatch, get state() { return state; }, chooseLock, stepMatch, keys, pressed };
 loadAll().then(() => {
-  buildBg(); state = 'select';
+  buildBg(); state = 'title';
   const vs = hp('vs'), sim = hp('sim'), auto = hp('auto') !== null || HASH.indexOf('auto') === 0;
   if (sim) { const [s, a, b] = sim.split('/').length > 1 ? sim.split('/') : [sim, 1, 5]; fastSim(+s, +a || 1, +b || 5); return; }
   if (vs) { const [a, b] = vs.split('/').map(Number); newMatch(a || 1, b || 5, false); }
@@ -1032,7 +1123,15 @@ loadAll().then(() => {
   requestAnimationFrame(frame);
 });
 
-function render() { const wr = document.getElementById('wrap'); if (wr) wr.classList.toggle('inmatch', state === 'match' && !helpOn); render0(); if (helpOn) drawHelp(); else if (state === 'select' || state === 'match') drawHelpBtn(); }
+function render() {
+  const wr = document.getElementById('wrap'); if (wr) wr.classList.toggle('inmatch', state === 'match' && !helpOn);
+  render0(); if (helpOn) drawHelp(); else { if (state === 'select' || state === 'match') drawHelpBtn(); drawBgmButton(); }
+  if (state === 'match' && M && !M.p[0].human) {
+    ctx.fillStyle = 'rgba(12,18,48,.86)'; ctx.fillRect(410, 88, 140, 28);
+    ctx.strokeStyle = '#ffe070'; ctx.strokeRect(410, 88, 140, 28);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('観戦を終了', 480, 107);
+  }
+}
 function drawHelpBtn() { const b = hbRect(); ctx.fillStyle = 'rgba(20,30,90,.85)'; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.strokeStyle = '#ffe070'; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('H: 操作・技表', b.x + b.w / 2, b.y + 21); }
 const _hc = {};
 function helpFighter(no) { return _hc[no] || (_hc[no] = new Fighter(no, -1, false)); }
