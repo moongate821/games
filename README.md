@@ -3,6 +3,7 @@
 ブラウザで遊べるゲーム。
 
 - 入口: https://moongate821.github.io/games/
+- SUPER RING 超人プロレス: https://moongate821.github.io/games/wrestling/ — 20人の個性派レスラーがリングで対戦。打撃・投げ・フォール・必殺技を、PCとスマートフォンのタッチ操作で楽しめます。
 - ABYSSAL CURRENT ― 深海機兵: https://moongate821.github.io/games/abyssal-current/ — 12の深海を突破する横スクロールシューティング。20種の機械海獣・12ボス・10武器。武装カプセルで10武器を解放、ゲージをためてオーバードライブ！ボス撃破後は次の面へ自動進行。PC・スマホ・ゲームパッド対応。
 - SWARM BREAKER: https://moongate821.github.io/games/swarm-breaker/ — 単機で出撃し、弱らせた敵を捕獲して仲間を増やす縦シューティング。全12面・ボス5体。PC・タッチ・ゲームパッド対応。【工事中・試遊版】
 - 沈書庫: https://moongate821.github.io/games/shizumi/ — MS-DOS風の画面で遊ぶ、死に覚えのテキストRPG。地下へ沈む書庫で、死ぬと一冊の本になる。知ったことだけが次の周に残る(激ムズ)。
