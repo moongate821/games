@@ -106,7 +106,7 @@ const TRIAL_CROP = {
   driverHold: [175, 90, 1097, 1080], driverComposite: [121, 15, 1012, 1303],
   getup: [96, 203, 1120, 858],
 };
-const TRIAL_HEIGHT = { getup: 150, walkA: 200, walkB: 200, lowKick: 195, lariat: 190, runRope: 180, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 200, bridge: 100, fallBack: 125, busterDrop: 175, busterComposite: 215, sparkLock: 175, sparkComposite: 170, driverHold: 180, driverComposite: 220 };
+const TRIAL_HEIGHT = { getup: 150, walkA: 212, walkB: 212, lowKick: 195, lariat: 190, runRope: 180, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 150, bridge: 100, fallBack: 125, busterDrop: 175, busterComposite: 215, sparkLock: 175, sparkComposite: 170, driverHold: 180, driverComposite: 220 };
 const INDIVIDUAL_POSES = 'guard grapple crouch carry throwRelease getup walkA walkB windup lariat punch kick lowKick chopUp chopDown headbutt elbow power stagger pinTop stomp dive elbowDrop hold held tucked bridge fallBack clinch throwPrep liftHigh slamDown block taunt'.split(' ');
 const INDIVIDUAL_REVISIONS = { 2: { headbutt: 'headbutt-v2', hold: 'hold-v2', throwPrep: 'throwPrep-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v3', elbowDrop: 'elbowDrop-v2', tucked: 'tucked-v2' }, 3: { hold: 'hold-v2', pinTop: 'pinTop-v2', chopUp: 'chopUp-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v4', elbowDrop: 'elbowDrop-v2', punch: 'punch-v2' }, 4: { headbutt: 'headbutt-v2', throwPrep: 'throwPrep-v2', taunt: 'taunt-v2', chopUp: 'chopUp-v2', block: 'block-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 5: { clinch: 'clinch-v2', hold: 'hold-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 6: { hold: 'hold-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2', kick: 'kick-v2' }, 7: { throwPrep: 'throwPrep-v2', hold: 'hold-v2', slamDown: 'slamDown-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 8: { headbutt: 'headbutt-v2', stagger: 'stagger-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', slamDown: 'slamDown-v2', tucked: 'tucked-v2' }, 9: { hold: 'hold-v2', power: 'power-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', kick: 'kick-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v4', elbowDrop: 'elbowDrop-v2' }, 10: { hold: 'hold-v2', headbutt: 'headbutt-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2', tucked: 'tucked-v2' }, 11: { clinch: 'clinch-v2', hold: 'hold-v2', chopDown: 'chopDown-v2', lariat: 'lariat-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', windup: 'windup-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 12: { hold: 'hold-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 13: { fallBack: 'fallBack-v2', hold: 'hold-v2', chopDown: 'chopDown-v2', block: 'block-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', bridge: 'bridge-v3', elbowDrop: 'elbowDrop-v2', stomp: 'stomp-v2' }, 14: { taunt: 'taunt-v2', hold: 'hold-v2', chopUp: 'chopUp-v2', lariat: 'lariat-v2', block: 'block-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 15: { hold: 'hold-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 16: { fallBack: 'fallBack-v2', hold: 'hold-v2', lariat: 'lariat-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', windup: 'windup-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 17: { hold: 'hold-v2', elbow: 'elbow-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2' }, 18: { hold: 'hold-v2', chopUp: 'chopUp-v2', headbutt: 'headbutt-v2', tucked: 'tucked-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', elbowDrop: 'elbowDrop-v2' }, 19: { lariat: 'lariat-v2', hold: 'hold-v2', headbutt: 'headbutt-v2', stagger: 'stagger-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v2', elbowDrop: 'elbowDrop-v2', punch: 'punch-v2' }, 20: { headbutt: 'headbutt-v2', tucked: 'tucked-v2', windup: 'windup-v2', kick: 'kick-v2', stomp: 'stomp-v2', fallBack: 'fallBack-v2', bridge: 'bridge-v4', elbowDrop: 'elbowDrop-v2', punch: 'punch-v2' } };
 // シートの境界で体が切れた候補は、個別修正版を確認できるまで従来の動作描画へ戻す。
@@ -126,7 +126,7 @@ const REJECTED_FRAGMENT_POSES = {
   tucked: [],
   windup: [],
 };
-const INDIVIDUAL_HEIGHT = { crouch: 150, getup: 150, walkA: 200, walkB: 200, lowKick: 195, lariat: 190, headbutt: 180, clinch: 190, throwPrep: 190, slamDown: 185, hold: 190, held: 185, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 200, bridge: 100, fallBack: 125, liftHigh: 215 };
+const INDIVIDUAL_HEIGHT = { crouch: 150, getup: 150, walkA: 212, walkB: 212, lowKick: 195, lariat: 190, headbutt: 180, clinch: 190, throwPrep: 190, slamDown: 185, hold: 190, held: 185, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 150, bridge: 100, fallBack: 125, liftHigh: 215 };
 const ACTION_POSE_CELL = { guard: 0, grapple: 1, clinch: 1, crouch: 2, carry: 3, liftHigh: 3, throwPrep: 3, slamDown: 4, getup: 5 };
 const IMG = { body: {}, face: {}, down: {}, trial: {}, individual: {}, action: {}, special: {}, referee: {} }, PROP = window.PROP = {};
 let SPRITE_BOUNDS = {};
@@ -273,7 +273,7 @@ function applyHit(a, d, mv, big, mult, noFx) {
   if (d.life <= 0) endMatch(a, 'KO');
   return dm;
 }
-function endMatch(w, how) { if (M.over) return; M.gongT = 1.4; M.over = { winner: w, how, t: 0 }; say(how === 'PIN' ? '3カウント!' : how === 'KO' ? 'K.O.!' : '判定', 3); Snd.bell(); Snd.cheer(); }
+function endMatch(w, how) { if (M.over) return; M.gongT = 1.4; M.over = { winner: w, how, t: 0 }; if (!SIM && M.p[0].human) { recordBout(M.p[0].no, w === M.p[0]); if (M.tournament) finishTournamentBout(w.no); } say(how === 'PIN' ? '3カウント!' : how === 'KO' ? 'K.O.!' : '判定', 3); Snd.bell(); Snd.cheer(); }
 const TXT = { '打': ['POW!', 'BAM!', 'WHAP!', 'BASH!'], '投': ['DOGOON!', 'CRASH!', 'KABOOM!', 'SLAM!'], '関': ['GRIND!', 'CRUSH!'], '地': ['THUD!', 'STOMP!'], '飛': ['IMPACT!', 'BOOM!'], 'ロ': ['WHAM!', 'RAM!'], '奥': ['DOOM!!', 'K.O.!!'], '角': ['BANG!', 'SMASH!'] };
 function fxHit(a, d, mv, tier, dm) {
   const kind = mv.kind, x = (sx(a.x) + sx(d.x)) / 2, y = GROUND - 112, k = [0.9, 1.3, 1.9, 2.8][tier], floorX = sx(d.x);
@@ -729,7 +729,12 @@ function drawIndividualPose(f, pose) {
   const im = IMG.individual[f.no]?.[pose]; if (!im) return false;
   const v = f.vis, px = sx(f.x) + v.ox;
   const crop = im.ink || [0, 0, im.width, im.height];
-  const height = INDIVIDUAL_HEIGHT[pose] || 212, width = height * crop[2] / crop[3];
+  // 旧128pxの同一シート内では、全姿勢に共通の画素倍率を使う。
+  // 画像ごとに高さを合わせると、しゃがみ・起き上がりだけ身体が拡大してしまう。
+  const guard = IMG.individual[f.no]?.guard;
+  const sameSheet = im.width === 128 && im.height === 128 && guard?.width === 128 && guard.height === 128;
+  const height = sameSheet ? 212 * crop[3] / (guard.ink?.[3] || guard.height) : (INDIVIDUAL_HEIGHT[pose] || 212);
+  const width = height * crop[2] / crop[3];
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56, 11, 0, 0, 7); ctx.fill();
   ctx.save(); ctx.translate(px, GROUND - v.lift - height / 2); ctx.rotate(v.rot); ctx.scale(f.face >= 0 ? 1 : -1, 1);
   ctx.drawImage(im, ...crop, -width / 2, -height / 2, width, height);
@@ -923,18 +928,89 @@ function drawLock() {
 // ---------- 画面: 選択・結果 ----------
 let state = 'loading', sel = 0, selCpu = 0, titleT = 0, helpOn = false, helpNo = 1;
 let selectMode = 'play', watchFirst = null, titleChoice = 0;
-const BGM_RECTS = { title: { x: 390, y: 454, w: 180, h: 42 }, select: { x: 622, y: 12, w: 154, h: 30 }, match: { x: 410, y: 54, w: 140, h: 30 }, result: { x: 410, y: 54, w: 140, h: 30 } };
+const RECORD_KEY = 'super-ring-record-v1', TOURNAMENT_KEY = 'super-ring-tournament-v1';
+function storedJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } }
+let RECORD = storedJson(RECORD_KEY, { fighters: {} });
+if (!RECORD || typeof RECORD.fighters !== 'object' || !RECORD.fighters) RECORD = { fighters: {} };
+let T = storedJson(TOURNAMENT_KEY, null);
+if (T && (!Array.isArray(T.slots) || !Number.isInteger(T.player) || T.player < 1 || T.player > 20)) T = null;
+function saveRecord() { try { localStorage.setItem(RECORD_KEY, JSON.stringify(RECORD)); } catch (e) {} }
+function saveTournament() { try { if (T) localStorage.setItem(TOURNAMENT_KEY, JSON.stringify(T)); else localStorage.removeItem(TOURNAMENT_KEY); } catch (e) {} }
+function fighterRecord(no) {
+  const r = RECORD.fighters[String(no)];
+  return r && Number.isFinite(r.wins) && Number.isFinite(r.losses) && Number.isFinite(r.trophies) ? r : { wins: 0, losses: 0, trophies: 0 };
+}
+function winRate(no) { const r = fighterRecord(no), bouts = r.wins + r.losses; return bouts ? Math.round(r.wins / bouts * 100) + '%' : '—'; }
+function recordBout(no, won) { const r = { ...fighterRecord(no) }; r[won ? 'wins' : 'losses']++; RECORD.fighters[String(no)] = r; saveRecord(); }
+function recordTrophy(no) { const r = { ...fighterRecord(no) }; r.trophies++; RECORD.fighters[String(no)] = r; saveRecord(); }
+const ROUND_NAMES = ['予選', 'ベスト16', '準々決勝', '準決勝', '決勝'];
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function cpuWinner(a, b) {
+  const score = (no) => { const s = DATA.wrestlers[String(no)].stats; return s['力'] + s['速'] + s['技'] + s['耐'] + s['気']; };
+  return rnd() < clamp(0.5 + (score(a) - score(b)) * 0.018, 0.2, 0.8) ? a : b;
+}
+function prepareTournamentRound() {
+  while (T && T.slots.length > 1) {
+    T.winners = [];
+    T.nextPair = -1; T.opponent = null;
+    for (let i = 0; i < T.slots.length; i += 2) {
+      const a = T.slots[i], b = T.slots[i + 1];
+      if (!a || !b) T.winners.push(a || b || null);
+      else if (a === T.player || b === T.player) { T.nextPair = i / 2; T.opponent = a === T.player ? b : a; T.winners.push(null); }
+      else T.winners.push(cpuWinner(a, b));
+    }
+    if (T.nextPair >= 0) { T.status = 'ready'; saveTournament(); return; }
+    T.slots = T.winners; T.round++;
+  }
+  if (T) { T.champion = T.slots[0]; T.status = T.champion === T.player ? 'champion' : 'eliminated'; saveTournament(); }
+}
+function startTournament(no) {
+  const entrants = shuffle(Array.from({ length: 20 }, (_, i) => i + 1));
+  const pairs = shuffle([...Array.from({ length: 4 }, (_, i) => entrants.slice(i * 2, i * 2 + 2)), ...entrants.slice(8).map((n) => [n, null])]);
+  T = { player: no, slots: pairs.flat(), round: 0, winners: [], nextPair: -1, opponent: null, champion: null, status: 'ready' };
+  prepareTournamentRound(); state = 'tournament'; Snd.menu();
+}
+function startTournamentMatch() {
+  if (!T || T.status !== 'ready' || !T.opponent) return;
+  newMatch(T.player, T.opponent, false);
+  M.tournament = true;
+}
+function finishTournamentBout(winner) {
+  if (!T || T.status !== 'ready' || T.nextPair < 0) return;
+  T.winners[T.nextPair] = winner;
+  T.status = winner === T.player ? 'won' : 'lost';
+  saveTournament();
+}
+function advanceTournamentAfterBout() {
+  if (T && (T.status === 'won' || T.status === 'lost')) {
+    const won = T.status === 'won';
+    T.slots = T.winners; T.round++;
+    if (won && T.slots.length === 1) { T.champion = T.player; T.status = 'champion'; recordTrophy(T.player); saveTournament(); }
+    else prepareTournamentRound();
+  }
+}
+function afterMatchResult() {
+  if (M?.tournament && T) { advanceTournamentAfterBout(); M = null; state = 'tournament'; return; }
+  M = null; state = 'select';
+}
+const BGM_RECTS = { title: { x: 390, y: 464, w: 180, h: 38 }, select: { x: 622, y: 12, w: 154, h: 30 }, tournament: { x: 622, y: 12, w: 154, h: 30 }, trophies: { x: 622, y: 12, w: 154, h: 30 }, match: { x: 410, y: 54, w: 140, h: 30 }, result: { x: 410, y: 54, w: 140, h: 30 } };
 const inRect = (x, y, b) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
 function enterSelect(mode) { selectMode = mode; watchFirst = null; sel = 0; state = 'select'; Snd.menu(); }
-function titleAction() { enterSelect(titleChoice === 0 ? 'play' : 'watch'); }
+function titleAction() {
+  if (titleChoice === 0) enterSelect('play');
+  else if (titleChoice === 1) { if (T && T.status === 'ready') { state = 'tournament'; Snd.menu(); } else enterSelect('tournament'); }
+  else if (titleChoice === 2) enterSelect('watch');
+  else { state = 'trophies'; Snd.menu(); }
+}
 const hbRect = () => state === 'match' ? { x: W / 2 - 76, y: H - 40, w: 152, h: 30 } : { x: W - 168, y: 12, w: 152, h: 30 };
 function handleTap(x, y) {
   if (inRect(x, y, BGM_RECTS[state])) { Snd.toggleBgm(); return; }
   if (state === 'title') {
-    if (inRect(x, y, { x: 325, y: 315, w: 310, h: 58 })) { titleChoice = 0; titleAction(); }
-    else if (inRect(x, y, { x: 325, y: 385, w: 310, h: 58 })) { titleChoice = 1; titleAction(); }
+    for (let i = 0; i < 4; i++) if (inRect(x, y, { x: 325, y: 265 + i * 48, w: 310, h: 42 })) { titleChoice = i; titleAction(); break; }
     return;
   }
+  if (state === 'tournament') { if (y < 48 && x >= 190 && x < 350) { enterSelect('tournament'); } else if (y < 48 && x < 190) { state = 'title'; Snd.menu(); } else if (y > 444) { if (T?.status === 'ready') startTournamentMatch(); else { state = 'title'; Snd.menu(); } } return; }
+  if (state === 'trophies') { if (y < 55 || y > 480) { state = 'title'; Snd.menu(); } return; }
   if (state === 'select' && inRect(x, y, { x: 92, y: 12, w: 150, h: 32 })) { state = 'title'; Snd.menu(); return; }
   if (state === 'match' && M && !M.p[0].human && inRect(x, y, { x: 410, y: 88, w: 140, h: 28 })) { M = null; state = 'title'; Snd.menu(); return; }
   if (state === 'match' && M && M.lock && M.lock.a.human && !helpOn) {   // 技の選択メニュー: 項目をタップ
@@ -944,7 +1020,7 @@ function handleTap(x, y) {
   if (helpOn) { if (y > 486) { if (x < 330) helpNo = (helpNo + 18) % 20 + 1; else if (x > 630) helpNo = helpNo % 20 + 1; else helpOn = false; Snd.menu(); } else if (x > W - 120 && y < 40) helpOn = false; return; }
   const hb = hbRect(); if ((state === 'select' || state === 'match') && x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) { openHelp(); return; }
   if (state === 'select') { const cols = 5, cw = 150, ch = 98, ox = (W - cols * cw) / 2, oy = 84; const c = Math.floor((x - ox) / cw), r = Math.floor((y - oy) / ch); if (c >= 0 && c < cols && r >= 0 && r < 4) { const i = r * cols + c; if (i === sel) startFromSelect(); else { sel = i; Snd.menu(); } } else if (y > 480) startFromSelect(); }
-  else if (state === 'result') { state = 'select'; M = null; }
+  else if (state === 'result') afterMatchResult();
 }
 function openHelp() { helpOn = true; helpNo = state === 'match' && M ? M.p[0].no : sel + 1; Snd.menu(); }
 function startFromSelect() {
@@ -953,6 +1029,7 @@ function startFromSelect() {
     if (watchFirst === sel + 1) { Snd.menu(); return; }
     newMatch(watchFirst, sel + 1, true); return;
   }
+  if (selectMode === 'tournament') { startTournament(sel + 1); return; }
   let c; do { c = 1 + Math.floor(rnd() * 20); } while (c === sel + 1); newMatch(sel + 1, c, false);
 }
 function drawBgmButton() {
@@ -961,6 +1038,57 @@ function drawBgmButton() {
   ctx.strokeStyle = Snd.bgmOn ? '#ffe070' : '#7a88a0'; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h);
   ctx.fillStyle = Snd.bgmOn ? '#ffe070' : '#c4cad4'; ctx.textAlign = 'center'; ctx.font = 'bold 16px sans-serif';
   ctx.fillText('♪ BGM ' + (Snd.bgmOn ? 'ON' : 'OFF'), b.x + b.w / 2, b.y + b.h / 2 + 6);
+}
+function drawTrophyCup(x, y, scale) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+  ctx.fillStyle = '#b66b1e'; ctx.beginPath(); ctx.moveTo(-18, -30); ctx.quadraticCurveTo(-36, -38, -35, -12); ctx.quadraticCurveTo(-33, 0, -18, -3); ctx.lineTo(-19, -10); ctx.quadraticCurveTo(-28, -8, -27, -20); ctx.quadraticCurveTo(-26, -26, -18, -23); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(18, -30); ctx.quadraticCurveTo(36, -38, 35, -12); ctx.quadraticCurveTo(33, 0, 18, -3); ctx.lineTo(19, -10); ctx.quadraticCurveTo(28, -8, 27, -20); ctx.quadraticCurveTo(26, -26, 18, -23); ctx.fill();
+  const gold = ctx.createLinearGradient(-20, 0, 20, 0); gold.addColorStop(0, '#a95b18'); gold.addColorStop(0.3, '#ffe187'); gold.addColorStop(0.65, '#ffc33e'); gold.addColorStop(1, '#9e5011');
+  ctx.fillStyle = gold; ctx.beginPath(); ctx.moveTo(-20, -34); ctx.lineTo(20, -34); ctx.quadraticCurveTo(17, -8, 5, -5); ctx.lineTo(-5, -5); ctx.quadraticCurveTo(-17, -8, -20, -34); ctx.fill();
+  ctx.fillRect(-4, -5, 8, 14); ctx.fillRect(-14, 9, 28, 5); ctx.fillStyle = '#8c4b1c'; ctx.fillRect(-19, 14, 38, 8); ctx.fillStyle = '#ffdf70'; ctx.fillRect(-15, 15, 30, 2); ctx.restore();
+}
+function wrestlerName(no) { return DATA.wrestlers[String(no)]?.name || 'BYE'; }
+function drawTournament() {
+  ctx.fillStyle = '#0b1029'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffe070'; ctx.font = 'bold 30px sans-serif'; ctx.fillText('20人トーナメント', W / 2, 79);
+  ctx.fillStyle = '#172651'; ctx.fillRect(20, 10, 160, 36); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(20, 10, 160, 36); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('← タイトルへ', 100, 35);
+  ctx.fillStyle = '#172651'; ctx.fillRect(190, 10, 160, 36); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(190, 10, 160, 36); ctx.fillStyle = '#fff'; ctx.fillText('新しい大会', 270, 35);
+  if (T.status !== 'ready') {
+    if (T.status === 'champion') { drawTrophyCup(W / 2, 286, 3); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 54px sans-serif'; ctx.fillText('優勝！', W / 2, 137); }
+    else { ctx.fillStyle = '#ffb0b0'; ctx.font = 'bold 50px sans-serif'; ctx.fillText('トーナメント敗退', W / 2, 140); }
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.fillText('優勝者: ' + wrestlerName(T.champion), W / 2, 367);
+    ctx.font = '18px sans-serif'; ctx.fillText(`${wrestlerName(T.player)}　${fighterRecord(T.player).wins}勝 ${fighterRecord(T.player).losses}敗　勝率 ${winRate(T.player)}　優勝 ${fighterRecord(T.player).trophies}回`, W / 2, 407);
+  } else {
+    ctx.fillStyle = '#a8c5ff'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(`第${T.round + 1}ラウンド　${ROUND_NAMES[T.round] || '決勝'}`, W / 2, 103);
+    const a = IMG.face[T.player], b = IMG.face[T.opponent]; if (a) ctx.drawImage(a, 355, 109, 66, 66); if (b) ctx.drawImage(b, 539, 109, 66, 66);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 27px sans-serif'; ctx.fillText('VS', W / 2, 153); ctx.font = 'bold 16px sans-serif'; ctx.fillText(wrestlerName(T.player), 394, 196); ctx.fillText(wrestlerName(T.opponent), 567, 196);
+    ctx.fillStyle = '#9bf'; ctx.font = '14px sans-serif'; ctx.fillText(`あなたの成績: ${fighterRecord(T.player).wins}勝 ${fighterRecord(T.player).losses}敗　勝率 ${winRate(T.player)}`, W / 2, 220);
+    const matches = T.slots.length / 2, rows = Math.min(8, matches);
+    for (let i = 0; i < matches; i++) {
+      const col = Math.floor(i / rows), row = i % rows, x = matches <= 8 ? 278 : 63 + col * 430, y = 232 + row * 27;
+      const left = T.slots[i * 2], right = T.slots[i * 2 + 1];
+      ctx.fillStyle = i === T.nextPair ? '#54471c' : '#1a2448'; ctx.fillRect(x, y, 404, 24);
+      ctx.strokeStyle = i === T.nextPair ? '#ffe070' : '#394b79'; ctx.strokeRect(x, y, 404, 24);
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(wrestlerName(left) + (right ? '  vs  ' + wrestlerName(right) : '  不戦勝'), x + 7, y + 17);
+      if (T.winners[i]) { ctx.textAlign = 'right'; ctx.fillStyle = '#9bf'; ctx.fillText('→ ' + wrestlerName(T.winners[i]), x + 396, y + 17); }
+    }
+  }
+  ctx.fillStyle = '#a32645'; ctx.fillRect(330, 476, 300, 46); ctx.strokeStyle = '#ffe070'; ctx.lineWidth = 3; ctx.strokeRect(330, 476, 300, 46);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = 'bold 22px sans-serif'; ctx.fillText(T.status === 'ready' ? '次の試合へ  Z / タップ' : 'タイトルへ  Z / タップ', W / 2, 507);
+}
+function drawTrophies() {
+  ctx.fillStyle = '#0b1029'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffe070'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('トロフィー展示室', W / 2, 42);
+  const total = Object.values(RECORD.fighters).reduce((n, r) => n + (r?.trophies || 0), 0);
+  ctx.fillStyle = '#b9ccf4'; ctx.font = '16px sans-serif'; ctx.fillText(`1P操作の戦績　優勝トロフィー ${total}個　　戻る: Z / タップ`, W / 2, 64);
+  for (let i = 0; i < 20; i++) {
+    const no = i + 1, col = i % 5, row = Math.floor(i / 5), x = 48 + col * 176, y = 78 + row * 103, r = fighterRecord(no);
+    ctx.fillStyle = r.trophies ? '#26325b' : '#161d38'; ctx.fillRect(x, y, 164, 96); ctx.strokeStyle = r.trophies ? '#ffe070' : '#384362'; ctx.strokeRect(x, y, 164, 96);
+    const face = IMG.face[no]; if (face) ctx.drawImage(face, x + 9, y + 8, 49, 49);
+    if (r.trophies) { drawTrophyCup(x + 119, y + 58, 0.55); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('×' + r.trophies, x + 143, y + 51); }
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText(wrestlerName(no), x + 82, y + 72);
+    ctx.fillStyle = '#9bf'; ctx.font = '11px sans-serif'; ctx.fillText(`${r.wins}勝 ${r.losses}敗　${winRate(no)}`, x + 82, y + 88);
+  }
 }
 function drawTitle() {
   if (bg) ctx.drawImage(bg, 0, 0); else { ctx.fillStyle = '#090b1e'; ctx.fillRect(0, 0, W, H); }
@@ -974,36 +1102,41 @@ function drawTitle() {
     const h = 312, w = h * im.width / im.height;
     ctx.save(); ctx.translate(x, 438); ctx.scale(flip, 1); ctx.globalAlpha = 0.88; ctx.drawImage(im, -w / 2, -h, w, h); ctx.restore();
   }
-  for (const [i, label] of ['1P 対 AI で遊ぶ', 'AI 対 AI を観戦'].entries()) {
-    const y = 315 + i * 70, active = i === titleChoice;
-    ctx.fillStyle = active ? 'rgba(192,42,70,.96)' : 'rgba(20,32,76,.94)'; ctx.fillRect(325, y, 310, 58);
-    ctx.strokeStyle = active ? '#ffe070' : '#7e9fd2'; ctx.lineWidth = 3; ctx.strokeRect(325, y, 310, 58);
-    ctx.textAlign = 'center'; ctx.font = 'bold 24px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(label, W / 2, y + 38);
+  const cups = Object.values(RECORD.fighters).reduce((n, r) => n + (r?.trophies || 0), 0);
+  ctx.fillStyle = 'rgba(9,15,47,.9)'; ctx.fillRect(325, 230, 310, 28); drawTrophyCup(348, 251, 0.4);
+  ctx.fillStyle = '#ffe070'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`トロフィー展示室　優勝 ${cups}回`, W / 2 + 7, 250);
+  for (const [i, label] of ['1P 対 AI で遊ぶ', T?.status === 'ready' ? 'トーナメントを再開' : '20人トーナメント', 'AI 対 AI を観戦', '勝率・トロフィーを見る'].entries()) {
+    const y = 265 + i * 48, active = i === titleChoice;
+    ctx.fillStyle = active ? 'rgba(192,42,70,.96)' : 'rgba(20,32,76,.94)'; ctx.fillRect(325, y, 310, 42);
+    ctx.strokeStyle = active ? '#ffe070' : '#7e9fd2'; ctx.lineWidth = 2; ctx.strokeRect(325, y, 310, 42);
+    ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(label, W / 2, y + 28);
   }
   ctx.fillStyle = '#d8e1ff'; ctx.font = '14px sans-serif'; ctx.fillText('画面タップで音楽開始　 /　↑↓ + 決定　 /　M: BGM切替', W / 2, 524);
 }
 function drawSelect() {
   ctx.fillStyle = '#0c0c24'; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SUPER RING 超人プロレス', 435, 46); ctx.fillStyle = '#ccd'; ctx.font = '16px sans-serif';
-  ctx.fillText(selectMode === 'watch' ? (watchFirst === null ? '観戦: 先攻レスラーを選んでください' : '観戦: 対戦相手を選んでください') : 'レスラーを選んでください(矢印+Z / タップ)  相手はランダム', W / 2, 72);
+  ctx.fillText(selectMode === 'watch' ? (watchFirst === null ? '観戦: 先攻レスラーを選んでください' : '観戦: 対戦相手を選んでください') : selectMode === 'tournament' ? '20人トーナメントで操作するレスラーを選んでください' : 'レスラーを選んでください(矢印+Z / タップ)  相手はランダム', W / 2, 72);
   ctx.fillStyle = '#182552'; ctx.fillRect(92, 12, 150, 32); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(92, 12, 150, 32); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('← タイトルへ', 167, 34);
   const cols = 5, cw = 150, ch = 98, ox = (W - cols * cw) / 2, oy = 84;
   for (let i = 0; i < 20; i++) {
     const c = i % cols, r = Math.floor(i / cols), x = ox + c * cw, y = oy + r * ch, on = i === sel; const im = IMG.face[i + 1];
     ctx.fillStyle = on ? '#2a3a90' : '#16163a'; ctx.fillRect(x + 6, y + 4, cw - 12, ch - 10); ctx.strokeStyle = on ? '#ffe070' : '#445'; ctx.lineWidth = on ? 4 : 1.5; ctx.strokeRect(x + 6, y + 4, cw - 12, ch - 10);
     if (im) ctx.drawImage(im, x + cw / 2 - 31, y + 8, 62, 62); ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(DATA.wrestlers[String(i + 1)].name, x + cw / 2, y + ch - 13);
+    const trophies = fighterRecord(i + 1).trophies; if (trophies) { drawTrophyCup(x + cw - 23, y + 35, 0.33); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('×' + trophies, x + cw - 26, y + 52); }
   }
   const w = DATA.wrestlers[String(sel + 1)]; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif';
   const st = w.stats; ctx.fillText(`${w.name}(${w.type})  力${st['力']} 速${st['速']} 技${st['技']} 耐${st['耐']} 気${st['気']}`, 30, 528);
   ctx.textAlign = 'right'; ctx.fillStyle = '#ff80f0'; ctx.font = '14px sans-serif'; const names = w.specials.map((id) => DATA.master.find((m) => m.id === id).name).join(' / '); ctx.fillText('必殺: ' + names, W - 30, 528);
   ctx.textAlign = 'center'; ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('試合: ←→移動 Z弱打 X強打 C組み付き(倒れた相手にはカバー) ↑+X ロープ反動 V必殺(ゲージがたまると組みで出せる)', W / 2, 504);
   if (selectMode === 'watch') { ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText(watchFirst === null ? '先攻を決定すると、次に対戦相手を選べます' : '先攻: ' + DATA.wrestlers[String(watchFirst)].name + '　　別のレスラーを決定すると観戦開始', W / 2, 484); }
+  else { const r = fighterRecord(sel + 1); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText(`${r.wins}勝 ${r.losses}敗　勝率 ${winRate(sel + 1)}　優勝 ${r.trophies}回${selectMode === 'tournament' ? '　　決定すると大会開始' : ''}`, W / 2, 484); }
 }
 function drawResult() {
   const o = M.over; ctx.fillStyle = 'rgba(0,0,20,.7)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; const w = o.winner;
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 60px sans-serif'; ctx.fillText(w.name + ' の勝ち!', W / 2, 200); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.fillText(({ PIN: '3カウント', KO: 'K.O.', '判定': '時間切れ判定' })[o.how] + '  ' + Math.floor(M.time / 60) + '分' + Math.floor(M.time % 60) + '秒', W / 2, 250);
   const im = IMG.body[w.no]; if (im) { const hh = 190, sc = hh / im.height; ctx.drawImage(im, W / 2 - im.width * sc / 2, 280, im.width * sc, hh); }
-  if (PROP.belt) { const b = PROP.belt; ctx.drawImage(b, W / 2 - b.width * 1.3, 268, b.width * 2.6, b.height * 2.6); }  ctx.fillStyle = '#9bf'; ctx.font = '18px sans-serif'; ctx.fillText('Z / タップで レスラー選択へ', W / 2, 520);
+  if (PROP.belt) { const b = PROP.belt; ctx.drawImage(b, W / 2 - b.width * 1.3, 268, b.width * 2.6, b.height * 2.6); }  ctx.fillStyle = '#9bf'; ctx.font = '18px sans-serif'; ctx.fillText(M.tournament ? 'Z / タップで トーナメント表へ' : 'Z / タップで レスラー選択へ', W / 2, 520);
 }
 function drawCutIn(A) {
   const u = A.t / A.intro, a = A.a, ap = Math.sin(Math.min(1, u * 1.1) * Math.PI) ** 0.5;
@@ -1095,8 +1228,15 @@ function update(dt) {
   }
   if (wasPressed('KeyH') && (state === 'select' || state === 'match')) { openHelp(); return; }
   if (state === 'title') {
-    if (wasPressed('ArrowUp', 'ArrowDown')) { titleChoice = 1 - titleChoice; Snd.menu(); }
+    if (wasPressed('ArrowUp')) { titleChoice = (titleChoice + 3) % 4; Snd.menu(); }
+    if (wasPressed('ArrowDown')) { titleChoice = (titleChoice + 1) % 4; Snd.menu(); }
     if (wasPressed('KeyZ', 'Enter', 'Space')) titleAction();
+  } else if (state === 'tournament') {
+    if (wasPressed('Escape')) { state = 'title'; Snd.menu(); }
+    else if (wasPressed('KeyN')) enterSelect('tournament');
+    else if (wasPressed('KeyZ', 'Enter', 'Space')) { if (T?.status === 'ready') startTournamentMatch(); else { state = 'title'; Snd.menu(); } }
+  } else if (state === 'trophies') {
+    if (wasPressed('KeyZ', 'Enter', 'Space', 'Escape')) { state = 'title'; Snd.menu(); }
   } else if (state === 'select') {
     if (wasPressed('Escape')) { state = 'title'; Snd.menu(); return; }
     if (wasPressed('ArrowRight')) { sel = (sel + 1) % 20; Snd.menu(); } if (wasPressed('ArrowLeft')) { sel = (sel + 19) % 20; Snd.menu(); }
@@ -1106,11 +1246,11 @@ function update(dt) {
     if (M && !M.p[0].human && wasPressed('Escape')) { M = null; state = 'title'; return; }
     stepMatch(dt); stepFx(dt); stepPoses(dt); stepRef(dt);
   }
-  else if (state === 'result') { stepFx(dt); stepPoses(dt); if (wasPressed('KeyZ', 'Enter', 'Space')) { state = 'select'; M = null; } }
+  else if (state === 'result') { stepFx(dt); stepPoses(dt); if (wasPressed('KeyZ', 'Enter', 'Space')) afterMatchResult(); }
 }
 function render0() {
   if (state === 'loading') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(M ? '選手の動作画像を読み込み中…' : '読み込み中…', W / 2, H / 2); return; }
-  if (state === 'title') drawTitle(); else if (state === 'select') drawSelect(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
+  if (state === 'title') drawTitle(); else if (state === 'select') drawSelect(); else if (state === 'tournament' && T) drawTournament(); else if (state === 'trophies') drawTrophies(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
 }
 
 // ---------- 起動・試験 ----------
@@ -1123,6 +1263,7 @@ function fastSim(sec, a, b) {
 }
 window.__pw = { startAct, startLock, fastSim, get M() { return M; }, newMatch, get state() { return state; }, chooseLock, stepMatch, keys, pressed };
 loadAll().then(() => {
+  if (T?.status === 'won' || T?.status === 'lost') advanceTournamentAfterBout();
   buildBg(); state = 'title';
   const vs = hp('vs'), sim = hp('sim'), auto = hp('auto') !== null || HASH.indexOf('auto') === 0;
   if (sim) { const [s, a, b] = sim.split('/').length > 1 ? sim.split('/') : [sim, 1, 5]; fastSim(+s, +a || 1, +b || 5); return; }
