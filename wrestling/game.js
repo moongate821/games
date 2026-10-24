@@ -236,13 +236,18 @@ const FX = [];         // 演出(火花・文字)
 let shake = 0, flashT = 0, banner = null, hitStop = 0, slowT = 0, zoom = 0, zoomC = [W / 2, 300], flashRGB = '255,255,255', crowdT = 0, comboT = 0;
 function newMatch(a, b, auto) {
   const p1 = new Fighter(a, -1, !auto), p2 = new Fighter(b, +1, false);
+  const assets = [];
   if (!SIM) {
-    if (a === 1 || b === 1) loadTrialFor01();
-    loadIndividualFor(a); loadIndividualFor(b);
+    if (a === 1 || b === 1) assets.push(loadTrialFor01());
+    assets.push(loadIndividualFor(a), loadIndividualFor(b));
   }
   if (RENDER_3D && window.FIG3D) { FIG3D.prepare(a, -1); FIG3D.prepare(b, +1); }
   M = { ref: { no: 21, x: 0, face: 1, scl: 0.93, vis: { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 }, lieN: 0, mode: 'ref' }, chairs: [{ side: -1, avail: true }, { side: 1, avail: true }], gongT: 1.2, p: [p1, p2], act: null, lock: null, pin: null, time: 0, limit: 240, over: null, msg: null, msgT: 0, log: [], counts: { moves: 0, downs: 0, pins: 0, specials: 0 }, started: 0, bellT: 1.4 };
-  FX.length = 0; banner = null; state = 'match'; Snd.bell(); say('FIGHT!', 1.2);
+  FX.length = 0; banner = null;
+  const match = M;
+  const begin = () => { if (M !== match) return; state = 'match'; Snd.bell(); say('FIGHT!', 1.2); };
+  if (assets.length) { state = 'loading'; Promise.all(assets).then(begin); }
+  else begin();
   if (p1.no === 1 && ['S011', 'S012', 'S013'].includes(SPECIAL_TRIAL_ID)) {
     const move = DATA.master.find((m) => m.id === SPECIAL_TRIAL_ID);
     if (move) { p1.x = -0.13; p2.x = 0.13; p1.gauge = 3; M.bellT = 0; M.msgT = 0; startAct(p1, p2, move, 'lock'); }
@@ -283,7 +288,7 @@ function fxHit(a, d, mv, tier, dm) {
     if (tier >= 1) FX.push({ type: 'crack', x: floorX, y: GROUND + 6, t: 0, dur: 1.4, k, seed: Math.floor(rnd() * 9999) });
   }
   if (tier >= 2) { FX.push({ type: 'wave', x, y, t: 0, dur: 0.5, k, tier }); crowdT = 1.2 + tier * 0.4; Snd.cheer(); }
-  shake = Math.max(shake, [4, 9, 16, 28][tier]); hitStop = [0.035, 0.07, 0.14, 0.3][tier]; zoom = Math.max(zoom, [0.008, 0.02, 0.05, 0.1][tier]); zoomC = [x, y + 40];
+  shake = Math.max(shake, [4, 9, 16, 28][tier]); hitStop = [0.035, 0.07, 0.14, 0.3][tier];
   if (tier >= 2) { flashT = Math.max(flashT, tier >= 3 ? 0.55 : 0.2); flashRGB = tier >= 3 ? '255,220,255' : '255,255,255'; }
   if (tier >= 3) slowT = 0.85;
   if (tier >= 2) { comboT = 1.3; M.praise = { s: tier >= 3 ? 'FINISH!!' : (dm > 20 ? 'EXCELLENT!' : 'GREAT!'), t: 0, dur: 1.3, tier }; }
@@ -519,17 +524,20 @@ function freeStep(f, dt) {
   f.vis.flash = Math.max(0, f.vis.flash - dt);
   if (f.slide) { f.x = clamp(f.x + f.slide * dt * 0.8, -0.95, 0.95); f.slide *= Math.pow(0.02, dt); if (Math.abs(f.slide) < 0.05) f.slide = 0; }
   if (f.mode === 'down') {
-    f.downT -= dt * (1 + f.mash * 0.0); lieTo(f, true, dt); f.vis.lie = f.lieN;
+    const escapeHeld = f.human && ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'Enter', 'Space'].some((k) => keys[k]);
+    f.downT -= dt * (escapeHeld ? 3 : 1); lieTo(f, true, dt); f.vis.lie = f.lieN;
     if (f.human && wasPressed('KeyZ', 'KeyX', 'KeyC', 'KeyV', 'Enter', 'Space')) f.downT -= 0.22;
     if (!f.human && rnd() < dt * 1.2) f.downT -= 0.1;
+    // 追撃で downT が繰り返し延びても、一定時間を超えたら必ず起き上がれる。
+    if ((f.downElapsed || 0) >= (f.human ? 3.4 : 4.2)) f.downT = Math.min(f.downT, 0);
     if (f.downT <= 0 && !(M.pin && M.pin.d === f)) {
       if (!f.human && !f.fakeDone && f.ratio > 0.3 && rnd() < 0.12) { f.fakeDone = true; f.downT = 0.6; return; }   // 狸寝入り: もう少し寝たふり
       const o2 = opp(f), away = f.x >= o2.x ? 1 : -1;
-      f.mode = 'free'; f.stun = 0.2; f.invuln = 0.4;
+      f.mode = 'free'; f.stun = f.human ? 0 : 0.2; f.invuln = f.human ? 1.2 : 0.6;
       f.getupT = 0.38;
-      if (f.fakeDone) { f.fakeDone = false; f.stun = 0; f.invuln = 0.8; f.surprise = 1.2; say('狸寝入りだった!', 0.9); }   // 起きざま不意打ち
+      if (f.fakeDone) { f.fakeDone = false; f.stun = 0; f.invuln = Math.max(f.invuln, 0.8); f.surprise = 1.2; say('狸寝入りだった!', 0.9); }   // 起きざま不意打ち
       else if (f.human ? (keys.ArrowDown || f.ratio < 0.3 && !keys.ArrowLeft && !keys.ArrowRight && false) : f.ratio < 0.35) { f.stun = 0.6; f.power = Math.min(MAXPOWER, f.power + 1.5); }   // ゆっくり起きて気力を戻す
-      else if (f.human ? (keys.ArrowLeft || keys.ArrowRight) : rnd() < 0.2) { f.slide = (f.human ? (keys.ArrowRight ? 1 : -1) : away) * 1.1; f.invuln = 0.7; f.stun = 0; }   // ころがって逃げる
+      else if (f.human ? (keys.ArrowLeft || keys.ArrowRight) : rnd() < 0.2) { f.slide = (f.human ? (keys.ArrowRight ? 1 : -1) : away) * 1.1; f.invuln = Math.max(f.invuln, 0.7); f.stun = 0; }   // ころがって逃げる
       f.fakeDone = false;
     }
     return;
@@ -588,6 +596,7 @@ function humanIntent(f) {
 function aiIntent(f, o, dt) {
   const A = f.ai, I = { mx: 0, light: false, heavy: false, grab: false, special: false, rope: false, up: false }; A.t -= dt;
   const d = Math.abs(f.x - o.x), dir = o.x > f.x ? 1 : -1, lv = 0.8 + (f.st['技'] - 5) * 0.04;
+  if (o.human && o.invuln > 0 && o.mode === 'free') { I.mx = d < 0.4 ? -dir : 0; return I; }
   if (o.mode === 'down') {   // 倒れた相手: ピンか追撃
     if (d > 0.4) I.mx = dir; else if (A.t <= 0) { A.t = rr(0.25, 0.6); const r = rnd(); if (o.ratio < 0.35 && r < 0.4) I.grab = true; else if (r < 0.8 && f.ground.length) I.light = true; else if (f.dive.length) I.heavy = true; }
     if (d > 0.4 && d < 1.0 && f.dive.length && A.t <= 0 && rnd() < 0.4) { A.t = 0.5; I.heavy = true; I.mx = 0; }
@@ -616,6 +625,7 @@ function stepMatch(dt) {
   for (const f of M.p) { f.invuln = Math.max(0, (f.invuln || 0) - dt); }
   if (M.over) { M.over.t += dt; if (M.act) stepAct(dt); if (state === 'match' && M.over.t > 2.6) { state = 'result'; } return; }
   if (M.bellT > 0) { M.bellT -= dt; return; }
+  for (const f of M.p) f.downElapsed = f.mode === 'down' ? (f.downElapsed || 0) + dt : 0;
   if (M.time > M.limit) { const [a, b] = M.p; endMatch(a.ratio >= b.ratio ? a : b, '判定'); return; }
   if (M.act) stepAct(dt);
   else if (M.lock) {
@@ -787,7 +797,7 @@ function drawTrialThrowForeground(f, pose) {
 }
 function drawTrialPiledriverVictim(a, d) {
   const im = IMG.body[d.no]; if (!im) { drawFighter(d); return; }
-  const scale = Math.min(184 / im.height, 145 / im.width);
+  const scale = 212 / im.height;
   const height = im.height * scale, width = im.width * scale;
   const px = sx(a.x) + a.vis.ox + 50 * (a.face >= 0 ? 1 : -1);
   ctx.save(); ctx.translate(px, GROUND - height / 2 - trialDropLift('driverHold'));
@@ -797,7 +807,7 @@ function drawTrialPiledriverVictim(a, d) {
 }
 function drawTrialSpecialVictim(a, d, pose, u) {
   const im = IMG.body[d.no]; if (!im) { drawFighter(d); return; }
-  const scale = Math.min(162 / im.height, 145 / im.width);
+  const scale = 212 / im.height;
   const height = im.height * scale, width = im.width * scale;
   const dir = a.face >= 0 ? 1 : -1;
   const fall = ease(clamp((u - 0.62) / 0.24, 0, 1));
@@ -891,6 +901,7 @@ function drawHud() {
   const rem = Math.max(0, M.limit - M.time); ctx.textAlign = 'center'; ctx.font = 'bold 26px monospace'; ctx.fillStyle = '#ffe070'; ctx.fillText(String(Math.floor(rem / 60)).padStart(2, '0') + ':' + String(Math.floor(rem % 60)).padStart(2, '0'), W / 2, 36); ctx.font = '13px sans-serif'; ctx.fillStyle = '#ccd'; ctx.fillText('TIME', W / 2, 16);
   if (M.msgT > 0 && M.msg) { ctx.font = 'bold 54px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = '#102060'; ctx.fillStyle = '#fff'; const s = M.msg; ctx.strokeText(s, W / 2, 190); ctx.fillText(s, W / 2, 190); }
   if (M.pin) { const P = M.pin; ctx.font = 'bold 25px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff6060'; ctx.fillText(`COUNT ${P.n}${P.d.human ? '  ボタン連打・長押しで返せ!' : ''}`, W / 2, 130); bar(W / 2 - 100, 140, 200, 8, P.t / P.step, '#ff6060', '#201830'); if (P.d.human) bar(W / 2 - 100, 154, 200, 9, P.escape / 2.8, '#50dfff', '#201830'); }
+  else { const down = M.p.find((f) => f.human && f.mode === 'down'); if (down) { ctx.font = 'bold 21px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#50dfff'; ctx.fillText('攻撃ボタン長押し・連打で起き上がる!', W / 2, 130); bar(W / 2 - 100, 140, 200, 8, 1 - down.downT / 3.2, '#50dfff', '#201830'); } }
   if (M.lock) drawLock();
   if (banner) { const u = banner.t / banner.dur, a = u < 0.1 ? u / 0.1 : u > 0.85 ? (1 - u) / 0.15 : 1; ctx.globalAlpha = clamp(a, 0, 1); ctx.fillStyle = banner.special ? 'rgba(80,0,60,.9)' : 'rgba(10,20,70,.9)'; ctx.fillRect(W / 2 - 250, 456, 500, 44); ctx.strokeStyle = banner.special ? '#ff60e0' : '#fff'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 250, 456, 500, 44); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((banner.special ? '★ ' : '') + banner.s + (banner.special ? ' ★' : ''), W / 2, 487); ctx.globalAlpha = 1; }
 }
@@ -1098,7 +1109,7 @@ function update(dt) {
   else if (state === 'result') { stepFx(dt); stepPoses(dt); if (wasPressed('KeyZ', 'Enter', 'Space')) { state = 'select'; M = null; } }
 }
 function render0() {
-  if (state === 'loading') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('読み込み中…', W / 2, H / 2); return; }
+  if (state === 'loading') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(M ? '選手の動作画像を読み込み中…' : '読み込み中…', W / 2, H / 2); return; }
   if (state === 'title') drawTitle(); else if (state === 'select') drawSelect(); else if (state === 'match') drawMatch(); else if (state === 'result') { drawMatch(); drawResult(); }
 }
 
@@ -1138,7 +1149,7 @@ function drawHelp() {
   ctx.textAlign = 'left'; ctx.fillStyle = '#ffe070'; ctx.font = 'bold 26px sans-serif'; ctx.fillText('操作・技表', 24, 38);
   ctx.fillStyle = '#9bf'; ctx.font = '14px sans-serif'; ctx.fillText('←→ レスラー切替   H / Z / Esc で閉じる', 190, 36);
   // 左: 操作
-  const rows = [['←  →', '移動(相手に近づく/離れる)'], ['Z', '弱打 ― 立ち技の打撃(倒れた相手には 地上技)'], ['X', '強打 ― 重い打撃(倒れた相手には 飛び技)'], ['C', '組み付き → 技を選ぶ(倒れた相手には カバー=3カウント)'], ['↑ + X', 'ロープ反動技(ロープ際で)'], ['V', '必殺技(ゲージがたまっていれば組みで出せる)'], ['連打', 'カバーされたら ボタン連打で返す / 倒れたとき 連打で早く起きる'], ['組み中', '↑↓ + Z か 数字 1〜6 で技を選ぶ(3秒で自動)']];
+  const rows = [['←  →', '移動(相手に近づく/離れる)'], ['Z', '弱打 ― 立ち技の打撃(倒れた相手には 地上技)'], ['X', '強打 ― 重い打撃(倒れた相手には 飛び技)'], ['C', '組み付き → 技を選ぶ(倒れた相手には カバー=3カウント)'], ['↑ + X', 'ロープ反動技(ロープ際で)'], ['V', '必殺技(ゲージがたまっていれば組みで出せる)'], ['連打・長押し', 'カバーを返す / 倒れたとき早く起きる'], ['組み中', '↑↓ + Z か 数字 1〜6 で技を選ぶ(3秒で自動)']];
   ctx.font = 'bold 15px sans-serif'; let y = 72;
   for (const [k, t] of rows) { ctx.fillStyle = '#ff9040'; ctx.fillRect(24, y - 15, 70, 22); ctx.fillStyle = '#10102a'; ctx.textAlign = 'center'; ctx.fillText(k, 59, y + 1); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = '14px sans-serif'; wrapText(t, 102, y, 270, 17); ctx.font = 'bold 15px sans-serif'; y += (t.length > 19 ? 40 : 28); }
   ctx.fillStyle = '#9bf'; ctx.font = '13px sans-serif'; ctx.fillText('iPhone: 左手=◀▶(移動)▲▼ / 右手=弱・強・組、必・ロープ・椅子。技は画面をタップで選ぶ', 24, y + 14); ctx.fillText('勝ち方: 3カウント / K.O.(体力0) / 時間切れ判定', 24, y + 34); ctx.fillText('青いバー=気力(技を出すと減る) ピンクの3つ=必殺ゲージ', 24, y + 54); ctx.fillText('組んだら連打で力比べ / 投げられる瞬間にボタンで受け身 / 倒れたあと ◀▶でころがり ▼で休む', 24, y + 74);
