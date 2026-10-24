@@ -126,9 +126,10 @@ const REJECTED_FRAGMENT_POSES = {
   tucked: [],
   windup: [],
 };
-const INDIVIDUAL_HEIGHT = { getup: 150, walkA: 200, walkB: 200, lowKick: 195, lariat: 190, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 200, bridge: 100, fallBack: 125, liftHigh: 215 };
+const INDIVIDUAL_HEIGHT = { crouch: 150, getup: 150, walkA: 200, walkB: 200, lowKick: 195, lariat: 190, headbutt: 180, clinch: 190, throwPrep: 190, slamDown: 185, hold: 190, held: 185, stagger: 200, pinTop: 110, stomp: 190, dive: 110, elbowDrop: 115, tucked: 200, bridge: 100, fallBack: 125, liftHigh: 215 };
 const ACTION_POSE_CELL = { guard: 0, grapple: 1, clinch: 1, crouch: 2, carry: 3, liftHigh: 3, throwPrep: 3, slamDown: 4, getup: 5 };
 const IMG = { body: {}, face: {}, down: {}, trial: {}, individual: {}, action: {}, special: {}, referee: {} }, PROP = window.PROP = {};
+let SPRITE_BOUNDS = {};
 const REFEREE_SPRITES = {
   refStand: { file: 'stand', crop: [220, 78, 570, 1386], height: 190 },
   refUp: { file: 'count_up', crop: [420, 24, 927, 969], height: 145 },
@@ -137,6 +138,7 @@ const REFEREE_SPRITES = {
 let DATA = null, SIM = false;
 function loadAll() {
   const jobs = [fetch('moves.json').then((r) => r.json()).then((d) => { DATA = d; })];
+  jobs.push(fetch('assets/individual/bounds.json').then((r) => r.json()).then((d) => { SPRITE_BOUNDS = d; }).catch(() => {}));
   for (let i = 1; i <= 20; i++) for (const k of ['body', 'face']) jobs.push(new Promise((res) => { const im = new Image(); im.onload = () => { IMG[k][i] = im; res(); }; im.onerror = res; im.src = `assets/${k}_${String(i).padStart(2, '0')}.webp`; }));
   for (let i = 2; i <= 20; i++) jobs.push(new Promise((res) => {
     const im = new Image(); im.onload = () => { IMG.action[i] = im; res(); }; im.onerror = res;
@@ -156,7 +158,6 @@ function loadAll() {
     const im = new Image(); im.onload = () => { IMG.referee[pose] = im; res(); }; im.onerror = res;
     im.src = `assets/referee/${spec.file}.webp`;
   }));
-  jobs.push(OPUP.loadAll());
   jobs.push(fetch('assets/props/props.json').then((r) => r.json()).then((d) => Promise.all(Object.keys(d).map((k) => new Promise((res) => { const im = new Image(); im.onload = () => { PROP[k] = im; res(); }; im.onerror = res; im.src = 'assets/props/' + k + '.webp'; })))).catch(() => {}));
   return Promise.all(jobs);
 }
@@ -180,12 +181,24 @@ function loadIndividualFor(no) {
   images.ready = Promise.all(INDIVIDUAL_POSES.map((pose) => new Promise((resolve) => {
     if (!individualPoseAllowed(no, pose)) { resolve(); return; }
     const im = new Image();
-    im.onload = () => { images[pose] = im; resolve(); };
+    im.onload = () => { im.ink = SPRITE_BOUNDS[no]?.[file] || (im.width <= 256 && im.height <= 256 ? spriteInkBounds(im) : null); images[pose] = im; resolve(); };
     im.onerror = () => resolve();
     const file = INDIVIDUAL_REVISIONS[no]?.[pose] || pose;
     im.src = `assets/individual/${String(no).padStart(2, '0')}/${file}.webp`;
   })));
   return images.ready;
+}
+// 旧128pxコマは透明な余白を含む。体の実寸で合わせて技画像との縮尺差をなくす。
+function spriteInkBounds(im) {
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  let left = c.width, top = c.height, right = -1, bottom = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    if (d[(y * c.width + x) * 4 + 3] < 16) continue;
+    left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
+  }
+  return right < left ? [0, 0, im.width, im.height] : [left, top, right - left + 1, bottom - top + 1];
 }
 function individualPoseAllowed(no, pose) {
   if (REJECTED_INDIVIDUAL_POSES[no]?.has(pose)) return false;
@@ -479,18 +492,22 @@ function chooseLock(i) {
 
 // ---------- ピン(3カウント) ----------
 function startPin(a, d) {
-  M.pin = { a, d, n: 0, t: 0, step: 0.78 }; a.mode = 'pin'; M.counts.pins++; a.x = clamp(d.x - (a.x < d.x ? 0.16 : -0.16), -0.95, 0.95); say('カバー!', 0.8);
+  M.pin = { a, d, n: 0, t: 0, step: 0.9, escape: 0 }; d.mash = 0; a.mode = 'pin'; M.counts.pins++; a.x = clamp(d.x - (a.x < d.x ? 0.16 : -0.16), -0.95, 0.95); say('カバー!', 0.8);
 }
 function stepPin(dt) {
   const P = M.pin; if (!P) return; const a = P.a, d = P.d;
-  d.mash += (wasPressed('KeyZ', 'KeyX', 'KeyC', 'KeyV', 'Space', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown') && d.human ? 1 : 0) + (!d.human && rnd() < dt * (2 + d.st['気'] * 0.4) ? 1 : 0);
+  const struggle = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'Space', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+  const tap = d.human && wasPressed(...struggle), held = d.human && struggle.some((k) => keys[k]);
+  d.mash += (tap ? 1 : 0) + (!d.human && rnd() < dt * (2 + d.st['気'] * 0.4) ? 1 : 0);
+  if (d.human) P.escape += (tap ? 0.65 : 0) + (held ? dt * 1.8 : 0);
+  if (P.escape >= 2.8) { say('自力でフォールを返した!', 1); a.mode = 'free'; a.cool = 0.5; d.mode = 'down'; d.downT = Math.min(d.downT, 0.35); M.pin = null; return; }
   P.t += dt;
   if (P.t >= P.step) {
     P.t = 0; P.n++; Snd.count(); say(String(P.n), 0.7);
-    const kick = clamp(0.06 + 0.78 * Math.pow(d.ratio, 0.85) + 0.035 * (d.st['耐'] - 5) + d.mash * 0.09, 0.02, 0.96); d.mash = 0;
+    const kick = clamp(0.1 + 0.84 * Math.pow(d.ratio, 0.75) + 0.035 * (d.st['耐'] - 5) + d.mash * 0.09 + (d.downT <= 0 ? 0.15 : 0), 0.04, 0.97); d.mash = 0;
     if (P.n < 3) { if (rnd() < kick * 0.55) { P.out = true; } }
     else if (rnd() < kick) P.out = true;
-    if (P.out) { say('カウント2.9! 返した!', 1.0); a.mode = 'free'; a.cool = 0.5; d.downT = Math.max(d.downT, 0.8); d.mode = 'down'; M.pin = null; return; }
+    if (P.out) { say('フォールを返した!', 1.0); a.mode = 'free'; a.cool = 0.5; d.downT = Math.max(d.downT, 0.5); d.mode = 'down'; M.pin = null; return; }
     if (P.n >= 3) { M.pin = null; a.mode = 'free'; endMatch(a, 'PIN'); }
   }
 }
@@ -572,7 +589,7 @@ function aiIntent(f, o, dt) {
   const A = f.ai, I = { mx: 0, light: false, heavy: false, grab: false, special: false, rope: false, up: false }; A.t -= dt;
   const d = Math.abs(f.x - o.x), dir = o.x > f.x ? 1 : -1, lv = 0.8 + (f.st['技'] - 5) * 0.04;
   if (o.mode === 'down') {   // 倒れた相手: ピンか追撃
-    if (d > 0.4) I.mx = dir; else if (A.t <= 0) { A.t = rr(0.25, 0.6); const r = rnd(); if (o.ratio < 0.55 && r < 0.55) I.grab = true; else if (r < 0.8 && f.ground.length) I.light = true; else if (f.dive.length) I.heavy = true; }
+    if (d > 0.4) I.mx = dir; else if (A.t <= 0) { A.t = rr(0.25, 0.6); const r = rnd(); if (o.ratio < 0.35 && r < 0.4) I.grab = true; else if (r < 0.8 && f.ground.length) I.light = true; else if (f.dive.length) I.heavy = true; }
     if (d > 0.4 && d < 1.0 && f.dive.length && A.t <= 0 && rnd() < 0.4) { A.t = 0.5; I.heavy = true; I.mx = 0; }
     return I;
   }
@@ -701,11 +718,12 @@ function drawIndividualPose(f, pose) {
   if (!individualPoseAllowed(f.no, pose)) return false;
   const im = IMG.individual[f.no]?.[pose]; if (!im) return false;
   const v = f.vis, px = sx(f.x) + v.ox;
-  const height = INDIVIDUAL_HEIGHT[pose] || 212, width = height * im.width / im.height;
+  const crop = im.ink || [0, 0, im.width, im.height];
+  const height = INDIVIDUAL_HEIGHT[pose] || 212, width = height * crop[2] / crop[3];
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56, 11, 0, 0, 7); ctx.fill();
-  ctx.save(); ctx.translate(px, GROUND - v.lift); ctx.scale(f.face >= 0 ? 1 : -1, 1);
-  ctx.drawImage(im, -width / 2, -height, width, height);
-  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6; ctx.drawImage(im, -width / 2, -height, width, height); }
+  ctx.save(); ctx.translate(px, GROUND - v.lift - height / 2); ctx.rotate(v.rot); ctx.scale(f.face >= 0 ? 1 : -1, 1);
+  ctx.drawImage(im, ...crop, -width / 2, -height / 2, width, height);
+  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6; ctx.drawImage(im, ...crop, -width / 2, -height / 2, width, height); }
   ctx.restore(); return true;
 }
 function drawS081Composite(a) {
@@ -806,14 +824,12 @@ function drawFighter(f) {
     const pose = f.getupT > 0 ? 'getup' : walking ? (Math.sin(f.walkT || 0) >= 0 ? 'walkA' : 'walkB') : (({ grapple: 'clinch', carry: 'liftHigh', kneel: 'getup' })[f.poseName] || f.poseName);
     if ((pose !== 'slamDown' || M.act?.throwStyle === 'slam') && drawTrialPose(f, pose)) return;
   }
-  if (f.mode !== 'down' && f.lieN <= 0.5 && Math.abs(f.vis.rot) < 0.6 && drawIndividualPose(f, f.poseName)) return;
-  if (f.mode !== 'down' && f.lieN <= 0.5 && Math.abs(f.vis.rot) < 0.6 && drawActionPose(f, f.poseName)) return;
-  if (f.mode !== 'down' && f.lieN < 0.35 && OPUP.has(f.no)) {   // 元絵を関節で切り分けた紙人形(origpuppet.js)
-    const v0 = f.vis, flip0 = f.face >= 0 ? 1 : -1;
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(sx(f.x) + v0.ox, GROUND + 4, 56 * (1 - Math.min(0.5, v0.lift / 280)), 11, 0, 0, 7); ctx.fill();
-    OPUP.draw(ctx, f, sx(f.x), GROUND, flip0, v0); return;
+  if (f.mode !== 'down' && f.lieN <= 0.5) {
+    // 技中も1枚の絵を回転させる。関節分割の絵へ切り替えると肩・膝が離れて見える。
+    const pose = f.poseName === 'runRope' ? (Math.sin(f.walkT || 0) >= 0 ? 'walkA' : 'walkB')
+      : f.poseName === 'spark' ? 'hold' : f.poseName === 'kneel' ? 'getup' : f.poseName;
+    if (drawIndividualPose(f, pose) || drawActionPose(f, pose)) return;
   }
-  if (f.mode !== 'down' && f.lieN < 0.35 && Math.abs(f.vis.rot) < 0.8) { drawOriginalPuppet(f, im); return; }
   // レスラーは常に元の body_NN.webp を描く。衣装・腕の数・体格が場面で変わらない。
   const v = f.vis, pose = f.poseName || 'guard', lie = f.lieN;
   const hh = 212, sc = hh / im.height, w = im.width * sc;
@@ -840,25 +856,6 @@ function drawFighter(f) {
   ctx.scale(flip * v.sx, v.sy * poseScaleY);
   ctx.drawImage(im, -w / 2, -hh / 2, w, hh);
   if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.7; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
-  ctx.restore();
-}
-function drawOriginalPuppet(f, im) {
-  const v = f.vis, p = f.pose || PUP.newPose(), hh = 212, sc = hh / im.height, w = im.width * sc;
-  const px = sx(f.x) + v.ox, cy = GROUND - hh / 2 - v.lift, flip = f.face >= 0 ? 1 : -1;
-  const shoulder = im.height * .3, hip = im.height * .57, mid = im.width * .5, overlap = 8;
-  const ax = (x) => x * sc - w / 2, ay = (y) => y * sc - hh / 2;
-  const slice = (x, y, sw, sh) => ctx.drawImage(im, x, y, sw, sh, ax(x), ay(y), sw * sc, sh * sc);
-  const turn = (x, y, angle, x0, y0, sw, sh) => { ctx.save(); ctx.translate(ax(x), ay(y)); ctx.rotate(angle); ctx.translate(-ax(x), -ay(y)); slice(x0, y0, sw, sh); ctx.restore(); };
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(px, GROUND + 4, 56, 11, 0, 0, 7); ctx.fill();
-  ctx.save(); ctx.translate(px, cy); ctx.rotate(v.rot); ctx.scale(flip * v.sx, v.sy);
-  // 元絵を頭・胴・脚の重なり合う3層に分け、元の画素を描き直さずに関節を動かす。
-  const legRot = (p.lf1 + p.lb1) * .12 + (f.walkVisual > 0 ? Math.sin(f.walkT || 0) * .035 : 0);
-  turn(mid, hip, legRot, 0, hip - overlap, im.width, im.height - hip + overlap);
-  ctx.save(); ctx.translate(ax(mid), ay(hip)); ctx.rotate((p.tr - .06) * .32); ctx.translate(-ax(mid), -ay(hip));
-  slice(0, shoulder - overlap, im.width, hip - shoulder + overlap * 2);
-  turn(mid, shoulder, -p.hr * .24, 0, 0, im.width, shoulder + overlap);
-  ctx.restore();
-  if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .3; ctx.drawImage(im, -w / 2, -hh / 2, w, hh); }
   ctx.restore();
 }
 function drawFx() {
@@ -893,7 +890,7 @@ function drawHud() {
   }
   const rem = Math.max(0, M.limit - M.time); ctx.textAlign = 'center'; ctx.font = 'bold 26px monospace'; ctx.fillStyle = '#ffe070'; ctx.fillText(String(Math.floor(rem / 60)).padStart(2, '0') + ':' + String(Math.floor(rem % 60)).padStart(2, '0'), W / 2, 36); ctx.font = '13px sans-serif'; ctx.fillStyle = '#ccd'; ctx.fillText('TIME', W / 2, 16);
   if (M.msgT > 0 && M.msg) { ctx.font = 'bold 54px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = '#102060'; ctx.fillStyle = '#fff'; const s = M.msg; ctx.strokeText(s, W / 2, 190); ctx.fillText(s, W / 2, 190); }
-  if (M.pin) { const P = M.pin; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff6060'; ctx.fillText(`COUNT ${P.n}  ― ${P.d.human ? 'ボタンを連打で返せ!' : ''}`, W / 2, 130); bar(W / 2 - 100, 140, 200, 8, P.t / P.step, '#ff6060', '#201830'); }
+  if (M.pin) { const P = M.pin; ctx.font = 'bold 25px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff6060'; ctx.fillText(`COUNT ${P.n}${P.d.human ? '  ボタン連打・長押しで返せ!' : ''}`, W / 2, 130); bar(W / 2 - 100, 140, 200, 8, P.t / P.step, '#ff6060', '#201830'); if (P.d.human) bar(W / 2 - 100, 154, 200, 9, P.escape / 2.8, '#50dfff', '#201830'); }
   if (M.lock) drawLock();
   if (banner) { const u = banner.t / banner.dur, a = u < 0.1 ? u / 0.1 : u > 0.85 ? (1 - u) / 0.15 : 1; ctx.globalAlpha = clamp(a, 0, 1); ctx.fillStyle = banner.special ? 'rgba(80,0,60,.9)' : 'rgba(10,20,70,.9)'; ctx.fillRect(W / 2 - 250, 456, 500, 44); ctx.strokeStyle = banner.special ? '#ff60e0' : '#fff'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 250, 456, 500, 44); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((banner.special ? '★ ' : '') + banner.s + (banner.special ? ' ★' : ''), W / 2, 487); ctx.globalAlpha = 1; }
 }
