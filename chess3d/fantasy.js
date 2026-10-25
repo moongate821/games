@@ -5,10 +5,12 @@ import {fleetInitial,fleetMoves} from './fleet.js?v=20261025a';
 
 export const FANTASY_NAME={k:'王',q:'ドラゴン',r:'勇者',b:'魔法使い',n:'召喚士',p:'精霊'};
 export const FANTASY_FACTION={w:'光の王国',b:'影の王国'};
-export const MAGIC_CIRCLES=[id(3,3,1),id(4,4,1),id(3,3,2),id(4,4,0)];
+// Mirror symmetry across the players' ranks and the upper/lower boards.
+export const MAGIC_CIRCLES=[id(3,3,1),id(3,4,1),id(4,3,2),id(4,4,0)];
 const circles=new Set(MAGIC_CIRCLES);
 export const CIRCLE_WIN_STREAK=3;
 export const FANTASY_JUDGE_QUIET=60, FANTASY_JUDGE_TOTAL=100;
+export const MANA_SURGE_TURN=40;
 const VALUE={k:500,q:900,r:500,b:330,n:300,p:100};
 
 export function fantasyInitial(){
@@ -18,7 +20,16 @@ export function fantasyInitial(){
 export const circlesHeld=(s,who)=>MAGIC_CIRCLES.filter(at=>side(s.board[at])===who).length;
 
 export function fantasyMoves(s,who=s.turn){
-  const moves=fleetMoves(s,who).filter(m=>!m.order);
+  const moves=[];
+  for(const m of fleetMoves(s,who)){
+    if(m.order)continue;
+    if(!m.attack||s.fullmove<MANA_SURGE_TURN){moves.push(m);continue;}
+    const boosted={...m,damage:2,hit:s.hp[m.to]>2,sink:s.hp[m.to]<=2,surge:true};
+    const last=who==='w'?7:0;
+    if(boosted.sink&&!m.promotion&&s.board[m.from].toLowerCase()==='p'&&coord(m.to).y===last){
+      for(const promotion of ['q','r','b','n'])moves.push({...boosted,promotion});
+    }else moves.push(boosted);
+  }
   if(s.powers[who].fire){
     for(const m of moves.slice()){
       if(!m.attack||!['q','b'].includes(s.board[m.from].toLowerCase()))continue;
@@ -41,7 +52,7 @@ export function fantasyMoves(s,who=s.turn){
 export function fantasyPlay(s,m){
   const n={...s,board:s.board.slice(),hp:s.hp.slice(),hits:{...s.hits},sunk:{...s.sunk},powers:{w:{...s.powers.w},b:{...s.powers.b}},circleStreak:{...s.circleStreak},repetition:{}};
   const p=n.board[m.from],who=side(p),target=n.board[m.to];
-  const info={from:m.from,to:m.to,attacker:p,target,who,spell:m.spell||'normal',attack:!!m.attack,hit:!!m.hit,sink:false,hpBefore:target==='.'?0:s.hp[m.to],hpAfter:0,splash:[],circle:false};
+  const info={from:m.from,to:m.to,attacker:p,target,who,spell:m.spell||'normal',attack:!!m.attack,hit:!!m.hit,sink:false,surge:!!m.surge&&m.spell!=='fire',hpBefore:target==='.'?0:s.hp[m.to],hpAfter:0,splash:[],circle:false,disrupted:false};
   if(m.spell==='summon'){
     n.powers[who].summon=0;
     n.board[m.to]=who==='w'?'P':'p';n.hp[m.to]=3;
@@ -76,6 +87,10 @@ export function fantasyPlay(s,m){
     n.halfmove=m.attack||p.toLowerCase()==='p'?0:s.halfmove+1;
   }
   n.fullmove=s.fullmove+(who==='b'?1:0);n.turn=opponent(who);n.ep=-1;n.last=info;
+  if(info.attack&&(circles.has(m.to)||info.splash.some(at=>circles.has(at)))){
+    info.disrupted=n.circleStreak[opponent(who)]>0;
+    n.circleStreak[opponent(who)]=0;
+  }
   for(const team of ['w','b'])if(circlesHeld(n,team)<2)n.circleStreak[team]=0;
   if(circlesHeld(n,who)>=2)n.circleStreak[who]++;
   if(info.sink&&target.toLowerCase()==='k')n.result=`${FANTASY_FACTION[who]}の勝ち（王を倒した）`;
@@ -91,8 +106,8 @@ export function fantasyPlay(s,m){
 export function fantasyMoveText(s,m){
   const name=FANTASY_NAME[s.board[m.from].toLowerCase()];
   if(m.spell==='summon')return `${name} ${label(m.from)}から ${label(m.to)}へ精霊を召喚`;
-  if(m.spell==='fire')return `${name}の竜炎 ${label(m.from)}→${label(m.to)}${s.hp[m.to]<=2?' 撃破':''}`;
-  if(m.attack)return `${name} ${label(m.from)}が ${FANTASY_NAME[s.board[m.to].toLowerCase()]} ${label(m.to)}を攻撃${s.hp[m.to]===1?' →撃破':''}`;
+  if(m.spell==='fire')return `${name}の竜炎 ${label(m.from)}→${label(m.to)}${s.hp[m.to]<=2?' 撃破':''}${circles.has(m.to)&&s.circleStreak[opponent(s.turn)]>0?' · 支配を妨害':''}`;
+  if(m.attack)return `${m.surge?'魔力奔流 ':''}${name} ${label(m.from)}が ${FANTASY_NAME[s.board[m.to].toLowerCase()]} ${label(m.to)}を攻撃${s.hp[m.to]<=(m.damage||1)?' →撃破':''}${m.promotion?` 覚醒→${FANTASY_NAME[m.promotion]}`:''}${circles.has(m.to)&&s.circleStreak[opponent(s.turn)]>0?' · 支配を妨害':''}`;
   return `${name} ${label(m.from)}→${label(m.to)}${m.promotion?` 覚醒→${FANTASY_NAME[m.promotion]}`:''}${circles.has(m.to)?' 魔法陣':''}`;
 }
 
@@ -134,8 +149,11 @@ function evaluate(s){
   for(const who of ['w','b']){
     const sign=who==='b'?1:-1;
     score+=sign*((s.powers[who].fire||0)*110+(s.powers[who].summon||0)*65);
-    for(const at of MAGIC_CIRCLES)if(side(s.board[at])===who)score+=sign*320;
-    score+=sign*(s.circleStreak[who]||0)*170;
+    const held=circlesHeld(s,who),streak=s.circleStreak[who]||0;
+    score+=sign*held*420;
+    // A two-turn hold usually becomes an immediate win on the next move.
+    // Make the one-reply AI defend it before static material matters.
+    score+=sign*(streak>=2?15000:streak===1?1500:0);
     const enemy=kings[opponent(who)];
     if(enemy>=0){
       score+=sign*(26-kingFreedom(s,enemy,opponent(who)))*(2+10*late);
@@ -147,21 +165,42 @@ function evaluate(s){
 export function chooseFantasyMove(s,difficulty='strong'){
   const moves=fantasyMoves(s);if(!moves.length)return null;
   const max=s.turn==='b';let best=max?-Infinity:Infinity,pick=moves[0];
+  const practice=[];
+  const value=position=>{
+    if(!position.result)return evaluate(position);
+    const winner=winnerOf(position.result);
+    return winner==='b'?1e6:winner==='w'?-1e6:0;
+  };
   for(const m of moves){
     const a=fantasyPlay(s,m);let score;
-    if(a.result){const winner=winnerOf(a.result);score=winner==='b'?1e6:winner==='w'?-1e6:0;}
+    if(a.result)score=value(a);
     else if(difficulty==='easy')score=evaluate(a);
     else{
       let worst=max?Infinity:-Infinity;
       for(const reply of fantasyMoves(a)){
-        const b=fantasyPlay(a,reply),winner=winnerOf(b.result);
-        const v=winner==='b'?1e6:winner==='w'?-1e6:evaluate(b);
+        const b=fantasyPlay(a,reply);
+        const v=value(b);
         worst=max?Math.min(worst,v):Math.max(worst,v);
       }
       score=worst*.85+evaluate(a)*.15;
     }
-    score+=(max?1:-1)*Math.random()*.05;
-    if(max?score>best:score<best){best=score;pick=m;}
+    if(difficulty==='easy')practice.push({move:m,score});
+    else{
+      score+=(max?1:-1)*Math.random()*.05;
+      if(max?score>best:score<best){best=score;pick=m;}
+    }
+  }
+  if(difficulty==='easy'){
+    practice.sort((left,right)=>max?right.score-left.score:left.score-right.score);
+    if(Math.abs(practice[0].score)>=900000)pick=practice[0].move;
+    else{
+      const chances=[.55,.25,.15,.05];let roll=Math.random();
+      const choices=practice.slice(0,4);
+      for(let i=0;i<choices.length;i++){
+        roll-=chances[i];
+        if(roll<=0||i===choices.length-1){pick=choices[i].move;break;}
+      }
+    }
   }
   if(pick.promotion)pick=moves.find(m=>m.from===pick.from&&m.to===pick.to&&m.spell===pick.spell&&m.promotion==='q')||pick;
   return pick;

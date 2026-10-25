@@ -38,7 +38,7 @@ export function playFantasyFx(info,fromEl,toEl,splashEls=[]){
     add(1250,k=>{
       const progress=Math.min(1,k*2.3),point={x:a.x+(b.x-a.x)*progress,y:a.y+(b.y-a.y)*progress};
       beam(a,point,'#ff6b28',1-k,9);beam(a,point,'#ffe390',1-k,3);
-      if(k>.3){ring(b,b.r*(k-.3)*2.8,'#ff9e39',1-k,7);sigil(b,'#ff5128',(1-k)*.8,k);}
+      if(k>.3){ring(b,b.r*(k-.3)*2.8,info.disrupted?'#d9a0ff':'#ff9e39',1-k,7);sigil(b,'#ff5128',(1-k)*.8,k);}
       for(const el of splashEls){if(!el)return;const p=center(el);ring(p,p.r*(.2+k), '#ffad6b',1-k,3);}
     });
     return;
@@ -46,6 +46,7 @@ export function playFantasyFx(info,fromEl,toEl,splashEls=[]){
   if(info.attack){
     add(1000,k=>{
       const progress=Math.min(1,k*2.4),point={x:a.x+(b.x-a.x)*progress,y:a.y+(b.y-a.y)*progress};
+      if(info.surge){ring(a,a.r*(.65+k*.6),'#ffcf69',1-k,5);beam(a,point,'#ffcf69',1-k,9);}
       if(kind==='r'){
         beam(a,point,color,1-k,5);beam({x:a.x-8,y:a.y+8},{x:point.x+8,y:point.y-8},'#ffffff',1-k,2);
       }else if(kind==='b'||kind==='n'){
@@ -55,7 +56,7 @@ export function playFantasyFx(info,fromEl,toEl,splashEls=[]){
       }else{
         ring(a,a.r*(.4+k),color,1-k,4);beam(a,point,color,1-k,kind==='q'?7:4);
       }
-      if(k>.3)ring(b,b.r*(k-.3)*1.5,info.sink?'#ff7565':'#bcd9ff',1-k,info.sink?6:3);
+      if(k>.3)ring(b,b.r*(k-.3)*1.5,info.disrupted?'#d9a0ff':info.sink?'#ff7565':'#bcd9ff',1-k,info.sink||info.disrupted?6:3);
     });
   }else{
     add(info.circle?1050:550,k=>{

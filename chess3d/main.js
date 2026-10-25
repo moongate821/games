@@ -4,8 +4,8 @@ import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v
 import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024f';
 import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261025a';
 import {initFleetFx,playMoveFx,clearFleetFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261025a';
-import {fantasyInitial,fantasyMoves,fantasyPlay,fantasyMoveText,chooseFantasyMove,kingHp,circlesHeld,FANTASY_NAME,FANTASY_FACTION,MAGIC_CIRCLES} from './fantasy.js?v=20261025b';
-import {initFantasyFx,playFantasyFx,clearFantasyFx} from './fantasy-fx.js?v=20261025b';
+import {fantasyInitial,fantasyMoves,fantasyPlay,fantasyMoveText,chooseFantasyMove,kingHp,circlesHeld,FANTASY_NAME,FANTASY_FACTION,MAGIC_CIRCLES,MANA_SURGE_TURN} from './fantasy.js?v=20261025c';
+import {initFantasyFx,playFantasyFx,clearFantasyFx} from './fantasy-fx.js?v=20261025c';
 import {wireModel} from './fleet-models.js?v=20261024f';
 
 const glyph={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
@@ -169,7 +169,7 @@ function render(){
   updateClock();
   els.status.textContent=s.result||`${who}の手番${check?' · チェック':''}`;
   if(fleetMode&&!s.result){const pip=n=>'●'.repeat(n)+'○'.repeat(FLAG_HP-n);els.status.textContent+=`  旗艦 帝国${pip(flagshipHp(s,'w'))} 共和${pip(flagshipHp(s,'b'))}`;}
-  if(fantasyMode&&!s.result){const pip=n=>'●'.repeat(n)+'○'.repeat(3-n);els.status.textContent+=`  王 光${pip(kingHp(s,'w'))} 影${pip(kingHp(s,'b'))}`;}
+  if(fantasyMode&&!s.result){const pip=n=>'●'.repeat(n)+'○'.repeat(3-n);els.status.textContent+=`  王 光${pip(kingHp(s,'w'))} 影${pip(kingHp(s,'b'))}${s.fullmove>=MANA_SURGE_TURN?' · 魔力奔流':''}`;}
   els.detail.textContent=s.result?'対局終了。新しい対局を始めるか、1手戻せます。':els.mode.value==='auto'&&autoPaused?'AI同士の対局を一時停止しています。':thinking?`${who}AIが考えています…`:fantasyMode&&activeSpell()==='summon'?'召喚士を選び、緑の空きマスに精霊を呼び出してください。':fantasyMode&&activeSpell()==='fire'?'ドラゴンか魔法使いを選び、敵に竜炎を放ってください。':fleetMode&&activeOrder()==='repair'?'傷ついた味方艦を選び、もう一度同じマスを押すと修理します。':fleetMode&&activeOrder()==='salvo'?'攻撃する艦を選び、赤い敵艦のマスを押してください。':selected>=0?(showLegalMoves?'青いマスを選ぶと移動します。':'移動先表示はOFFです。移動先のマスを選んでください。'):`${who}の駒を選択してください。`;
   if(fleetMode){
     const remaining=s.orders?.[s.turn]||{salvo:0,repair:0};
