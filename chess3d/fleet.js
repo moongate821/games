@@ -12,15 +12,17 @@ export const SHIP_NAME={k:'旗艦(超弩級艦)',q:'惑星型戦闘艦',r:'戦�
 export const FACTION={w:'empire',b:'republic'};
 export const FACTION_NAME={w:'星冠帝国軍',b:'地球星域防衛軍'};
 const hpOf=t=>t==='k'?FLAG_HP:SHIP_HP;
-const ROMAN={k:'DN',q:'PL',r:'BB',b:'CV',n:'TB',p:'FR'};
+// Both sides receive the same one-use orders. They can be disabled for a
+// rules-only match without changing the base movement or victory rules.
+export const FLEET_ORDERS={salvo:'集中砲火',repair:'応急修理'};
 
-export function fleetInitial(){
+export function fleetInitial(tactics=true){
   const board=Array(192).fill('.'),hp=Array(192).fill(0);
   const put=(x,y,p)=>{const i=id(x,y,1);board[i]=p;hp[i]=hpOf(p.toLowerCase());};
   for(let x=0;x<8;x++){
     put(x,0,'RNBQKBNR'[x]);put(x,1,'P');put(x,6,'p');put(x,7,'rnbqkbnr'[x]);
   }
-  return {board,hp,turn:'w',castle:'',ep:-1,halfmove:0,fullmove:1,result:null,repetition:{},fleet:true,last:null,sunk:{w:0,b:0},hits:{w:0,b:0}};
+  return {board,hp,turn:'w',castle:'',ep:-1,halfmove:0,fullmove:1,result:null,repetition:{},fleet:true,tactics,orders:{w:{salvo:tactics?1:0,repair:tactics?1:0},b:{salvo:tactics?1:0,repair:tactics?1:0}},last:null,sunk:{w:0,b:0},hits:{w:0,b:0}};
 }
 
 function slide(s,from,dirs,who,out){
@@ -69,6 +71,12 @@ export function fleetMoves(s,who=s.turn){
   for(const m of raw(s,who)){
     const target=s.board[m.to];
     if(target!=='.'){
+      if(s.orders?.[who]?.salvo){
+        const salvo={...m,order:'salvo',attack:true,damage:2,hit:s.hp[m.to]>2,sink:s.hp[m.to]<=2};
+        if(salvo.sink&&s.board[m.from].toLowerCase()==='p'&&coord(m.to).y===last){
+          for(const promotion of ['q','r','b','n'])out.push({...salvo,promotion});
+        }else out.push(salvo);
+      }
       if(s.hp[m.to]>1){out.push({...m,attack:true,hit:true});continue;}   // 防御が残る → 位置は動かない
       m.attack=true;m.sink=true;
     }
@@ -76,15 +84,31 @@ export function fleetMoves(s,who=s.turn){
       for(const promotion of ['q','r','b','n'])out.push({...m,promotion});
     }else out.push(m);
   }
+  if(s.orders?.[who]?.repair){
+    for(let from=0;from<192;from++){
+      const p=s.board[from];
+      if(side(p)===who&&s.hp[from]<hpOf(p.toLowerCase()))out.push({from,to:from,order:'repair'});
+    }
+  }
   return out;
 }
 export function fleetPlay(s,m){
-  const n={...s,board:s.board.slice(),hp:s.hp.slice(),sunk:{...s.sunk},hits:{...s.hits},repetition:{}};
+  const n={...s,board:s.board.slice(),hp:s.hp.slice(),sunk:{...s.sunk},hits:{...s.hits},orders:{w:{...s.orders?.w},b:{...s.orders?.b}},repetition:{}};
   const p=n.board[m.from],who=side(p),target=n.board[m.to];
-  const info={from:m.from,to:m.to,attacker:p,target,who,attack:!!m.attack,hit:!!m.hit,sink:false,hpBefore:target!=='.'?s.hp[m.to]:0,hpAfter:0};
+  const info={from:m.from,to:m.to,attacker:p,target:m.order==='repair'?'.':target,who,order:m.order||'normal',attack:!!m.attack,hit:!!m.hit,sink:false,hpBefore:target!=='.'?s.hp[m.to]:0,hpAfter:0};
+  if(m.order==='repair'){
+    n.orders[who].repair=0;
+    n.hp[m.from]=Math.min(hpOf(p.toLowerCase()),n.hp[m.from]+1);
+    info.hpAfter=n.hp[m.from];
+    n.halfmove=s.halfmove+1;
+    n.fullmove=s.fullmove+(who==='b'?1:0);
+    n.turn=opponent(who);n.ep=-1;n.last=info;
+    return settleFleetResult(n);
+  }
+  if(m.order==='salvo')n.orders[who].salvo=0;
   if(m.attack){
     n.hits[who]++;
-    n.hp[m.to]--;info.hpAfter=n.hp[m.to];
+    n.hp[m.to]-=m.damage||1;info.hpAfter=Math.max(0,n.hp[m.to]);
     if(n.hp[m.to]<=0){
       info.sink=true;n.sunk[who]++;n.board[m.to]='.';n.hp[m.to]=0;
     }
@@ -97,7 +121,11 @@ export function fleetPlay(s,m){
   n.halfmove=m.attack||p.toLowerCase()==='p'?0:s.halfmove+1;
   n.fullmove=s.fullmove+(who==='b'?1:0);
   n.turn=opponent(who);n.ep=-1;n.last=info;
-  if(info.sink&&target.toLowerCase()==='k')n.result=`${FACTION_NAME[who]}の勝ち（旗艦撃沈）`;
+  return settleFleetResult(n);
+}
+function settleFleetResult(n){
+  const {target,who,sink}=n.last;
+  if(sink&&target.toLowerCase()==='k')n.result=`${FACTION_NAME[who]}の勝ち（旗艦撃沈）`;
   else if(!fleetMoves(n).length)n.result='引き分け（動ける艦がない）';
   else if(n.halfmove>=JUDGE_QUIET||n.fullmove>JUDGE_TOTAL){   // 判定: 残った戦力(防御の残りも含む)が大きい側の勝ち
     const w=fleetPower(n,'w'),b=fleetPower(n,'b'),why=n.halfmove>=JUDGE_QUIET?'攻撃なし50往復':'200往復';
@@ -108,9 +136,10 @@ export function fleetPlay(s,m){
 export function fleetMoveText(s,m){
   const p=s.board[m.from].toLowerCase();
   const name=SHIP_NAME[p];
+  if(m.order==='repair')return `応急修理 ${name} ${label(m.from)} 防御${s.hp[m.from]}→${s.hp[m.from]+1}`;
   if(!m.attack)return `${name} ${label(m.from)}→${label(m.to)}${m.promotion?` 改装→${SHIP_NAME[m.promotion]}`:''}`;
-  const t=s.board[m.to].toLowerCase(),left=s.hp[m.to]-1;
-  return `${name} ${label(m.from)}が ${SHIP_NAME[t]} ${label(m.to)}を攻撃 ${left>0?`(防御残り${left})`:'→撃沈'}`;
+  const t=s.board[m.to].toLowerCase(),left=s.hp[m.to]-(m.damage||1);
+  return `${m.order==='salvo'?'集中砲火 ':' '}${name} ${label(m.from)}が ${SHIP_NAME[t]} ${label(m.to)}を攻撃 ${left>0?`(防御残り${left})`:'→撃沈'}`.trim();
 }
 export const JUDGE_QUIET=100, JUDGE_TOTAL=200;
 // 残存戦力: 艦の価値×防御の残り割合。旗艦は500として数える
@@ -148,6 +177,8 @@ function evalFleet(s){   // 黒が有利なら正
     score+=(who==='b'?1:-1)*worth;
   }
   score+=(s.hits.b-s.hits.w)*18;
+  score+=((s.orders?.b?.salvo||0)-(s.orders?.w?.salvo||0))*120;
+  score+=((s.orders?.b?.repair||0)-(s.orders?.w?.repair||0))*55;
   for(const who of ['w','b']){
     const ek=kings[opponent(who)],sign=who==='b'?1:-1;if(ek<0)continue;
     score+=sign*(26-kingFreedom(s,ek,opponent(who)))*(2+10*late);
@@ -177,6 +208,6 @@ export function chooseFleetMove(s,difficulty='strong'){
     score+=(max?1:-1)*Math.random()*.05;
     if(max?score>best:score<best){best=score;pick=m;}
   }
-  if(pick.promotion)pick=moves.find(m=>m.from===pick.from&&m.to===pick.to&&m.promotion==='q')||pick;
+  if(pick.promotion)pick=moves.find(m=>m.from===pick.from&&m.to===pick.to&&m.order===pick.order&&m.promotion==='q')||pick;
   return pick;
 }

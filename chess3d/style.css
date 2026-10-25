@@ -146,3 +146,26 @@ body[data-mode="fleet"] .viewport{background:url(assets/fleet/bg-space.webp) cen
 .fleet-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
 body[data-mode="fleet"]{overflow-x:hidden}
 body[data-mode="fleet"] .square.capture:after,body[data-mode="fleet"] .cell3d.capture:after{border-color:#ff5d5d;box-shadow:0 0 10px #ff4d4d}
+.fleet-orders-remaining{color:#b9defc;font-size:12px;white-space:nowrap}
+body[data-mode="fleet"] .square.repair:after,body[data-mode="fleet"] .cell3d.repair:after{content:"+";position:absolute;inset:7%;display:grid;place-items:center;border:3px solid #5cf0bb;border-radius:50%;color:#baffdf;font:bold 22px system-ui;text-shadow:0 0 8px #19a974;pointer-events:none}
+
+/* Experimental fantasy mode: magic circles remain part of the clickable grid. */
+body[data-mode="fantasy"]{background:radial-gradient(ellipse at 50% -20%,#694b85 0,transparent 55%),radial-gradient(circle at 15% 80%,#244e50 0,transparent 40%),#140f23}
+body[data-mode="fantasy"] .layer-card,body[data-mode="fantasy"] .viewer,body[data-mode="fantasy"] .card,body[data-mode="fantasy"] .status-card,body[data-mode="fantasy"] .controlbar,body[data-mode="fantasy"] .viewbar{background:linear-gradient(155deg,#302443ed,#161a2deb)!important;border-color:#a887cb!important}
+body[data-mode="fantasy"] .inspiration-card{display:none}
+body[data-mode="fantasy"] .square.light,body[data-mode="fantasy"] .plane .cell3d.light{background:linear-gradient(145deg,#cec0e5e8,#a9a2c6de)!important}
+body[data-mode="fantasy"] .square.dark,body[data-mode="fantasy"] .plane .cell3d.dark{background:linear-gradient(145deg,#514171ee,#382f62e8)!important}
+body[data-mode="fantasy"] .plane,body[data-mode="fantasy"] .plane[data-level]{--rim:#bc9ae0;--edge-bright:#a37cc3;--edge-dark:#2b2143;border-color:#b499d8;box-shadow:inset 0 0 0 2px #f4d2ff88,0 0 0 5px #30204e,0 0 24px #a965e966,0 24px 35px #000b}
+body[data-mode="fantasy"] .chessboard{border-color:#bc9be0;box-shadow:0 0 0 3px #33234e,0 7px 0 #57336c,0 0 26px #a968d255}
+body[data-mode="fantasy"] .viewport{background:radial-gradient(circle at 50% 46%,#58487b,#25223f 58%,#121323);border-color:#b08ad5}
+body[data-mode="fantasy"] .piece.fantasy-unit{font-family:Georgia,"Yu Gothic UI",serif;font-size:clamp(15px,1.8vw,30px);text-shadow:0 1px 4px #0008}
+body[data-mode="fantasy"] .piece.fantasy-unit.white,body[data-mode="fantasy"] .captured-piece.fantasy-unit.white{background:radial-gradient(circle at 30% 25%,#fff5ce,#d9b779);color:#503d2a;border-color:#b88549}
+body[data-mode="fantasy"] .piece.fantasy-unit.black,body[data-mode="fantasy"] .captured-piece.fantasy-unit.black{background:radial-gradient(circle at 30% 25%,#9a79c5,#433161);color:#f4e7ff;border-color:#a988cf}
+body[data-mode="fantasy"] .piece3d.fantasy-unit{font:900 26px Georgia,serif;color:#fff4c5;text-shadow:0 0 9px #e7b7ff}
+body[data-mode="fantasy"] .magic-circle:before{content:"✧";position:absolute;inset:12%;display:grid;place-items:center;border:2px solid #77ffc9;border-radius:50%;color:#d2fff0;font:900 23px Georgia,serif;line-height:1;box-shadow:0 0 10px #59efba,inset 0 0 9px #6dffd488;text-shadow:0 0 8px #81ffd5;pointer-events:none;z-index:0}
+body[data-mode="fantasy"] .square.summon:after,body[data-mode="fantasy"] .cell3d.summon:after{content:"✦";position:absolute;inset:9%;display:grid;place-items:center;border:3px solid #79ffd0;border-radius:50%;color:#bcffe3;font:900 20px Georgia,serif;box-shadow:0 0 11px #72ffcc;pointer-events:none}
+body[data-mode="fantasy"] .square.capture:after,body[data-mode="fantasy"] .cell3d.capture:after{border-color:#ff976b;box-shadow:0 0 10px #ff8d51}
+body[data-mode="fantasy"] .hp-pips.white i{background:#ffdf8c;box-shadow:0 0 5px #e8ae60}
+body[data-mode="fantasy"] .hp-pips.black i{background:#d3a4ff;box-shadow:0 0 5px #bc78ff}
+.fantasy-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61}
+body[data-mode="fantasy"] #fantasyPowersRemaining{flex-basis:100%;white-space:pre-line;line-height:1.5;color:#e7d5ff}

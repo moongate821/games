@@ -70,8 +70,59 @@ function addFleetPiece(cell,kind,side){
   group.add(ship,new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.45})));pieces.add(group);
   entries.push({cell,group,height:1,footprint:1/FLEET_SIZE[kind],kind,side,fleet:true});
 }
+// Small procedural fantasy figures keep the mode usable without external models.
+const fantasyModels=new Map();
+function fantasyObject(kind,side){
+  const key=`${kind}:${side}`;
+  if(fantasyModels.has(key))return fantasyModels.get(key).clone(true);
+  const main=new THREE.MeshStandardMaterial({color:side==='white'?0xe7c47e:0x8051b4,metalness:.25,roughness:.52});
+  const trim=new THREE.MeshStandardMaterial({color:side==='white'?0xfff1b8:0xce9cff,metalness:.5,roughness:.35});
+  const magic=new THREE.MeshBasicMaterial({color:side==='white'?0xffd77a:0xb68bff,transparent:true,opacity:.85,side:THREE.DoubleSide});
+  const group=new THREE.Group();
+  const add=(geometry,material,x,y,z,rx=0,ry=0,rz=0)=>{
+    const part=new THREE.Mesh(geometry,material);part.position.set(x,y,z);part.rotation.set(rx,ry,rz);group.add(part);return part;
+  };
+  add(new THREE.CylinderGeometry(.32,.38,.1,12),trim,0,.06,0);
+  if(kind==='p'){
+    add(new THREE.SphereGeometry(.23,12,8),magic,0,.5,0);
+    for(const x of [-.16,.16])add(new THREE.ConeGeometry(.075,.27,7),magic,x,.78,0);
+  }else{
+    add(new THREE.CylinderGeometry(kind==='q'?.24:.16,.25,.55,10),main,0,.37,0);
+    if(kind==='k'){
+      add(new THREE.TorusGeometry(.22,.055,6,16),trim,0,.69,0,Math.PI/2);
+      for(let i=0;i<5;i++){const a=i*Math.PI*2/5;add(new THREE.ConeGeometry(.065,.3,6),trim,Math.cos(a)*.21,.85,Math.sin(a)*.21);}
+    }else if(kind==='q'){
+      add(new THREE.SphereGeometry(.23,10,8),main,0,.77,0);
+      add(new THREE.ConeGeometry(.12,.42,8),trim,0,.75,.29,Math.PI/2);
+      for(const dir of [-1,1]){
+        add(new THREE.ConeGeometry(.055,.23,6),trim,dir*.13,1.01,-.05);
+        add(new THREE.ConeGeometry(.28,.62,3),main,dir*.44,.7,0,0,0,dir*.7);
+      }
+    }else if(kind==='r'){
+      add(new THREE.SphereGeometry(.17,10,8),trim,0,.76,0);
+      add(new THREE.BoxGeometry(.065,.58,.065),trim,.31,.81,0);
+      add(new THREE.BoxGeometry(.29,.055,.08),main,.31,.56,0);
+    }else if(kind==='b'){
+      add(new THREE.ConeGeometry(.3,.5,10),trim,0,.9,0);
+      add(new THREE.TorusGeometry(.26,.035,5,12),main,0,.66,0,Math.PI/2);
+      add(new THREE.CylinderGeometry(.035,.035,.8,6),trim,.3,.57,0);
+      add(new THREE.SphereGeometry(.1,8,6),magic,.3,1,0);
+    }else if(kind==='n'){
+      add(new THREE.SphereGeometry(.16,10,8),magic,0,.8,0);
+      add(new THREE.TorusGeometry(.27,.035,6,16),trim,0,.8,0,.35);
+      add(new THREE.TorusGeometry(.27,.035,6,16),trim,0,.8,0,-.35);
+    }
+  }
+  fantasyModels.set(key,group);
+  return group.clone(true);
+}
+function addFantasyPiece(cell,kind,side){
+  const group=fantasyObject(kind,side);pieces.add(group);
+  entries.push({cell,group,height:1,footprint:1,kind,side,fantasy:true});
+}
 function addPiece(cell,kind,side){
   if(activeTheme==='fleet')return addFleetPiece(cell,kind,side);
+  if(activeTheme==='fantasy')return addFantasyPiece(cell,kind,side);
   const source=models.get(`${activeTheme}:${kind}`);
   if(!source)return;
   const root=source.scene.clone(true);
@@ -107,12 +158,12 @@ function drawFrame(){
   camera.updateProjectionMatrix();
   refreshEntries();
   const fit=parseFloat(getComputedStyle(viewport.querySelector('.world')).getPropertyValue('--fit'))||1;
-  for(const {cell,group,height,footprint,kind,side,fleet} of entries){
+  for(const {cell,group,height,footprint,kind,side,fleet,fantasy} of entries){
     const rect=cell.getBoundingClientRect();
     // Keep model size tied to the actual square and zoom, not its projected
     // bounding box, which changes with both tilt and horizontal rotation.
     const size=cell.offsetWidth*latestCameraState.zoom;
-    const scale=fleet?size/footprint:Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
+    const scale=fleet?size/footprint:fantasy?size*.82:Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
     group.scale.setScalar(Math.max(0.001,scale));
     group.rotation.x=THREE.MathUtils.degToRad(90-latestCameraState.tilt);
     group.rotation.y=THREE.MathUtils.degToRad(-latestCameraState.yaw)+(side==='white'?Math.PI:0);
@@ -162,10 +213,10 @@ export async function initPieceModels(viewportElement,viewerElement){
 }
 
 export function setPieceTheme(theme){
-  if((!folders[theme]&&theme!=='fleet')||theme===activeTheme)return;
+  if((!folders[theme]&&theme!=='fleet'&&theme!=='fantasy')||theme===activeTheme)return;
   activeTheme=theme;
   pieces.clear();entries=[];
-  if(ready&&(theme==='fleet'||models.has(`${theme}:king`)))syncPieceModels(latestCameraState);
+  if(ready&&(theme==='fleet'||theme==='fantasy'||models.has(`${theme}:king`)))syncPieceModels(latestCameraState);
 }
 
 export function syncPieceModels(cameraState){

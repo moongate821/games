@@ -12,16 +12,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0d1427">
   <title>三次元チェス 実験版</title>
-  <link rel="stylesheet" href="style.css?v=20261024f">
+  <link rel="stylesheet" href="style.css?v=20261025b">
 </head>
 <body>
   <main class="shell">
     <header class="top">
-      <div><p class="eyebrow">THREE LAYER CHESS · PROTOTYPE 0.6</p><h1>三次元チェス</h1><p class="subtitle">中央の戦場から、上下の盤へ。立体の攻防を試す実験版。</p></div>
+      <div><p class="eyebrow">THREE LAYER CHESS · PROTOTYPE 0.8</p><h1>三次元チェス</h1><p class="subtitle">中央の戦場から、上下の盤へ。立体の攻防を試す実験版。</p></div>
       <div class="top-actions"><div class="game-clock"><span>対局時間</span><time id="gameTime" datetime="PT0S">00:00</time></div><button id="newGame" class="primary">新しい対局</button><button id="undo">1手戻す</button></div>
     </header>
     <section class="controlbar" aria-label="対局設定">
-      <label>ゲーム <select id="gameMode"><option value="chess">三次元チェス</option><option value="fleet">艦隊運用モード</option></select></label>
+      <label>ゲーム <select id="gameMode"><option value="chess">三次元チェス</option><option value="fleet">艦隊運用モード</option><option value="fantasy">異世界モード</option></select></label>
+      <label class="move-toggle" id="fleetTacticsWrap" hidden><input id="fleetTactics" type="checkbox" checked><span>戦術命令</span></label>
+      <label id="fleetOrderWrap" hidden>命令 <select id="fleetOrder"><option value="normal">通常行動</option><option value="salvo">集中砲火 · 2ダメージ</option><option value="repair">応急修理 · 防御+1</option></select></label>
+      <span id="fleetOrdersRemaining" class="fleet-orders-remaining" hidden></span>
+      <label id="fantasySpellWrap" hidden>魔法 <select id="fantasySpell"><option value="normal">通常行動</option><option value="fire">竜炎 · 2ダメージ＋余波</option><option value="summon">精霊召喚</option></select></label>
+      <span id="fantasyPowersRemaining" class="fleet-orders-remaining" hidden></span>
       <label>対戦相手 <select id="mode"><option value="human">2人で対局</option><option value="bot">AI（黒）</option><option value="auto">AI同士で対局</option></select></label>
       <label id="difficultyWrap" hidden>AIの強さ <select id="difficulty"><option value="strong">手強い · 相手の返しを読む</option><option value="easy">練習 · 1手ずつ考える</option><option value="deep">深読み · 3半手（試験用）</option></select></label>
       <button id="toggleAuto" hidden>一時停止</button>
@@ -59,7 +64,8 @@
         </div>
         <div class="status-card"><p class="small-title">対局状況</p><h2 id="status">白の手番</h2><p id="detail">駒を選択してください。</p><div class="mini-stats"><div><strong id="moveNo">1</strong><small>手目</small></div><div><strong id="captureNo">0</strong><small id="captureLabel">取った駒</small></div><div><strong id="checkNo">0</strong><small id="checkLabel">チェック</small></div></div></div>
         <div class="card"><div class="card-head"><h3>着手履歴</h3><button id="copyLog" class="text-button">コピー</button></div><ol id="history" class="history"><li class="empty">対局が始まるとここに表示されます。</li></ol></div>
-        <div class="card rules" id="rulesFleet" hidden><h3>艦隊運用モード</h3><p>駒は銀河覇権の艦隊です。白=星冠帝国軍、黒=地球星域防衛軍。キング=旗艦(超弩級艦)、クイーン=惑星型戦闘艦、ルーク=戦艦、ビショップ=空母、ナイト=雷撃艇、ポーン=護衛艦。動き方はチェスと同じです。</p><p>敵艦のマスへ動くと<b>攻撃</b>。どの艦も防御(バリヤー)が3枚あり、1回の攻撃で1枚はがれます。3回目の攻撃で<b>撃沈</b>し、攻撃した艦がそのマスへ進みます(撃沈しないときは元の位置のまま)。</p><p><b>旗艦を3回攻撃して撃沈した側の勝ち</b>。攻撃のないまま50往復(ポーンの前進もなし)か、全体で200往復になったら<b>判定</b>: 残った艦の戦力(防御の残りも含む)が大きい側の勝ち。チェック・キャスリング・アンパッサンはありません。マスの下の点が残りの防御です。</p></div>
+        <div class="card rules" id="rulesFleet" hidden><h3>艦隊運用モード</h3><p>駒は銀河覇権の艦隊です。白=星冠帝国軍、黒=地球星域防衛軍。キング=旗艦(超弩級艦)、クイーン=惑星型戦闘艦、ルーク=戦艦、ビショップ=空母、ナイト=雷撃艇、ポーン=護衛艦。動き方はチェスと同じです。</p><p>敵艦のマスへ動くと<b>攻撃</b>。どの艦も防御(バリヤー)が3枚あり、1回の攻撃で1枚はがれます。3回目の攻撃で<b>撃沈</b>し、攻撃した艦がそのマスへ進みます(撃沈しないときは元の位置のまま)。</p><p><b>戦術命令</b>をONにすると、各軍は対局中に「集中砲火」と「応急修理」をそれぞれ1回使えます。集中砲火は攻撃可能な敵艦の防御を2枚はがします。応急修理は傷ついた味方艦を1隻選び、もう一度そのマスを押すと防御を1枚回復します。どちらも1手を使い、旗艦にも使えます。設定の変更は新しい対局から適用されます。</p><p><b>旗艦を撃沈した側の勝ち</b>。攻撃のないまま50往復(ポーンの前進もなし)か、全体で200往復になったら<b>判定</b>: 残った艦の戦力(防御の残りも含む)が大きい側の勝ち。チェック・キャスリング・アンパッサンはありません。マスの下の点が残りの防御です。</p></div>
+        <div class="card rules" id="rulesFantasy" hidden><h3>異世界モード</h3><p>光の王国と影の王国が三層の盤で戦います。王・ドラゴン・勇者・魔法使い・召喚士・精霊が、キング・クイーン・ルーク・ビショップ・ナイト・ポーンに対応します。全員の防御は3。攻撃を3回受けると倒れ、王を倒した側の勝ちです。</p><p><b>竜炎</b>はドラゴンか魔法使いで使える各軍1回の魔法です。対象に2ダメージ、同じ層で隣接する敵にも1ダメージを与えます。余波では王を傷つけず、他の駒も倒しません。<b>精霊召喚</b>は召喚士が隣の空きマスに精霊を1体呼び出す各軍1回の魔法です。どちらも1手を使います。</p><p>中央に2つ、上段と下段に1つずつある光る<b>魔法陣</b>に移動すると防御を1回復します（最大3）。4つの魔法陣のうち2つ以上を自分の手番終了時に3手続けて保持しても勝利します。魔法は上の「魔法」で選び、駒と対象マスを押します。攻撃と精霊の前進がない30往復、または全体で100往復になると残存戦力で判定します。</p></div>
         <div class="card rules" id="rulesChess"><h3>この試作のルール</h3><p>中央8×8、上段・下段は6×6。白黒とも中央から開始します。ルークは縦横上下、ビショップは2軸の斜め、クイーンは空間斜めも移動。ナイトは立体L字、キングは隣接マスへ動きます。</p><p>ポーンは中央盤内を進みます。キャスリング、アンパッサン、昇格に対応しています。試作独自のルールで、作品の公式ルールではありません。</p><p>立体盤で奥のマスを選びにくいときは「表示層」で1段ずつ表示できます。</p><a href="../銀河英雄伝説_三次元チェス調査.md">調査・設計資料を見る</a></div>
       </aside>
     </section>
@@ -67,7 +73,7 @@
   </main>
   <dialog id="promotionDialog"><form method="dialog"><h2>ポーンを昇格</h2><p>変更する駒を選んでください。</p><div id="promotionChoices" class="promotion-choices"></div></form></dialog>
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-  <script type="module" src="main.js?v=20261024f"></script>
+  <script type="module" src="main.js?v=20261025b"></script>
 <script src="shell.js"></script>
 </body>
 </html>

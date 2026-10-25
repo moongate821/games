@@ -2,6 +2,7 @@
 // バリヤーは、よく使われる「縁が明るいフレネルの輪郭+うすい六角の網目+被弾点から広がる波紋」の3層で描く。
 const COL={w:[255,196,90],b:[90,190,255]};   // 白=星冠帝国軍(琥珀) 黒=地球星域防衛軍(青)
 let cv,g,fx=[],running=false,seOn=localStorage.getItem('threeLayerChess.fleetSe')!=='off',AC,master;
+const pending=new Set();
 
 export function initFleetFx(){
   if(cv)return;
@@ -12,6 +13,12 @@ export function initFleetFx(){
 }
 export const fleetSe=()=>seOn;
 export function setFleetSe(on){seOn=on;localStorage.setItem('threeLayerChess.fleetSe',on?'on':'off');}
+export function clearFleetFx(){
+  fx=[];
+  for(const timer of pending)clearTimeout(timer);
+  pending.clear();
+  if(g)g.clearRect(0,0,innerWidth,innerHeight);
+}
 
 // ---------- 効果音(Web Audio で合成) ----------
 function ac(){
@@ -36,6 +43,7 @@ const SE={
   missile(){noise(.5,.12,'bandpass',600,2600);osc('triangle',300,900,.45,.05);},
   fighter(){for(let i=0;i<5;i++){osc('square',1200+i*90,700,.08,.035,i*.06);}},
   move(){osc('sine',160,240,.25,.06);noise(.25,.03,'lowpass',800,300);},
+  repair(){osc('sine',390,780,.55,.1);osc('triangle',520,1040,.6,.07,.12);},
   shield(){osc('sine',1320,1250,.5,.12);osc('sine',1985,1900,.45,.07);osc('triangle',660,640,.6,.06);noise(.25,.05,'highpass',5000,3000);},
   crack(){osc('sine',880,300,.4,.12);noise(.35,.1,'bandpass',3000,800);osc('sawtooth',220,110,.3,.05);},
   boom(){noise(1.2,.35,'lowpass',3000,60);osc('sine',120,28,1.1,.4);osc('sawtooth',90,30,.8,.12);},
@@ -132,15 +140,23 @@ function banner(text,c){
 export function playMoveFx(info,fromEl,toEl){
   if(!cv||!fromEl||!toEl)return;
   const a=center(fromEl),b=center(toEl),c=COL[info.who],tc=COL[info.who==='w'?'b':'w'],kind=info.attacker.toLowerCase();
+  if(info.order==='repair'){
+    playSe('repair');
+    add({dur:900,draw(k){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(c,(1-k)*.9);g.lineWidth=3;g.beginPath();g.arc(a.x,a.y,a.w*(.2+k*.8),0,Math.PI*2);g.stroke();g.restore();flash(a,a.w*.7,c,(1-k)*.65);}});
+    return;
+  }
   if(!info.attack){playSe('move');add({dur:500,draw(k){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(c,(1-k)*.7);g.setLineDash([6,8]);g.lineDashOffset=-k*40;g.lineWidth=2;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.restore();flash(b,a.w*.5,c,(1-k)*.6);}});return;}
-  playSe(kind==='n'?'missile':kind==='b'?'fighter':kind==='q'||kind==='k'?'heavy':'beam');
+  playSe(info.order==='salvo'?'heavy':kind==='n'?'missile':kind==='b'?'fighter':kind==='q'||kind==='k'?'heavy':'beam');
   weapon(kind,a,b,c,650);
+  if(info.order==='salvo')add({dur:650,draw(k){if(k>.9)return;glowLine(a,b,c,4,(1-k)*.8);flash(b,18,c,(1-k)*.6);}},120);
   const impact=kind==='n'||kind==='b'?520:260;
-  setTimeout(()=>{
+  const timer=setTimeout(()=>{
+    pending.delete(timer);
     if(info.sink){
       const flag=info.target.toLowerCase()==='k';
       playSe(flag?'flag':'boom');explosion(b,tc,flag);shake(flag?9:4);
       if(flag)banner('旗艦撃沈',c);
     }else{playSe(info.hpAfter<=1?'crack':'shield');barrier(b,a,tc,info.hpAfter,900);}
   },impact);
+  pending.add(timer);
 }
