@@ -1,6 +1,6 @@
 import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261024f';
 import {chooseBotMove} from './ai.js?v=20261024f';
-import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261026c';
+import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261026d';
 import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024f';
 import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261025a';
 import {initFleetFx,playMoveFx,clearFleetFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261025a';
