@@ -234,7 +234,10 @@ function drawFrame(){
     // Keep model size tied to the actual square and zoom, not its projected
     // bounding box, which changes with both tilt and horizontal rotation.
     const size=cell.offsetWidth*latestCameraState.zoom;
-    const scale=fleet?size/footprint:fantasy?Math.min(size*FANTASY_HEIGHT[kind]/height,size*.84/footprint):Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
+    // Meshy dragons have a long tail, so a strict one-square footprint makes
+    // their body look much smaller than the other fantasy characters.
+    const fantasyFootprint=kind==='q'&&(activeTheme==='fantasyMeshy'||activeTheme==='fantasyMeshyLite')?1.12:.84;
+    const scale=fleet?size/footprint:fantasy?Math.min(size*FANTASY_HEIGHT[kind]/height,size*fantasyFootprint/footprint):Math.min(size*KING_HEIGHT*pieceHeights[kind]/height,size*MAX_FOOTPRINT/footprint);
     group.scale.setScalar(Math.max(0.001,scale));
     group.rotation.x=THREE.MathUtils.degToRad(90-latestCameraState.tilt);
     group.rotation.y=THREE.MathUtils.degToRad(-latestCameraState.yaw)+(side==='white'?Math.PI:0);
