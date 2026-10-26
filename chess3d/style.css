@@ -169,3 +169,5 @@ body[data-mode="fantasy"] .hp-pips.white i{background:#ffdf8c;box-shadow:0 0 5px
 body[data-mode="fantasy"] .hp-pips.black i{background:#d3a4ff;box-shadow:0 0 5px #bc78ff}
 .fantasy-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61}
 body[data-mode="fantasy"] #fantasyPowersRemaining{flex-basis:100%;white-space:pre-line;line-height:1.5;color:#e7d5ff}
+.fantasy-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:12px 0}
+.fantasy-roster span{padding:7px 8px;border:1px solid #8965af;border-radius:7px;background:#50396988;color:#f5eaff;font-size:12px;white-space:nowrap}

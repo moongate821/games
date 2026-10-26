@@ -1,0 +1,11 @@
+{
+  "note": "Public Meshy viewer geometry converted locally to GLB; these are not official Meshy GLB exports. Each model is displayed as CC0 on its public page (checked 2026-10-26).",
+  "models": {
+    "king": {"title": "King Richard 1 Lionheart miniature", "creator": "domenge.d", "taskId": "0194cdba-00b6-7822-a68a-de59e54a542b", "license": "CC0", "sourceTriangles": 299092},
+    "queen": {"title": "A low poly fire dragon", "creator": "priyanshu.srivastava707", "taskId": "0195db74-6706-7a64-a9ce-bccaa6f45dc5", "license": "CC0", "sourceTriangles": 10000},
+    "rook": {"title": "Adventurer", "creator": "thapesscum", "taskId": "01971f6c-84b4-7267-837b-33d9a395c8f9", "license": "CC0", "sourceTriangles": 10000},
+    "bishop": {"title": "Low Poly Wizard from a ps2 videogame", "creator": "DedSec", "taskId": "0193fe3d-7009-70ef-9875-7e3a234ddc4f", "license": "CC0", "sourceTriangles": 21741},
+    "knight": {"title": "Hand-painted stylized summoner", "creator": "Ghostpen", "taskId": "019597ea-405e-75e4-b161-51633d6aea14", "license": "CC0", "sourceTriangles": 199843},
+    "pawn": {"title": "Magical wisp", "creator": "92g.ivanov", "taskId": "0195349b-1483-77cb-ace8-304bccafc31d", "license": "CC0", "sourceTriangles": 10000}
+  }
+}

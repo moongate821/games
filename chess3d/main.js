@@ -1,20 +1,23 @@
 import {LEVELS,TYPES,id,coord,valid,side,initial,legalMoves,play,inCheck,canClaimDraw,moveText} from './engine.js?v=20261024f';
 import {chooseBotMove} from './ai.js?v=20261024f';
-import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261025b';
+import {initPieceModels,syncPieceModels,setPieceTheme} from './piece-models.js?v=20261026b';
 import {TRACKS,getSaved,initBgm,setBgm,setBgmVolume,bgmStatusText} from './bgm.js?v=20261024f';
 import {fleetInitial,fleetMoves,fleetPlay,fleetMoveText,chooseFleetMove,flagshipHp,SHIP_NAME,FACTION_NAME,FLAG_HP} from './fleet.js?v=20261025a';
 import {initFleetFx,playMoveFx,clearFleetFx,fleetSe,setFleetSe} from './fleet-fx.js?v=20261025a';
-import {fantasyInitial,fantasyMoves,fantasyPlay,fantasyMoveText,chooseFantasyMove,kingHp,circlesHeld,FANTASY_NAME,FANTASY_FACTION,MAGIC_CIRCLES,MANA_SURGE_TURN} from './fantasy.js?v=20261025c';
+import {fantasyInitial,fantasyMoves,fantasyPlay,fantasyMoveText,chooseFantasyMove,kingHp,circlesHeld,FANTASY_NAME,FANTASY_FACTION,MAGIC_CIRCLES,MANA_SURGE_TURN} from './fantasy.js?v=20261026a';
 import {initFantasyFx,playFantasyFx,clearFantasyFx} from './fantasy-fx.js?v=20261025c';
 import {wireModel} from './fleet-models.js?v=20261024f';
 
 const glyph={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-const fantasyGlyph={k:'♔',q:'🐉',r:'⚔',b:'✦',n:'◈',p:'✧'};
+const fantasyGlyph={k:'♔',q:'🐉',r:'⚔',b:'🪄',n:'◈',p:'✧'};
 const magicCircleSet=new Set(MAGIC_CIRCLES);
-const els=Object.fromEntries(['boards','newGame','undo','mode','difficulty','difficultyWrap','toggleAuto','theme','themePreview','themeTitle','themeDescription','themeSource','showMoves','moveToggleState','claimDraw','status','detail','gameTime','moveNo','captureNo','checkNo','captureWhite','captureBlack','history','copyLog','promotionDialog','promotionChoices','view2d','view3d','viewer','viewport','world','cameraInfo','topView','resetView','layerFocus','layerFocusWrap','focusNotice','focusMessage','showAllLayers','bgmSelect','bgmVolume','gameMode','fleetSe','seWrap','rulesChess','rulesFleet','rulesFantasy','captureLabel','checkLabel','capturedTitle','capturedWhiteLabel','capturedBlackLabel','fleetTactics','fleetTacticsWrap','fleetOrder','fleetOrderWrap','fleetOrdersRemaining','fantasySpell','fantasySpellWrap','fantasyPowersRemaining'].map(x=>[x,document.getElementById(x)]));
+const els=Object.fromEntries(['boards','newGame','undo','mode','difficulty','difficultyWrap','toggleAuto','theme','themePreview','themeTitle','themeDescription','themeSource','showMoves','moveToggleState','claimDraw','status','detail','gameTime','moveNo','captureNo','checkNo','captureWhite','captureBlack','history','copyLog','promotionDialog','promotionChoices','view2d','view3d','viewer','viewport','world','cameraInfo','topView','resetView','layerFocus','layerFocusWrap','focusNotice','focusMessage','showAllLayers','bgmSelect','bgmVolume','gameMode','fleetSe','seWrap','rulesChess','rulesFleet','rulesFantasy','captureLabel','checkLabel','capturedTitle','capturedWhiteLabel','capturedBlackLabel','fleetTactics','fleetTacticsWrap','fleetOrder','fleetOrderWrap','fleetOrdersRemaining','fantasySpell','fantasySpellWrap','fantasyPowersRemaining','fantasyStyle','fantasyStyleWrap'].map(x=>[x,document.getElementById(x)]));
 // ---- ゲームモード(三次元チェス / 艦隊運用モード) ----
 let fleetMode=localStorage.getItem('threeLayerChess.gameMode')==='fleet';
 let fantasyMode=localStorage.getItem('threeLayerChess.gameMode')==='fantasy';
+let fantasyStyle=['meshy','meshyLite','simple'].includes(localStorage.getItem('threeLayerChess.fantasyStyle'))?localStorage.getItem('threeLayerChess.fantasyStyle'):'meshy';
+els.fantasyStyle.value=fantasyStyle;
+const fantasyPieceTheme=()=>fantasyStyle==='simple'?'fantasy':fantasyStyle==='meshyLite'?'fantasyMeshyLite':'fantasyMeshy';
 let fleetTactics=localStorage.getItem('threeLayerChess.fleetTactics')!=='off';
 const RULES={
   chess:{initial,legalMoves,play,inCheck,canClaimDraw,moveText},
@@ -119,7 +122,7 @@ function applyTheme(){
   const t=THEMES[pieceTheme];
   els.themePreview.src=t.preview;els.themePreview.alt=t.alt;els.themeTitle.textContent=t.title;
   els.themeDescription.textContent=t.desc;els.themeSource.href=t.href;els.themeSource.textContent=t.link;
-  setPieceTheme(fantasyMode?'fantasy':fleetMode?'fleet':pieceTheme);
+  setPieceTheme(fantasyMode?fantasyPieceTheme():fleetMode?'fleet':pieceTheme);
 }
 function draw3D(){
   const s=current(), moves=!showLegalMoves||selected<0?[]:visibleMoves(s).filter(m=>m.from===selected);
@@ -162,7 +165,7 @@ function showView(mode){
   els.view2d.classList.toggle('active',mode==='2d');els.view3d.classList.toggle('active',mode==='3d');
   els.view2d.setAttribute('aria-pressed',mode==='2d');els.view3d.setAttribute('aria-pressed',mode==='3d');
   els.topView.hidden=mode==='2d';els.resetView.hidden=mode==='2d';els.layerFocusWrap.hidden=mode==='2d';
-  if(mode==='3d')draw3D();
+  if(mode==='3d')draw3D();else drawBoards();
 }
 function render(){
   const s=current(), check=R().inCheck(s,s.turn), who=fantasyMode?FANTASY_FACTION[s.turn]:fleetMode?FACTION_NAME[s.turn]:s.turn==='w'?'白':'黒';
@@ -350,7 +353,6 @@ els.copyLog.addEventListener('click',async()=>{try{await navigator.clipboard.wri
 setInterval(updateClock,1000);
 window.addEventListener('piece-models-ready',()=>syncPieceModels(camera));
 window.addEventListener('piece-models-resize',()=>syncPieceModels(camera));
-initPieceModels(els.viewport,els.viewer);
 initFleetFx();
 initFantasyFx();
 function applyMode(){
@@ -359,6 +361,7 @@ function applyMode(){
   els.fleetTacticsWrap.hidden=!fleetMode;els.fleetTactics.checked=fleetTactics;
   els.fleetOrderWrap.hidden=!fleetMode||!fleetTactics;els.fleetOrdersRemaining.hidden=!fleetMode||!fleetTactics;
   els.fantasySpellWrap.hidden=!fantasyMode;els.fantasyPowersRemaining.hidden=!fantasyMode;
+  els.fantasyStyleWrap.hidden=!fantasyMode;
   const deepOption=els.difficulty.querySelector('option[value="deep"]');
   deepOption.hidden=combatMode();deepOption.disabled=combatMode();
   if(combatMode()&&els.difficulty.value==='deep')els.difficulty.value='strong';
@@ -369,7 +372,7 @@ function applyMode(){
   els.capturedWhiteLabel.textContent=fleetMode?'星冠帝国軍(白)が撃沈':fantasyMode?'光の王国が倒した仲間':'白が取った駒';
   els.capturedBlackLabel.textContent=fleetMode?'地球星域防衛軍(黒)が撃沈':fantasyMode?'影の王国が倒した仲間':'黒が取った駒';
   const lg=document.querySelector('.legend');if(lg)lg.innerHTML=fleetMode?'<i class="mark move"></i>移動先 <i class="mark capture"></i>攻撃できる艦 <i class="mark selected"></i>選択中':fantasyMode?'<i class="mark move"></i>移動先 <i class="mark capture"></i>攻撃 <i class="mark selected"></i>選択中':'<i class="mark move"></i>移動先 <i class="mark capture"></i>取れる駒 <i class="mark selected"></i>選択中';
-  setPieceTheme(fantasyMode?'fantasy':fleetMode?'fleet':pieceTheme);
+  setPieceTheme(fantasyMode?fantasyPieceTheme():fleetMode?'fleet':pieceTheme);
 }
 els.gameMode.addEventListener('change',()=>{
   fleetMode=els.gameMode.value==='fleet';fantasyMode=els.gameMode.value==='fantasy';localStorage.setItem('threeLayerChess.gameMode',els.gameMode.value);
@@ -381,8 +384,10 @@ els.fleetSe.addEventListener('change',()=>setFleetSe(els.fleetSe.checked));
 els.fleetTactics.addEventListener('change',()=>{fleetTactics=els.fleetTactics.checked;localStorage.setItem('threeLayerChess.fleetTactics',fleetTactics?'on':'off');applyMode();reset();});
 els.fleetOrder.addEventListener('change',()=>{selected=-1;render();});
 els.fantasySpell.addEventListener('change',()=>{selected=-1;render();});
+els.fantasyStyle.addEventListener('change',()=>{fantasyStyle=els.fantasyStyle.value;localStorage.setItem('threeLayerChess.fantasyStyle',fantasyStyle);setPieceTheme(fantasyPieceTheme());render();});
 applyTheme();
 applyMode();
+initPieceModels(els.viewport,els.viewer);
 render();
 
 {

@@ -3,7 +3,7 @@
 import {coord,id,valid,side,opponent,label,vectors} from './engine.js?v=20261024f';
 import {fleetInitial,fleetMoves} from './fleet.js?v=20261025a';
 
-export const FANTASY_NAME={k:'王',q:'ドラゴン',r:'勇者',b:'魔法使い',n:'召喚士',p:'精霊'};
+export const FANTASY_NAME={k:'王',q:'ドラゴン',r:'冒険者（勇者）',b:'魔法使い',n:'召喚士',p:'精霊'};
 export const FANTASY_FACTION={w:'光の王国',b:'影の王国'};
 // Mirror symmetry across the players' ranks and the upper/lower boards.
 export const MAGIC_CIRCLES=[id(3,3,1),id(3,4,1),id(4,3,2),id(4,4,0)];
