@@ -1073,7 +1073,7 @@ function drawTitle(){
     const g=ctx.createLinearGradient(0,0,0,50);g.addColorStop(0,'rgba(2,4,24,.8)');g.addColorStop(1,'rgba(2,4,24,0)');ctx.fillStyle=g;ctx.fillRect(0,0,256,50);
     const t1='ああ、青い星地球へ';ctx.font='20px "MS Gothic","Yu Gothic",monospace';ctx.textBaseline='top';
     const w=ctx.measureText(t1).width;ctx.fillStyle='#0a1a60';ctx.fillText(t1,(W-w)/2+2,10+2);ctx.fillStyle='#e8f4ff';ctx.fillText(t1,(W-w)/2,10);
-    const s='全16章 (制作中の試作版)';txt(s,(W-tw(s))/2,36,'#bfe0ff');
+    const s='全16章';txt(s,(W-tw(s))/2,36,'#bfe0ff');
     return;
   }
   for(let i=0;i<60;i++){const x=hash(i,1)*W,y=hash(i,2)*140,t=(frame/20+i)%6;rect(x,y,1,1,t<3?'#fff':'#889')}
@@ -1091,7 +1091,7 @@ function drawTitle(){
   ctx.font='20px "MS Gothic","Yu Gothic",monospace';ctx.textBaseline='top';
   const w=ctx.measureText(t1).width;
   ctx.fillStyle='#0a1a60';ctx.fillText(t1,(W-w)/2+2,18+2);ctx.fillStyle='#e8f4ff';ctx.fillText(t1,(W-w)/2,18);
-  txt('第1章 白い天井 (試作版)',(W-tw('第1章 白い天井 (試作版)'))/2,46,'#9cf');
+  txt('第1章 白い天井',(W-tw('第1章 白い天井'))/2,46,'#9cf');
 }
 async function titleLoop(){
   G.mode='title';bgm('title');
