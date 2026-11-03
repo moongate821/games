@@ -21,7 +21,7 @@
           lamps: [[30, 12], [39, 12], [12, 15], [26, 15]],
           barrels: [[17, 16], [23, 16], [17, 21], [23, 20]],
           signs: [[33, 12]],
-          trees: [[4, 8, 120], [5, 22, 128], [40, 22, 118], [26, 6, 130], [18, 5, 124], [22, 25, 112]],
+          trees: [[7, 10, 98], [10, 10, 105], [4, 18, 100], [11, 17, 105], [4, 8, 120], [5, 22, 128], [40, 22, 118], [26, 6, 130], [18, 5, 124], [22, 25, 112]],
           decor: [{ img: 'furn_crate', x: 18, y: 16, scale: 0.32 }, { img: 'furn_crate', x: 22, y: 18, scale: 0.3 }, { img: 'furn_well', x: 21, y: 20, scale: 0.3 }, { img: 'furn_chest', x: 24, y: 17, scale: 0.28 }]
         }
       },
@@ -40,15 +40,15 @@
         }
       },
       C6_TOWN: {
-        name: 'エマの仕立て屋', w: 14, h: 10, indoor: true, bgm: 'home',
-        ops: [['fill', 'x'], ['rect', 1, 2, 12, 8, 'o'], ['set', 6, 9, 'd']],
+        name: 'エマの仕立て屋', w: 12, h: 10, indoor: true, bgm: 'home',
+        ops: [['fill', 'x'], ['rect', 1, 2, 10, 8, 'o'], ['set', 6, 9, 'd']],
         points: { start: [6, 8] },
         layout: {
-          wallColor: '#7a5a3c', windows: [2 * 48 + 6, 9 * 48 + 6], doorX: 6,
+          wallColor: '#7a5a3c', windows: [2 * 48 + 6, 8 * 48 + 6], doorX: 6,
           furn: [
             { img: 'furn_bench_orthogonal', x: 7, y: 3, w: 3, h: 2, dw: 156, say: '裁ち台。針と糸、型紙が整然と並んでいる。' },
             { img: 'furn_bookshelf_orthogonal', x: 3, y: 2, w: 2, h: 1, dw: 100, say: '布見本の棚。色ごとに巻いてある。' },
-            { img: 'furn_bed_orthogonal', x: 11, y: 6, w: 2, h: 2, dw: 82, say: '小さな寝台。仕事場の隅で寝起きしているらしい。' },
+            { img: 'furn_bed_orthogonal', x: 9, y: 6, w: 2, h: 2, dw: 82, say: '小さな寝台。仕事場の隅で寝起きしているらしい。' },
             { img: 'furn_table_orthogonal', x: 2, y: 5, w: 2, h: 2, dw: 118, say: '試着用の机。縫いかけの外套が掛けてある。' },
             { img: 'furn_flowerpot', x: 1, y: 3, w: 1, h: 1, dw: 32 }]
         }

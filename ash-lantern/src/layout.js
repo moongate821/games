@@ -15,7 +15,7 @@ const LAYOUT = {
     gap: { side: 'w', y0: 4, y1: 9 }, gap2: { side: 'e', y0: 6, y1: 7 },   // 東の出口は第2章へ
     buildings: [
       { img: 'bld_workshop_front', x: 5, y: 5, flip: false, kind: 'talk', story: 'c1_childhouse_door' },
-      { img: 'bld_hall_front', x: 14, y: 5, flip: false, kind: 'locked' },
+      { img: 'bld_hall_front', x: 14, y: 5, flip: false, door: 17, kind: 'door', shopName: '防具屋' },
       { img: 'bld_hall_front', x: 29, y: 5, flip: true, kind: 'talk', story: 'c1_elderhouse_door' },
       { img: 'bld_workshop_front', x: 23, y: 19, flip: false, kind: 'talk', story: 'c1_clinic_door' },
       { img: 'bld_hall_front', x: 8, y: 19, flip: true, kind: 'locked' }
@@ -31,8 +31,8 @@ const LAYOUT = {
     buildings: [
       { img: 'bld_workshop_front', x: 10, y: 9, flip: false, door: 12, kind: 'workshop' },
       { img: 'bld_hall_front', x: 25, y: 8, flip: false, kind: 'hall' },
-      { img: 'bld_workshop_front', x: 26, y: 20, flip: true, kind: 'locked' },
-      { img: 'bld_hall_front', x: 10, y: 20, flip: true, kind: 'locked' }
+      { img: 'bld_workshop_front', x: 26, y: 20, flip: true, door: 30, kind: 'door', shopName: '道具屋' },
+      { img: 'bld_hall_front', x: 10, y: 20, flip: true, door: 13, kind: 'door', shopName: '武器屋' }
     ],
     lamps: [[17, 10], [23, 10], [17, 18], [23, 18], [11, 10], [26, 9], [8, 12], [8, 15], [35, 11]],
     barrels: [[9, 9], [16, 9], [24, 9], [9, 19], [25, 19]],

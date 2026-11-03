@@ -1,7 +1,7 @@
 'use strict';
 /* マップ・台詞などのデータ。台本は 物語・シナリオ/序章_会話イベント台本.md が元。 */
 const T = 48;
-const IMG_LIST = ['allen.png', 'allen_walk_v2.png', 'battle_allen_idle_v2.png', 'battle_mira_idle_v2.png', 'battle_gardo_idle_v2.png', 'battle_noah_idle_v2.png', 'battle_serena_idle_v2.png', 'prop_village_furnace_v2.png', 'npc_mayor.png', 'npc_carpenter.png', 'npc_blacksmith.png', 'npc_innkeeper.png', 'npc_lina.png',
+const IMG_LIST = ['dg_icon_3006.png','dg_icon_3012.png','dg_icon_1003.png','dg_icon_1052.png','dg_icon_1310.png','dg_icon_1311.png', 'prop_shop_counter.png', 'prop_shop_supplies.png', 'prop_shop_weapons.png', 'prop_shop_armor.png', 'shop_bread.png', 'shop_staff.png', 'shop_knife.png', 'shop_coat.png', 'shop_elixir.png', 'shop_potion.png', 'shop_ether.png', 'shop_sword.png', 'shop_armor.png', 'shop_charm.png', 'allen.png', 'allen_walk_v2.png', 'battle_allen_idle_v2.png', 'battle_mira_idle_v2.png', 'battle_gardo_idle_v2.png', 'battle_noah_idle_v2.png', 'battle_serena_idle_v2.png', 'prop_village_furnace_v2.png', 'npc_mayor.png', 'npc_carpenter.png', 'npc_blacksmith.png', 'npc_innkeeper.png', 'npc_lina.png',
   'npc_granny.png', 'npc_guard.png', 'npc_kid.png', 'item_bell.png', 'item_potion.png', 'item_repair.png',
   'bld_workshop.png', 'bld_inn.png', 'bld_workshop_front.png', 'bld_hall_front.png', 'prop_lamp.png', 'prop_tree.png', 'prop_barrel.png', 'prop_sign.png',
   'enemy_wolf.png', 'bg_battle.jpg', 'bg_title.jpg',

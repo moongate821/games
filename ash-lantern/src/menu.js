@@ -92,7 +92,7 @@ async function openMenu() {
   while (true) {
     const ms = fieldMembers();
     const c = await choose(['ステータス', '道具', '装備', 'セーブ', '操作説明', '音: ' + (Snd.on ? 'ON' : 'OFF'), '移動速度: ' + WALK_SPEEDS[walkSpeedIndex()].name, 'タイトルへ戻る', '閉じる'],
-      ms.map(m => `${m.name} ${m.hp}/${m.mhp}`).join('  ') + `   回復薬 ×${S.items.potion}`, { cancel: true });
+      ms.map(m => `${m.name} ${m.hp}/${m.mhp}`).join('  ') + `   回復薬 ×${S.items.potion}   ${S.gold} G`, { cancel: true });
     if (c < 0 || c === 8) break;
     if (c === 0) await statusScreen();
     else if (c === 1) await itemMenu();

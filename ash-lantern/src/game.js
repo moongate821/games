@@ -50,7 +50,7 @@ let okWait = null;
 let map = null, actors = [], statics = [], solid = null, warps = [], zones = [], inters = [];
 
 function newState() {
-  return { st: 'start', flags: {}, items: { potion: 0, kit: 0, bread: 0, ether: 0 }, hp: 50, mhp: 50, lv: 0, allies: [], gear: {}, equip: {}, map: 'W', x: 7, y: 5, dir: 'down' };
+  return { gold: 180, shopStock: {}, st: 'start', flags: {}, items: { potion: 0, kit: 0, bread: 0, ether: 0 }, hp: 50, mhp: 50, lv: 0, allies: [], gear: {}, equip: {}, map: 'W', x: 7, y: 5, dir: 'down' };
 }
 const stIdx = s => STAGES.indexOf(S.st);
 const atLeast = s => stIdx() >= STAGES.indexOf(s);
@@ -101,7 +101,7 @@ function say(name, text) {
 }
 function narrate(text) { return say('', text); }
 function choose(list, prompt, opts) {   // opts: { cancel: true → Xキーで -1 を返す, desc: i => 選択中の説明文 }
-  return new Promise(r => { G.choice = { list, idx: 0, prompt: prompt || '', resolve: r, cancel: !!(opts && opts.cancel), desc: opts && opts.desc }; });
+  return new Promise(r => { G.choice = { list, idx: 0, prompt: prompt || '', resolve: r, cancel: !!(opts && opts.cancel), desc: opts && opts.desc, icons: opts && opts.icons }; });
 }
 function toast(text) { G.toast = { text, t: 150 }; }
 
@@ -143,6 +143,7 @@ function buildOutdoorStatics(id) {   // 灯守村(V)・川霧の町(K)。配置�
   };
   for (const b of (L.buildings || [])) {
     bld(b.img, b.x, b.y, b.flip, b.door != null ? b.door : null, b.art, b.artWidth);
+    if (b.shopName) add({ y: (b.y + 1) * T + 1, draw(c) { const x = b.door * T + T / 2; c.save(); c.font = 'bold 14px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#302016'; c.fillRect(x - 27, b.y * T - 35, 54, 20); c.strokeStyle = '#d2a760'; c.strokeRect(x - 27, b.y * T - 35, 54, 20); c.fillStyle = '#fff0c5'; c.fillText(b.shopName, x, b.y * T - 25); c.restore(); } });
     if (b.kind === 'workshop') warps.push({ x: b.door, y: b.y, to: 'W', tx: 6, ty: 8, dir: 'up' });
     else if (b.kind === 'hall') inters.push({ x: b.x + 3, y: b.y, w: 1, fn: async () => { await narrate(atLeast('furnace_taken') ? '公民館の扉。中から人の気配がする。' : '村の公民館。灯火祭の準備で荷物が積まれている。'); } });
     else if (b.kind === 'locked') inters.push({ x: b.x + (b.img === 'bld_workshop_front' ? (b.flip ? 4 : 2) : 3), y: b.y, w: 1, fn: async () => { await narrate('扉には鍵がかかっている。留守のようだ。'); } });
@@ -264,7 +265,7 @@ function buildWorkshopStatics(id) {
     if (!d.noblock) { const bw = d.blockW || 1; block(d.x - Math.floor(bw / 2), d.y, bw, 1); }
   }
   if (id === 'W') warps.push({ x: 6, y: 9, to: 'V', tx: 12, ty: 10, dir: 'down', cond: () => true, pre: async () => { if (S.st === 'start') { await narrate('(机の鈴を見てから行こう)'); return false; } return true; } });
-  for (const f of (WL.furn || [])) { if (f.act && ACTS[f.act]) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: ACTS[f.act] }); else if (f.say) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: say1(f.say) }); else if (f.story) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => play(STORY[f.story]) }); }
+  for (const f of (WL.furn || [])) { if (f.shop) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => openShop(f.shop) }); else if (f.act && ACTS[f.act]) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: ACTS[f.act] }); else if (f.say) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: say1(f.say) }); else if (f.story) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => play(STORY[f.story]) }); }
 }
 
 const say1 = s => async () => { await narrate(s); };
@@ -361,7 +362,8 @@ function placeActors() { placeActorsBase(); if (map.id === 'V') registryActors()
 function placeActorsBase() {
   actors = [];
   if (map.id === 'K') { placeKirimachi(); registryActors(); return; }
-  if (map.id !== 'V') { registryActors(); return; }
+  if (SHOP_ROOMS[map.id]) { placeShopkeeper(map.id); return; }
+  if (map.id !== 'V') { registryActors(); if (map.id === 'C12_SEA' && atLeast('c12_start')) placeTravelingMerchant(); return; }
   const st = stIdx();
   if (st < STAGES.indexOf('furnace_taken')) {
     addActor({ id: 'mayor', img: 'npc_mayor', x: 22, y: 12, dir: 'left', name: '村長', talk: () => mayorTalk() });
@@ -642,6 +644,10 @@ function savedData(slot = 1) {
     const o = JSON.parse(t);
     if (!o || o.v !== SAVE_VERSION || !STAGES.includes(o.st) || !MAPS[o.map]) return null;
     const tiles = MAPS[o.map].tiles;
+    // 旧14×10の店舗セーブは新12×9内へ移す。保存データ自体は上書きしない。
+    if (SHOP_ROOMS[o.map] && !o.shopLayout && Number.isInteger(o.x) && Number.isInteger(o.y) && o.x >= 0 && o.x < 14 && o.y >= 0 && o.y < 10) { o.x = Math.max(1, Math.min(10, o.x - 1)); o.y = Math.max(2, Math.min(7, o.y)); }
+    if (o.map === 'C6_TOWN' && !o.roomLayout && Number.isInteger(o.x) && o.x >= 0 && o.x < 14) o.x = Math.min(10, o.x);
+    if ((o.map === 'C7_INN' || o.map === 'C16_TABLE') && (!o.roomLayout || o.roomLayout < 4) && Number.isInteger(o.x) && Number.isInteger(o.y) && o.x >= 0 && o.x < 16 && o.y >= 0 && o.y < 11) { o.x = Math.min(10, o.x); o.y = Math.min(8, o.y); }
     if (!Number.isInteger(o.x) || !Number.isInteger(o.y) || o.y < 0 || o.y >= tiles.length || o.x < 0 || o.x >= tiles[o.y].length) return null;
     if (o.allies != null && (!Array.isArray(o.allies) || o.allies.some(a => !a || !ALLIES[a.id]))) return null;
     for (const k of ['flags', 'items', 'gear', 'equip']) if (o[k] != null && (typeof o[k] !== 'object' || Array.isArray(o[k]))) return null;
@@ -711,7 +717,7 @@ async function doSave() {
     if (c !== 0) return false;
   }
   try {
-    localStorage.setItem(key, JSON.stringify({ v: SAVE_VERSION, st: S.st, flags: S.flags, items: S.items, hp: S.hp, mhp: S.mhp, lv: S.lv || 0, allies: S.allies || [], gear: S.gear || {}, equip: S.equip || {}, map: map.id, x: Math.round(G.P.x), y: Math.round(G.P.y), dir: G.P.dir, tint: G.tint, savedAt: new Date().toISOString() }));
+    localStorage.setItem(key, JSON.stringify({ v: SAVE_VERSION, shopLayout: 2, roomLayout: 4, gold: S.gold, shopStock: S.shopStock || {}, st: S.st, flags: S.flags, items: S.items, hp: S.hp, mhp: S.mhp, lv: S.lv || 0, allies: S.allies || [], gear: S.gear || {}, equip: S.equip || {}, map: map.id, x: Math.round(G.P.x), y: Math.round(G.P.y), dir: G.P.dir, tint: G.tint, savedAt: new Date().toISOString() }));
     await narrate(`セーブ ${slot} に保存しました。`);
     return true;
   } catch (e) { await narrate('セーブに失敗しました。(ブラウザの保存が使えません)'); return false; }
@@ -721,7 +727,7 @@ async function startGame(load, slot = 1) {
   G.mode = 'field'; G.busy = true; G.tint = 0;
   if (load) {
     const o = savedData(slot);
-    if (o) { Object.assign(S, { st: o.st, flags: o.flags || {}, items: Object.assign({ potion: 0, kit: 0, bread: 0, ether: 0 }, o.items), hp: o.hp, mhp: o.mhp, lv: o.lv || 0, allies: o.allies || [], gear: o.gear || {}, equip: o.equip || {} }); const restored = restoreMissedSupplies(S); G.tint = o.tint || 0; enterMap(o.map, o.x, o.y, o.dir); setStage(S.st);
+    if (o) { Object.assign(S, { shopStock: cleanShopStock(o.shopStock), gold: Number.isSafeInteger(o.gold) && o.gold >= 0 ? o.gold : 180 + Math.min(12, Math.max(0, o.lv || 0)) * 45, st: o.st, flags: o.flags || {}, items: Object.assign({ potion: 0, kit: 0, bread: 0, ether: 0 }, o.items), hp: o.hp, mhp: o.mhp, lv: o.lv || 0, allies: o.allies || [], gear: o.gear || {}, equip: o.equip || {} }); const restored = restoreMissedSupplies(S); G.tint = o.tint || 0; enterMap(o.map, o.x, o.y, o.dir); setStage(S.st);
       if (!Number.isFinite(S.hp) || !Number.isFinite(S.mhp) || S.mhp <= 0) { S.mhp = 50; S.hp = Math.max(1, Math.min(S.hp || 1, 50)); }
       if (isSolidTile(Math.round(G.P.x), Math.round(G.P.y))) { const st = (MAPS[o.map].points || {}).start || [2, 2]; G.P.x = G.P.px = G.P.tx = st[0]; G.P.y = G.P.py = G.P.ty = st[1]; } G.fade = 1; G.fadeTo = 0; G.busy = false; if (restored) toast('以前の冒険で受け取れなかった装備・道具を持ち物に追加しました。'); return; }
   }
@@ -1108,6 +1114,7 @@ function drawDialog() {
 }
 function drawChoice() {
   const c = G.choice;
+  if (G.shop && G.mode === 'field') { drawShopChoice(c); return; }
   ctx.font = '25px ' + FONT;
   let w = 240; c.list.forEach(t => w = Math.max(w, ctx.measureText(t).width + 80));
   if (c.prompt) { ctx.font = '22px ' + FONT; w = Math.max(w, ctx.measureText(c.prompt).width + 50); }
@@ -1119,7 +1126,7 @@ function drawChoice() {
   ctx.font = '25px ' + FONT; ctx.textBaseline = 'middle';
   c.list.forEach((t, i) => {
     if (i === c.idx) { const ry = yy + i * 46; const glow = ctx.createLinearGradient(x + 14, ry, x + w - 14, ry); glow.addColorStop(0, 'rgba(187,132,62,.48)'); glow.addColorStop(1, 'rgba(187,132,62,.12)'); ctx.fillStyle = glow; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.fill(); ctx.strokeStyle = 'rgba(246,210,139,.55)'; ctx.lineWidth = 1; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.stroke(); ctx.fillStyle = '#ffe6a8'; ctx.fillText('▶', x + 24, ry + 21); }
-    ctx.fillStyle = i === c.idx ? '#fff' : '#cfc6b0'; ctx.fillText(t, x + 56, yy + i * 46 + 21, w - 76);
+    ctx.fillStyle = i === c.idx ? '#fff' : '#cfc6b0'; const icon = c.icons && IMG[c.icons[i]]; if (icon) ctx.drawImage(icon, x + 53, yy + i * 46 + 4, 34, 34); ctx.fillText(t, x + (icon ? 94 : 56), yy + i * 46 + 21, w - (icon ? 114 : 76));
   });
   if (c.desc) { const d = c.desc(c.idx); if (d) { panel(30, H - 96, W - 60, 70); ctx.font = '22px ' + FONT; ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(d, 56, H - 61, W - 112); } }
 }

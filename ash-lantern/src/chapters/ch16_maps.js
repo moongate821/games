@@ -29,20 +29,21 @@
         }
       },
       C16_TABLE: {
-        name: '灯りのある食卓', w: 16, h: 11, indoor: true, bgm: 'home', dim: 'rgba(255,200,130,.06)',
-        ops: [['fill', 'x'], ['rect', 1, 2, 14, 9, 'o'], ['set', 8, 10, 'd']],
-        points: { start: [8, 9], table: [8, 6] },
+        name: '灯りのある食卓', w: 12, h: 10, indoor: true, bgm: 'home', dim: 'rgba(255,200,130,.06)',
+        ops: [['fill', 'x'], ['rect', 1, 2, 10, 8, 'o'], ['set', 8, 9, 'd']],
+        points: { start: [8, 8], table: [8, 6] },
         layout: {
-          wallColor: '#7a5532', windows: [3 * 48 + 6, 11 * 48 + 6], doorX: 8, rug: { x: 5.4, y: 3.2, w: 200 },
+          wallColor: '#7a5532', windows: [4 * 48 + 6, 9 * 48 + 6], doorX: 8, wall: [{img:'furn_jarshelf_orthogonal',x:6.05,y:17,w:110}], rug: { x: 5.4, y: 3.2, w: 200 },
           furn: [
             { img: 'furn_table_orthogonal', x: 7, y: 4, w: 2, h: 2, dw: 118, say: '大きな食卓。皿が並んでいる。どれも温かい湯気をのぼらせている。' },
             { img: 'furn_chair_orthogonal', x: 6, y: 4, w: 1, h: 1, dw: 35 }, { img: 'furn_chair_orthogonal', x: 6, y: 5, w: 1, h: 1, dw: 35 },
             { img: 'furn_chair_orthogonal', x: 9, y: 4, w: 1, h: 1, dw: 35 },
             { img: 'furn_chair_orthogonal', x: 9, y: 5, w: 1, h: 1, dw: 35, say: '空席。皿は置かれたまま、誰も座らない。それでいい。' },
             { img: 'furn_chair_orthogonal', x: 7, y: 3, w: 1, h: 1, dw: 35 }, { img: 'furn_chair_orthogonal', x: 8, y: 3, w: 1, h: 1, dw: 35, say: '新しい人の席。新しい皿が置いてある。' },
-            { img: 'furn_stove', x: 13, y: 2, w: 1, h: 2, dw: 66, say: '鍋が煮えている。ガルドの味に近づけようとした跡がある。' },
+            { img: 'furn_stove', x: 10, y: 2, w: 1, h: 2, dw: 66, say: '鍋が煮えている。ガルドの味に近づけようとした跡がある。' },
             { img: 'furn_bookshelf_orthogonal', x: 2, y: 2, w: 2, h: 1, dw: 100, say: '修理記録の束。最初の一冊は、日付が妹の命日になっている。' },
-            { img: 'furn_flowerpot', x: 11, y: 2, w: 1, h: 1, dw: 32 }, { img: 'furn_barrel', x: 2, y: 7, w: 1, h: 1, dw: 46 }, { img: 'furn_crate', x: 13, y: 7, w: 1, h: 1, dw: 52 }]
+            { img: 'furn_chest', x: 2, y: 5, w: 1, h: 1, dw: 44, say: '器や食卓の布がしまってある。' },
+            { img: 'furn_flowerpot', x: 1, y: 4, w: 1, h: 1, dw: 32 }, { img: 'furn_barrel', x: 2, y: 7, w: 1, h: 1, dw: 46 }, { img: 'furn_crate', x: 10, y: 7, w: 1, h: 1, dw: 52 }]
         }
       }
     },
@@ -50,7 +51,7 @@
       { map: 'C16_VILLAGE', at: [1, 13], to: 'C15_ROAD', to_at: 'C15_ROAD@east_in', dir: 'left' },
       { map: 'C16_VILLAGE', at: [1, 14], to: 'C15_ROAD', to_at: 'C15_ROAD@east_in', dir: 'left' },
       { map: 'C16_VILLAGE', at: [14, 9], to: 'C16_TABLE', to_at: 'C16_TABLE@start', dir: 'up' },
-      { map: 'C16_TABLE', at: [8, 10], to: 'C16_VILLAGE', to_at: 'C16_VILLAGE@table_door', dir: 'down' }
+      { map: 'C16_TABLE', at: [8, 9], to: 'C16_VILLAGE', to_at: 'C16_VILLAGE@table_door', dir: 'down' }
     ],
     assets: [
       { ...A('prop.new_furnace', 'prop', '192x288・透明。村に新しくともった分散型の炉(小さな塔と大きなランタン、点灯/揺らぎの差分)。村の目印として V の炉より少し小ぶり', 'furn_lantern', '高', '第16章 furnace(20,16)。通常画像を接続、揺らぎ差分は未制作'), status: '調整中' },

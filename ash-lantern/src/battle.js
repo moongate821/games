@@ -61,7 +61,7 @@ async function runBattle(enemyIds) {
   const snap = snapshot();
   while (true) {
     const res = await battleOnce(enemyIds);
-    if (res === 'win') return res;
+    if (res === 'win') { const reward = battleGold(enemyIds); S.gold = Math.min(999999, (S.gold || 0) + reward); toast(`戦利金 ${reward} G を手に入れた`); return res; }
     const n = partyForBattle().length;
     const c = await choose(['戦闘の前からやり直す', 'タイトルへ戻る'], n > 1 ? 'みんなは倒れてしまった……' : 'アレンは倒れてしまった……');
     if (c === 1) { location.reload(); await new Promise(() => { }); }
