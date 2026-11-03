@@ -134,7 +134,7 @@ function buildOutdoorStatics(id) {   // 灯守村(V)・川霧の町(K)。配置�
       const i = im(); if (!i) return; const dw = art && IMG[art] && artWidth ? artWidth : 6 * T;
       // 専用画像の寸法は代替画像と異なる。代替画像専用の切り出しは流用しない。
       const crop = art && IMG[art] ? [0, 0, i.width, i.height] : img === 'bld_workshop_front' ? [60, 32, 1257, 1034] : img === 'bld_hall_front' ? [22, 28, 1339, 1059] : [0, 0, i.width, i.height];
-      const dh = crop[3] * dw / crop[2], dx = x * T + (6 * T - dw) / 2 + (img === 'bld_workshop_front' && !flip ? 15 : 0);
+      const dh = crop[3] * dw / crop[2], dx = x * T + (6 * T - dw) / 2 + (img === 'bld_workshop_front' && !flip && !(art && IMG[art]) ? 15 : 0);
       c.save(); if (flip) { c.translate(dx * 2 + dw, 0); c.scale(-1, 1); }
       c.drawImage(i, ...crop, dx, (y + 1) * T - dh, dw, dh); c.restore();
     } });
@@ -236,10 +236,13 @@ function buildWorkshopStatics(id) {
       const key = (o.art && IMG[o.art]) ? o.art : img, i = IMG[key]; if (!i) return;
       const crops = { furn_table_orthogonal: [158, 184, 1173, 734], furn_bed_orthogonal: [143, 93, 859, 1190], furn_bench_orthogonal: [13, 25, 1369, 1075], furn_chair_orthogonal: [108, 97, 783, 1374], furn_bookshelf_orthogonal: [108, 31, 989, 1255] };
       const crop = (key === img && crops[img]) || [0, 0, i.width, i.height];
-      const h = crop[3] * dw / crop[2], cx = (fx + fw / 2) * T + (o.ox || 0), by = (fy + fh) * T - 2;
+      const cx = (fx + fw / 2) * T + (o.ox || 0), by = (fy + fh) * T - 2;
+      const topMargin = key === 'prop_voice_furnace' ? T : 8;
+      const width = key !== img ? Math.min(dw, Math.max(1, by - topMargin) * crop[2] / crop[3]) : dw;
+      const h = crop[3] * width / crop[2];
       c.save();
       if (o.flip) { c.translate(cx * 2, 0); c.scale(-1, 1); }
-      c.drawImage(i, ...crop, cx - dw / 2, by - h, dw, h);
+      c.drawImage(i, ...crop, cx - width / 2, by - h, width, h);
       c.restore();
       if (o.after) o.after(c, cx, by - h);
     } });
@@ -249,6 +252,17 @@ function buildWorkshopStatics(id) {
   if (WL.rug) add({ y: -90, draw(c) { const i = IMG.furn_rug_orthogonal; if (i) c.drawImage(i, 121, 110, 1293, 795, WL.rug.x * T, WL.rug.y * T, WL.rug.w, 795 * WL.rug.w / 1293); } });
   add({ y: -80, draw(c) { for (const w of (WL.wall || [])) { const i = IMG[w.img]; if (i) { const crop = w.img === 'furn_toolrack_orthogonal' ? [6, 21, 1525, 974] : w.img === 'furn_jarshelf_orthogonal' ? [165, 49, 1822, 611] : [0, 0, i.width, i.height]; c.drawImage(i, ...crop, w.x * T, w.y, w.w, crop[3] * w.w / crop[2]); } } } });
   for (const f of (WL.furn || [])) furn(f.img, f.x, f.y, f.w, f.h, f.dw, { flip: f.flip, dy: f.dy, art: f.art, after: f.overlay ? OVERLAYS[f.overlay] : null });
+  // Chapter decorations can also be placed indoors (the shared asset map uses decor).
+  for (const d of (WL.decor || [])) {
+    if (!(d.art && IMG[d.art])) continue;
+    add({ y: (d.y + 1) * T, draw(c) {
+      const im = IMG[d.art]; if (!im || (d.visible && !d.visible())) return;
+      const dw = d.aw || 96, dh = im.height * dw / im.width, px = d.x * T + T / 2;
+      c.save(); if (d.flip) { c.translate(px * 2, 0); c.scale(-1, 1); }
+      c.drawImage(im, px - dw / 2, (d.y + 1) * T - dh, dw, dh); c.restore();
+    } });
+    if (!d.noblock) { const bw = d.blockW || 1; block(d.x - Math.floor(bw / 2), d.y, bw, 1); }
+  }
   if (id === 'W') warps.push({ x: 6, y: 9, to: 'V', tx: 12, ty: 10, dir: 'down', cond: () => true, pre: async () => { if (S.st === 'start') { await narrate('(机の鈴を見てから行こう)'); return false; } return true; } });
   for (const f of (WL.furn || [])) { if (f.act && ACTS[f.act]) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: ACTS[f.act] }); else if (f.say) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: say1(f.say) }); else if (f.story) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => play(STORY[f.story]) }); }
 }
@@ -619,9 +633,12 @@ async function sceneReturn() { // E08
 /* ================= 戦闘は src/battle.js ================= */
 
 /* ================= メニュー・タイトル・セーブ ================= */
-function savedData() {
+const SAVE_SLOTS = 3;
+// Slot 1 keeps the original key so existing saves work without migration.
+function saveSlotKey(slot = 1) { return slot === 1 ? SAVE_KEY : SAVE_KEY + '_' + slot; }
+function savedData(slot = 1) {
   try {
-    const t = localStorage.getItem(SAVE_KEY); if (!t) return null;
+    const t = localStorage.getItem(saveSlotKey(slot)); if (!t) return null;
     const o = JSON.parse(t);
     if (!o || o.v !== SAVE_VERSION || !STAGES.includes(o.st) || !MAPS[o.map]) return null;
     const tiles = MAPS[o.map].tiles;
@@ -630,6 +647,24 @@ function savedData() {
     for (const k of ['flags', 'items', 'gear', 'equip']) if (o[k] != null && (typeof o[k] !== 'object' || Array.isArray(o[k]))) return null;
     return o;
   } catch (e) { return null; }
+}
+function anySavedData() { return [1, 2, 3].some(slot => !!savedData(slot)); }
+function saveSlotText(slot) {
+  let raw = null; try { raw = localStorage.getItem(saveSlotKey(slot)); } catch (e) { return `セーブ ${slot}　保存を利用できません`; }
+  if (raw === null) return `セーブ ${slot}　― 空き ―`;
+  const data = savedData(slot); if (!data) return `セーブ ${slot}　読み取れません`;
+  const mapName = MAPS[data.map].name || data.map;
+  const date = data.savedAt && !Number.isNaN(Date.parse(data.savedAt)) ? new Date(data.savedAt).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '以前の記録';
+  return `セーブ ${slot}　${mapName}　${date}`;
+}
+async function chooseSaveSlot(prompt, loading = false) {
+  while (true) {
+    const selection = await choose([1, 2, 3].map(saveSlotText), prompt, { cancel: true });
+    if (selection < 0) return null;
+    const slot = selection + 1;
+    if (!loading || savedData(slot)) return slot;
+    await narrate('このセーブは空か、読み取れません。');
+  }
 }
 // 追加前に該当イベントを終えたセーブだけに、受け取れなかった補給を届ける。
 // ステージはイベント終了後の最初の保存可能地点。取得済みフラグは通常の物語と共有する。
@@ -666,23 +701,26 @@ function restoreMissedSupplies(state) {
 }
 async function doSave() {
   if (G.P.moving) return false;
-  let previous = null; try { previous = localStorage.getItem(SAVE_KEY); } catch (e) { /* setItem の失敗時に案内する */ }
+  const slot = await chooseSaveSlot('セーブ先を選んでください');
+  if (slot === null) return false;
+  const key = saveSlotKey(slot);
+  let previous = null; try { previous = localStorage.getItem(key); } catch (e) { /* setItem の失敗時に案内する */ }
   if (previous !== null) {
-    const valid = !!savedData();
-    const c = await choose(['上書きする', 'やめる'], valid ? '既にセーブデータがあります。' : '読み取れないセーブがあります。上書きしますか？');
+    const valid = !!savedData(slot);
+    const c = await choose(['上書きする', 'やめる'], valid ? `セーブ ${slot} を上書きしますか？` : `セーブ ${slot} は読み取れません。上書きしますか？`, { cancel: true });
     if (c !== 0) return false;
   }
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, st: S.st, flags: S.flags, items: S.items, hp: S.hp, mhp: S.mhp, lv: S.lv || 0, allies: S.allies || [], gear: S.gear || {}, equip: S.equip || {}, map: map.id, x: Math.round(G.P.x), y: Math.round(G.P.y), dir: G.P.dir, tint: G.tint }));
-    await narrate('セーブしました。');
+    localStorage.setItem(key, JSON.stringify({ v: SAVE_VERSION, st: S.st, flags: S.flags, items: S.items, hp: S.hp, mhp: S.mhp, lv: S.lv || 0, allies: S.allies || [], gear: S.gear || {}, equip: S.equip || {}, map: map.id, x: Math.round(G.P.x), y: Math.round(G.P.y), dir: G.P.dir, tint: G.tint, savedAt: new Date().toISOString() }));
+    await narrate(`セーブ ${slot} に保存しました。`);
     return true;
   } catch (e) { await narrate('セーブに失敗しました。(ブラウザの保存が使えません)'); return false; }
 }
-async function startGame(load) {
+async function startGame(load, slot = 1) {
   S = newState();
   G.mode = 'field'; G.busy = true; G.tint = 0;
   if (load) {
-    const o = savedData();
+    const o = savedData(slot);
     if (o) { Object.assign(S, { st: o.st, flags: o.flags || {}, items: Object.assign({ potion: 0, kit: 0, bread: 0, ether: 0 }, o.items), hp: o.hp, mhp: o.mhp, lv: o.lv || 0, allies: o.allies || [], gear: o.gear || {}, equip: o.equip || {} }); const restored = restoreMissedSupplies(S); G.tint = o.tint || 0; enterMap(o.map, o.x, o.y, o.dir); setStage(S.st);
       if (!Number.isFinite(S.hp) || !Number.isFinite(S.mhp) || S.mhp <= 0) { S.mhp = 50; S.hp = Math.max(1, Math.min(S.hp || 1, 50)); }
       if (isSolidTile(Math.round(G.P.x), Math.round(G.P.y))) { const st = (MAPS[o.map].points || {}).start || [2, 2]; G.P.x = G.P.px = G.P.tx = st[0]; G.P.y = G.P.py = G.P.ty = st[1]; } G.fade = 1; G.fadeTo = 0; G.busy = false; if (restored) toast('以前の冒険で受け取れなかった装備・道具を持ち物に追加しました。'); return; }
@@ -1093,15 +1131,20 @@ function bar(x, y, w, h, v, mv, col) {
   ctx.restore();
 }
 /* タイトル */
-function titleItems() { const it = ['はじめから']; if (savedData()) it.push('つづきから'); it.push('操作説明'); return it; }
+function titleItems() { const it = ['はじめから']; if (anySavedData()) it.push('つづきから'); it.push('操作説明'); return it; }
 async function titleSelect(item) {
   if (G.busy) return;
   G.busy = true;
   if (item === '操作説明') { await narrate('移動: 矢印キー / WASD / ゲームパッド / 画面の十字ボタン\n決定・調べる: Z・Enter・スペース\nメニュー・キャンセル: X・Esc\n進行はメニューの「セーブ」で保存できます。'); G.busy = false; return; }
-  if (item === 'はじめから' && savedData()) { const c = await choose(['はじめから(保存データは残る)', 'やめる'], '最初から始めますか？'); if (c !== 0) { G.busy = false; return; } }
+  if (item === 'はじめから' && anySavedData()) { const c = await choose(['はじめから(保存データは残る)', 'やめる'], '最初から始めますか？'); if (c !== 0) { G.busy = false; return; } }
+  let slot = 1;
+  if (item === 'つづきから') {
+    slot = await chooseSaveSlot('読み込むセーブを選んでください', true);
+    if (slot === null) { G.busy = false; return; }
+  }
   await fade(1, 0.05);
   G.busy = false;
-  await startGame(item === 'つづきから');
+  await startGame(item === 'つづきから', slot);
   if (item === 'つづきから') { await fade(0, 0.05); }
 }
 function drawTitle() {

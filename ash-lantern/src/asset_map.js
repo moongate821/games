@@ -71,6 +71,12 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   place('prop.ship_wheel', 'C10_SHIP', [24, 8]); place('prop.lullaby_device', 'C11_DEVICE', 'core'); place('prop.ash_cave_mouth', 'C12_SEA', 'gate');
   place('prop.crown_core', 'C13_CORE', 'crown'); place('prop.vision_mist', 'C13_CORE', 'vision1'); place('prop.vision_mist', 'C13_CORE', 'vision2'); place('prop.vision_mist', 'C13_CORE', 'vision3');
   place('prop.wayside_bench', 'C15_ROAD', 'rest');
+  // 幻は各人物が向き合った後に消え、章を越えて残り続けない。
+  for (const [point, flag] of [['vision1','c13_v1'], ['vision2','c13_v2'], ['vision3','c13_v3']]) {
+    const pos = MAPS.C13_CORE.points[point];
+    const d = (LAYOUT.C13_CORE.decor || []).find(x => x.art === key('prop.vision_mist') && x.x === pos[0] && x.y === pos[1]);
+    if (d) d.visible = () => atLeast('c13_start') && !atLeast('c13_crown') && !S.flags[flag];
+  }
 
   /* ---- 人物(台帳の名前の img に差し替え、今の絵は fallback に回す) ---- */
   const npc = (id, ids) => { const k = key(id); if (!k) return; const hit = []; for (const a of CHREG.actors) if (ids.includes(a.id)) { a.fallback = a.fallback || a.img; a.img = k; hit.push(a.map + ':' + a.id); } if (hit.length) use(id, '人物 ' + hit.join(', ')); };
@@ -78,12 +84,13 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   for (const a of CHREG.actors.filter(a => ['c3_foreman', 'c3_boatman', 'c3_cook'].includes(a.id))) a.fieldWidth = 56;
   for (const a of CHREG.actors.filter(a => a.id === 'c5_miners')) a.fieldWidth = 56;
   npc('npc.auto_keeper', ['c10_auto']); npc('npc.deck_crew', ['c12_crew']);
+  for (const a of CHREG.actors.filter(a => ['c9_keeper', 'c10_auto'].includes(a.id))) a.fieldWidth = a.id === 'c10_auto' ? 44 : 50;
 
   /* ---- 戦闘の表示(battle.js)。画像が置かれていれば自動で使われる ---- */
   const code = (id, where) => { if (ent(id)) use(id, where); };
   code('prop.salt_scrub', '第2章: 塩の街道の砂地に岩と草を配置');
-  code('ui.target_arrow', '戦闘: 対象選択中、選んでいる相手の頭上(無ければ金色の三角)'); code('ui.boss_frame', '戦闘: ボス戦の画面上部のHPバーの枠'); code('ui.boss_nameplate', '戦闘: ボス戦の開始から約2秒、名札');
-  code('ui.cmd_icons', '戦闘: コマンドメニューの左(攻撃/技/防御/道具)'); code('ui.mp_gauge', '戦闘: 味方のMPバーの枠');
+  code('ui.target_arrow', '戦闘: 対象選択中、選んでいる相手の頭上(無ければ金色の三角)');
+  for (const id of ['ui.boss_frame', 'ui.boss_nameplate', 'ui.cmd_icons', 'ui.mp_gauge']) pend(id, '戦闘画面再設計後は画像を参照せず、ゲーム内描画の枠・アイコン・ゲージを使用');
   code('fx.hit', '戦闘: 通常攻撃が当たったとき'); code('fx.light', '戦闘: 「ひかり」系の技'); code('fx.heal', '戦闘: 回復技・回復薬'); code('fx.rain', '戦闘: 全体技(あめのうた系)');
   code('fx.guard', '戦闘: 防御'); code('fx.enemy_strong', '戦闘: 敵の強攻撃'); code('fx.limit_teaching', '戦闘: ガルドの教え'); code('fx.boss_appear', '戦闘: ボス戦の最初の約0.7秒'); code('fx.ash_burst', '戦闘: 灰の冠の強攻撃');
   for (const c of ['mira', 'gardo', 'noah', 'serena']) code(`battle.${c}_cast`, `戦闘: ${c} が技を使うとき(技のポーズ)`);

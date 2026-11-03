@@ -133,11 +133,35 @@ function battleFx(B, name, c) {
     (B.fx = B.fx || []).push({ kind: name, x: p.x, y: p.y - (c.side === 'enemy' ? 90 : 60), t0: G.t, duration: 38 });
     return;
   }
-  const im = IMG['fx_' + name]; if (!im) return;
+  const im = IMG['fx_' + name];
+  if (!im) {
+    const p = posOf(B, c);
+    (B.fx = B.fx || []).push({ kind: 'minor_' + name, x: p.x, y: p.y - (c.side === 'enemy' ? 90 : 60), t0: G.t, duration: 34 });
+    return;
+  }
   const cell = im.height, n = Math.max(1, Math.round(im.width / cell)), p = posOf(B, c);
   (B.fx = B.fx || []).push({ im, n, cell, x: p.x, y: p.y - (c.side === 'enemy' ? 90 : 60), t0: G.t, fps: 14 });
 }
 function skillFxName(sk, id) { return SKILL_FX[id] || (sk.kind === 'heal' ? 'heal' : sk.target === 'allEnemies' ? 'rain' : 'light'); }
+// Built-in animated fallback effects keep ordinary actions visible even before image sheets are finished.
+function drawMinorFx(f) {
+  const t = Math.max(0, Math.min(1, (G.t - f.t0) / f.duration)), a = Math.sin(Math.PI * t);
+  const name = f.kind.slice(6); ctx.save(); ctx.translate(f.x, f.y); ctx.globalAlpha = .85 * a;
+  if (name === 'hit' || name === 'enemy_strong' || name === 'ash_burst') {
+    ctx.strokeStyle = name === 'hit' ? '#ffdf91' : '#ff8071'; ctx.lineWidth = 4 + 3 * (1 - t);
+    for (let i = 0; i < 8; i++) { const angle = i * Math.PI / 4 + t * .4, inner = 10 + 10 * t, outer = 25 + 48 * t; ctx.beginPath(); ctx.moveTo(Math.cos(angle)*inner, Math.sin(angle)*inner); ctx.lineTo(Math.cos(angle)*outer, Math.sin(angle)*outer); ctx.stroke(); }
+  } else if (name === 'heal' || name === 'light') {
+    const color = name === 'heal' ? '#a9ffbf' : '#ffe3a2'; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(0, 28, 18 + 27*t, 7 + 8*t, 0, 0, Math.PI*2); ctx.stroke();
+    for (let i = 0; i < 7; i++) { const x = Math.sin(i*2.4)*35, y = 30 - ((t*100 + i*21)%100); ctx.beginPath(); ctx.arc(x, y, 2 + 2*a, 0, Math.PI*2); ctx.fill(); }
+  } else if (name === 'rain') {
+    ctx.strokeStyle = '#a9ddff'; ctx.lineWidth = 3;
+    for (let i = 0; i < 9; i++) { const x = (i-4)*12, y = -65 + ((t*110 + i*29)%100); ctx.beginPath(); ctx.moveTo(x+4,y-10);ctx.lineTo(x-3,y+10);ctx.stroke(); }
+  } else if (name === 'guard') {
+    ctx.strokeStyle = '#a8ddff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0,-50);ctx.lineTo(38,-35);ctx.lineTo(34,5);ctx.quadraticCurveTo(20,35,0,42);ctx.quadraticCurveTo(-20,35,-34,5);ctx.lineTo(-38,-35);ctx.closePath();ctx.stroke();
+  }
+  ctx.restore();
+}
 // The strongest learned magic and Gardo's teaching get readable effects even without image assets.
 function drawUltimateFx(f) {
   const t = Math.max(0, Math.min(1, (G.t - f.t0) / f.duration));
@@ -375,7 +399,7 @@ function drawBattle() {
   // 演出(fx)
   B.fx = (B.fx || []).filter(f => f.kind ? G.t - f.t0 < f.duration : (G.t - f.t0) * f.fps / 60 < f.n);
   for (const f of B.fx) {
-    if (f.kind) { drawUltimateFx(f); continue; }
+    if (f.kind) { if (f.kind.startsWith('minor_')) drawMinorFx(f); else drawUltimateFx(f); continue; }
     const fr = Math.floor((G.t - f.t0) * f.fps / 60);
     ctx.drawImage(f.im, fr * f.cell, 0, f.cell, f.cell, f.x - f.cell / 2, f.y - f.cell / 2, f.cell, f.cell);
   }
