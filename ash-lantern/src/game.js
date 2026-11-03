@@ -620,7 +620,16 @@ async function sceneReturn() { // E08
 
 /* ================= メニュー・タイトル・セーブ ================= */
 function savedData() {
-  try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const o = JSON.parse(t); if (o.v !== SAVE_VERSION || !STAGES.includes(o.st) || !MAPS[o.map]) return null; return o; } catch (e) { return null; }
+  try {
+    const t = localStorage.getItem(SAVE_KEY); if (!t) return null;
+    const o = JSON.parse(t);
+    if (!o || o.v !== SAVE_VERSION || !STAGES.includes(o.st) || !MAPS[o.map]) return null;
+    const tiles = MAPS[o.map].tiles;
+    if (!Number.isInteger(o.x) || !Number.isInteger(o.y) || o.y < 0 || o.y >= tiles.length || o.x < 0 || o.x >= tiles[o.y].length) return null;
+    if (o.allies != null && (!Array.isArray(o.allies) || o.allies.some(a => !a || !ALLIES[a.id]))) return null;
+    for (const k of ['flags', 'items', 'gear', 'equip']) if (o[k] != null && (typeof o[k] !== 'object' || Array.isArray(o[k]))) return null;
+    return o;
+  } catch (e) { return null; }
 }
 // 追加前に該当イベントを終えたセーブだけに、受け取れなかった補給を届ける。
 // ステージはイベント終了後の最初の保存可能地点。取得済みフラグは通常の物語と共有する。
@@ -657,7 +666,12 @@ function restoreMissedSupplies(state) {
 }
 async function doSave() {
   if (G.P.moving) return false;
-  if (savedData()) { const c = await choose(['上書きする', 'やめる'], '既にセーブデータがあります。'); if (c !== 0) return false; }
+  let previous = null; try { previous = localStorage.getItem(SAVE_KEY); } catch (e) { /* setItem の失敗時に案内する */ }
+  if (previous !== null) {
+    const valid = !!savedData();
+    const c = await choose(['上書きする', 'やめる'], valid ? '既にセーブデータがあります。' : '読み取れないセーブがあります。上書きしますか？');
+    if (c !== 0) return false;
+  }
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, st: S.st, flags: S.flags, items: S.items, hp: S.hp, mhp: S.mhp, lv: S.lv || 0, allies: S.allies || [], gear: S.gear || {}, equip: S.equip || {}, map: map.id, x: Math.round(G.P.x), y: Math.round(G.P.y), dir: G.P.dir, tint: G.tint }));
     await narrate('セーブしました。');
