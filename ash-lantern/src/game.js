@@ -265,11 +265,12 @@ function buildWorkshopStatics(id) {
     if (!d.noblock) { const bw = d.blockW || 1; block(d.x - Math.floor(bw / 2), d.y, bw, 1); }
   }
   if (id === 'W') warps.push({ x: 6, y: 9, to: 'V', tx: 12, ty: 10, dir: 'down', cond: () => true, pre: async () => { if (S.st === 'start') { await narrate('(机の鈴を見てから行こう)'); return false; } return true; } });
-  for (const f of (WL.furn || [])) { if (f.shop) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => openShop(f.shop) }); else if (f.act && ACTS[f.act]) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: ACTS[f.act] }); else if (f.say) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: say1(f.say) }); else if (f.story) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => play(STORY[f.story]) }); }
+  for (const f of (WL.furn || [])) { if (f.shop) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, optional: true, fn: () => openShop(f.shop) }); else if (f.act && ACTS[f.act]) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: ACTS[f.act] }); else if (f.say) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: say1(f.say) }); else if (f.story) inters.push({ x: f.x, y: f.y, w: f.w, h: f.h, fn: () => play(STORY[f.story]) }); }
 }
 
 const say1 = s => async () => { await narrate(s); };
 const ACTS = {  // 家具を調べたときの動作(layout.js の act)
+  inn_rest: () => restAtInn(),
   bell: () => sceneBell(), kit: () => sceneKit(),
   bed: say1('寝台。妹が使っていた頃のまま、毛布だけが畳んである。'),
   stove: say1('鉄のストーブに、小さな火が燃えている。今日の仕事は、ランタンの修理だ。'),
@@ -410,6 +411,7 @@ async function runScene(fn) {
     G.fade = G.fadeTo = 0;
   }
   G.cg = G.pic = null;   // 台本の終わりで一枚絵・挿絵を必ず消す
+  if (map && S) syncRegistryActors();
   G.busy = false;
 }
 
@@ -901,7 +903,7 @@ function drawTiles(cx, cy) {
       const rr = g === 'W' ? 30 : R; cr = [du && dl ? rr : 0, du && dr ? rr : 0, dd && dr ? rr : 0, dd && dl ? rr : 0];
     }
     const round = cr.some(v => v);
-    if (round) { const gi = IMG[map.id === 'C2_ROAD' ? 'tile_sand' : 'tile_grass']; if (gi) ctx.drawImage(gi, (x % 4) * T, (y % 4) * T, T, T, px, py, T, T); }
+    if (round) { const gi = map.id === 'C12_SEA' ? tileImageFor(map, 'l') : IMG[map.id === 'C2_ROAD' || map.id === 'C9_GATE' ? 'tile_sand' : 'tile_grass']; if (gi) ctx.drawImage(gi, (x % 4) * T, (y % 4) * T, T, T, px, py, T, T); }
     if (round || sides.some(v => v)) { ctx.save(); roundedClip(ctx, px, py, cr[0], cr[1], cr[2], cr[3]); ctx.clip(); }
     if (im) ctx.drawImage(im, (x % 4) * T, (y % 4) * T, T, T, px, py, T, T);
     else { ctx.fillStyle = '#556'; ctx.fillRect(px, py, T, T); }
@@ -1044,6 +1046,7 @@ function drawActor(c, a, cx, cy) {
   let bob = 0; if (a.walk) bob = Math.abs(Math.sin(a.walk * 9)) * -3;
   c.save();
   if (a.img === 'enemy_wolf') { bob = Math.sin(G.t / 18) * 2; if (a.dir === 'right') { c.translate(px * 2, 0); c.scale(-1, 1); } }
+  if (a.img === 'npc_bandit' && a.dir === 'right') { c.translate(px * 2, 0); c.scale(-1, 1); }
   c.drawImage(im, px - dw / 2, py - dh + 4 + bob, dw, dh);
   c.restore();
 }
@@ -1119,15 +1122,19 @@ function drawChoice() {
   let w = 240; c.list.forEach(t => w = Math.max(w, ctx.measureText(t).width + 80));
   if (c.prompt) { ctx.font = '22px ' + FONT; w = Math.max(w, ctx.measureText(c.prompt).width + 50); }
   w = Math.min(W - 40, w);
-  const h = c.list.length * 46 + 28 + (c.prompt ? 48 : 0), x = W / 2 - w / 2, y = H / 2 - h / 2 - 20;
+  const visible = Math.min(c.list.length, c.desc ? 6 : 8);
+  const first = Math.max(0, Math.min(c.idx - visible + 1, c.list.length - visible));
+  const h = visible * 46 + 28 + (c.prompt ? 48 : 0), x = W / 2 - w / 2, y = H / 2 - h / 2 - 20;
   panel(x, y, w, h);
   let yy = y + 20;
   if (c.prompt) { ctx.font = '22px ' + FONT; ctx.fillStyle = '#ffe6a8'; ctx.textBaseline = 'top'; ctx.fillText(c.prompt, x + 25, yy, w - 50); yy += 48; }
   ctx.font = '25px ' + FONT; ctx.textBaseline = 'middle';
-  c.list.forEach((t, i) => {
-    if (i === c.idx) { const ry = yy + i * 46; const glow = ctx.createLinearGradient(x + 14, ry, x + w - 14, ry); glow.addColorStop(0, 'rgba(187,132,62,.48)'); glow.addColorStop(1, 'rgba(187,132,62,.12)'); ctx.fillStyle = glow; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.fill(); ctx.strokeStyle = 'rgba(246,210,139,.55)'; ctx.lineWidth = 1; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.stroke(); ctx.fillStyle = '#ffe6a8'; ctx.fillText('▶', x + 24, ry + 21); }
-    ctx.fillStyle = i === c.idx ? '#fff' : '#cfc6b0'; const icon = c.icons && IMG[c.icons[i]]; if (icon) ctx.drawImage(icon, x + 53, yy + i * 46 + 4, 34, 34); ctx.fillText(t, x + (icon ? 94 : 56), yy + i * 46 + 21, w - (icon ? 114 : 76));
+  c.list.slice(first, first + visible).forEach((t, row) => {
+    const i = first + row;
+    if (i === c.idx) { const ry = yy + row * 46; const glow = ctx.createLinearGradient(x + 14, ry, x + w - 14, ry); glow.addColorStop(0, 'rgba(187,132,62,.48)'); glow.addColorStop(1, 'rgba(187,132,62,.12)'); ctx.fillStyle = glow; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.fill(); ctx.strokeStyle = 'rgba(246,210,139,.55)'; ctx.lineWidth = 1; roundRect(ctx, x + 14, ry, w - 28, 42, 5); ctx.stroke(); ctx.fillStyle = '#ffe6a8'; ctx.fillText('▶', x + 24, ry + 21); }
+    ctx.fillStyle = i === c.idx ? '#fff' : '#cfc6b0'; const icon = c.icons && IMG[c.icons[i]]; if (icon) ctx.drawImage(icon, x + 53, yy + row * 46 + 4, 34, 34); ctx.fillText(t, x + (icon ? 94 : 56), yy + row * 46 + 21, w - (icon ? 114 : 76));
   });
+  if (first > 0 || first + visible < c.list.length) { ctx.fillStyle = '#e8d9b6'; ctx.font = '16px ' + FONT; ctx.textBaseline = 'middle'; ctx.fillText((first > 0 ? '↑' : '') + (first + visible < c.list.length ? '↓' : ''), x + w - 34, y + h - 14); }
   if (c.desc) { const d = c.desc(c.idx); if (d) { panel(30, H - 96, W - 60, 70); ctx.font = '22px ' + FONT; ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(d, 56, H - 61, W - 112); } }
 }
 function bar(x, y, w, h, v, mv, col) {

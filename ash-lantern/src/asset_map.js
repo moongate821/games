@@ -69,6 +69,7 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   if (harborBoat) harborBoat.waterOK = true;
   place('prop.hatch', 'C4_CASTLE', [15, 2]); place('prop.valve_wheel', 'C6_FURNACE', [11, 3]); place('prop.big_furnace_core', 'C6_FURNACE', 'boss');
   place('prop.ship_wheel', 'C10_SHIP', [24, 8]); place('prop.lullaby_device', 'C11_DEVICE', 'core'); place('prop.ash_cave_mouth', 'C12_SEA', 'gate');
+  for (const d of (LAYOUT.C12_SEA.decor || []).filter(d => d.art === key('prop.ash_cave_mouth'))) { d.aw = 192; d.y -= 2; } // 入口の背後へ置き、門番の獣を隠さない
   place('prop.crown_core', 'C13_CORE', 'crown'); place('prop.vision_mist', 'C13_CORE', 'vision1'); place('prop.vision_mist', 'C13_CORE', 'vision2'); place('prop.vision_mist', 'C13_CORE', 'vision3');
   place('prop.wayside_bench', 'C15_ROAD', 'rest');
   // 幻は各人物が向き合った後に消え、章を越えて残り続けない。
@@ -122,10 +123,12 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   show('ui.bell_glow', 'c14_furnace', has('鈴'), (op, d) => d >= 2, PIC);
   show('ui.voice_wave', 'c8_serena', 0, null, PIC);
   show('ui.lullaby_text', 'c4_king', has('子守歌'), (op, d) => d >= 2, PIC); show('ui.lullaby_text', 'c11_king', has('子守歌'), (op, d) => d >= 2, PIC);
-  show('item.gardo_pan', 'c7_mira', has('鍋'), (op, d) => d >= 2, PIC);
+  // ミラ・ノアのどちらに先に話しても、墓標の品が語られる場面で表示する。
+  show('item.gardo_pan', 'c7_mira', op => op[0] === 'n' && String(op[1]).includes('墓標には'), (op, d) => d >= 2, PIC);
+  show('item.gardo_pan', 'c7_noah', op => op[0] === 'n' && String(op[1]).includes('墓標には'), (op, d) => d >= 2, PIC);
 
   /* ---- 未接続のまま残る物(理由つき) ---- */
-  for (const id of ['ui.status_icons', 'fx.status_poison', 'fx.status_sleep']) pend(id, '状態異常のしくみが未実装(実装したときに接続)');
+  for (const id of ['ui.status_icons', 'fx.status_poison', 'fx.status_sleep']) pend(id, '毒・眠りは未実装。攻撃・防御低下は文字表示で、アイコン・専用演出は未接続');
   pend('ui.turn_order', '行動順の表示が未実装(提案の段階)');
   for (const id of ['prop.ship_mast', 'prop.floating_isle_edge', 'prop.small_lantern_core', 'prop.road_lantern_row', 'prop.dune_rock', 'npc.captain_dart', 'prop.wayside_bench', 'prop.hatch', 'prop.valve_wheel', 'prop.ship_wheel', 'prop.big_furnace_core', 'prop.lullaby_device', 'prop.ash_cave_mouth', 'prop.crown_core', 'prop.vision_mist'])
     pend(id, '配置する場所が決まっていない/名前付きの場所が無い(Codex と座標を決めてから接続)');

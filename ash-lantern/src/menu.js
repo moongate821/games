@@ -3,6 +3,13 @@
    ■ 道具は ITEMS、装備は GEAR に書き足す。装備の効果は攻撃(atk)・防御(def)・素早さ(spd)に足される。
    ■ 持ち物は S.items(道具の数)と S.gear(持っている装備の数)、付けている装備は S.equip[メンバーid]={w:武器,a:防具,c:装飾}。 */
 const ITEMS = {
+  weakening_powder: { name:'鈍刃の粉', desc:'戦闘中、敵1体の攻撃力を次の3行動の間25%下げる。', weaken:3 },
+  armorbreak_powder: { name:'砕甲の粉', desc:'敵1体の防御力を次の3行動の間25%下げる。通常攻撃に有効。', armorbreak:3 },
+  scroll_cataclysm: { name:'星墜の極大巻物', desc:'戦闘中、敵全体に90ダメージ。使うとなくなる。', damage:90, allEnemies:true, ultimate:true },
+  scroll_fire: { name:'火球の巻物', desc:'戦闘中、敵1体に28ダメージ。使うとなくなる。', damage:28 },
+  scroll_gale: { name:'旋風の巻物', desc:'戦闘中、敵全体に14ダメージ。使うとなくなる。', damage:14, allEnemies:true },
+  scroll_heal: { name:'治癒の巻物', desc:'仲間1人のHPを45回復。使うとなくなる。', hp:45 },
+  revival_tonic: { name: '目覚めの薬', desc: '戦闘不能の仲間をHP25で立て直す。', revive: 25 },
   potion: { name: '回復薬', desc: 'HPを25回復する。', hp: 25 },
   bread: { name: '灯火祭のパン', desc: 'HPを15回復する。素朴な甘さがする。', hp: 15 },
   ether: { name: '魔力薬', desc: 'MPを8回復する。', mp: 8 },
@@ -39,6 +46,8 @@ function statsOf(id) { const d = ALLIES[id], b = gearBonus(id), lv = S.lv || 0; 
 function applyItem(itemId, m) {
   const it = ITEMS[itemId];
   if ((S.items[itemId] || 0) <= 0) return null;
+  if (it.revive) { if (m.hp > 0) return null; m.hp = Math.min(it.revive, m.mhp); S.items[itemId]--; return `${m.name}は目を覚ました。HPが${m.hp}回復した。`; }
+  if (m.hp <= 0) return null;
   if (it.hp) { if (m.hp >= m.mhp) return null; const h = Math.min(it.hp, m.mhp - m.hp); m.hp += h; S.items[itemId]--; return m.id === 'allen' ? `${it.name}を使った。HPが${h}回復した。` : `${m.name}に${it.name}を使った。HPが${h}回復した。`; }
   if (it.mp) { if (!m.mmp || m.mp >= m.mmp) return null; const h = Math.min(it.mp, m.mmp - m.mp); m.mp += h; S.items[itemId]--; return `${m.name}に${it.name}を使った。MPが${h}回復した。`; }
   return null;
@@ -51,12 +60,13 @@ async function itemMenu() {
     const k = await choose(ids.map(i => `${ITEMS[i].name} ×${S.items[i]}`), '道具(戻る: Xキー)', { cancel: true, desc: i => ITEMS[ids[i]].desc + (ITEMS[ids[i]].key ? '(大事な物)' : '') });
     if (k < 0) return;
     const id = ids[k], it = ITEMS[id];
+    if (it.damage || it.weaken || it.armorbreak) { await narrate(`${it.name}は戦闘中に使う道具だ。`); continue; }
     if (it.key) { await narrate(`${it.name}は、使うものではない。${it.desc}`); continue; }
     const ms = fieldMembers();
     let m = ms[0];
     if (ms.length > 1) { const t = await choose(ms.map(x => `${x.name}  HP ${x.hp}/${x.mhp}${x.mmp ? '  MP ' + x.mp + '/' + x.mmp : ''}`), `${it.name}をだれに使う？`, { cancel: true }); if (t < 0) continue; m = ms[t]; }
     const msg = applyItem(id, m);
-    await narrate(msg || (it.mp ? `${m.name}のMPは回復できない。` : `${m.name}のHPは満タンだ。`));
+    await narrate(msg || (it.revive ? `${m.name}には今使えない。` : m.hp <= 0 ? `${m.name}は倒れている。目覚めの薬が必要だ。` : it.mp ? `${m.name}のMPは回復できない。` : `${m.name}のHPは満タンだ。`));
   }
 }
 
@@ -82,6 +92,17 @@ async function equipMenu() {
     }
     if (ms.length === 1) return;
   }
+}
+
+// 宿での休息。戦闘不能も回復するが、物語で離脱した人物は戻さない。
+async function restAtInn() {
+  const price = 20;
+  const c = await choose(['休む（20 G）', 'やめる'], `宿で休みますか？　所持金 ${S.gold} G`, { cancel: true });
+  if (c !== 0) return;
+  if (S.gold < price) { await narrate('所持金が足りません。'); return; }
+  S.gold -= price;
+  for (const m of fieldMembers()) { m.hp = m.mhp; if (m.mmp) m.mp = m.mmp; }
+  Snd.sfx('heal'); await narrate(`ひと休みして、仲間のHPとMPが全回復した。所持金 ${S.gold} G。`);
 }
 
 function statusScreen() {

@@ -54,7 +54,7 @@ function partyForBattle() {   // アレンは S.hp/S.mhp、他の仲間は S.all
 }
 function syncParty(list) { S.hp = list[0].hp; (S.allies || []).forEach((m, i) => { const c = list[i + 1]; if (c) { m.hp = c.hp; m.mp = c.mp; } }); }
 function snapshot() { return JSON.stringify({ hp: S.hp, items: S.items, allies: S.allies || [] }); }
-const usableItems = () => Object.keys(ITEMS).filter(k => (ITEMS[k].hp || ITEMS[k].mp) && (S.items[k] || 0) > 0);
+const usableItems = () => Object.keys(ITEMS).filter(k => (ITEMS[k].hp || ITEMS[k].mp || ITEMS[k].revive || ITEMS[k].damage || ITEMS[k].weaken || ITEMS[k].armorbreak) && (S.items[k] || 0) > 0);
 
 async function runBattle(enemyIds) {
   enemyIds = enemyIds || ['ash_wolf'];
@@ -81,8 +81,8 @@ async function pickEnemy() {
   const k = await pickMenu([...es.map((e, i) => [i, `${e.name}  HP ${e.hp}`]), ['back', '戻る']], 'だれを狙う？', { targets: es });
   return k === 'back' ? null : es[k];
 }
-async function pickAlly() {
-  const as = alive(G.B.allies); if (as.length === 1) return as[0];
+async function pickAlly(downed = false) {
+  const as = downed ? G.B.allies.filter(a => a.hp <= 0) : alive(G.B.allies); if (as.length === 1) return as[0];
   const k = await pickMenu([...as.map((a, i) => [i, `${a.name}  HP ${a.hp}/${a.mhp}`]), ['back', '戻る']], 'だれに使う？', { targets: as });
   return k === 'back' ? null : as[k];
 }
@@ -114,8 +114,13 @@ async function askCommand(a, canBack) {   // canBack=前の味方のコマンド
       if (!us.length) { await bmsg(S.items.potion <= 0 && !ITEMS.bread.hp ? '回復薬がない！' : '使える道具がない！'); continue; }
       let item = us[0];
       if (us.length > 1) { const k = await pickMenu([...us.map(i => [i, `${ITEMS[i].name} ×${S.items[i]}`]), ['back', '戻る']], '何を使う？'); if (k === 'back') continue; item = k; }
-      const t = await pickAlly(); if (!t) continue;
       const it = ITEMS[item];
+      if (it.damage || it.weaken || it.armorbreak) {
+        const t = it.allEnemies ? null : await pickEnemy(); if (!it.allEnemies && !t) continue;
+        return { actor: a, kind: 'item', item, target: t };
+      }
+      if (it.revive && !G.B.allies.some(a => a.hp <= 0)) { await bmsg('倒れている仲間はいない。'); continue; }
+      const t = await pickAlly(!!it.revive); if (!t) continue;
       if (it.hp && t.hp >= t.mhp) { await bmsg(t === a && G.B.allies.length === 1 ? 'HPは満タンだ。' : `${t.name}のHPは満タンだ。`); continue; }
       if (it.mp && (!t.mmp || t.mp >= t.mmp)) { await bmsg(`${t.name}のMPは回復できない。`); continue; }
       return { actor: a, kind: 'item', item, target: t };
@@ -198,6 +203,28 @@ async function doAction(B, act) {
     if (act.kind === 'defend') { battleFx(B, 'guard', a); await bmsg(`${a.name}は身構えた。`); return; }
     if (act.kind === 'item') {
       const t = act.target, id = act.item || 'potion', it = ITEMS[id];
+      if (it.weaken || it.armorbreak) {
+        const enemy = t && t.hp > 0 ? t : alive(B.enemies)[0];
+        if ((S.items[id] || 0) <= 0 || !enemy) { await bmsg(`${it.name}は使えなかった。`); return; }
+        S.items[id]--; const attack = !!it.weaken, count = it.weaken || it.armorbreak;
+        if (attack) enemy.weakenActions = count; else enemy.armorbreakActions = count;
+        battleFx(B, 'light', enemy);
+        await bmsg(`${a.name}は${it.name}を使った！ ${enemy.name}の${attack ? '攻撃力' : '防御力'}が次の${count}行動の間下がった！`); return;
+      }
+      if (it.damage) {
+        const targets = it.allEnemies ? alive(B.enemies) : [t && t.hp > 0 ? t : alive(B.enemies)[0]].filter(Boolean);
+        if ((S.items[id] || 0) <= 0 || !targets.length) { await bmsg(`${it.name}は使えなかった。`); return; }
+        S.items[id]--; Snd.sfx('hit');
+        for (const enemy of targets) { enemy.hp = Math.max(0, enemy.hp - it.damage); enemy.flash = 14; pop(B, enemy, it.damage, '#9fd8ff'); battleFx(B, it.ultimate ? 'ultimate_magic' : it.allEnemies ? 'rain' : 'light', enemy); }
+        await bmsg(`${a.name}は${it.name}を使った！ ${targets.map(enemy => `${enemy.name}に${it.damage}`).join('、')}のダメージ！`); return;
+      }
+      if (it.revive) {
+        if ((S.items[id] || 0) <= 0 || t.hp > 0) { await bmsg(`${it.name}は使えなかった。`); return; }
+        S.items[id]--; t.hp = Math.min(it.revive, t.mhp); t.down = false; Snd.sfx('heal'); battleFx(B, 'heal', t); pop(B, t, '+' + t.hp, '#7df08a');
+        await bmsg(`${a.name}は${t.name}に${it.name}を使った。${t.name}は立ち上がった！`); return;
+      }
+      // コマンド選択後、行動順の間に対象が倒れることがある。
+      if (!t || t.hp <= 0) { await bmsg(`${it.name}は使えなかった。`); return; }
       const full = it.hp ? t.hp >= t.mhp : (!t.mmp || t.mp >= t.mmp);
       if ((S.items[id] || 0) <= 0 || full) { await bmsg(`${it.name}は使えなかった。`); return; }
       S.items[id]--; Snd.sfx('heal'); battleFx(B, 'heal', t);
@@ -208,7 +235,8 @@ async function doAction(B, act) {
     let targets, text;
     if (act.kind === 'attack') {
       let t = act.target.hp > 0 ? act.target : alive(B.enemies)[0]; if (!t) return;
-      const dmg = Math.max(1, a.atk - t.def);
+      const defense = t.armorbreakActions > 0 ? Math.floor(t.def * .75) : t.def;
+      const dmg = Math.max(1, a.atk - defense);
       a.lunge = 1; await sleep(8);
       Snd.sfx('hit'); t.hp = Math.max(0, t.hp - dmg); t.flash = 14; pop(B, t, dmg, '#fff'); battleFx(B, 'hit', t); a.lunge = 0;
       await bmsg(`${a.name}の攻撃！　${t.name}に${dmg}のダメージ！`);
@@ -233,10 +261,14 @@ async function doAction(B, act) {
   }
   // 敵の行動
   const k = a.pattern[a.step % a.pattern.length]; a.step++;
+  const weakened = (a.weakenActions || 0) > 0;
+  if (weakened) a.weakenActions--;
+  if (a.armorbreakActions > 0) a.armorbreakActions--;
   if (k === 'tele') { a.pose = true; await bmsg(`${a.name}は身構えている……！　次の攻撃に注意！`); return; }
   a.pose = false;
   const t = alive(B.allies)[Math.floor(Math.random() * alive(B.allies).length)];
-  let dmg = Math.max(1, (k === 'strong' ? Math.round(a.atk * 1.6) : a.atk) - t.def);
+  const attack = weakened ? Math.max(1, Math.floor(a.atk * .75)) : a.atk;
+  let dmg = Math.max(1, (k === 'strong' ? Math.round(attack * 1.6) : attack) - t.def);
   if (t.defending) dmg = Math.max(1, Math.ceil(dmg / 2));
   a.x = -1; await sleep(8); a.x = 0;
   t.hp = Math.max(0, t.hp - dmg); B.shk = 14; B.red = 10; t.flash = 10; Snd.sfx('hurt'); pop(B, t, dmg, '#ff8a8a');
@@ -352,6 +384,8 @@ function drawCombatantLabel(rect, unit, active) {
   ctx.textAlign = 'right'; ctx.font = '11px ' + FONT; ctx.fillStyle = '#fff4e2';
   ctx.fillText(`${Math.max(0, unit.hp)}/${unit.mhp}`, x + w - 7, y + 10, 39);
   battleGauge(x + 8, y + 18, w - 16, unit.hp, unit.mhp, enemy ? ['#ffac89', '#b64240'] : unit.hp <= unit.mhp * .25 ? ['#ffcf7e', '#c25444'] : ['#a5edb1', '#388b70']);
+  if (enemy && unit.weakenActions > 0) { ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + FONT; ctx.fillStyle = '#102c31'; ctx.fillRect(x + 5, y + h, 44, 14); ctx.fillStyle = '#a4f3df'; ctx.fillText(`攻↓ ${unit.weakenActions}`, x + 8, y + h + 7); }
+  if (enemy && unit.armorbreakActions > 0) { ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + FONT; ctx.fillStyle = '#302720'; ctx.fillRect(x + 52, y + h, 44, 14); ctx.fillStyle = '#ffe0a0'; ctx.fillText(`防↓ ${unit.armorbreakActions}`, x + 55, y + h + 7); }
   if (!enemy && unit.mmp > 0) {
     ctx.textAlign = 'left'; ctx.font = '10px ' + FONT; ctx.fillStyle = '#b6d6ff'; ctx.fillText('MP', x + 8, y + 33);
     battleGauge(x + 25, y + 29, w - 60, unit.mp, unit.mmp, ['#b1d9ff', '#4a75bd']);

@@ -17,11 +17,12 @@ Object.assign(GEAR, {
 });
 // 進行フラグは到達後も残る。希少品は後半まで販売しない。
 const SHOP_STOCK = {
-  item: [ ['potion',25], ['bread',15], ['ether',40], ['caravan_ration',45,'c2_start'], ['star_ether',120,'c8_start'], ['rare_elixir',300,'c12_start',true], ['dg_potion',130,'c5_start'], ['dg_ether',165,'c8_start'] ],
+  item: [ ['potion',25], ['bread',15], ['ether',40], ['revival_tonic',90], ['scroll_heal',65], ['weakening_powder',100,'c2_start'], ['armorbreak_powder',125,'c3_start'], ['scroll_fire',80,'c2_start'], ['scroll_gale',150,'c5_start'], ['caravan_ration',45,'c2_start'], ['star_ether',120,'c8_start'], ['rare_elixir',300,'c12_start',true], ['scroll_cataclysm',900,'c12_start',true], ['dg_potion',130,'c5_start'], ['dg_ether',165,'c8_start'] ],
   w: [ ['iron_sword',110], ['herb_staff',95], ['salt_knife',150,'c2_start'], ['moon_staff',300,'c8_start'], ['rare_dawn_blade',680,'c12_start',true], ['dg_thief_dagger',130,'c2_start'], ['dg_steel_sword',420,'c8_start'] ],
   a: [ ['work_coat',80], ['leather_vest',110], ['bell_charm',140], ['caravan_coat',150,'c2_start'], ['sand_goggles',260,'c8_start'], ['rare_lantern_coat',600,'c12_start',true], ['rare_promise_charm',540,'c12_start',true], ['dg_leather_armor',190,'c2_start'], ['dg_iron_armor',400,'c8_start'] ]
 };
-const SHOP_ICONS = { dg_potion:'dg_icon_3006', dg_ether:'dg_icon_3012', dg_thief_dagger:'dg_icon_1003', dg_steel_sword:'dg_icon_1052', dg_leather_armor:'dg_icon_1310', dg_iron_armor:'dg_icon_1311', potion:'shop_potion', bread:'shop_bread', ether:'shop_ether', caravan_ration:'shop_bread', star_ether:'shop_ether', rare_elixir:'shop_elixir', iron_sword:'shop_sword', herb_staff:'shop_staff', salt_knife:'shop_knife', moon_staff:'shop_staff', rare_dawn_blade:'shop_sword', work_coat:'shop_armor', leather_vest:'shop_armor', caravan_coat:'shop_coat', rare_lantern_coat:'shop_coat', bell_charm:'shop_charm', sand_goggles:'shop_charm', rare_promise_charm:'shop_charm' };
+const SHOP_ICONS = { scroll_fire:'dg_icon_3506', scroll_heal:'dg_icon_3512', scroll_gale:'dg_icon_3522', revival_tonic:'shop_elixir', dg_potion:'dg_icon_3006', dg_ether:'dg_icon_3012', dg_thief_dagger:'dg_icon_1003', dg_steel_sword:'dg_icon_1052', dg_leather_armor:'dg_icon_1310', dg_iron_armor:'dg_icon_1311', potion:'shop_potion', bread:'shop_bread', ether:'shop_ether', caravan_ration:'shop_bread', star_ether:'shop_ether', rare_elixir:'shop_elixir', iron_sword:'shop_sword', herb_staff:'shop_staff', salt_knife:'shop_knife', moon_staff:'shop_staff', rare_dawn_blade:'shop_sword', work_coat:'shop_armor', leather_vest:'shop_armor', caravan_coat:'shop_coat', rare_lantern_coat:'shop_coat', bell_charm:'shop_charm', sand_goggles:'shop_charm', rare_promise_charm:'shop_charm' };
+Object.assign(SHOP_ICONS, { weakening_powder:'shop_potion', armorbreak_powder:'shop_potion', scroll_cataclysm:'dg_icon_3522' }); // 既存の仮アイコン
 function shopInfo(id) { return Object.prototype.hasOwnProperty.call(ITEMS,id) ? ITEMS[id] : Object.prototype.hasOwnProperty.call(GEAR,id) ? GEAR[id] : null; }
 function shopIcon(id) { return SHOP_ICONS[id] || (GEAR[id] ? (GEAR[id].slot === 'w' ? 'shop_sword' : GEAR[id].slot === 'a' ? 'shop_armor' : 'shop_charm') : 'shop_potion'); }
 function shopPrice(id) {
@@ -41,7 +42,7 @@ function cleanShopStock(data) {
   }
   return out;
 }
-function shopTypeOf(id) { const d=shopInfo(id); return !d ? null : ITEMS[id] ? ((d.hp || d.mp) && !d.key ? 'item' : null) : d.slot === 'w' ? 'w' : (d.slot === 'a' || d.slot === 'c') ? 'a' : null; }
+function shopTypeOf(id) { const d=shopInfo(id); return !d ? null : ITEMS[id] ? ((d.hp || d.mp || d.revive || d.damage || d.weaken || d.armorbreak) && !d.key ? 'item' : null) : d.slot === 'w' ? 'w' : (d.slot === 'a' || d.slot === 'c') ? 'a' : null; }
 function shopCurrentStock(type) { return G.shop && G.shop.type === type && S.shopStock ? (S.shopStock[G.shop.store] || {}) : {}; }
 function shopInventory(type) {
   const base=SHOP_STOCK[type].filter(r => shopInfo(r[0]) && shopUnlocked(r));
@@ -55,7 +56,7 @@ function shopInventory(type) {
 }
 function shopSellables(type) {
   const source = type === 'item' ? ITEMS : GEAR, held = type === 'item' ? S.items : S.gear;
-  return Object.keys(source).filter(id => held[id] > 0 && !source[id].key && (type === 'item' ? !!(source[id].hp || source[id].mp) : type === 'w' ? source[id].slot === 'w' : source[id].slot === 'a' || source[id].slot === 'c'));
+  return Object.keys(source).filter(id => held[id] > 0 && !source[id].key && (type === 'item' ? !!(source[id].hp || source[id].mp || source[id].revive || source[id].damage || source[id].weaken || source[id].armorbreak) : type === 'w' ? source[id].slot === 'w' : source[id].slot === 'a' || source[id].slot === 'c'));
 }
 function shopBuy(id, price) {
   if (!shopInfo(id) || !Number.isSafeInteger(price) || price < 0 || S.gold < price) return false;
@@ -121,6 +122,7 @@ function drawShopChoice(c) {
     ctx.fillStyle = '#f4d694'; ctx.font = 'bold 20px ' + FONT; ctx.fillText('売っているもの', 36, 43);
     ctx.font = '18px ' + FONT;
     stock.slice(0, 7).forEach((r,i) => { const d=shopInfo(r[0]); const img=IMG[shopIcon(r[0])]; const y=75+i*32; if(img) ctx.drawImage(img,35,y-13,26,26); ctx.fillStyle=r[3]?'#ffe09a':'#f1e8da'; ctx.fillText((r[3]?'★ ':'')+d.name+(r[4]?' ×'+r[4]:''),68,y,190); ctx.textAlign='right';ctx.fillText(r[1]+' G',330,y);ctx.textAlign='left'; });
+    if (stock.length > 7) { ctx.fillStyle='#cfc6b0'; ctx.font='15px '+FONT; ctx.fillText(`ほか ${stock.length - 7} 件（買うから確認）`,36,304,290); }
     panel(18, 330, 330, 53); ctx.fillStyle='#f4d694';ctx.font='19px '+FONT;ctx.fillText('所持金',36,356);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.fillText(S.gold+' G',330,356);ctx.textAlign='left';
   }
   const x=browsing?24:690, y=browsing?28:225, w=browsing?405:240, h=48+c.list.length*42;

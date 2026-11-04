@@ -104,8 +104,15 @@ function applyRegistry(id) {
   }
 }
 function registryActors() {
-  for (const a of CHREG.actors) if (a.map === map.id && (!a.when || storyCond(a.when))) {
+  for (const a of CHREG.actors) if (a.map === map.id && !getActor(a.id) && (!a.when || storyCond(a.when))) {
     const [x, y] = resolveAt(a.at, map.id);
     addActor({ id: a.id, img: a.img, fallback: a.fallback, fallback2: a.fallback2, sheet: a.sheet, x, y, dir: a.dir || 'down', name: a.name, scale: a.scale ?? 1.0, fieldWidth: a.fieldWidth, solid: a.solid !== false, talk: a.story ? () => play(STORY[a.story]) : undefined });
   }
+}
+// 同じマップ内の会話で進行段階やフラグが変わった場合も、次の人物を出す。
+// 生存する人物の座標・向き・アニメーションは作り直さず保持する。
+function syncRegistryActors() {
+  const defs = CHREG.actors.filter(a => a.map === map.id);
+  for (const a of defs) if (getActor(a.id) && a.when && !storyCond(a.when)) removeActor(a.id);
+  registryActors();
 }

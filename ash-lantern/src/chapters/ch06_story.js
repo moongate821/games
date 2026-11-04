@@ -122,6 +122,6 @@ registerChapter({
   },
   assets: [
     { id: 'bg.furnace_collapse', kind: 'bg', file: 'img/bg_furnace_collapse.jpg', spec: '一枚絵・崩落後の機械室・暗い橙', status: '調整中', fallback: 'bg_battle', priority: '中', owner: 'Codex', note: '第6章 ガルドとの別れ。台詞と沈黙の場面に重ねたい' },
-    { id: 'item.gardo_letter', kind: 'item', file: 'img/item_gardo_letter.png', spec: '48px・折りたたんだ書きかけの手紙', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第6章〜第16章 ガルドの未完の手紙' }
+    { id: 'item.gardo_letter', kind: 'item', file: 'img/item_gardo_letter.png', spec: '48px・折りたたんだ書きかけの手紙', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第16章 ガルドの未完の手紙を挿絵に接続。表示位置を単独確認、台詞と通し演出は要確認。' }
   ]
 });

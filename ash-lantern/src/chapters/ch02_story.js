@@ -166,6 +166,6 @@ registerChapter({
   assets: [
     { id: 'npc.trader', kind: 'npc', file: 'img/npc_trader.png', spec: '立ち絵80px・中年の商人・旅装', status: '調整中', fallback: 'npc_carpenter', priority: '低', owner: 'Codex', note: '第2章 荷車の商人トーマ。静止画を接続、歩行差分は未制作' },
     { id: 'npc.refugee', kind: 'npc', file: 'img/npc_refugee.png', spec: '立ち絵80px・疲れた様子の避難民', status: '調整中', fallback: 'npc_kid', priority: '中', owner: 'Codex', note: '第2・6章に静止画を接続。歩行差分は未制作' },
-    { id: 'npc.bandit', kind: 'npc', file: 'img/npc_bandit.png', spec: '立ち絵80px・頭巾の盗賊の頭', status: '調整中', fallback: 'npc_guard', priority: '低', owner: 'Codex', note: '第2章 盗賊の頭' }
+    { id: 'npc.bandit', kind: 'npc', file: 'img/npc_bandit.png', spec: '立ち絵80px・頭巾の盗賊の頭', status: '調整中', fallback: 'npc_guard', priority: '低', owner: 'Codex', note: '第2章 盗賊の頭。戦闘絵を参照した頭巾なしの静止絵を接続・実画面確認。頭巾指定との整合と歩行差分は要確認。' }
   ]
 });

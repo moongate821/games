@@ -142,7 +142,7 @@ registerChapter({
     ],
   },
   assets: [
-    { id: 'item.gardo_pan', kind: 'item', file: 'img/item_gardo_pan.png', spec: '48px・使い込んだ鍋の取っ手(墓に供える)', status: '調整中', fallback: 'item_bell', priority: '低', owner: 'Codex', note: '第7章 墓標の飾り' },
+    { id: 'item.gardo_pan', kind: 'item', file: 'img/item_gardo_pan.png', spec: '48px・使い込んだ鍋の取っ手(墓に供える)', status: '調整中', fallback: 'item_bell', priority: '低', owner: 'Codex', note: '第7章 墓標の遺品。ミラ・ノアの双方の会話順で挿絵の表示を確認。' },
     { id: 'ui.empty_plate', kind: 'ui', file: 'img/ui_empty_plate.png', spec: '食卓に置かれた空席の皿の挿絵・暖色', status: '調整中', fallback: 'furn_table', priority: '中', owner: 'Codex', note: '第7章 空席。第16章でも再利用' }
   ]
 });
