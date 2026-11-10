@@ -1104,13 +1104,34 @@ function drawActor(c, a, cx, cy) {
   c.restore();
 }
 function drawField() {
-  const [cx, cy] = camera();
+  const ship = typeof CONCEPT_SHIP !== 'undefined' && CONCEPT_SHIP[map.id];
+  const [cx, cy] = ship ? [0,0] : camera();
   ctx.fillStyle = '#05040a'; ctx.fillRect(0, 0, W, H);
   ctx.save();
   if (G.shake > 0) ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
   if (map.indoor) { ctx.fillStyle = '#1b1210'; ctx.fillRect(-cx, -cy, map.w * T, map.h * T); }
-  drawTiles(cx, cy);
+  if (ship) ctx.scale(W/(map.w*T), H/(map.h*T));
+  if (ship && IMG[ship.image]) ctx.drawImage(IMG[ship.image],0,0,map.w*T,map.h*T);
+  else drawTiles(cx, cy);
+  if (ship) {
+    for (const [x,y,label] of ship.exits) {
+      if (label === '浮島へ' && !atLeast('c10_ship')) continue;
+      const px=(x+.5)*T, py=(y+.9)*T;
+      ctx.save(); ctx.fillStyle='rgba(24,19,32,.8)'; roundRect(ctx,px-35,py-12,70,24,8);ctx.fill();
+      ctx.font='16px '+FONT;ctx.fillStyle='#ffe8b0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,px,py);ctx.restore();
+    }
+  }
   const list = [];
+  // The painted mast must hide people passing behind it. Redraw only its
+  // silhouette at the base's depth, using the original background pixels.
+  if (ship && IMG[ship.image]) {
+    for (const [top,left,right,bottom] of [[0,668,705,638],[0,1141,1187,513]]) {
+      const sx=map.w*T/1672, sy=map.h*T/941;
+      list.push({y:bottom*sy,d:c=>{c.save();c.beginPath();
+        c.rect(left*sx,top*sy,(right-left)*sx,(bottom-top)*sy);c.clip();
+        c.drawImage(IMG[ship.image],0,0,map.w*T,map.h*T);c.restore();}});
+    }
+  }
   for (const s of statics) list.push({ y: s.y, d: c => { c.save(); c.translate(-cx, -cy); s.draw(c); c.restore(); } });
   for (const a of actors) list.push({ y: (a.y + 1) * T, d: c => drawActor(c, a, cx, cy) });
   list.push({ y: (G.P.y + 1) * T, d: c => drawAllen(c, cx, cy, G.P) });
