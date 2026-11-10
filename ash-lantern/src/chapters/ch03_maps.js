@@ -31,19 +31,19 @@
         }
       },
       C3_WAREHOUSE: {
-        name: '夜の倉庫', w: 16, h: 11, indoor: true, bgm: 'home', dim: 'rgba(10,15,45,.38)',
+        name: '夜の倉庫', w: 16, h: 11, indoor: true, bgm: 'home', dim: 'rgba(10,15,45,.12)',
         ops: [['fill', 'x'], ['rect', 1, 2, 14, 9, 'o'], ['set', 8, 10, 'd']],
         points: { start: [8, 9], door: [8, 8], crate: [8, 4] },
         layout: {
           wallColor: '#4a3a30', windows: [3 * 48, 11 * 48], doorX: 8,
+          // 背景の棚・机・樽・台車に対応する足元判定と調べる位置。
           furn: [
-            { img: 'furn_crate', x: 2, y: 3, w: 1, h: 1, dw: 52, say: '港の荷が詰まった木箱。' }, { img: 'furn_crate', x: 3, y: 3, w: 1, h: 1, dw: 52, say: '同じ印の木箱が積んである。' },
-            { img: 'furn_crate', x: 2, y: 4, w: 1, h: 1, dw: 52, say: '中身は乾燥させた干し魚だ。' },
-            { img: 'furn_crate', x: 12, y: 3, w: 1, h: 1, dw: 52, say: '夜でも荷が運び込まれている。' }, { img: 'furn_crate', x: 13, y: 3, w: 1, h: 1, dw: 52 },
-            { img: 'furn_crate', x: 13, y: 4, w: 1, h: 1, dw: 52 },
-            { img: 'furn_barrel', x: 2, y: 7, w: 1, h: 1, dw: 46, say: '燃料の油が入った樽。' }, { img: 'furn_barrel', x: 13, y: 7, w: 1, h: 1, dw: 46, say: '水の樽。' },
-            { img: 'furn_crate', x: 5, y: 6, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 10, y: 6, w: 1, h: 1, dw: 52 },
-            { img: 'furn_chest', x: 6, y: 3, w: 1, h: 1, dw: 50, say: '鍵のかかった帳簿箱。' }]
+            { img:'furn_crate', x:1, y:3, w:3, h:4, dw:52, say:'港の積み荷が棚ごとに整理されている。干し魚や航海用品もある。' },
+            { img:'furn_table_orthogonal', x:1, y:7, w:3, h:2, dw:118, say:'入出庫の帳簿。燃料の搬入記録が残っている。' },
+            { img:'furn_crate', x:12, y:3, w:3, h:5, dw:52, say:'縄や袋、樽が積まれた荷棚。' },
+            { img:'furn_barrel', x:10, y:3, w:2, h:1, dw:46, say:'燃料の油が入った樽。' },
+            { img:'furn_crate', x:11, y:5, w:1, h:1, dw:52, say:'荷物を運ぶための台車。' }
+          ]
         }
       },
       C3_MARKET: {

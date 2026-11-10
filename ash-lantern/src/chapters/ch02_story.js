@@ -22,7 +22,8 @@ registerChapter({
   zones: [
     { map: 'C2_ROAD', at: 'C2_ROAD@west', cond: 'st:c1_complete', story: 'c2_arrive' },
     { map: 'C2_ROAD', at: 'C2_ROAD@start', cond: 'st:c1_complete', story: 'c2_arrive' },
-    { map: 'C2_ROAD', at: 'C2_ROAD@ambush', cond: 'st:c2_road&!flag:c2_ambush', story: 'c2_ambush' }
+    // The refugee occupies the ambush tile, so start the event when approached.
+    { map: 'C2_ROAD', at: [23, 12, 3, 3], cond: 'st:c2_road&!flag:c2_ambush', story: 'c2_ambush' }
   ],
   story: {
     c2_arrive: [
@@ -59,6 +60,10 @@ registerChapter({
         ['s', 'トーマ', '護衛の備えに、隊商の予備を使ってくれ。無事に届けるためだ。'],
         ['gear', 'salt_knife', 1], ['gear', 'caravan_coat', 1], ['gear', 'gardo_axe', 1], ['give', 'caravan_ration', 2],
         ['n', '塩晶のナイフ、隊商の外套、ガルドの手斧、隊商の携行食を2個受け取った。(装備はメニューから変更できる)']
+      ]],
+      ['if', '!flag:c2_magic_supply', [
+        ['flag', 'c2_magic_supply'], ['give', 'ether', 1], ['give', 'potion', 1],
+        ['s', 'トーマ', '魔力薬と回復薬も一つずつ持っていってくれ。連戦に備えてな。']
       ]],
       ['n', '戦闘で防御と回復を使い分けると、仲間を守れる。(この先、仲間の教えが技になることもある)'],
       ['stage', 'c2_road'], ['toast', '目的が更新された']

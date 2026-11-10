@@ -23,10 +23,10 @@
             { img: 'bld_hall_front', x: 14, y: 23, flip: false, kind: 'locked' }, { img: 'bld_workshop_front', x: 28, y: 23, flip: true, kind: 'locked' }],
           lamps: [[21, 10], [26, 10], [21, 18], [26, 18], [12, 14], [35, 14], [21, 25], [26, 25]],
           barrels: [[16, 9], [31, 9], [20, 21]],
-          signs: [[18, 14], [29, 14]],
+          signs: [[15, 14], [29, 14]],
           trees: [[7, 17, 120], [10, 19, 130], [38, 17, 118], [41, 20, 128], [6, 20, 110], [9, 17, 112], [40, 18, 114]],
-          decor: [{ img: 'furn_well', x: 25, y: 16, scale: 0.3 }, { img: 'furn_flowerpot', x: 21, y: 8, scale: 0.26 }, { img: 'furn_flowerpot', x: 26, y: 8, scale: 0.26 },
-            { img: 'furn_flowerpot', x: 8, y: 16, scale: 0.26 }, { img: 'furn_flowerpot', x: 39, y: 16, scale: 0.26 }]
+          decor: [{ img: 'furn_well', art: 'prop_royal_fountain_garden', x: 18, y: 18, scale: 0.3, aw: 288, blockW: 5 }, { img: 'furn_flowerpot', x: 21, y: 8, scale: 0.26 }, { img: 'furn_flowerpot', x: 26, y: 8, scale: 0.26 },
+            { img: 'furn_flowerpot', x: 8, y: 16, scale: 0.26 }, { img: 'furn_flowerpot', x: 39, y: 16, scale: 0.26 }, { img: 'furn_flowerpot', x: 13, y: 18, scale: 0.26 }, { img: 'furn_flowerpot', x: 31, y: 18, scale: 0.26 }]
         }
       },
       C4_CASTLE: {
@@ -35,27 +35,26 @@
         points: { start: [9, 10], throne: [9, 3], cell: [15, 3], cell_door: [16, 5], hatch: [15, 2] },
         layout: {
           wallColor: '#8a8f9c', windows: [2 * 48 + 6, 6 * 48 + 6, 11 * 48 + 6], doorX: 9, rug: { x: 7.7, y: 3.3, w: 200 },
+          // 玉座・帳簿棚・机・右奥の牢に透明な判定を合わせる。
           furn: [
-            { img: 'furn_chair_orthogonal', x: 9, y: 2, w: 1, h: 1, dw: 70, say: '玉座。誰も座っていない。肘掛けに、灯火炉と同じ紋が刻まれている。' },
-            { img: 'furn_bookshelf_orthogonal', x: 3, y: 2, w: 2, h: 1, dw: 100, say: '回収記録の写しが並んでいる。村の名前の多くに、斜線が引かれている。' },
-            { img: 'furn_bookshelf_orthogonal', x: 12, y: 2, w: 2, h: 1, dw: 100, say: '灯火炉の図面。過負荷の印が赤く塗られている。' },
-            { img: 'furn_table_orthogonal', x: 4, y: 6, w: 2, h: 2, dw: 118, say: '評議の長い机。地図の上に、灯火炉の駒が置かれている。' },
-            { img: 'furn_table_orthogonal', x: 12, y: 6, w: 2, h: 2, dw: 118, say: '書類が積んである。署名はどれも同じ筆跡だ。' },
-            { img: 'furn_fence', x: 14, y: 5, w: 2, h: 1, dw: 100, say: '牢の格子。' }]
+            { img:'furn_chair_orthogonal', x:9, y:2, w:1, h:1, dw:70, say:'玉座。灯火炉と同じ紋が刻まれている。' },
+            { img:'furn_table_orthogonal', x:2, y:3, w:1, h:1, dw:80, say:'評議の机。村の名前が記された書類が残る。' },
+            { img:'furn_bookshelf_orthogonal', x:4, y:3, w:2, h:1, dw:100, say:'回収記録の写し。村の名前の多くに斜線が引かれている。' },
+            { img:'furn_bookshelf_orthogonal', x:12, y:3, w:1, h:1, dw:60, say:'灯火炉の図面と記録。' },
+            { img:'furn_table_orthogonal', x:13, y:3, w:1, h:1, dw:80, say:'書類が積んである。署名はどれも同じ筆跡だ。' },
+            { img:'furn_fence', x:15, y:4, w:2, h:1, dw:100, say:'牢の格子。' }
+          ]
         }
       },
       C4_ESCAPE: {
-        name: '城の脱出路', w: 20, h: 13, indoor: true, bgm: 'dusk', skin: { o: 'r' }, dim: 'rgba(0,0,30,.42)',
+        name: '城の脱出路', w: 20, h: 13, indoor: true, bgm: 'dusk', skin: { o: 'r' }, dim: 'rgba(0,0,30,.14)',
         ops: [['fill', 'x'], ['rect', 1, 2, 18, 11, 'o'], ['set', 10, 12, 'd']],
         points: { start: [10, 3], exit: [10, 11] },
         layout: {
           wallColor: '#33323b', windows: [], doorX: 10,
           furn: [
-            { img: 'furn_crate', x: 5, y: 5, w: 1, h: 1, dw: 52, say: '古い荷箱。' }, { img: 'furn_crate', x: 5, y: 6, w: 1, h: 1, dw: 52 },
-            { img: 'furn_crate', x: 14, y: 5, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 14, y: 6, w: 1, h: 1, dw: 52, say: '蓋に王家の紋。中は空だ。' },
-            { img: 'furn_crate', x: 7, y: 8, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 12, y: 8, w: 1, h: 1, dw: 52 },
-            { img: 'furn_barrel', x: 16, y: 8, w: 1, h: 1, dw: 46, say: '湿った樽。' }, { img: 'furn_barrel', x: 3, y: 9, w: 1, h: 1, dw: 46 },
-            { img: 'furn_lantern', x: 6, y: 3, w: 1, h: 1, dw: 30, say: '壁の釘に掛かったランタン。まだ火が入っている。' }, { img: 'furn_lantern', x: 14, y: 3, w: 1, h: 1, dw: 30 }]
+            { img: 'furn_crate', x: 1, y: 2, w: 5, h: 10, dw: 52, say: '水路の向こうに、古い保管箱が並んでいる。' },
+            { img: 'furn_crate', x: 14, y: 2, w: 5, h: 10, dw: 52, say: '壁際に王家の紋が入った箱と樽が積まれている。' }]
         }
       }
     },
@@ -71,7 +70,7 @@
     ],
     assets: [
       { ...A('tile.royal_stone', 'tile', '192x192・4x4の継ぎ目なし。白い磨かれた石畳(王都)', 'tile_stone', '中', '第4章 王都の広場・城内の床'), status: '調整中' },
-      { ...A('bld.castle_gate', 'bld', '幅8タイル(384px)・高さ約5タイル・透明・正面寄り俯瞰。白い城の正門(中央に扉)', 'bld_hall_front', '高', '第4章 王都の城(正門 23,6)と第11章の右翼(29,6)'), status: '調整中' },
+      { ...A('bld.castle_gate', 'bld', '幅8タイル(384px)・高さ約5タイル・透明・正面寄り俯瞰。白い城の正門(中央に扉)', 'bld_hall_front', '高', '第4章 王都の正門に接続。右翼は既存画像。扉・経路の確認済み'), status: '調整中' },
       { ...A('prop.prison_bars', 'prop', '幅2タイル(96px)・高さ64px・透明。牢の鉄格子(開口部の戸つき)', 'furn_fence', '中', '第4章 城内の牢(cell)'), status: '調整中' },
       { ...A('prop.hatch', 'prop', '48x48・透明。床の隠し戸(開いた状態の差分あり)', 'furn_crate', '中', '第4章 牢の床の脱出口(15,2)'), status: '調整中' },
       { ...A('tile.cave_floor', 'tile', '192x192・4x4の継ぎ目なし。暗い岩の洞窟床', 'tile_gravel', '高', '第4・5・9・13章の洞窟風マップ(skin o→r で代用中)'), status: '調整中' }

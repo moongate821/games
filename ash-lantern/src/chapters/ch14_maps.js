@@ -12,10 +12,11 @@
         layout: {
           wallColor: '#b49a78', windows: [], doorX: 10, rug: { x: 7.6, y: 4.2, w: 200 },
           furn: [
-            { img: 'furn_lantern', x: 10, y: 2, w: 1, h: 1, dw: 84, say: '炉の中心で、小さな灯が静かに揺れている。' },
-            { img: 'furn_lantern', x: 6, y: 5, w: 1, h: 1, dw: 30, say: '周りのランタンが、同じ拍で明滅している。' }, { img: 'furn_lantern', x: 13, y: 5, w: 1, h: 1, dw: 30 },
-            { img: 'furn_stove', x: 3, y: 3, w: 1, h: 2, dw: 66, say: '古い補助釜。もう火は入っていない。' }, { img: 'furn_stove', x: 16, y: 3, w: 1, h: 2, dw: 66, say: '古い補助釜。' },
-            { img: 'furn_crate', x: 4, y: 8, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 15, y: 8, w: 1, h: 1, dw: 52 }]
+            { img: 'furn_lantern', x: 8, y: 2, w: 4, h: 2, dw: 84, say: '炉の中心で、小さな灯が静かに揺れている。' },
+            { img: 'furn_stove', x: 4, y: 2, w: 2, h: 2, dw: 66, say: '古い補助釜。もう火は入っていない。' },
+            { img: 'furn_stove', x: 14, y: 2, w: 2, h: 2, dw: 66, say: '古い補助釜。' },
+            { img: 'furn_crate', x: 1, y: 7, w: 2, h: 1, dw: 52, say: '記録と小さな灯りが残されている。' },
+            { img: 'furn_crate', x: 17, y: 7, w: 2, h: 1, dw: 52, say: '古い道具と灯り。' }]
         }
       }
     },

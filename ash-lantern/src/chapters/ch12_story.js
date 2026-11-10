@@ -5,13 +5,15 @@ registerChapter({
   stages: ['c12_start', 'c12_vows', 'c12_night', 'c12_complete'],
   objectives: {
     c12_start: '灰の海の入口を塞ぐ獣を退けよう',
-    c12_vows: '夜の甲板で、ミラ・ノア・セレナそれぞれと話そう',
+    c12_vows: '甲板の仲間に話しかけ、それぞれの決意を聞こう',
     c12_night: '甲板の仲間にもう一度話しかけ、夜を過ごそう',
     c12_complete: '第12章クリア'
   },
   actors: [
     { map: 'C12_SEA', id: 'c12_beasts', img: 'enemy_ash_beast', fallback: 'enemy_wolf', fieldWidth: 100, name: '灰の獣たち', at: 'C12_SEA@gate', dir: 'down', when: 'st:c12_start', story: 'c12_gate' },
-    { map: 'C12_DECK', id: 'c12_crew', img: 'npc_mira', name: '仲間たち(ミラ)', at: 'C12_DECK@rail', dir: 'down', when: 'st:c12_vows|st:c12_night', story: 'c12_crew' }
+    { map: 'C12_DECK', id: 'c12_crew', img: 'npc_mira', name: 'ミラ', at: 'C12_DECK@rail', dir: 'down', when: 'st:c12_vows|st:c12_night', story: 'c12_crew' },
+    { map: 'C12_DECK', id: 'c12_noah', img: 'npc_noah', name: 'ノア', at: [11, 8], dir: 'down', when: 'st:c12_vows|st:c12_night', story: 'c12_crew' },
+    { map: 'C12_DECK', id: 'c12_serena', img: 'npc_serena', name: 'セレナ', at: [18, 8], dir: 'down', when: 'st:c12_vows|st:c12_night', story: 'c12_crew' }
   ],
   story: {
     c12_gate: [

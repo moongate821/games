@@ -22,7 +22,7 @@ registerChapter({
     "serena_rod": {"name": "セレナの調律棒", "slot": "w", "atk": 5, "only": ["serena"], "desc": "機械の声を聞く細い棒。"}
   },
   allies: {
-    "serena": {"name": "セレナ", "mhp": 38, "mmp": 20, "atk": 5, "def": 3, "spd": 8, "skills": ["serena_bolt", "serena_mend", "serena_pulse"], "portrait": "battle_serena", "learn": {"10": ["serena_arc"], "11": ["serena_mend2"], "12": ["serena_burst"]}}
+    "serena": {"name": "セレナ", "mhp": 38, "mmp": 20, "atk": 5, "def": 3, "spd": 8, "skills": ["serena_bolt", "serena_mend", "serena_pulse"], "portrait": "battle_serena", "learn": {"10": ["serena_arc", "flame_extreme"], "11": ["serena_mend2"], "12": ["serena_burst"]}}
   },
   assets: [
     {"id": "enemy.sand_wraith", "kind": "enemy", "file": "img/enemy_sand_wraith.png", "spec": "横220px・透明・砂でできた人影。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第8章 観測所"},

@@ -13,6 +13,10 @@ const IMG_LIST = ['dg_icon_3506.png','dg_icon_3512.png','dg_icon_3522.png', 'dg_
   'tile_sand.png', 'tile_leaf.png', 'furn_cauldron.png', 'battle_mira.png', 'enemy_slime.png', 'enemy_bat.png', 'npc_mira.png', 'enemy_crab.png',
   'npc_gardo.png', 'npc_noah.png', 'npc_serena.png', 'npc_emma.png', 'npc_alvan.png', 'battle_gardo.png', 'battle_noah.png', 'battle_serena.png', 'enemy_guard.png', 'enemy_golem.png'];
 
+IMG_LIST.push('item_armorbreak_powder.png', 'item_weakening_powder.png', 'item_scroll_cataclysm.png', 'prop_deck_rail.png', 'prop_ship_hatch.png', 'prop_ship_mast_open.png', 'prop_ship_stern.png', 'furn_bench_concept.png', 'prop_shop_supplies_concept.png', 'prop_shop_forge_concept.png', 'prop_undersea_column.png', 'wall_workshop_concept.png', 'prop_royal_fountain.png', 'window_workshop_concept.png', 'bg_workshop_concept.png', 'prop_royal_fountain_garden.png', 'bg_harbor_warehouse.png', 'bg_mine_tunnel_concept.png', 'bg_observatory_lab_concept.png', 'bg_castle_audience_concept.png');
+IMG_LIST.push('bg_inn_remembrance.png', 'bg_escape_drain.png', 'bg_furnace_heart_concept.png');
+IMG_LIST.push('fx_status_poison.png', 'fx_status_sleep.png');
+
 // 地面の種類 → 画像名
 const TILE_IMG = { g: 'tile_grass', f: 'tile_flower', p: 'tile_path', s: 'tile_stone', w: 'tile_water', b: 'tile_wood',
   a: 'tile_sand', l: 'tile_leaf', m: 'tile_moss', r: 'tile_gravel', o: 'tile_wood', d: 'tile_wood', x: 'tile_moss' };
@@ -102,7 +106,7 @@ function buildWorkshop() {
 
 const MAPS = {
   V: { id: 'V', name: '灯守村', tiles: buildVillage(), indoor: false },
-  W: { id: 'W', name: '修理工房', tiles: buildWorkshop(), indoor: true },
+  W: { id: 'W', name: '修理工房', tiles: buildWorkshop(), indoor: true, points: { start: [6, 4] } },
   K: { id: 'K', name: '川霧の町', tiles: buildKirimachi(), indoor: false }
 };
 

@@ -7,7 +7,9 @@
 const SKILLS = {
   heal: { name: 'ヒール', mp: 4, target: 'ally', kind: 'heal', power: 25 },
   light: { name: 'ひかり', mp: 3, target: 'enemy', kind: 'magic', power: 14 },
-  rain: { name: 'あめのうた', mp: 6, target: 'allEnemies', kind: 'magic', power: 9 }
+  rain: { name: 'あめのうた', mp: 6, target: 'allEnemies', kind: 'magic', power: 9 },
+  water_extreme: { name: '水極', mp: 10, target: 'allEnemies', kind: 'magic', power: 55 },
+  flame_extreme: { name: '炎極', mp: 10, target: 'allEnemies', kind: 'magic', power: 60 }
 };
 const ALLIES = {
   allen: { name: 'アレン', mhp: 50, mmp: 0, atk: 10, def: 4, spd: 10, skills: [], sprite: 'allen' },
@@ -26,7 +28,7 @@ const ENEMY_POS = { 1: [[710, 345]], 2: [[610, 345], [810, 345]], 3: [[525, 345]
 /* フラグで解放される技。once=1戦闘に1回(MPを使わない)。例: 第7章「ガルドの教え」(c7_bond) */
 const SKILL_UNLOCKS = [{ flag: 'c7_bond', who: 'allen', skill: 'gardo_teaching' }];
 /* 成長(S.lv)で覚える技。ALLIES[id].learn = {必要なlv:[技ID...]}。ミラは下の表(章データ側の仲間は learn を持つ) */
-const LEARN = { mira: { 3: ['light_plus'], 4: ['heal_plus'], 5: ['rain_plus'], 7: ['light_max'], 8: ['heal_max'], 9: ['rain_max'], 11: ['light_ex'], 12: ['heal_ex'] } };
+const LEARN = { mira: { 3: ['light_plus'], 4: ['heal_plus'], 5: ['rain_plus'], 7: ['light_max'], 8: ['heal_max'], 9: ['rain_max'], 10: ['water_extreme'], 11: ['light_ex'], 12: ['heal_ex'] } };
 function skillsOf(id, lv) {   // 基本の技+成長で覚えた技+フラグで解放された技
   const d = ALLIES[id], L = d.learn || LEARN[id] || {}, out = d.skills.slice(); lv = lv == null ? (S.lv || 0) : lv;
   for (const n of Object.keys(L).map(Number).sort((a, b) => a - b)) if (lv >= n) for (const s of L[n]) if (SKILLS[s] && !out.includes(s)) out.push(s);
@@ -54,7 +56,7 @@ function partyForBattle() {   // アレンは S.hp/S.mhp、他の仲間は S.all
 }
 function syncParty(list) { S.hp = list[0].hp; (S.allies || []).forEach((m, i) => { const c = list[i + 1]; if (c) { m.hp = c.hp; m.mp = c.mp; } }); }
 function snapshot() { return JSON.stringify({ hp: S.hp, items: S.items, allies: S.allies || [] }); }
-const usableItems = () => Object.keys(ITEMS).filter(k => (ITEMS[k].hp || ITEMS[k].mp || ITEMS[k].revive || ITEMS[k].damage || ITEMS[k].weaken || ITEMS[k].armorbreak) && (S.items[k] || 0) > 0);
+const usableItems = () => Object.keys(ITEMS).filter(k => (ITEMS[k].hp || ITEMS[k].mp || ITEMS[k].revive || ITEMS[k].damage || ITEMS[k].weaken || ITEMS[k].armorbreak || ITEMS[k].poison || ITEMS[k].sleepStatus) && (S.items[k] || 0) > 0);
 
 async function runBattle(enemyIds) {
   enemyIds = enemyIds || ['ash_wolf'];
@@ -70,12 +72,28 @@ async function runBattle(enemyIds) {
 }
 
 const alive = list => list.filter(c => c.hp > 0);
+// Use the same ordering for the tactical preview and for resolving the round.
+const compareBattleSpeed = (x, y) => (y.actor.spd - x.actor.spd) || ((x.actor.side === 'ally' ? 0 : 1) - (y.actor.side === 'ally' ? 0 : 1));
+function battleOrderPreview(B) {
+  const committed = B.queuedActs || [];
+  const reserved = new Set(committed.filter(a => a.kind === 'fusion').flatMap(a => a.fusion.participants.filter(p => p !== a.actor)));
+  return [...alive(B.allies).filter(a => !reserved.has(a)), ...alive(B.enemies)]
+    .map(actor => ({ actor })).sort(compareBattleSpeed).map(x => x.actor);
+}
+// 2人版はミラの行動、3人版はアレンの行動から指示する。該当者のそのターンの行動を使う。
+function availableFusion(a) {
+  const party = G.B.allies, mira = party.find(m => m.id === 'mira' && m.hp > 0), serena = party.find(m => m.id === 'serena' && m.hp > 0);
+  if (!mira || !serena || !mira.skills.includes('water_extreme') || !serena.skills.includes('flame_extreme') || mira.mp < 10 || serena.mp < 10) return null;
+  if (a.id === 'mira' && party.indexOf(serena) > party.indexOf(mira)) return { name:'双極・核融合', participants:[mira,serena], power:230 };
+  if (a.id === 'allen') return { name:'三重極・星核融合', participants:[a,mira,serena], power:345 };
+  return null;
+}
 const posOf = (B, c) => {
   const list = c.side === 'ally' ? B.allies : B.enemies, n = list.length;
   const p = (c.side === 'ally' ? ALLY_POS : ENEMY_POS)[Math.min(4, n)][list.indexOf(c)];
   return { x: p[0] + (c.lunge || 0) * (c.side === 'ally' ? 140 : -110) + (c.x || 0) * 110, y: p[1] };
 };
-function pickMenu(list, prompt, opts) { return new Promise(r => { G.B.menu = { idx: 0, list, r, cancel: !!(opts && opts.cancel), targets: opts && opts.targets }; G.B.msg = prompt; }); }   // opts.cancel=Xキーで 'cancel' を返す / opts.targets=選択中の対象に矢印
+function pickMenu(list, prompt, opts) { return new Promise(r => { G.B.menu = { idx: 0, list, r, cancel: !!(opts && opts.cancel), targets: opts && opts.targets, desc: opts && opts.desc }; G.B.msg = prompt; }); }   // opts.cancel=Xキーで 'cancel' を返す / opts.targets=選択中の対象に矢印
 async function pickEnemy() {
   const es = alive(G.B.enemies); if (es.length === 1) return es[0];
   const k = await pickMenu([...es.map((e, i) => [i, `${e.name}  HP ${e.hp}`]), ['back', '戻る']], 'だれを狙う？', { targets: es });
@@ -90,11 +108,18 @@ async function askCommand(a, canBack) {   // canBack=前の味方のコマンド
   while (true) {
     const top = [['attack', '攻撃']];
     if (a.skills.length) top.push(['skill', '技']);
+    const fusion = availableFusion(a);
+    if (fusion) top.push(['fusion', fusion.participants.length + '人合成']);
     top.push(['defend', '防御'], ['item', '道具 ×' + usableItems().reduce((n, k) => n + S.items[k], 0)]);
     const c = await pickMenu(top, `${a.name}はどうする？`, { cancel: !!canBack });
     if (c === 'cancel') return 'back';
     if (c === 'attack') { const t = await pickEnemy(); if (!t) continue; return { actor: a, kind: 'attack', target: t }; }
     if (c === 'defend') { a.defending = true; return { actor: a, kind: 'defend' }; }
+    if (c === 'fusion') {
+      const k = await pickMenu([['cast', `${fusion.name}（全体${fusion.power}）`], ['back', '戻る']], `水極と炎極を合成。ミラ・セレナ各MP10、参加者${fusion.participants.length}人の行動を消費。`);
+      if (k === 'back') continue;
+      return { actor:a, kind:'fusion', fusion };
+    }
     if (c === 'skill') {
       const k = await pickMenu([...a.skills.map(s => [s, SKILLS[s].once ? `${SKILLS[s].name}  1戦闘に1回${a.used && a.used[s] ? '(使用済み)' : ''}` : `${SKILLS[s].name}  MP${SKILLS[s].mp}`]), ['back', '戻る']], `${a.name}の技`);
       if (k === 'back') continue;
@@ -113,9 +138,9 @@ async function askCommand(a, canBack) {   // canBack=前の味方のコマンド
       const us = usableItems();
       if (!us.length) { await bmsg(S.items.potion <= 0 && !ITEMS.bread.hp ? '回復薬がない！' : '使える道具がない！'); continue; }
       let item = us[0];
-      if (us.length > 1) { const k = await pickMenu([...us.map(i => [i, `${ITEMS[i].name} ×${S.items[i]}`]), ['back', '戻る']], '何を使う？'); if (k === 'back') continue; item = k; }
+      if (us.length > 1) { const k = await pickMenu([...us.map(i => [i, `${ITEMS[i].name} ×${S.items[i]}`]), ['back', '戻る']], '何を使う？', { desc: i => us[i] ? ITEMS[us[i]].desc : 'コマンドに戻る。' }); if (k === 'back') continue; item = k; }
       const it = ITEMS[item];
-      if (it.damage || it.weaken || it.armorbreak) {
+      if (it.damage || it.weaken || it.armorbreak || it.poison || it.sleepStatus) {
         const t = it.allEnemies ? null : await pickEnemy(); if (!it.allEnemies && !t) continue;
         return { actor: a, kind: 'item', item, target: t };
       }
@@ -128,7 +153,7 @@ async function askCommand(a, canBack) {   // canBack=前の味方のコマンド
   }
 }
 /* 演出(img/fx_*.png)。横に並べた正方形のコマ(1コマの一辺=画像の高さ)を順に再生する。画像が無ければ何もしない */
-const SKILL_FX = { light: 'light', light_plus: 'light', light_max: 'ultimate_magic', light_ex: 'ultimate_magic', rain: 'rain', rain_plus: 'rain', rain_max: 'ultimate_magic', gardo_teaching: 'ultimate_attack' };
+const SKILL_FX = { light: 'light', light_plus: 'light', light_max: 'ultimate_magic', light_ex: 'ultimate_magic', rain: 'rain', rain_plus: 'rain', rain_max: 'ultimate_magic', water_extreme:'ultimate_magic', flame_extreme:'ultimate_magic', gardo_teaching: 'ultimate_attack' };
 const BATTLE_BG = { rogue_device: 'bg_throne_room', deep_keeper: 'bg_underwater', deep_fish: 'bg_underwater', ash_beast: 'bg_ash_horizon', ash_shade: 'bg_ash_core', ash_crown: 'bg_ash_core' };
 function battleBackground(enemyIds) { const id = enemyIds.slice(0, 3).find(enemy => BATTLE_BG[enemy]); return id ? BATTLE_BG[id] : null; }
 const isBoss = e => e.pattern.includes('strong') && e.mhp >= 80;
@@ -201,8 +226,24 @@ async function doAction(B, act) {
   if (a.hp <= 0) return;
   if (a.side === 'ally') {
     if (act.kind === 'defend') { battleFx(B, 'guard', a); await bmsg(`${a.name}は身構えた。`); return; }
+    if (act.kind === 'fusion') {
+      const f = act.fusion, mira = f.participants.find(p => p.id === 'mira'), serena = f.participants.find(p => p.id === 'serena');
+      if (f.participants.some(p => p.hp <= 0) || mira.mp < 10 || serena.mp < 10) { await bmsg(`${f.name}は発動できなかった。`); return; }
+      mira.mp -= 10; serena.mp -= 10; Snd.sfx('hit');
+      for (const e of alive(B.enemies)) { e.hp = Math.max(0,e.hp-f.power); e.flash=14; pop(B,e,f.power,'#fff0a0'); battleFx(B,'ultimate_magic',e); }
+      await bmsg(`${f.participants.map(p=>p.name).join('と')}の${f.name}！ 敵全体に${f.power}のダメージ！`); return;
+    }
     if (act.kind === 'item') {
       const t = act.target, id = act.item || 'potion', it = ITEMS[id];
+      if (it.poison || it.sleepStatus) {
+        const enemy = t && t.hp > 0 ? t : alive(B.enemies)[0];
+        if ((S.items[id] || 0) <= 0 || !enemy) { await bmsg(`${it.name}は使えなかった。`); return; }
+        if (it.sleepStatus && isBoss(enemy)) { await bmsg(`${enemy.name}には眠りが効かない。道具は減らなかった。`); return; }
+        S.items[id]--;
+        if (it.poison) enemy.poisonActions = it.poison; else enemy.sleepActions = it.sleepStatus;
+        battleFx(B, it.poison ? 'status_poison' : 'status_sleep', enemy);
+        await bmsg(`${a.name}は${it.name}を使った！ ${enemy.name}は${it.poison ? '毒におかされた' : '眠った'}！`); return;
+      }
       if (it.weaken || it.armorbreak) {
         const enemy = t && t.hp > 0 ? t : alive(B.enemies)[0];
         if ((S.items[id] || 0) <= 0 || !enemy) { await bmsg(`${it.name}は使えなかった。`); return; }
@@ -252,7 +293,7 @@ async function doAction(B, act) {
         targets = sk.target === 'allEnemies' ? alive(B.enemies) : [act.target.hp > 0 ? act.target : alive(B.enemies)[0]];
         a.lunge = 0.4; await sleep(8); Snd.sfx('hit');
         const parts = [];
-        for (const t of targets) { if (!t) continue; const dmg = sk.power; t.hp = Math.max(0, t.hp - dmg); t.flash = 14; pop(B, t, dmg, '#9fd8ff'); battleFx(B, skillFxName(sk, act.skill), t); parts.push(`${t.name}に${dmg}`); }
+        for (const t of targets) { if (!t) continue; const dmg = sk.power; t.hp = Math.max(0, t.hp - dmg); t.flash = 14; pop(B, t, dmg, '#9fd8ff'); battleFx(B, skillFxName(sk, act.skill), t); if (act.skill === 'gardo_teaching' && IMG.fx_limit_teaching) battleFx(B, 'limit_teaching', t); parts.push(`${t.name}に${dmg}`); }
         a.lunge = 0;
         await bmsg(`${a.name}の${sk.name}！　${parts.join('、')}のダメージ！`);
       }
@@ -260,6 +301,17 @@ async function doAction(B, act) {
     return;
   }
   // 敵の行動
+  if (a.poisonActions > 0) {
+    const damage = Math.min(30, Math.max(1, Math.ceil(a.mhp * .05)));
+    a.poisonActions--; a.hp = Math.max(0, a.hp - damage); a.flash = 14;
+    pop(B, a, damage, '#dc9eff'); battleFx(B, 'status_poison', a);
+    await bmsg(`${a.name}は毒で${damage}のダメージ！`);
+    if (a.hp <= 0) return;
+  }
+  if (a.sleepActions > 0) {
+    a.sleepActions--; battleFx(B, 'status_sleep', a);
+    await bmsg(`${a.name}は眠っている……`); return;
+  }
   const k = a.pattern[a.step % a.pattern.length]; a.step++;
   const weakened = (a.weakenActions || 0) > 0;
   if (weakened) a.weakenActions--;
@@ -288,18 +340,19 @@ async function battleOnce(enemyIds) {
   if (enemyIds[0] === 'ash_wolf') await bmsg('【戦い方】 攻撃=敵を斬る / 防御=受けるダメージを半分に / 道具=回復薬でHPを25回復');
   while (true) {
     // 1) 味方のコマンド
-    const acts = [];
+    const acts = []; B.queuedActs = acts;
     const live = allies.filter(a => a.hp > 0);
     for (let i = 0; i < live.length;) {   // 味方ごとにコマンド。Xキーで前の味方に戻って選び直せる
       const a = live[i]; B.active = a;
-      const r = await askCommand(a, i > 0);
-      if (r === 'back') { i--; live[i].defending = false; acts.pop(); continue; }
+      if (acts.some(x => x.kind === 'fusion' && x.fusion.participants.includes(a))) { i++; continue; }
+      const r = await askCommand(a, acts.length > 0);
+      if (r === 'back') { const prev = acts.pop(); prev.actor.defending = false; i = live.indexOf(prev.actor); continue; }
       acts.push(r); i++;
     }
     B.active = null;
     for (const e of enemies) if (e.hp > 0) acts.push({ actor: e, kind: 'enemy' });
     // 2) 素早さの高い順(同じなら味方が先)
-    acts.sort((x, y) => (y.actor.spd - x.actor.spd) || ((x.actor.side === 'ally' ? 0 : 1) - (y.actor.side === 'ally' ? 0 : 1)));
+    acts.sort(compareBattleSpeed); B.queuedActs = null;
     for (const act of acts) {
       await doAction(B, act);
       syncParty(allies);
@@ -386,6 +439,11 @@ function drawCombatantLabel(rect, unit, active) {
   battleGauge(x + 8, y + 18, w - 16, unit.hp, unit.mhp, enemy ? ['#ffac89', '#b64240'] : unit.hp <= unit.mhp * .25 ? ['#ffcf7e', '#c25444'] : ['#a5edb1', '#388b70']);
   if (enemy && unit.weakenActions > 0) { ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + FONT; ctx.fillStyle = '#102c31'; ctx.fillRect(x + 5, y + h, 44, 14); ctx.fillStyle = '#a4f3df'; ctx.fillText(`攻↓ ${unit.weakenActions}`, x + 8, y + h + 7); }
   if (enemy && unit.armorbreakActions > 0) { ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + FONT; ctx.fillStyle = '#302720'; ctx.fillRect(x + 52, y + h, 44, 14); ctx.fillStyle = '#ffe0a0'; ctx.fillText(`防↓ ${unit.armorbreakActions}`, x + 55, y + h + 7); }
+  if (enemy && (unit.poisonActions > 0 || unit.sleepActions > 0)) {
+    const sy = y + h + ((unit.weakenActions > 0 || unit.armorbreakActions > 0) ? 14 : 0);
+    ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + FONT; ctx.fillStyle = '#302040'; ctx.fillRect(x + 5, sy, 98, 14); ctx.fillStyle = '#e4bbff';
+    ctx.fillText([unit.poisonActions > 0 ? `毒 ${unit.poisonActions}` : '', unit.sleepActions > 0 ? `眠 ${unit.sleepActions}` : ''].filter(Boolean).join('  '), x + 8, sy + 7);
+  }
   if (!enemy && unit.mmp > 0) {
     ctx.textAlign = 'left'; ctx.font = '10px ' + FONT; ctx.fillStyle = '#b6d6ff'; ctx.fillText('MP', x + 8, y + 33);
     battleGauge(x + 25, y + 29, w - 60, unit.mp, unit.mmp, ['#b1d9ff', '#4a75bd']);
@@ -464,9 +522,16 @@ function drawBattle() {
   // The battlefield stays unobstructed: dialogue and commands share the lower strip.
   const split = !!B.menu, messageWidth = split ? 540 : W - 40;
   battleFrame(20, H - 150, messageWidth, 130); ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-  let messageSize = 22, lines; do { ctx.font = messageSize + 'px ' + FONT; lines = wrapText(B.msg, messageWidth - 48); if (lines.length <= 4 || messageSize <= 13) break; messageSize--; } while (true);
+  const description = B.menu && B.menu.desc ? B.menu.desc(B.menu.idx) : '';
+  const message = description ? `${B.msg}\n${description}` : B.msg;
+  let messageSize = 22, lines; do { ctx.font = messageSize + 'px ' + FONT; lines = wrapText(message, messageWidth - 48); if (lines.length <= 4 || messageSize <= 13) break; messageSize--; } while (true);
   const lineHeight = Math.min(messageSize + 6, 100 / Math.max(1, lines.length));
   lines.forEach((l, i) => ctx.fillText(l, 44, H - 130 + i * lineHeight));
+  if (B.menu && lines.length <= 2) {
+    const order = battleOrderPreview(B).map(c => c.name).join(' → ');
+    ctx.font = '13px ' + FONT; ctx.fillStyle = '#d9c8a5';
+    ctx.fillText('行動順の目安：' + order, 44, H - 51, messageWidth - 48);
+  }
   if (B.msgWait && Math.floor(G.t / 20) % 2) { ctx.fillStyle = '#ffe6a8'; ctx.fillText('▼', 20 + messageWidth - 36, H - 56); }
   if (B.menu) {
     const m = B.menu, x = 574, top = H - 150, w = W - x - 20, visible = Math.min(4, m.list.length), rh = 27;

@@ -19,12 +19,12 @@
         }
       },
       C12_DECK: {
-        name: '夜の甲板', w: 30, h: 14, bgm: 'dusk', dim: 'rgba(5,10,55,.5)',
-        ops: [['fill', 'w'], ['rect', 3, 4, 26, 9, 'o'], ['rect', 0, 6, 2, 7, 'b']],
+        name: '夜の甲板', w: 30, h: 14, bgm: 'dusk', dim: 'rgba(5,10,55,.35)',
+        ops: [['fill', 'w'], ['rect', 6, 4, 23, 9, 'o'], ['rect', 4, 5, 25, 8, 'o'], ['rect', 3, 6, 26, 7, 'o'], ['rect', 0, 6, 2, 7, 'b']],
         points: { start: [14, 7], rail: [14, 4], gangway_in: [3, 6] },
         layout: {
           border: 'none',
-          buildings: [], lamps: [[8, 5], [19, 5], [8, 9], [19, 9]], barrels: [[5, 5], [24, 5]], signs: [], trees: [],
+          buildings: [], lamps: [], barrels: [[5, 5], [24, 5]], signs: [], trees: [],
           decor: [{ img: 'furn_crate', x: 6, y: 9, scale: 0.32 }, { img: 'furn_crate', x: 23, y: 9, scale: 0.3 }]
         }
       }

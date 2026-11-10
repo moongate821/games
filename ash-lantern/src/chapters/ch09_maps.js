@@ -25,12 +25,14 @@
         }
       },
       C9_RUIN: {
-        name: '海底の灯台', w: 24, h: 14, indoor: true, bgm: 'dusk', skin: { o: 's' }, dim: 'rgba(0,60,95,.5)',
+        name: '海底の灯台', w: 24, h: 14, indoor: true, bgm: 'dusk', skin: { o: 's' }, dim: 'rgba(0,60,95,.36)',
         ops: [['fill', 'x'], ['rect', 1, 2, 22, 12, 'o'], ['set', 12, 13, 'd']],
         points: { start: [12, 12], deep: [12, 3], lamp: [12, 5] },
         layout: {
           wallColor: '#1f3d4a', windows: [], doorX: 12,
           furn: [
+            { img: 'furn_crate', art: 'prop_undersea_column', x: 3, y: 6, w: 1, h: 1, dw: 70, say: '海藻の絡む古い石柱。' },
+            { img: 'furn_crate', art: 'prop_undersea_column', x: 20, y: 6, w: 1, h: 1, dw: 70, say: '貝殻に覆われた石柱。' },
             { img: 'furn_lantern', x: 12, y: 4, w: 1, h: 1, dw: 64, say: '古い灯台の灯。海の底でなお、消えずに揺れている。' },
             { img: 'furn_fence', x: 6, y: 8, w: 3, h: 1, dw: 150, say: '崩れた石の欄干。藻が絡んでいる。' }, { img: 'furn_fence', x: 15, y: 8, w: 3, h: 1, dw: 150 },
             { img: 'furn_chest', x: 3, y: 3, w: 1, h: 1, dw: 50, say: '遺跡の箱。蓋は固く貼りついている。' }, { img: 'furn_chest', x: 20, y: 3, w: 1, h: 1, dw: 50 },

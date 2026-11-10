@@ -30,7 +30,9 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   const bld = (id, map, x, y) => { const k = key(id), b = ((LAYOUT[map] || {}).buildings || []).find(b => b.x === x && b.y === y); if (!k || !b) return; b.art = k; use(id, `${map} の建物(${x},${y})`); };
   bld('bld.waystation', 'C2_ROAD', 5, 9);
   bld('bld.warehouse', 'C3_PORT', 8, 11);
-  bld('bld.castle_gate', 'C4_CAPITAL', 21, 6); bld('bld.castle_gate', 'C4_CAPITAL', 27, 6);
+  bld('bld.castle_gate', 'C4_CAPITAL', 21, 6);
+  const castleGate = (LAYOUT.C4_CAPITAL.buildings || []).find(b => b.x === 21 && b.y === 6);
+  if (castleGate) { castleGate.artWidth = 384; castleGate.artOffsetX = -24; } // 扉の中心を既存の通行位置(23)に合わせる
   bld('bld.mine_entrance', 'C5_MINE', 28, 10); bld('bld.tailor_shop', 'C5_TOWN', 18, 11);
   bld('bld.furnace_hall', 'C6_VALLEY', 32, 9); bld('bld.observatory', 'C8_OBS', 17, 9);
   bld('bld.lighthouse', 'C9_GATE', 8, 6); bld('bld.table_house', 'C16_VILLAGE', 12, 9);
@@ -49,7 +51,7 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   for (const d of (LAYOUT.C2_CAMP.decor || []).filter(d => d.art === key('prop.refugee_tent'))) { d.aw = 144; d.blockW = 3; }
   swap('prop.supply_wagon', 'C2_ROAD', 15, 11); swap('prop.market_stall', 'C3_MARKET', 23, 9);
   for (const d of (LAYOUT.C3_MARKET.decor || []).filter(d => d.art === key('prop.market_stall'))) d.blockW = 3;
-  swap('prop.prison_bars', 'C4_CASTLE', 14, 5); swap('prop.throne', 'C4_CASTLE', 9, 2); swap('prop.throne', 'C11_HALL', 10, 2);
+  swap('prop.prison_bars', 'C4_CASTLE', 15, 4); swap('prop.throne', 'C4_CASTLE', 9, 2); swap('prop.throne', 'C11_HALL', 10, 2);
   swap('prop.rubble', 'C5_TUNNEL', 17, 6); swap('prop.mine_cart', 'C5_MINE', 34, 11);
   swap('prop.gravestone', 'C7_HILL', 18, 6); swap('prop.gravestone', 'C7_HILL', 22, 6);
   swap('prop.observation_console', 'C8_LAB', 6, 3); swap('prop.sea_lamp', 'C9_RUIN', 12, 4);
@@ -58,19 +60,48 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   for (const d of (LAYOUT.C16_TABLE.furn || []).filter(d => d.art === key('prop.table_set'))) d.dw = 118; // 椅子と室内の2マスの食卓に合わせる
   for (const d of (LAYOUT.C16_VILLAGE.decor || []).filter(d => d.art === key('prop.new_furnace'))) d.blockW = 3;
   // 新しく置く(当たり判定なしの飾り。ファイルが無いあいだは何も描かない)。位置は台帳の note と名前付きの場所から
-  const place = (id, map, at) => {
+  const place = (id, map, at, opts = {}) => {
     const k = key(id), m = MAPS[map]; if (!k || !m) return;
     const p = typeof at === 'string' ? (m.points || {})[at] : at; if (!p) return;
-    const l = LAYOUT[map] = LAYOUT[map] || {}; (l.decor = l.decor || []).push({ img: null, art: k, x: p[0], y: p[1], aw: width(id, 96), noblock: true });
-    use(id, `${map} の ${typeof at === 'string' ? '点「' + at + '」' : '(' + p + ')'}(新規の飾り・当たり判定なし)`);
+    const l = LAYOUT[map] = LAYOUT[map] || {}; (l.decor = l.decor || []).push({ img: null, art: k, x: p[0], y: p[1], aw: opts.width || width(id, 96), noblock: !opts.block });
+    use(id, `${map} の ${typeof at === 'string' ? '点「' + at + '」' : '(' + p + ')'}(新規の飾り・${opts.block ? '足元に当たり判定あり' : '当たり判定なし'})`);
   };
+  place('prop.dune_rock', 'C2_ROAD', [20, 8], { width:72, block:true });
+  place('prop.dune_rock', 'C2_ROAD', [35, 16], { width:72, block:true });
+  place('prop.dune_rock', 'C8_OBS', [28, 17], { width:72, block:true });
+  place('prop.small_lantern_core', 'C15_ROAD', [26, 15], { width:48, block:true });
+  // Rocky undersides are visual overlays at the southern edge of each island;
+  // the existing cloud/land tiles remain responsible for movement.
+  for (const pt of [[9,19],[21,13],[32,23]]) place('prop.floating_isle_edge', 'C10_ISLES', pt, { width:240 });
+  for (const d of LAYOUT.C10_ISLES.decor.filter(d => d.art === key('prop.floating_isle_edge'))) d.waterOK = true;
   place('prop.small_boat', 'C3_PORT', [22, 20]); // 陸の木箱ではなく、桟橋の隣の水面に浮かべる
   const harborBoat = (LAYOUT.C3_PORT.decor || []).find(d => d.art === key('prop.small_boat'));
   if (harborBoat) harborBoat.waterOK = true;
   place('prop.hatch', 'C4_CASTLE', [15, 2]); place('prop.valve_wheel', 'C6_FURNACE', [11, 3]); place('prop.big_furnace_core', 'C6_FURNACE', 'boss');
-  place('prop.ship_wheel', 'C10_SHIP', [24, 8]); place('prop.lullaby_device', 'C11_DEVICE', 'core'); place('prop.ash_cave_mouth', 'C12_SEA', 'gate');
+  // 船尾の舵輪は操舵区画の一体絵に含まれる。
+  place('prop.ship_mast', 'C10_SHIP', [17, 8], { width:128, block:true }); place('prop.ship_mast', 'C12_DECK', [17, 7], { width:128, block:true });
+  place('prop.ship_mast', 'C10_SHIP', [9, 8], { width:128, block:true }); place('prop.ship_mast', 'C12_DECK', [9, 7], { width:128, block:true });
+  // 帆を広げた別素材。欠落時は既存の巻いた帆へ戻す。
+  for (const mid of ['C10_SHIP', 'C12_DECK']) for (const d of LAYOUT[mid].decor.filter(d => d.art === key('prop.ship_mast'))) { d.img = key('prop.ship_mast'); d.scale = 0.25; d.art = 'prop_ship_mast_open'; d.aw = 240; }
+  // 船尾の高い操舵区画は背景小物。階段・扉は現時点で装飾。
+  for (const [map, x, y] of [['C10_SHIP', 23, 6], ['C12_DECK', 23, 5]])
+    LAYOUT[map].decor.push({img:null, art:'prop_ship_stern', x, y, aw:336, noblock:true});
+  // 甲板に街灯柱を立てず、手すり付近の小型灯火で照らす。
+  for (const [map, x, y] of [['C10_SHIP', 10, 5], ['C10_SHIP', 20, 5], ['C10_SHIP', 10, 12], ['C10_SHIP', 20, 12], ['C12_DECK', 8, 4], ['C12_DECK', 19, 4], ['C12_DECK', 8, 9], ['C12_DECK', 19, 9]])
+    LAYOUT[map].decor.push({img:null, art:'furn_lantern', x, y, aw:22, noblock:true});
+  // 船倉に通じる床ハッチ。足元の飾りで、上を歩ける。
+  for (const [map, x, y] of [['C10_SHIP', 12, 10], ['C12_DECK', 11, 7]])
+    LAYOUT[map].decor.push({img:null, art:'prop_ship_hatch', x, y, aw:96, noblock:true});
+  // 甲板の上下の縁に手すりを並べる。乗降口を空ける。
+  for (const [map, north, south] of [['C10_SHIP', 4, 12], ['C12_DECK', 3, 9]])
+    for (const x of [7, 10, 13, 16, 19, 22])
+      for (const y of [north, south]) LAYOUT[map].decor.push({img:null, art:'prop_deck_rail', x, y, aw:144, noblock:true, waterOK:true});
+  place('prop.lullaby_device', 'C11_DEVICE', 'core'); place('prop.ash_cave_mouth', 'C12_SEA', 'gate');
   for (const d of (LAYOUT.C12_SEA.decor || []).filter(d => d.art === key('prop.ash_cave_mouth'))) { d.aw = 192; d.y -= 2; } // 入口の背後へ置き、門番の獣を隠さない
   place('prop.crown_core', 'C13_CORE', 'crown'); place('prop.vision_mist', 'C13_CORE', 'vision1'); place('prop.vision_mist', 'C13_CORE', 'vision2'); place('prop.vision_mist', 'C13_CORE', 'vision3');
+  // 王都の広場は中央通路を空け、端に休憩用の椅子を置く。
+  place('prop.wayside_bench', 'C4_CAPITAL', [14, 18], { width:96, block:true });
+  place('prop.wayside_bench', 'C4_CAPITAL', [30, 18], { width:96, block:true });
   place('prop.wayside_bench', 'C15_ROAD', 'rest');
   // 幻は各人物が向き合った後に消え、章を越えて残り続けない。
   for (const [point, flag] of [['vision1','c13_v1'], ['vision2','c13_v2'], ['vision3','c13_v3']]) {
@@ -84,12 +115,13 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   npc('npc.dockman', ['c3_foreman', 'c3_boatman', 'c3_cook']); npc('npc.miner', ['c5_miners']); npc('npc.keeper', ['c9_keeper']);
   for (const a of CHREG.actors.filter(a => ['c3_foreman', 'c3_boatman', 'c3_cook'].includes(a.id))) a.fieldWidth = 56;
   for (const a of CHREG.actors.filter(a => a.id === 'c5_miners')) a.fieldWidth = 56;
-  npc('npc.auto_keeper', ['c10_auto']); npc('npc.deck_crew', ['c12_crew']);
+  npc('npc.auto_keeper', ['c10_auto']);
   for (const a of CHREG.actors.filter(a => ['c9_keeper', 'c10_auto'].includes(a.id))) a.fieldWidth = a.id === 'c10_auto' ? 44 : 50;
 
   /* ---- 戦闘の表示(battle.js)。画像が置かれていれば自動で使われる ---- */
   const code = (id, where) => { if (ent(id)) use(id, where); };
   code('prop.salt_scrub', '第2章: 塩の街道の砂地に岩と草を配置');
+  code('prop.road_lantern_row', '第15章: 帰り道の街灯に点灯した姿を表示');
   code('ui.target_arrow', '戦闘: 対象選択中、選んでいる相手の頭上(無ければ金色の三角)');
   for (const id of ['ui.boss_frame', 'ui.boss_nameplate', 'ui.cmd_icons', 'ui.mp_gauge']) pend(id, '戦闘画面再設計後は画像を参照せず、ゲーム内描画の枠・アイコン・ゲージを使用');
   code('fx.hit', '戦闘: 通常攻撃が当たったとき'); code('fx.light', '戦闘: 「ひかり」系の技'); code('fx.heal', '戦闘: 回復技・回復薬'); code('fx.rain', '戦闘: 全体技(あめのうた系)');
@@ -115,6 +147,9 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   show('bg.lighthouse_log', 'c9_keeper_boss', isOp('ask'), (op, d) => d >= 3, BG);
   show('bg.sky_isles', 'c10_auto', 0, isOp('battle'), BG);
   show('bg.throne_hall', 'c4_king', 0, isOp('stage'), BG); show('bg.throne_hall', 'c11_king', 0, isOp('battle'), BG);
+  show('npc.captain_dart', 'c4_king', has('兵たちが入ってきた'), has('捕らえよ'), PIC);
+  // A group illustration belongs in the night scene, never in a single actor's sprite slot.
+  show('npc.deck_crew', 'c12_crew', op => op[0] === 'n' && String(op[1]).includes('甲板に、静かな夜風'), op => op[0] === 's' && op[1] === 'アレン', PICB);
   show('bg.ash_sea', 'c12_gate', 0, isOp('battle'), BG); show('bg.ash_sea', 'c14_voice', 0, isOp('ask'), BG);
   show('bg.table_end', 'c16_kid', has('食卓に、笑い声が広がった'), isOp('end_game'), BG);
   show('ui.empty_plate', 'c16_kid', has('皿のない席'), has('空けておいて'), PICB);
@@ -128,9 +163,10 @@ const ASSET_USE = {}, ASSET_PENDING = {}, ASSET_PROBLEMS = [];
   show('item.gardo_pan', 'c7_noah', op => op[0] === 'n' && String(op[1]).includes('墓標には'), (op, d) => d >= 2, PIC);
 
   /* ---- 未接続のまま残る物(理由つき) ---- */
-  for (const id of ['ui.status_icons', 'fx.status_poison', 'fx.status_sleep']) pend(id, '毒・眠りは未実装。攻撃・防御低下は文字表示で、アイコン・専用演出は未接続');
-  pend('ui.turn_order', '行動順の表示が未実装(提案の段階)');
+  pend('ui.status_icons', '敵の毒・眠りと攻撃・防御低下は文字表示。アイコン画像は未使用');
+  pend('ui.turn_order', '行動順は戦闘画面に文字で表示。候補画像は未使用');
   for (const id of ['prop.ship_mast', 'prop.floating_isle_edge', 'prop.small_lantern_core', 'prop.road_lantern_row', 'prop.dune_rock', 'npc.captain_dart', 'prop.wayside_bench', 'prop.hatch', 'prop.valve_wheel', 'prop.ship_wheel', 'prop.big_furnace_core', 'prop.lullaby_device', 'prop.ash_cave_mouth', 'prop.crown_core', 'prop.vision_mist'])
     pend(id, '配置する場所が決まっていない/名前付きの場所が無い(Codex と座標を決めてから接続)');
   pend('item.gardo_pan', '台本に「鍋」の場面が見つからない');
 })();
+

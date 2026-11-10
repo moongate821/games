@@ -3,6 +3,8 @@
    ■ 道具は ITEMS、装備は GEAR に書き足す。装備の効果は攻撃(atk)・防御(def)・素早さ(spd)に足される。
    ■ 持ち物は S.items(道具の数)と S.gear(持っている装備の数)、付けている装備は S.equip[メンバーid]={w:武器,a:防具,c:装飾}。 */
 const ITEMS = {
+  poison_vial: { name:'痺れ毒の小瓶', desc:'敵1体を3回の行動の間、毒にする。行動前に最大HPの5%（最大30）ダメージ。', poison:3 },
+  sleep_dust: { name:'眠りの香粉', desc:'敵1体の次の行動を休ませる。ボスには効かない。', sleepStatus:1 },
   weakening_powder: { name:'鈍刃の粉', desc:'戦闘中、敵1体の攻撃力を次の3行動の間25%下げる。', weaken:3 },
   armorbreak_powder: { name:'砕甲の粉', desc:'敵1体の防御力を次の3行動の間25%下げる。通常攻撃に有効。', armorbreak:3 },
   scroll_cataclysm: { name:'星墜の極大巻物', desc:'戦闘中、敵全体に90ダメージ。使うとなくなる。', damage:90, allEnemies:true, ultimate:true },
@@ -60,7 +62,7 @@ async function itemMenu() {
     const k = await choose(ids.map(i => `${ITEMS[i].name} ×${S.items[i]}`), '道具(戻る: Xキー)', { cancel: true, desc: i => ITEMS[ids[i]].desc + (ITEMS[ids[i]].key ? '(大事な物)' : '') });
     if (k < 0) return;
     const id = ids[k], it = ITEMS[id];
-    if (it.damage || it.weaken || it.armorbreak) { await narrate(`${it.name}は戦闘中に使う道具だ。`); continue; }
+    if (it.damage || it.weaken || it.armorbreak || it.poison || it.sleepStatus) { await narrate(`${it.name}は戦闘中に使う道具だ。`); continue; }
     if (it.key) { await narrate(`${it.name}は、使うものではない。${it.desc}`); continue; }
     const ms = fieldMembers();
     let m = ms[0];

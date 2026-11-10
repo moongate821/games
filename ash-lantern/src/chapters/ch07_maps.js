@@ -8,19 +8,17 @@
       C7_INN: {
         name: '丘のふもとの宿', w: 12, h: 10, indoor: true, bgm: 'home',
         ops: [['fill', 'x'], ['rect', 1, 2, 10, 8, 'o'], ['set', 8, 9, 'd']],
-        points: { start: [8, 8], table: [6, 5], seat: [9, 5] },
+        points: { start: [8, 8], table: [4, 5], seat: [8, 5] },
         layout: {
           wallColor: '#7a5532', windows: [4 * 48 + 6, 9 * 48 + 6], doorX: 8, wall: [{img:'furn_jarshelf_orthogonal',x:6.05,y:17,w:110}], rug: { x: 5.2, y: 3.6, w: 210 },
           furn: [
-            { img: 'furn_table_orthogonal', art: 'prop_table_set', x: 7, y: 4, w: 2, h: 2, dw: 118, say: '宿の食卓。皿は並んでいるが、一つだけ手つかずのままだ。' },
-            { img: 'furn_chair_orthogonal', x: 6, y: 4, w: 1, h: 1, dw: 35, say: '椅子。' },
-            { img: 'furn_chair_orthogonal', x: 9, y: 4, w: 1, h: 1, dw: 35, say: '空いたままの椅子。誰の席か、言わなくても分かる。' },
-            { img: 'furn_bookshelf_orthogonal', x: 2, y: 2, w: 2, h: 1, dw: 100, say: '宿帳と、旅人の置いていった本。' },
+            { img: 'furn_table_orthogonal', art: 'prop_table_set', x: 5, y: 3, w: 3, h: 2, dw: 118, say: '宿の食卓。皿が一枚、手つかずのまま置かれている。' },
+            { img: 'furn_chair_orthogonal', x: 6, y: 2, w: 1, h: 1, dw: 35, say: '空いたままの椅子。誰の席か、言わなくても分かる。' },
+            { img: 'furn_bookshelf_orthogonal', x: 1, y: 2, w: 3, h: 1, dw: 100, say: '宿帳と、旅人の置いていった本。' },
             { img: 'furn_stove', x: 10, y: 2, w: 1, h: 2, dw: 66, say: '暖炉代わりのストーブ。鍋が静かに煮えている。' },
-            { img: 'furn_bed_orthogonal', x: 1, y: 6, w: 2, h: 2, dw: 82, act: 'inn_rest' },
-            { img: 'furn_barrel', x: 10, y: 7, w: 1, h: 1, dw: 46, say: '葡萄酒の樽。' }, { img: 'furn_crate', x: 10, y: 8, w: 1, h: 1, dw: 52 },
-            { img: 'furn_flowerpot', x: 5, y: 2, w: 1, h: 1, dw: 32 },
-            { img: 'furn_chest', x: 1, y: 4, w: 1, h: 1, dw: 44, say: '宿泊客のための毛布が入っている。' }]
+            { img: 'furn_bed_orthogonal', x: 1, y: 5, w: 2, h: 2, dw: 82, act: 'inn_rest' },
+            { img: 'furn_barrel', x: 10, y: 5, w: 1, h: 2, dw: 46, say: '葡萄酒の樽。' },
+            { img: 'furn_chest', x: 1, y: 8, w: 1, h: 1, dw: 44, say: '宿泊客のための毛布が入っている。' }]
         }
       },
       C7_HILL: {

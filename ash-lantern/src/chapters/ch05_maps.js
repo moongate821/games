@@ -27,20 +27,19 @@
         }
       },
       C5_TUNNEL: {
-        name: '雨鳴鉱山の坑道', w: 22, h: 14, indoor: true, bgm: 'dusk', skin: { o: 'r' }, dim: 'rgba(5,10,28,.5)',
+        name: '雨鳴鉱山の坑道', w: 22, h: 14, indoor: true, bgm: 'dusk', skin: { o: 'r' }, dim: 'rgba(5,10,28,.12)',
         ops: [['fill', 'x'], ['rect', 1, 2, 20, 12, 'o'], ['set', 11, 13, 'd']],
-        points: { start: [11, 12], deep: [11, 3], trapped: [18, 4] },
+        points: { start: [11, 12], deep: [11, 3], trapped: [16, 6] },
         layout: {
           wallColor: '#3a3430', windows: [], doorX: 11,
+          // 岩・坑木・鉱車の足元に合わせ、中央の線路は歩けるようにする。
           furn: [
-            { img: 'furn_crate', x: 16, y: 3, w: 1, h: 1, dw: 52, say: '崩れた坑木と荷箱が通路をふさいでいる。' }, { img: 'furn_crate', x: 16, y: 4, w: 1, h: 1, dw: 52 },
-            { img: 'furn_crate', x: 16, y: 5, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 17, y: 6, w: 1, h: 1, dw: 52 },
-            { img: 'furn_fence', x: 6, y: 5, w: 2, h: 1, dw: 100, say: '折れかけた坑木。' },
-            { img: 'furn_crate', x: 4, y: 6, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 5, y: 6, w: 1, h: 1, dw: 52, say: '鉱石を入れた木箱。濡れて重い。' },
-            { img: 'furn_crate', x: 4, y: 9, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 15, y: 9, w: 1, h: 1, dw: 52 },
-            { img: 'furn_crate', x: 8, y: 8, w: 1, h: 1, dw: 52 }, { img: 'furn_crate', x: 14, y: 7, w: 1, h: 1, dw: 52 },
-            { img: 'furn_barrel', x: 2, y: 11, w: 1, h: 1, dw: 46, say: '雨水が溜まった樽。' }, { img: 'furn_barrel', x: 19, y: 11, w: 1, h: 1, dw: 46 },
-            { img: 'furn_lantern', x: 9, y: 3, w: 1, h: 1, dw: 30, say: '坑道のランタン。火は小さい。' }, { img: 'furn_lantern', x: 13, y: 3, w: 1, h: 1, dw: 30 }]
+            { img:'furn_crate', x:16, y:3, w:1, h:3, dw:52, say:'崩れた坑木と岩が通路をふさいでいる。' },
+            { img:'furn_crate', x:17, y:6, w:1, h:1, dw:52 },
+            { img:'furn_crate', x:4, y:4, w:3, h:2, dw:100, say:'鉱石を入れた荷箱。雨に濡れて重い。' },
+            { img:'furn_crate', x:2, y:6, w:2, h:2, dw:100, say:'掘り出した鉱石を運ぶ鉱車。' },
+            { img:'furn_barrel', x:6, y:4, w:1, h:1, dw:46, say:'道具をしまう樽。' }
+          ]
         }
       },
       C5_TOWN: {

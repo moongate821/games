@@ -112,6 +112,20 @@ function isSolidTile(x, y) {
   return false;
 }
 function actorAt(x, y) { return actors.find(a => a.solid && a.vis !== false && Math.round(a.x) === x && Math.round(a.y) === y && !a.moving); }
+// A map's nominal start can itself be occupied by a stage-specific actor.
+function safeLoadPosition(preferred) {
+  const [sx, sy] = preferred;
+  for (let r = 0; r <= map.w + map.h; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      const dx = r - Math.abs(dy);
+      for (const x of dx ? [sx - dx, sx + dx] : [sx]) {
+        const y = sy + dy;
+        if (!isSolidTile(x, y) && !actorAt(x, y)) return [x, y];
+      }
+    }
+  }
+  return null;
+}
 
 function setMapData(id) {
   const m = MAPS[id];
@@ -128,13 +142,13 @@ function buildOutdoorStatics(id) {   // 灯守村(V)・川霧の町(K)。配置�
   const L = LAYOUT[id] || {};
   const add = (o) => statics.push(o);
   // 建物 (x,y = 足元の左端タイル。接地は2行)
-  const bld = (img, x, y, flip, doorX, art, artWidth) => {   // art = 専用画像の名前(ファイルがあれば img の代わりに使う)
+  const bld = (img, x, y, flip, doorX, art, artWidth, artOffsetX) => {   // art = 専用画像の名前(ファイルがあれば img の代わりに使う)
     const im = () => (art && IMG[art]) || IMG[img];
     add({ y: (y + 1) * T, draw(c) {
       const i = im(); if (!i) return; const dw = art && IMG[art] && artWidth ? artWidth : 6 * T;
       // 専用画像の寸法は代替画像と異なる。代替画像専用の切り出しは流用しない。
       const crop = art && IMG[art] ? [0, 0, i.width, i.height] : img === 'bld_workshop_front' ? [60, 32, 1257, 1034] : img === 'bld_hall_front' ? [22, 28, 1339, 1059] : [0, 0, i.width, i.height];
-      const dh = crop[3] * dw / crop[2], dx = x * T + (6 * T - dw) / 2 + (img === 'bld_workshop_front' && !flip && !(art && IMG[art]) ? 15 : 0);
+      const dh = crop[3] * dw / crop[2], dx = x * T + (6 * T - dw) / 2 + (art && IMG[art] ? (artOffsetX || 0) : 0) + (img === 'bld_workshop_front' && !flip && !(art && IMG[art]) ? 15 : 0);
       c.save(); if (flip) { c.translate(dx * 2 + dw, 0); c.scale(-1, 1); }
       c.drawImage(i, ...crop, dx, (y + 1) * T - dh, dw, dh); c.restore();
     } });
@@ -142,7 +156,7 @@ function buildOutdoorStatics(id) {   // 灯守村(V)・川霧の町(K)。配置�
     if (doorX != null) solid[y][doorX] = false;
   };
   for (const b of (L.buildings || [])) {
-    bld(b.img, b.x, b.y, b.flip, b.door != null ? b.door : null, b.art, b.artWidth);
+    bld(b.img, b.x, b.y, b.flip, b.door != null ? b.door : null, b.art, b.artWidth, b.artOffsetX);
     if (b.shopName) add({ y: (b.y + 1) * T + 1, draw(c) { const x = b.door * T + T / 2; c.save(); c.font = 'bold 14px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#302016'; c.fillRect(x - 27, b.y * T - 35, 54, 20); c.strokeStyle = '#d2a760'; c.strokeRect(x - 27, b.y * T - 35, 54, 20); c.fillStyle = '#fff0c5'; c.fillText(b.shopName, x, b.y * T - 25); c.restore(); } });
     if (b.kind === 'workshop') warps.push({ x: b.door, y: b.y, to: 'W', tx: 6, ty: 8, dir: 'up' });
     else if (b.kind === 'hall') inters.push({ x: b.x + 3, y: b.y, w: 1, fn: async () => { await narrate(atLeast('furnace_taken') ? '公民館の扉。中から人の気配がする。' : '村の公民館。灯火祭の準備で荷物が積まれている。'); } });
@@ -155,7 +169,15 @@ function buildOutdoorStatics(id) {   // 灯守村(V)・川霧の町(K)。配置�
     block(x, y, 1, 1);
   };
   (L.lamps || []).forEach(([x, y]) => {
-    add({ y: (y + 1) * T, draw(c) { const i = IMG.prop_lamp_tall; if (!i) return; const dh = 120, dw = dh * 360 / 1491; c.drawImage(i, 407, 23, 234, 1491, x * T + T / 2 - dw * 0.22, (y + 1) * T - dh, dw, dh); } });
+    add({ y: (y + 1) * T, draw(c) {
+      const dh = 120;
+      if (id === 'C15_ROAD' && IMG.prop_road_lantern_row) {
+        const i = IMG.prop_road_lantern_row, dw = dh * i.width / i.height;
+        c.drawImage(i, x * T + T / 2 - dw / 2, (y + 1) * T - dh, dw, dh); return;
+      }
+      const i = IMG.prop_lamp_tall; if (!i) return; const dw = dh * 360 / 1491;
+      c.drawImage(i, 407, 23, 234, 1491, x * T + T / 2 - dw * 0.22, (y + 1) * T - dh, dw, dh);
+    } });
     block(x, y, 1, 1);
   });
   (L.barrels || []).forEach(p => prop('prop_barrel', p[0], p[1], 1));
@@ -227,13 +249,15 @@ async function fieldBattle(ids) {   // 台本から呼ぶ戦闘。終わった�
 
 function buildWorkshopStatics(id) {
   id = id || 'W';
+  const conceptRoom = (id === 'W' && IMG.bg_workshop_concept) || (id === 'C3_WAREHOUSE' && IMG.bg_harbor_warehouse) || (id === 'C5_TUNNEL' && IMG.bg_mine_tunnel_concept) || (id === 'C8_LAB' && IMG.bg_observatory_lab_concept) || (id === 'C4_CASTLE' && IMG.bg_castle_audience_concept) || (id === 'C7_INN' && IMG.bg_inn_remembrance) || (id === 'C4_ESCAPE' && IMG.bg_escape_drain) || (id === 'C14_HEART' && IMG.bg_furnace_heart_concept);
   const add = (o) => statics.push(o);
   // 壁(上2行)
-  add({ y: -100, draw(c) { drawWorkshopWall(c); } });
+  add({ y: -100, draw(c) { if (!conceptRoom) drawWorkshopWall(c); } });
   // 家具(画像素材15から切り出した img/furn_*.png)。footprint=タイル単位の当たり判定、描画は足元基準
   const furn = (img, fx, fy, fw, fh, dw, o) => {
     o = o || {};
     add({ y: (fy + fh) * T + (o.dy || 0), draw(c) {
+      if (conceptRoom) return;
       const key = (o.art && IMG[o.art]) ? o.art : img, i = IMG[key]; if (!i) return;
       const crops = { furn_table_orthogonal: [158, 184, 1173, 734], furn_bed_orthogonal: [143, 93, 859, 1190], furn_bench_orthogonal: [13, 25, 1369, 1075], furn_chair_orthogonal: [108, 97, 783, 1374], furn_bookshelf_orthogonal: [108, 31, 989, 1255] };
       const crop = (key === img && crops[img]) || [0, 0, i.width, i.height];
@@ -250,11 +274,14 @@ function buildWorkshopStatics(id) {
     if (!o.noblock) block(fx, fy, fw, fh);
   };
   const WL = LAYOUT[id] || {};
-  if (WL.rug) add({ y: -90, draw(c) { const i = IMG.furn_rug_orthogonal; if (i) c.drawImage(i, 121, 110, 1293, 795, WL.rug.x * T, WL.rug.y * T, WL.rug.w, 795 * WL.rug.w / 1293); } });
-  add({ y: -80, draw(c) { for (const w of (WL.wall || [])) { const i = IMG[w.img]; if (i) { const crop = w.img === 'furn_toolrack_orthogonal' ? [6, 21, 1525, 974] : w.img === 'furn_jarshelf_orthogonal' ? [165, 49, 1822, 611] : [0, 0, i.width, i.height]; c.drawImage(i, ...crop, w.x * T, w.y, w.w, crop[3] * w.w / crop[2]); } } } });
+  if (WL.rug && !conceptRoom) add({ y: -90, draw(c) { const i = IMG.furn_rug_orthogonal; if (i) c.drawImage(i, 121, 110, 1293, 795, WL.rug.x * T, WL.rug.y * T, WL.rug.w, 795 * WL.rug.w / 1293); } });
+  add({ y: -80, draw(c) { if (conceptRoom) return; for (const w of (WL.wall || [])) { if (id === 'W' && w.img === 'furn_toolrack_orthogonal' && IMG.furn_bench_concept) continue; const i = IMG[w.img]; if (i) { const crop = w.img === 'furn_toolrack_orthogonal' ? [6, 21, 1525, 974] : w.img === 'furn_jarshelf_orthogonal' ? [165, 49, 1822, 611] : [0, 0, i.width, i.height]; c.drawImage(i, ...crop, w.x * T, w.y, w.w, crop[3] * w.w / crop[2]); } } } });
   for (const f of (WL.furn || [])) furn(f.img, f.x, f.y, f.w, f.h, f.dw, { flip: f.flip, dy: f.dy, art: f.art, after: f.overlay ? OVERLAYS[f.overlay] : null });
+  if (id === 'W' && IMG.bg_workshop_concept) add({ y: 4*T, draw(c) { const bell=IMG.item_bell, kit=IMG.item_repair; if (bell) c.drawImage(bell, 3.57*T, 3.35*T, 14, 14*bell.height/bell.width); if (kit) c.drawImage(kit, 10.55*T, 3.21*T, 24, 24*kit.height/kit.width); } });
   // Chapter decorations can also be placed indoors (the shared asset map uses decor).
   for (const d of (WL.decor || [])) {
+    if (id === 'C4_CASTLE' && IMG.bg_castle_audience_concept) continue;
+    if (id === 'C14_HEART' && IMG.bg_furnace_heart_concept) continue;
     if (!(d.art && IMG[d.art])) continue;
     add({ y: (d.y + 1) * T, draw(c) {
       const im = IMG[d.art]; if (!im || (d.visible && !d.visible())) return;
@@ -298,9 +325,12 @@ function drawWorkshopWall(c) {
     c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x * T + T - 3, 0, 3, 2 * T);
     c.fillStyle = 'rgba(255,255,255,.06)'; c.fillRect(x * T, 0, 3, 2 * T);
   }
+  if (map.id === 'W' && IMG.wall_workshop_concept) { const i = IMG.wall_workshop_concept; for (let x=0; x<map.w*T; x+=4*T) { const n = Math.min(4*T, map.w*T-x); c.drawImage(i, 0, 0, n, 96, x, 0, n, 2*T); } }
+  if (map.id === 'C5_TUNNEL' && IMG.tile_cave_wall) { const i = IMG.tile_cave_wall; for (let x=0; x<map.w*T; x+=4*T) { const n = Math.min(4*T, map.w*T-x); c.drawImage(i, 0, 0, n, 96, x, 0, n, 2*T); } }
   c.fillStyle = '#4a3220'; c.fillRect(0, 2 * T - 10, map.w * T, 10);
   // 窓
   for (const wx of wins) {
+    if (map.id === 'W' && IMG.window_workshop_concept) { c.drawImage(IMG.window_workshop_concept, wx - 8, 6, 92, 82); continue; }
     c.fillStyle = '#3a2814'; c.fillRect(wx - 6, 14, 84, 70);
     const g = c.createLinearGradient(0, 18, 0, 80); g.addColorStop(0, '#ffe7a8'); g.addColorStop(1, '#f0b860');
     c.fillStyle = g; c.fillRect(wx, 20, 72, 58);
@@ -364,7 +394,7 @@ function placeActorsBase() {
   actors = [];
   if (map.id === 'K') { placeKirimachi(); registryActors(); return; }
   if (SHOP_ROOMS[map.id]) { placeShopkeeper(map.id); return; }
-  if (map.id !== 'V') { registryActors(); if (map.id === 'C12_SEA' && atLeast('c12_start')) placeTravelingMerchant(); return; }
+  if (map.id !== 'V') { registryActors(); if (map.id === 'C12_SEA' && atLeast('c12_start')) placeTravelingMerchant(); if (map.id === 'C5_TOWN' && atLeast('c5_confess')) placeValleyMerchant(); return; }
   const st = stIdx();
   if (st < STAGES.indexOf('furnace_taken')) {
     addActor({ id: 'mayor', img: 'npc_mayor', x: 22, y: 12, dir: 'left', name: '村長', talk: () => mayorTalk() });
@@ -474,8 +504,9 @@ async function play(script) {   // 戻り値 true = ['end'] で終わった
       case 'actor': { if (op[1] === 'remove') removeActor(op[2]); else if (op[1] === 'add') { const d = op[2], [ax, ay] = resolveAt(d.at, map.id); addActor({ id: d.id, img: d.img, fallback: d.fallback, sheet: d.sheet, x: ax, y: ay, dir: d.dir || 'down', name: d.name, scale: d.scale, talk: d.story ? () => play(STORY[d.story]) : undefined }); } break; }
       case 'bg': G.cg = op[1] ? { img: op[1] } : null; break;   // ['bg', 画像名|null] 一枚絵を画面いっぱいに(会話の背景)
       case 'pic': G.pic = op[1] ? { img: op[1], size: op[2] || 'small' } : null; break;   // ['pic', 画像名|null, 'small'|'big'] 挿絵・小物を中央に
-      case 'levelup': { const n = op[1] || 1; const ids = ['allen', ...(S.allies || []).map(m => m.id)], was = ids.map(i => skillsOf(i)); S.lv = (S.lv || 0) + n; S.mhp += LV.mhp * n; S.hp += LV.mhp * n; for (const m of (S.allies || [])) { m.hp += LV.mhp * n; m.mp += LV.mmp * n; } Snd.sfx('item');
+      case 'levelup': { const n = op[1] || 1, oldLv = S.lv || 0; const ids = ['allen', ...(S.allies || []).map(m => m.id)], was = ids.map(i => skillsOf(i)); S.lv = oldLv + n; S.mhp += LV.mhp * n; S.hp += LV.mhp * n; for (const m of (S.allies || [])) { m.hp += LV.mhp * n; m.mp += LV.mmp * n; } Snd.sfx('item');
         for (let k = 0; k < ids.length; k++) for (const s of skillsOf(ids[k])) if (!was[k].includes(s)) await narrate(`${ALLIES[ids[k]].name}は「${SKILLS[s].name}」を覚えた！`);
+        if (oldLv < 10 && S.lv >= 10 && ids.includes('mira') && ids.includes('serena')) await narrate('水極と炎極を覚えた！ 戦闘でミラかアレンの「合成」を選ぶと、参加者の行動とMPを使い、強力な全体魔法を放てる。');
         break; }   // 全員の成長(新しく覚えた技も知らせる)
       case 'end_game': await fade(1, 0.04); G.mode = 'ended'; G.fade = 0; G.fadeTo = 0; break;
       case 'card': await showCard(op[1], op[2]); break;
@@ -694,6 +725,20 @@ function restoreMissedSupplies(state) {
   const progress = STAGES.indexOf(state.st);
   if (progress < 0) return 0;
   let restored = 0;
+  // The road's added supplies are also available to older saves already past the trader.
+  if ((state.st === 'c2_road' || state.st === 'c2_conflict') && !state.flags.c2_magic_supply) {
+    state.items.ether = (state.items.ether || 0) + 1;
+    state.items.potion = (state.items.potion || 0) + 1;
+    state.flags.c2_magic_supply = true;
+    restored++;
+  }
+  // Saves made in the warehouse before the first-aid cache was introduced
+  // should have the same tactical options without rewriting the save slot.
+  if (state.st === 'c3_night' && !state.flags.c3_firstaid) {
+    for (const id of ['potion', 'ether', 'weakening_powder', 'armorbreak_powder']) state.items[id] = (state.items[id] || 0) + 1;
+    state.flags.c3_firstaid = true;
+    restored++;
+  }
   for (const [stage, flag, gear, item] of MISSED_SUPPLIES) {
     const threshold = STAGES.indexOf(stage);
     if (threshold < 0 || progress < threshold || state.flags[flag]) continue;
@@ -731,7 +776,7 @@ async function startGame(load, slot = 1) {
     const o = savedData(slot);
     if (o) { Object.assign(S, { shopStock: cleanShopStock(o.shopStock), gold: Number.isSafeInteger(o.gold) && o.gold >= 0 ? o.gold : 180 + Math.min(12, Math.max(0, o.lv || 0)) * 45, st: o.st, flags: o.flags || {}, items: Object.assign({ potion: 0, kit: 0, bread: 0, ether: 0 }, o.items), hp: o.hp, mhp: o.mhp, lv: o.lv || 0, allies: o.allies || [], gear: o.gear || {}, equip: o.equip || {} }); const restored = restoreMissedSupplies(S); G.tint = o.tint || 0; enterMap(o.map, o.x, o.y, o.dir); setStage(S.st);
       if (!Number.isFinite(S.hp) || !Number.isFinite(S.mhp) || S.mhp <= 0) { S.mhp = 50; S.hp = Math.max(1, Math.min(S.hp || 1, 50)); }
-      if (isSolidTile(Math.round(G.P.x), Math.round(G.P.y))) { const st = (MAPS[o.map].points || {}).start || [2, 2]; G.P.x = G.P.px = G.P.tx = st[0]; G.P.y = G.P.py = G.P.ty = st[1]; } G.fade = 1; G.fadeTo = 0; G.busy = false; if (restored) toast('以前の冒険で受け取れなかった装備・道具を持ち物に追加しました。'); return; }
+      if (isSolidTile(Math.round(G.P.x), Math.round(G.P.y)) || actorAt(Math.round(G.P.x), Math.round(G.P.y))) { const st = (MAPS[o.map].points || {}).start || [2, 2], safe = safeLoadPosition(st); if (safe) { G.P.x = G.P.px = G.P.tx = safe[0]; G.P.y = G.P.py = G.P.ty = safe[1]; } } G.fade = 1; G.fadeTo = 0; G.busy = false; if (restored) toast('以前の冒険で受け取れなかった装備・道具を持ち物に追加しました。'); return; }
   }
   enterMap('W', 6, 4, 'down'); G.fade = 1;
   await sceneIntro();
@@ -883,6 +928,14 @@ function tileImageFor(m, ch) {
   return (m.tileArt && IMG[m.tileArt[ch]]) || IMG[TILE_IMG[skin] || skin];
 }
 function drawTiles(cx, cy) {
+  if (map.id === 'C14_HEART' && IMG.bg_furnace_heart_concept) { ctx.drawImage(IMG.bg_furnace_heart_concept, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C4_ESCAPE' && IMG.bg_escape_drain) { ctx.drawImage(IMG.bg_escape_drain, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C7_INN' && IMG.bg_inn_remembrance) { ctx.drawImage(IMG.bg_inn_remembrance, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C4_CASTLE' && IMG.bg_castle_audience_concept) { ctx.drawImage(IMG.bg_castle_audience_concept, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C8_LAB' && IMG.bg_observatory_lab_concept) { ctx.drawImage(IMG.bg_observatory_lab_concept, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C5_TUNNEL' && IMG.bg_mine_tunnel_concept) { ctx.drawImage(IMG.bg_mine_tunnel_concept, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'C3_WAREHOUSE' && IMG.bg_harbor_warehouse) { ctx.drawImage(IMG.bg_harbor_warehouse, -cx, -cy, map.w*T, map.h*T); return; }
+  if (map.id === 'W' && IMG.bg_workshop_concept) { ctx.drawImage(IMG.bg_workshop_concept, -cx, -cy, map.w*T, map.h*T); return; }
   const x0 = Math.max(0, Math.floor(cx / T)), y0 = Math.max(0, Math.floor(cy / T));
   const x1 = Math.min(map.w - 1, Math.floor((cx + W) / T)), y1 = Math.min(map.h - 1, Math.floor((cy + H) / T));
   const tl = (x, y) => (map.tiles[y] && map.tiles[y][x]) || 'x';
@@ -893,7 +946,7 @@ function drawTiles(cx, cy) {
     const im = tileImageFor(map, ch);   // tileArt は専用画像、skin は地形記号または画像名
     const px = x * T - cx, py = y * T - cy;
     const g = tgrp(ch);
-    const soft = !map.indoor && (g === 'P' || g === 'W' || g === 'M');
+    const soft = !map.indoor && (g === 'P' || g === 'W' || g === 'M') && !(g === 'W' && (map.id === 'C10_SHIP' || map.id === 'C12_DECK'));
     let cr = [0, 0, 0, 0];   // 左上, 右上, 右下, 左下の丸め
     let sides = [false, false, false, false]; // 上, 右, 下, 左 が別の地面
     if (soft) {
@@ -1208,7 +1261,19 @@ function draw() {
   if (G.card) drawCard();
   if (G.screen && G.screen.type === 'status') drawStatusScreen();
   if (G.cg && IMG[G.cg.img]) { const im = IMG[G.cg.img], s = Math.max(W / im.width, H / im.height); ctx.drawImage(im, (W - im.width * s) / 2, (H - im.height * s) / 2, im.width * s, im.height * s); }
-  if (G.pic && IMG[G.pic.img]) { const im = IMG[G.pic.img], w = Math.min(im.width, G.pic.size === 'big' ? 420 : 200), h = im.height * w / im.width; ctx.drawImage(im, (W - w) / 2, 150 - h / 2 + 40, w, h); }
+  if (G.pic && IMG[G.pic.img]) {
+    const im = IMG[G.pic.img], w = Math.min(im.width, G.pic.img === 'ui_lullaby_text' ? 360 : G.pic.size === 'big' ? 420 : 200), h = im.height * w / im.width;
+    // Keep the laboratory's voice waveform above the speakers' heads.
+    const cy = G.pic.img === 'ui_voice_wave' || G.pic.img === 'ui_lullaby_text' ? 95 : 190;
+    const px = G.pic.img === 'npc_captain_dart' ? W - w - 45 : (W - w) / 2;
+    if (G.pic.img === 'npc_deck_crew') {
+      // Treat the group art as a cutscene, not oversized figures on the deck.
+      ctx.fillStyle = 'rgba(7, 11, 21, .94)'; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(217, 185, 121, .65)'; ctx.lineWidth = 2;
+      ctx.strokeRect(px - 10, cy - h / 2 - 10, w + 20, h + 20);
+    }
+    ctx.drawImage(im, px, cy - h / 2, w, h);
+  }
   if (G.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${G.fade})`; ctx.fillRect(0, 0, W, H); }
   if (G.dlg) drawDialog();
   if (G.choice) drawChoice();

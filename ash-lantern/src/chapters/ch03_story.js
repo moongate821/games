@@ -57,6 +57,10 @@ registerChapter({
       ['battle', ['warehouse_guard', 'dock_rat', 'dock_rat']],
       ['n', '番兵は倒れたが、命に別状はなさそうだ。ミラが簡単な手当てをした。'],
       ['s', 'ミラ', '怖い思いをさせました。……少し眠ってください。'],
+      ['if', '!flag:c3_firstaid', [
+        ['flag', 'c3_firstaid'], ['give', 'potion', 1], ['give', 'ether', 1], ['give', 'weakening_powder', 1], ['give', 'armorbreak_powder', 1],
+        ['n', '荷棚の救急袋に回復薬と魔力薬、敵の攻撃を弱める鈍刃の粉と、守りを崩す砕甲の粉が一つずつ残っていた。']
+      ]],
       ['toast', '目的が更新された']
     ],
     c3_crate: [

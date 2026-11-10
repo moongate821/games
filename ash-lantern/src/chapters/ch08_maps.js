@@ -26,16 +26,17 @@
       C8_LAB: {
         name: '観測室', w: 16, h: 11, indoor: true, bgm: 'home', skin: { o: 's' }, dim: 'rgba(120,150,210,.10)',
         ops: [['fill', 'x'], ['rect', 1, 2, 14, 9, 'o'], ['set', 8, 10, 'd']],
-        points: { start: [8, 9], console: [9, 3] },
+        points: { start: [8, 9], console: [9, 4] },
         layout: {
           wallColor: '#5d6577', windows: [3 * 48 + 6, 11 * 48 + 6], doorX: 8,
+          // 観測装置と机の足元を通行不可にし、中央通路を確保。
           furn: [
-            { img: 'furn_bench_orthogonal', x: 6, y: 3, w: 3, h: 2, dw: 156, say: '観測の操作卓。灯火の波形が、細い線で刻まれ続けている。' },
-            { img: 'furn_bookshelf_orthogonal', x: 2, y: 2, w: 2, h: 1, dw: 100, say: '観測記録の棚。日付と場所の札が整然と並ぶ。' },
-            { img: 'furn_bookshelf_orthogonal', x: 11, y: 2, w: 2, h: 1, dw: 100, say: '各地の灯火炉の記録。声の反響を測った数値が綴じてある。' },
-            { img: 'furn_table_orthogonal', x: 3, y: 6, w: 2, h: 2, dw: 118, say: '検証用の机。実験の途中らしい書き込みが散らばっている。' },
-            { img: 'furn_lantern', x: 12, y: 6, w: 1, h: 1, dw: 30, say: '標本用のランタン。中の灯は弱く揺れている。' },
-            { img: 'furn_chest', x: 13, y: 8, w: 1, h: 1, dw: 50, say: '記録用の結晶を収めた箱。' }]
+            { img:'furn_bench_orthogonal', x:6, y:3, w:4, h:1, dw:156, say:'観測装置。灯火の波形が細い線で刻まれ続けている。' },
+            { img:'furn_bookshelf_orthogonal', x:1, y:3, w:2, h:1, dw:100, say:'日付と場所の札が並ぶ観測記録の棚。' },
+            { img:'furn_bookshelf_orthogonal', x:13, y:3, w:2, h:1, dw:100, say:'各地の灯火炉と声の反響を測った記録。' },
+            { img:'furn_table_orthogonal', x:2, y:6, w:3, h:2, dw:118, say:'星図と実験記録を広げた机。' },
+            { img:'furn_table_orthogonal', x:11, y:6, w:3, h:2, dw:118, say:'望遠鏡と標本を使う観測机。' }
+          ]
         }
       }
     },

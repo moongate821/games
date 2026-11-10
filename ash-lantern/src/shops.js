@@ -17,12 +17,12 @@ Object.assign(GEAR, {
 });
 // 進行フラグは到達後も残る。希少品は後半まで販売しない。
 const SHOP_STOCK = {
-  item: [ ['potion',25], ['bread',15], ['ether',40], ['revival_tonic',90], ['scroll_heal',65], ['weakening_powder',100,'c2_start'], ['armorbreak_powder',125,'c3_start'], ['scroll_fire',80,'c2_start'], ['scroll_gale',150,'c5_start'], ['caravan_ration',45,'c2_start'], ['star_ether',120,'c8_start'], ['rare_elixir',300,'c12_start',true], ['scroll_cataclysm',900,'c12_start',true], ['dg_potion',130,'c5_start'], ['dg_ether',165,'c8_start'] ],
+  item: [ ['potion',25], ['bread',15], ['ether',40], ['revival_tonic',90], ['scroll_heal',65], ['weakening_powder',100,'c2_start'], ['armorbreak_powder',125,'c3_start'], ['poison_vial',160,'c5_start'], ['sleep_dust',140,'c5_start'], ['scroll_fire',80,'c2_start'], ['scroll_gale',150,'c5_start'], ['caravan_ration',45,'c2_start'], ['star_ether',120,'c8_start'], ['rare_elixir',300,'c12_start',true], ['scroll_cataclysm',900,'c12_start',true], ['dg_potion',130,'c5_start'], ['dg_ether',165,'c8_start'] ],
   w: [ ['iron_sword',110], ['herb_staff',95], ['salt_knife',150,'c2_start'], ['moon_staff',300,'c8_start'], ['rare_dawn_blade',680,'c12_start',true], ['dg_thief_dagger',130,'c2_start'], ['dg_steel_sword',420,'c8_start'] ],
   a: [ ['work_coat',80], ['leather_vest',110], ['bell_charm',140], ['caravan_coat',150,'c2_start'], ['sand_goggles',260,'c8_start'], ['rare_lantern_coat',600,'c12_start',true], ['rare_promise_charm',540,'c12_start',true], ['dg_leather_armor',190,'c2_start'], ['dg_iron_armor',400,'c8_start'] ]
 };
 const SHOP_ICONS = { scroll_fire:'dg_icon_3506', scroll_heal:'dg_icon_3512', scroll_gale:'dg_icon_3522', revival_tonic:'shop_elixir', dg_potion:'dg_icon_3006', dg_ether:'dg_icon_3012', dg_thief_dagger:'dg_icon_1003', dg_steel_sword:'dg_icon_1052', dg_leather_armor:'dg_icon_1310', dg_iron_armor:'dg_icon_1311', potion:'shop_potion', bread:'shop_bread', ether:'shop_ether', caravan_ration:'shop_bread', star_ether:'shop_ether', rare_elixir:'shop_elixir', iron_sword:'shop_sword', herb_staff:'shop_staff', salt_knife:'shop_knife', moon_staff:'shop_staff', rare_dawn_blade:'shop_sword', work_coat:'shop_armor', leather_vest:'shop_armor', caravan_coat:'shop_coat', rare_lantern_coat:'shop_coat', bell_charm:'shop_charm', sand_goggles:'shop_charm', rare_promise_charm:'shop_charm' };
-Object.assign(SHOP_ICONS, { weakening_powder:'shop_potion', armorbreak_powder:'shop_potion', scroll_cataclysm:'dg_icon_3522' }); // 既存の仮アイコン
+Object.assign(SHOP_ICONS, { weakening_powder:'item_weakening_powder', armorbreak_powder:'item_armorbreak_powder', scroll_cataclysm:'item_scroll_cataclysm' });
 function shopInfo(id) { return Object.prototype.hasOwnProperty.call(ITEMS,id) ? ITEMS[id] : Object.prototype.hasOwnProperty.call(GEAR,id) ? GEAR[id] : null; }
 function shopIcon(id) { return SHOP_ICONS[id] || (GEAR[id] ? (GEAR[id].slot === 'w' ? 'shop_sword' : GEAR[id].slot === 'a' ? 'shop_armor' : 'shop_charm') : 'shop_potion'); }
 function shopPrice(id) {
@@ -34,7 +34,7 @@ function shopUnlocked(row) { return !row[2] || (STAGES.includes(row[2]) && atLea
 // 店ごとに引き取った品数。通常商品の在庫は従来どおり無制限。
 function cleanShopStock(data) {
   const out = {}; if (!data || typeof data !== 'object' || Array.isArray(data)) return out;
-  for (const store of [...Object.keys(SHOP_ROOMS), 'C12_SEA']) {
+  for (const store of [...Object.keys(SHOP_ROOMS), 'C5_TOWN', 'C12_SEA']) {
     const entry = data[store]; if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     const clean = {};
     for (const [id,n] of Object.entries(entry)) if (shopInfo(id) && !shopInfo(id).key && Number.isSafeInteger(n) && n > 0 && n <= 9999) clean[id] = n;
@@ -42,7 +42,7 @@ function cleanShopStock(data) {
   }
   return out;
 }
-function shopTypeOf(id) { const d=shopInfo(id); return !d ? null : ITEMS[id] ? ((d.hp || d.mp || d.revive || d.damage || d.weaken || d.armorbreak) && !d.key ? 'item' : null) : d.slot === 'w' ? 'w' : (d.slot === 'a' || d.slot === 'c') ? 'a' : null; }
+function shopTypeOf(id) { const d=shopInfo(id); return !d ? null : ITEMS[id] ? ((d.hp || d.mp || d.revive || d.damage || d.weaken || d.armorbreak || d.poison || d.sleepStatus) && !d.key ? 'item' : null) : d.slot === 'w' ? 'w' : (d.slot === 'a' || d.slot === 'c') ? 'a' : null; }
 function shopCurrentStock(type) { return G.shop && G.shop.type === type && S.shopStock ? (S.shopStock[G.shop.store] || {}) : {}; }
 function shopInventory(type) {
   const base=SHOP_STOCK[type].filter(r => shopInfo(r[0]) && shopUnlocked(r));
@@ -56,7 +56,7 @@ function shopInventory(type) {
 }
 function shopSellables(type) {
   const source = type === 'item' ? ITEMS : GEAR, held = type === 'item' ? S.items : S.gear;
-  return Object.keys(source).filter(id => held[id] > 0 && !source[id].key && (type === 'item' ? !!(source[id].hp || source[id].mp || source[id].revive || source[id].damage || source[id].weaken || source[id].armorbreak) : type === 'w' ? source[id].slot === 'w' : source[id].slot === 'a' || source[id].slot === 'c'));
+  return Object.keys(source).filter(id => held[id] > 0 && !source[id].key && (type === 'item' ? !!(source[id].hp || source[id].mp || source[id].revive || source[id].damage || source[id].weaken || source[id].armorbreak || source[id].poison || source[id].sleepStatus) : type === 'w' ? source[id].slot === 'w' : source[id].slot === 'a' || source[id].slot === 'c'));
 }
 function shopBuy(id, price) {
   if (!shopInfo(id) || !Number.isSafeInteger(price) || price < 0 || S.gold < price) return false;
@@ -137,7 +137,7 @@ function placeShopkeeper(id) { const d=SHOP_ROOMS[id]; addActor({id:'shopkeeper'
 for (const [id,d] of Object.entries(SHOP_ROOMS)) {
   MAPS[id] = { id, name:d.name, indoor:true, tiles:buildMapOps({w:12,h:9,ops:[['fill','x'],['rect',1,2,10,7,'o'],['set',5,8,'d']]}), points:{start:[5,7]} };
   // 店種ごとに陳列物を変え、店主と出入口の間は空ける。
-  const displays = { item: 'prop_shop_supplies', w: 'prop_shop_weapons', a: 'prop_shop_armor' };
+  const displays = { item: 'prop_shop_supplies_concept', w: 'prop_shop_weapons', a: 'prop_shop_armor' };
   const messages = { item: '薬瓶や食料が、使いやすいように棚へ並んでいる。', w: '旅人向けの武器が手入れされて並んでいる。', a: '旅の安全を願って作られた防具が並んでいる。' };
   const extras = d.type === 'item' ? [
     {img:'furn_cauldron',x:11,y:2,w:1,h:1,dw:54,say:'薬草を煮出す小鍋。'},
@@ -146,11 +146,11 @@ for (const [id,d] of Object.entries(SHOP_ROOMS)) {
     {img:'furn_chest',x:10,y:5,w:1,h:1,dw:45,say:'薬草の種や包み紙を入れた箱。'},
     {img:'furn_barrel',x:12,y:4,w:1,h:1,dw:44,say:'乾いた食材を入れた樽。'}
   ] : d.type === 'w' ? [
-    {img:'furn_bench_orthogonal',x:9,y:2,w:3,h:1,dw:142,say:'刃の手入れに使う作業台。'},
+    {img:'furn_bench_orthogonal',art:'prop_shop_forge_concept',x:9,y:2,w:3,h:1,dw:142,say:'武器を鍛える炉。火の温度を見極めながら鉄を鍛える。'},
     {img:'furn_barrel',x:1,y:5,w:1,h:1,dw:44,say:'長い道具をしまう樽。'},
     {img:'furn_crate',x:11,y:6,w:1,h:1,dw:49,say:'武具の材料が入っている。'},
     {img:'furn_chest',x:10,y:5,w:1,h:1,dw:46,say:'砥石や金具を入れた道具箱。'},
-    {img:'furn_stove',x:12,y:4,w:1,h:1,dw:46,say:'鉄を温める小さな炉。'}
+    {img:'furn_crate',x:12,y:4,w:1,h:1,dw:42,say:'鍛造に使う鉄材が収められている。'}
   ] : [
     {img:'furn_bench_orthogonal',x:9,y:2,w:3,h:1,dw:130,say:'防具を仕立て直す作業台。'},
     {img:'furn_chest',x:1,y:5,w:1,h:1,dw:46,say:'大切に磨かれた金具がしまわれている。'},
@@ -173,6 +173,8 @@ CHREG.warps.push({map:'V',at:[30,20],to:'SHOP_ITEM',to_at:[5,7],dir:'up'}, {map:
 
 // 灰の海まで同行した行商人。後戻りできない終盤でも希少品を手に取れる。
 function placeTravelingMerchant() { addActor({id:'traveling_merchant',img:'npc_innkeeper',x:7,y:10,dir:'down',name:'旅の行商人',talk:openTravelingShop}); }
+// 谷へ向かう前に物資を補充できる行商人。店の引取在庫は他の店と分ける。
+function placeValleyMerchant() { addActor({id:'valley_merchant',img:'npc_innkeeper',x:27,y:13,dir:'down',name:'谷の行商人',talk:openTravelingShop}); }
 async function openTravelingShop() {
   while (true) {
     const c = await choose(['道具を見る','武器を見る','防具と装飾を見る','別れる'], `行商人　所持金 ${S.gold} G`, {cancel:true});

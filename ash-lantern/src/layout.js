@@ -47,23 +47,14 @@ const LAYOUT = {
     ]
   },
   W: {
-    rug: { x: 6.2, y: 5.35, w: 180 },
-    wall: [
-      { img: 'furn_jarshelf_orthogonal', x: 1.0, y: 14, w: 100 },
-      { img: 'furn_toolrack_orthogonal', x: 8.08, y: 6, w: 120 }
-    ],
+    // コンセプト画像の家具の足元に対応した判定。イベントは従来のまま。
     furn: [
-      { img: 'furn_bookshelf_orthogonal', x: 4, y: 2, w: 2, h: 1, dw: 100, act: 'shelf' },
-      { img: 'furn_table_orthogonal', x: 2, y: 2, w: 2, h: 2, dw: 118, overlay: 'bell', act: 'bell' },
-      { img: 'furn_bench_orthogonal', x: 8, y: 2, w: 3, h: 2, dw: 156, overlay: 'kit', act: 'kit' },
-      { img: 'furn_stove', x: 12, y: 2, w: 1, h: 2, dw: 66, overlay: 'stove', act: 'stove' },
-      { img: 'furn_flowerpot', x: 1, y: 4, w: 1, h: 1, dw: 32 },
-      { img: 'furn_bed_orthogonal', x: 1, y: 6, w: 2, h: 2, dw: 82, act: 'bed' },
-      { img: 'furn_table_orthogonal', x: 8, y: 6, w: 2, h: 1, dw: 104, overlay: 'lantern', act: 'table' },
-      { img: 'furn_chair_orthogonal', x: 7, y: 6, w: 1, h: 1, dw: 35 },
-      { img: 'furn_crate', x: 12, y: 6, w: 1, h: 1, dw: 52, act: 'crate' },
-      { img: 'furn_barrel', x: 11, y: 7, w: 1, h: 1, dw: 46, act: 'barrel' },
-      { img: 'furn_chest', x: 12, y: 7, w: 1, h: 1, dw: 50, act: 'chest' }
+      { img:'furn_bed_orthogonal', x:1, y:3, w:2, h:3, dw:82, act:'bed' },
+      { img:'furn_table_orthogonal', x:3, y:3, w:1, h:1, dw:70, overlay:'bell', act:'bell' },
+      { img:'furn_bookshelf_orthogonal', x:6, y:3, w:2, h:1, dw:100, act:'shelf' },
+      { img:'furn_bench_orthogonal', art:'furn_bench_concept', x:9, y:3, w:3, h:1, dw:156, overlay:'kit', act:'kit' },
+      { img:'furn_bookshelf_orthogonal', x:1, y:7, w:2, h:1, dw:100, say:'畳んだ布や道具を入れた棚。' },
+      { img:'furn_barrel', x:3, y:7, w:1, h:1, dw:46, act:'barrel' },
+      { img:'furn_chest', x:11, y:7, w:2, h:1, dw:80, act:'chest' }
     ]
-  }
-};
+  }};

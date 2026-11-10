@@ -9,13 +9,13 @@
       C10_SHIP: {
         name: '古代船の甲板', w: 30, h: 18, bgm: 'village', dim: 'rgba(130,180,235,.10)',
         ops: [
-          ['fill', 'w'], ['rect', 3, 5, 26, 12, 'o'], ['circle', 27, 8.5, 3, 'o'],
+          ['fill', 'w'], ['rect', 6, 5, 23, 12, 'o'], ['rect', 4, 6, 25, 11, 'o'], ['rect', 3, 7, 27, 10, 'o'],
           ['rect', 0, 8, 2, 9, 'b'], ['rect', 27, 8, 29, 9, 'b']                     // 乗り降りの板(西=港側、東=島側)
         ],
         points: { start: [14, 9], helm: [24, 8], hold: [7, 8], gangway_in: [3, 8], bow_in: [26, 8] },
         layout: {
           border: 'none',
-          buildings: [], lamps: [[20, 6], [20, 11], [10, 6], [10, 11]], barrels: [[5, 6], [5, 11], [8, 6]], signs: [], trees: [],
+          buildings: [], lamps: [], barrels: [[5, 6], [5, 11], [8, 6]], signs: [], trees: [],
           decor: [{ img: 'furn_crate', x: 6, y: 10, scale: 0.32 }, { img: 'furn_crate', x: 7, y: 10, scale: 0.3 }, { img: 'furn_chest', x: 22, y: 6, scale: 0.28 }, { img: 'furn_crate', x: 24, y: 11, scale: 0.3 }]
         }
       },
@@ -47,9 +47,9 @@
       { map: 'C10_ISLES', at: [1, 14], to: 'C10_SHIP', to_at: 'C10_SHIP@bow_in', dir: 'left' }
     ],
     assets: [
-      { ...A('tile.deck_wood', 'tile', '192x192・4x4の継ぎ目なし。古代船の甲板(金属の継ぎ目と木板)', 'tile_wood', '高', '第10・12章の甲板'), status: '調整中' },
+      { ...A('tile.deck_wood', 'tile', '192x192・4x4の継ぎ目なし。古代船の甲板(金属の継ぎ目と木板)', 'tile_wood', '高', '第10・12章の甲板に接続し昼夜の表示を確認'), status: '調整中' },
       { ...A('prop.ship_wheel', 'prop', '96x96・透明。古代船の舵輪(修復前/修復後の差分、光る灯火管)', 'furn_lantern', '高', '第10章 helm(24,8)'), status: '調整中' },
-      { ...A('prop.ship_mast', 'prop', '96x240・透明。帆柱と畳んだ帆(修復前/後)', 'prop_tree', '中', '第10・12章の甲板。今は何も描かれない'), status: '調整中' },
+      { ...A('prop.ship_mast', 'prop', '96x240・透明。帆柱と畳んだ帆(修復前/後)', 'prop_tree', '中', '第10・12章の甲板に静止画を配置。修復前後の差分は未制作'), status: '調整中' },
       { ...A('tile.sky_cloud', 'tile', '192x192・4x4。雲海(浮島群の足元。ゆっくり流れる差分)', 'tile_stone', '高', '第10章 浮島群の空(skin w→s で代用中)'), status: '調整中' },
       { ...A('prop.floating_isle_edge', 'prop', '島の縁用の岩肌と根(円形の島の外周に重ねる)。192x96・透明', 'prop_tree', '中', '第10章 浮島群'), status: '調整中' },
       { ...A('prop.small_lantern_core', 'prop', '48x72・透明。各地で繋ぐ小さな炉(消灯/点灯)', 'furn_lantern', '中', '第10章 各地の再訪'), status: '調整中' }
