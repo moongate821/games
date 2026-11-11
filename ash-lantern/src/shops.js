@@ -133,7 +133,7 @@ function drawShopChoice(c) {
   const desc=c.desc&&c.desc(c.idx);ctx.fillStyle='#fff';ctx.font='20px '+FONT;ctx.fillText(desc || (G.shop.view==='main'?'いらっしゃい。何をお探しですか？':c.prompt),220,480,520);
   ctx.restore();
 }
-function placeShopkeeper(id) { const d=SHOP_ROOMS[id]; addActor({id:'shopkeeper',img:d.img,x:5,y:3,dir:'down',name:d.keeper,talk:()=>openShop(d.type)}); }
+function placeShopkeeper(id) { const d=SHOP_ROOMS[id],p=MAPS[id].points.keeper||[5,3]; addActor({id:'shopkeeper',img:d.img,x:p[0],y:p[1],dir:'down',name:d.keeper,talk:()=>openShop(d.type)}); }
 for (const [id,d] of Object.entries(SHOP_ROOMS)) {
   MAPS[id] = { id, name:d.name, indoor:true, tiles:buildMapOps({w:12,h:9,ops:[['fill','x'],['rect',1,2,10,7,'o'],['set',5,8,'d']]}), points:{start:[5,7]} };
   // 店種ごとに陳列物を変え、店主と出入口の間は空ける。

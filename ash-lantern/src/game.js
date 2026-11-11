@@ -249,7 +249,7 @@ async function fieldBattle(ids) {   // 台本から呼ぶ戦闘。終わった�
 
 function buildWorkshopStatics(id) {
   id = id || 'W';
-  const conceptRoom = (id === 'W' && IMG.bg_workshop_concept) || (id === 'C3_WAREHOUSE' && IMG.bg_harbor_warehouse) || (id === 'C5_TUNNEL' && IMG.bg_mine_tunnel_concept) || (id === 'C8_LAB' && IMG.bg_observatory_lab_concept) || (id === 'C4_CASTLE' && IMG.bg_castle_audience_concept) || (id === 'C7_INN' && IMG.bg_inn_remembrance) || (id === 'C4_ESCAPE' && IMG.bg_escape_drain) || (id === 'C14_HEART' && IMG.bg_furnace_heart_concept);
+  const conceptRoom = (typeof CONCEPT_ROOMS !== 'undefined' && CONCEPT_ROOMS[id] && IMG[CONCEPT_ROOMS[id].image]) || (id === 'W' && IMG.bg_workshop_concept) || (id === 'C3_WAREHOUSE' && IMG.bg_harbor_warehouse) || (id === 'C5_TUNNEL' && IMG.bg_mine_tunnel_concept) || (id === 'C8_LAB' && IMG.bg_observatory_lab_concept) || (id === 'C4_CASTLE' && IMG.bg_castle_audience_concept) || (id === 'C7_INN' && IMG.bg_inn_remembrance) || (id === 'C4_ESCAPE' && IMG.bg_escape_drain) || (id === 'C14_HEART' && IMG.bg_furnace_heart_concept);
   const add = (o) => statics.push(o);
   // 壁(上2行)
   add({ y: -100, draw(c) { if (!conceptRoom) drawWorkshopWall(c); } });
@@ -418,6 +418,14 @@ function fieldMusic() {
 function enterMap(id, x, y, dir) {
   setMapData(id);
   placeActors();
+  // Entries from scenes, tools and old coordinates must obey the same floor
+  // rules as movement. Never place the player in water, walls or another actor.
+  if (!Number.isInteger(x) || !Number.isInteger(y) || isSolidTile(x, y) || actorAt(x, y)) {
+    const preferred = map.points.start || [6, 7];
+    const safe = safeLoadPosition(preferred);
+    if (!safe) throw new Error('歩ける開始位置がありません: ' + id);
+    [x, y] = safe;
+  }
   Snd.bgm(fieldMusic());
   G.P = { x, y, px: x, py: y, dir, moving: 0, alt: false, tx: x, ty: y, prog: 0 };
   S.map = id;
@@ -928,6 +936,8 @@ function tileImageFor(m, ch) {
   return (m.tileArt && IMG[m.tileArt[ch]]) || IMG[TILE_IMG[skin] || skin];
 }
 function drawTiles(cx, cy) {
+  const room = typeof CONCEPT_ROOMS !== 'undefined' && CONCEPT_ROOMS[map.id];
+  if (room && IMG[room.image]) { ctx.drawImage(IMG[room.image], -cx, -cy, map.w*T, map.h*T); return; }
   if (map.id === 'C14_HEART' && IMG.bg_furnace_heart_concept) { ctx.drawImage(IMG.bg_furnace_heart_concept, -cx, -cy, map.w*T, map.h*T); return; }
   if (map.id === 'C4_ESCAPE' && IMG.bg_escape_drain) { ctx.drawImage(IMG.bg_escape_drain, -cx, -cy, map.w*T, map.h*T); return; }
   if (map.id === 'C7_INN' && IMG.bg_inn_remembrance) { ctx.drawImage(IMG.bg_inn_remembrance, -cx, -cy, map.w*T, map.h*T); return; }
@@ -1122,6 +1132,11 @@ function drawField() {
     }
   }
   const list = [];
+  const room = typeof CONCEPT_ROOMS !== 'undefined' && CONCEPT_ROOMS[map.id];
+  if (room && room.counter && IMG[room.image]) {
+    const [x,y,w,h,base]=room.counter, sx=map.w*T/1536, sy=map.h*T/1024;
+    list.push({y:base*sy,d:c=>{c.save();c.beginPath();c.rect(x*sx-cx,y*sy-cy,w*sx,h*sy);c.clip();c.drawImage(IMG[room.image],-cx,-cy,map.w*T,map.h*T);c.restore();}});
+  }
   // The painted mast must hide people passing behind it. Redraw only its
   // silhouette at the base's depth, using the original background pixels.
   if (ship && IMG[ship.image]) {

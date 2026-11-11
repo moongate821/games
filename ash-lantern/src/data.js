@@ -105,9 +105,9 @@ function buildWorkshop() {
 }
 
 const MAPS = {
-  V: { id: 'V', name: '灯守村', tiles: buildVillage(), indoor: false },
+  V: { id: 'V', name: '灯守村', tiles: buildVillage(), indoor: false, points: { start: [12, 11] } },
   W: { id: 'W', name: '修理工房', tiles: buildWorkshop(), indoor: true, points: { start: [6, 4] } },
-  K: { id: 'K', name: '川霧の町', tiles: buildKirimachi(), indoor: false }
+  K: { id: 'K', name: '川霧の町', tiles: buildKirimachi(), indoor: false, points: { start: [3, 6] } }
 };
 
 // 台本の状態(進行)
