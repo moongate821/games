@@ -101,7 +101,15 @@ async function shopBrowse(type, selling) {
     if (selling ? shopSell(id) : shopBuy(id,price)) await narrate(`${d.name}を${selling ? '売った' : '買った'}。所持金 ${S.gold} G。`);
   }
 }
+function canTradeAtCounter() {
+  const d=SHOP_ROOMS[map.id];if(!d)return true;
+  const p=MAPS[map.id].points.service,keeper=getActor('shopkeeper');
+  return !!p && !!keeper && keeper.vis!==false && !keeper.moving &&
+    keeper.x===p[0] && keeper.y===p[1]-1 && G.P.x===p[0] && G.P.y===p[1]+1 &&
+    !G.P.moving && G.P.dir==='up';
+}
 async function openShop(type) {
+  if(!canTradeAtCounter()){toast('店員のいるカウンターの正面で話しかけよう。');return;}
   G.shop = { type, view: 'main', store: map.id };
   try {
     while (true) {

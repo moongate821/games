@@ -1113,6 +1113,12 @@ function drawActor(c, a, cx, cy) {
   c.drawImage(im, px - dw / 2, py - dh + 4 + bob, dw, dh);
   c.restore();
 }
+function fieldPersonScale(y) {
+  const room=typeof CONCEPT_ROOMS!=='undefined'&&CONCEPT_ROOMS[map.id];
+  if(!room||!room.people)return 1;
+  const depth=Math.max(0,Math.min(1,(y-2)/(map.h-4)));
+  return room.people.far+(room.people.near-room.people.far)*depth;
+}
 function drawField() {
   const ship = typeof CONCEPT_SHIP !== 'undefined' && CONCEPT_SHIP[map.id];
   const [cx, cy] = ship ? [0,0] : camera();
@@ -1148,8 +1154,12 @@ function drawField() {
     }
   }
   for (const s of statics) list.push({ y: s.y, d: c => { c.save(); c.translate(-cx, -cy); s.draw(c); c.restore(); } });
-  for (const a of actors) list.push({ y: (a.y + 1) * T, d: c => drawActor(c, a, cx, cy) });
-  list.push({ y: (G.P.y + 1) * T, d: c => drawAllen(c, cx, cy, G.P) });
+  const person=(c,p,fn)=>{
+    const scale=fieldPersonScale(p.y),x=(p.x+.5)*T-cx,y=(p.y+1)*T-cy;
+    c.save();c.translate(x,y);c.scale(scale,scale);c.translate(-x,-y);fn();c.restore();
+  };
+  for (const a of actors) list.push({ y: (a.y + 1) * T, d: c => person(c,a,()=>drawActor(c, a, cx, cy)) });
+  list.push({ y: (G.P.y + 1) * T, d: c => person(c,G.P,()=>drawAllen(c, cx, cy, G.P)) });
   list.sort((a, b) => a.y - b.y);
   for (const l of list) l.d(ctx);
   ctx.restore();
