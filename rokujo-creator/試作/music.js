@@ -14,7 +14,7 @@
  function create({tracks,onChange=()=>{},AudioClass=globalThis.Audio,fadeMs=650}){
   const channels=[new AudioClass(),new AudioClass()];
   for(let i=0;i<channels.length;i++){const a=channels[i];a.preload='metadata';a.volume=0;a.dataset.channel=String(i);a.setAttribute('aria-hidden','true');}
-  let active=-1,desired='title',enabled=true,volume=.35,unlocked=false,suspended=false,duck=false,token=0,timer=null,status='locked',failedKey=null;
+  let active=-1,desired='title',enabled=true,volume=.35,unlocked=false,suspended=false,duck=false,token=0,timer=null,status='locked',failedKey=null,manualRepeat=null;
   const levels=[0,0];
   const snapshot=()=>({status,desired,current:active<0?null:channels[active].dataset.track,enabled,volume,unlocked,suspended,title:tracks[desired]?.title||''});
   const report=()=>onChange(snapshot());
@@ -42,7 +42,7 @@
     return;
    }
    const index=active===0?1:0,a=channels[index],run=++token;
-   clearInterval(timer);timer=null;a.pause();levels[index]=0;apply();a.dataset.track=desired;a.loop=data.loop;a.src=data.src;active=index;status='loading';report();
+   clearInterval(timer);timer=null;a.pause();levels[index]=0;apply();a.dataset.track=desired;a.loop=manualRepeat===null?data.loop:manualRepeat;a.src=data.src;active=index;status='loading';report();
    try{
     await a.play();
     if(run!==token){if(suspended||!enabled||active!==index)a.pause();return;}
@@ -60,7 +60,7 @@
   });
   return {
    channels,snapshot,
-   scene(key,{reading=false}={}){const changed=desired!==key;desired=key;duck=reading;apply();if(changed)failedKey=null;if(enabled&&unlocked&&!suspended)void play();report();},
+   scene(key,{reading=false,repeat=null}={}){const changed=desired!==key;desired=key;duck=reading;manualRepeat=typeof repeat==='boolean'?repeat:null;if(active>=0&&channels[active].dataset.track===key)channels[active].loop=manualRepeat===null?tracks[key]?.loop:manualRepeat;apply();if(changed)failedKey=null;if(enabled&&unlocked&&!suspended)void play();report();},
    preferences(prefs){enabled=!!prefs.enabled;volume=Math.max(0,Math.min(1,Number(prefs.volume)||0));apply();if(!enabled)halt('muted');else if(!unlocked){status='locked';report();}else if(!suspended)void play();},
    resume(){unlocked=true;suspended=false;failedKey=null;const a=channels[active];if(a?.ended)a.currentTime=0;if(enabled)void play();else report();},
    suspend(){suspended=true;halt('suspended');},

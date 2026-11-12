@@ -3,16 +3,16 @@
  const E=RokujoEngine,$=id=>document.getElementById(id),ctx=$('world').getContext('2d');
  const storage={getItem:k=>window.localStorage.getItem(k),setItem:(k,v)=>window.localStorage.setItem(k,v),removeItem:k=>window.localStorage.removeItem(k)};
  const repo=RokujoStorage.repository(storage);
- let musicPrefs={enabled:true,volume:.35};
- try{const p=JSON.parse(storage.getItem('rokujo_creator_audio_settings'));if(p&&typeof p.enabled==='boolean'&&Number.isFinite(p.volume)&&p.volume>=0&&p.volume<=1)musicPrefs=p;}catch{}
+ let musicPrefs={enabled:true,volume:.35,track:'auto',repeat:true};
+ try{const p=JSON.parse(storage.getItem('rokujo_creator_audio_settings'));if(p&&typeof p.enabled==='boolean'&&Number.isFinite(p.volume)&&p.volume>=0&&p.volume<=1)musicPrefs={...p,track:p.track==='auto'||Object.hasOwn(RokujoMusicTracks,p.track)?p.track:'auto',repeat:typeof p.repeat==='boolean'?p.repeat:true};}catch{}
  const music=RokujoMusic.create({tracks:RokujoMusicTracks,onChange:info=>{
   const labels={locked:'最初の操作から再生できます。',loading:'曲を読み込んでいます。',playing:'再生中',muted:'音楽は消音中です。',suspended:'画面を離れたため停止中。音楽ボタンで再開できます。',blocked:'再生するには音楽ボタンを押してください。',error:'この曲を読み込めませんでした。ゲームはそのまま続けられます。',ended:'曲を最後まで再生しました。'};
   $('musicState').textContent=labels[info.status]||'';$('musicCredit').textContent=info.title?'現在の曲：'+info.title+' · 音楽フォルダから選定':'';
   const active=info.enabled&&info.status==='playing';$('musicToggle').textContent=active?'音楽を消す':['muted','locked'].includes(info.status)?'音楽を再生':'音楽を再開';$('musicToggle').setAttribute('aria-pressed',String(active));$('musicToggle').title=labels[info.status]||'';
  }});
  music.channels.forEach(a=>{a.hidden=true;a.className='bgm-channel';document.body.append(a);});
- function syncMusic(){music.scene(RokujoMusic.select({playing,state,event:replay?.entry||state?.story.queued[0],view,campaign:campaignUI?.context?.()}),{reading:!!(campaignUI?.context?.()||replay||state?.story.queued[0]?.pages)});}
- function saveMusicPrefs(){musicPrefs={enabled:$('musicEnabled').checked,volume:Number($('musicVolume').value)/100};music.preferences(musicPrefs);$('musicVolumeValue').textContent=Math.round(musicPrefs.volume*100)+'%';try{storage.setItem('rokujo_creator_audio_settings',JSON.stringify(musicPrefs));}catch{tell('音楽の設定を保存できませんでした。この画面では適用しています。');}}
+ function syncMusic(){const campaign=campaignUI?.context?.(),ending=campaign?.endingTrack&&campaign.tab==='story',fixed=musicPrefs.track!=='auto'&&!ending;music.scene(ending?'inheritance':fixed?musicPrefs.track:RokujoMusic.select({playing,state,event:replay?.entry||state?.story.queued[0],view,campaign}),{reading:!!(campaign||replay||state?.story.queued[0]?.pages),repeat:fixed?musicPrefs.repeat:null});}
+ function saveMusicPrefs(){const previous=musicPrefs.track;musicPrefs={enabled:$('musicEnabled').checked,volume:Number($('musicVolume').value)/100,track:$('musicTrack').value,repeat:$('musicRepeat').checked};if(previous!==musicPrefs.track)campaignUI?.clearEndingSong?.();music.preferences(musicPrefs);syncMusic();$('musicRepeat').disabled=musicPrefs.track==='auto';$('musicVolumeValue').textContent=Math.round(musicPrefs.volume*100)+'%';try{storage.setItem('rokujo_creator_audio_settings',JSON.stringify(musicPrefs));}catch{tell('音楽の設定を保存できませんでした。この画面では適用しています。');}}
 
  let notebook=null,districtUI=null,continuationUI=null,campaignUI=null;
  let state=null,playing=false,view='world',selected='lab',auto=false,timer=null,speed=1,effectTimer,confirmation=null,manualSignature='',leaveAfterSave=false,loadingToken=0,filter='all',library='research',storyConfirmation=null,replay=null;
@@ -30,7 +30,7 @@
  function dirty(){return playing&&JSON.stringify(state)!==manualSignature;}
  function modalOpen(){return !!document.querySelector('dialog[open]');}
  function stop(reason='停止中'){auto=false;clearTimeout(timer);timer=null;if(playing){$('runState').textContent='Ⅱ 停止中';$('stopReason').textContent=reason;$('auto').textContent='自動';$('pause').setAttribute('aria-pressed','true');}}
- function applySettings(){document.documentElement.style.setProperty('--ui-scale',settings.font);document.body.classList.toggle('reduced-motion',settings.motion);$('fontSize').value=settings.font;$('reduceMotion').checked=settings.motion;$('musicEnabled').checked=musicPrefs.enabled;$('musicVolume').value=Math.round(musicPrefs.volume*100);$('musicVolumeValue').textContent=Math.round(musicPrefs.volume*100)+'%';}
+ function applySettings(){document.documentElement.style.setProperty('--ui-scale',settings.font);document.body.classList.toggle('reduced-motion',settings.motion);$('fontSize').value=settings.font;$('reduceMotion').checked=settings.motion;$('musicEnabled').checked=musicPrefs.enabled;$('musicTrack').value=musicPrefs.track;$('musicRepeat').checked=musicPrefs.repeat;$('musicRepeat').disabled=musicPrefs.track==='auto';$('musicVolume').value=Math.round(musicPrefs.volume*100);$('musicVolumeValue').textContent=Math.round(musicPrefs.volume*100)+'%';}
  function saveSettings(){settings={font:$('fontSize').value,motion:$('reduceMotion').checked};applySettings();try{storage.setItem('rokujo_creator_settings',JSON.stringify(settings));}catch{tell('設定を保存できませんでした。この画面では適用しています。');}}
  function recovery(){if(!playing)return;try{repo.writeRecovery(state);$('recover').disabled=false;}catch(e){tell(e.message+' 手動の保存枠は変更していません。');}}
  function begin(candidate,fromSave=false){
@@ -370,6 +370,8 @@
  notebook=RokujoNotebook.create({getState:()=>state,onSelect:()=>stop('観測の手帖を読んでいます。')});
  for(const [key,url] of Object.entries(paths)){let im;Object.defineProperty(art,key,{get(){if(!im){im=new Image();im.decoding='async';im.onload=()=>draw();im.onerror=()=>{im.failed=true;draw();tell('画像の一部を読み込めませんでした。画像フォルダの場所を確認してください。');};im.src=url;}return im;}});}
  $('musicToggle').onclick=()=>{const info=music.snapshot();if(info.status==='playing'){musicPrefs.enabled=false;}else{musicPrefs.enabled=true;}music.preferences(musicPrefs);if(musicPrefs.enabled)music.resume();$('musicEnabled').checked=musicPrefs.enabled;try{storage.setItem('rokujo_creator_audio_settings',JSON.stringify(musicPrefs));}catch{}};
+ for(const [key,track] of Object.entries(RokujoMusicTracks)){const option=document.createElement('option');option.value=key;option.textContent=track.title;$('musicTrack').append(option);}
+ $('musicTrack').onchange=$('musicRepeat').onchange=()=>{saveMusicPrefs();if(musicPrefs.enabled)music.resume();};
  $('musicEnabled').onchange=()=>{saveMusicPrefs();if(musicPrefs.enabled)music.resume();};$('musicVolume').oninput=saveMusicPrefs;
  $('eventDialog').addEventListener('close',syncMusic);
  music.preferences(musicPrefs);syncMusic();applySettings();updateRecoveryButton();

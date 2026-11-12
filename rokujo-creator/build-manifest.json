@@ -1,15 +1,21 @@
 {
-  "version": "0.25-under-review",
+  "version": "0.26-concept-and-music",
   "construction": true,
   "pngCount": 125,
+  "video": {
+    "url": "../videos/rokujo-creator-3min.mp4",
+    "sha256": "6890aadf7c79e10925ccbd8d609ed0c2f76e662e1a2b371522b0c661722a6e24",
+    "bytes": 18016324,
+    "durationSeconds": 180
+  },
   "files": {
     "index.html": {
-      "sha256": "8d98d5a748b95ce1a80846d762d4f1f84b4b585750a25d1d6b66a1aeaafb8077",
-      "bytes": 2866
+      "sha256": "1b9c92f178fc447d3f6ff3c876372c71749eb444c7f48ec0183290ef69824a42",
+      "bytes": 3325
     },
     "試作/app.js": {
-      "sha256": "94bb69fff4e9b7a5078404e2a636f47201c57260fb9dbda21c76a9cf7852f0c9",
-      "bytes": 95307
+      "sha256": "06f0702942ed13f3fa0dc93a5594416331fad0bf6b111cc5af3f3d458be6a669",
+      "bytes": 96297
     },
     "試作/art.css": {
       "sha256": "4158ce87784759ffd7a209eb601805ff4151b376d7e65eda2e2ad00391d368c5",
@@ -24,8 +30,8 @@
       "bytes": 1570539
     },
     "試作/campaign-ui.js": {
-      "sha256": "8b33fa3efc5932490920977ce0edbb74f9cf9abd21c2d9746681a40d1fb47ccc",
-      "bytes": 17496
+      "sha256": "ffa472d02ed6047a973f009d17f1189022fa80fc985aacaff17c23c3dab8d0e4",
+      "bytes": 17557
     },
     "試作/campaign.css": {
       "sha256": "421b11811f8bc7a0ccc78076355ca41039ec264a814171a13df4c19f81978be8",
@@ -34,6 +40,10 @@
     "試作/campaign.js": {
       "sha256": "8acd89aed3f65c4fc0ca19600cf7332a6a61249bbd4c17e0e01d66367ba3cd9b",
       "bytes": 14924
+    },
+    "試作/concept-theme.css": {
+      "sha256": "bb5fdd85bdee821476e68f209c21243d31ea5e76a11248bb92ad1c9f280b8164",
+      "bytes": 5309
     },
     "試作/continuation.js": {
       "sha256": "6c5c23b35299d288c02c2fcc17cc7527c8b2f86e307bb578acecc2195f1e0390",
@@ -64,16 +74,16 @@
       "bytes": 44422
     },
     "試作/index.html": {
-      "sha256": "6c9d66965aa607a4121e6f5ac102ba8b3d79d8b9dec4172b03d6d9290174289b",
-      "bytes": 16382
+      "sha256": "5476ffa9970aab8e49807fbeee27555c0ef5dfec4a97e2284542a39331af0595",
+      "bytes": 16870
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
       "bytes": 10089
     },
     "試作/music.js": {
-      "sha256": "63c2d2c4d7b7ad9eb4592702d51e6795b16258595daaf57f20467b192e95c44b",
-      "bytes": 5044
+      "sha256": "41871af77a47146fa2860f5f4612690a1b0865b2561b755cc00f071bac6b0aad",
+      "bytes": 5282
     },
     "試作/musicdata.js": {
       "sha256": "004ea7cf41acff57c830af8fe9967f4717ebb3fc4ab9284e944a3e9040929794",
@@ -92,8 +102,8 @@
       "bytes": 1066705
     },
     "試作/storage.js": {
-      "sha256": "0210327f0240093b0d2830a665a9c5081a7cffa3dac9826dde5cc9c2c6550dec",
-      "bytes": 3168
+      "sha256": "b83289e0f10794bf735d3616810897e70bde92e8bcef9c360c75a96410871892",
+      "bytes": 3173
     },
     "試作/storydata.js": {
       "sha256": "0869f662cca9b8170aefaa3b4808da5064aec49c253aa2097120d541a3255805",
@@ -640,5 +650,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 381238321
+  "bytes": 381245871
 }
