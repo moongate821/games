@@ -1,0 +1,12 @@
+.title{max-width:1200px;background:linear-gradient(90deg,#10252bf2 0%,#11282adb 38%,#12292a22 100%),url('../画像/concept/concept.room.souta.night.v1.png') center/cover;min-height:650px}
+.title>p,.title>h1{max-width:460px}.gallery-link{color:var(--gold);font-size:12px;text-underline-offset:4px}
+.worldstage{position:relative;overflow:hidden}.world canvas{aspect-ratio:1672/941}.worldtop{align-items:center}.worldtop button{padding:5px 12px;font-size:11px}
+.world .places{padding-top:12px}.tools #actions button{position:relative;padding-left:55px;min-height:74px;font-size:13px}.tools #actions button small{font-size:9px}
+.tool-icon{position:absolute;left:7px;top:14px;width:40px;height:40px;display:block;background-image:url('../画像/props/prop.tools.creator.atlas.v1.png');background-size:200% 200%;background-repeat:no-repeat}
+.tool-icon.tweezers{background-position:0 0}.tool-icon.dropper{background-position:100% 0}.tool-icon.lamp{background-position:0 100%}.tool-icon.paper{background-position:100% 100%}
+.person{grid-template-columns:48px 1fr}.portrait{height:48px;background-size:190% auto;background-position:50% 7%;background-repeat:no-repeat;border:1px solid #d9c78b40;background-color:#384b43}
+.portrait.aria{background-image:url('../画像/actors/actor.aria.child.v1.png')}.portrait.galdo{background-image:url('../画像/actors/actor.galdo.child.v1.png')}
+.water-effect{position:absolute;left:9%;bottom:3%;height:79%;max-width:45%;object-fit:contain;pointer-events:none;animation:water-drop 1.6s ease-out both}
+@keyframes water-drop{0%{opacity:0;transform:translateY(-20%)}20%{opacity:.95}65%{opacity:.85;transform:translateY(0)}100%{opacity:0;transform:translateY(4%)}}
+@media(prefers-reduced-motion:reduce){.water-effect{animation:none}}
+@media(max-width:620px){.title{min-height:590px;background-position:60% center}.title h1{font-size:46px}.title>p{font-size:13px}.tools #actions button{font-size:12px;padding-right:8px;min-height:88px}.tools #actions button small{font-size:9px}.tool-icon{top:19px;width:38px;height:38px}.worldtop{padding:10px 15px}}

@@ -1,0 +1,644 @@
+{
+  "version": "0.25-under-review",
+  "construction": true,
+  "pngCount": 125,
+  "files": {
+    "index.html": {
+      "sha256": "8d98d5a748b95ce1a80846d762d4f1f84b4b585750a25d1d6b66a1aeaafb8077",
+      "bytes": 2866
+    },
+    "試作/app.js": {
+      "sha256": "94bb69fff4e9b7a5078404e2a636f47201c57260fb9dbda21c76a9cf7852f0c9",
+      "bytes": 95307
+    },
+    "試作/art.css": {
+      "sha256": "4158ce87784759ffd7a209eb601805ff4151b376d7e65eda2e2ad00391d368c5",
+      "bytes": 2074
+    },
+    "試作/campaign-art.js": {
+      "sha256": "4a6fcfcf4619324c029f9db61fdc15fccae101c2c9288359a53ac3b5e4754c1f",
+      "bytes": 2493
+    },
+    "試作/campaign-data.js": {
+      "sha256": "89c9bd0779a4a3930d93092a6759d3b10fba0d536d04bee5af2ca0ccb85d0b97",
+      "bytes": 1570539
+    },
+    "試作/campaign-ui.js": {
+      "sha256": "8b33fa3efc5932490920977ce0edbb74f9cf9abd21c2d9746681a40d1fb47ccc",
+      "bytes": 17496
+    },
+    "試作/campaign.css": {
+      "sha256": "421b11811f8bc7a0ccc78076355ca41039ec264a814171a13df4c19f81978be8",
+      "bytes": 4754
+    },
+    "試作/campaign.js": {
+      "sha256": "8acd89aed3f65c4fc0ca19600cf7332a6a61249bbd4c17e0e01d66367ba3cd9b",
+      "bytes": 14924
+    },
+    "試作/continuation.js": {
+      "sha256": "6c5c23b35299d288c02c2fcc17cc7527c8b2f86e307bb578acecc2195f1e0390",
+      "bytes": 5224
+    },
+    "試作/deck.js": {
+      "sha256": "0c948401219578e10107d892ff71826c9494d9d09e860a2be72f615dbef1aafd",
+      "bytes": 8302
+    },
+    "試作/development-systems.js": {
+      "sha256": "fae0f270fe6aabce25e386d7f0b053bdcdc5d96e32c01ad10d27e276bb73faa5",
+      "bytes": 11523
+    },
+    "試作/development.js": {
+      "sha256": "75b84fe1378b2bb8a6c20aef5f5d2be152051e80d4426f28cac03e35d25a8364",
+      "bytes": 16501
+    },
+    "試作/district-ui.js": {
+      "sha256": "777d2b64ffc2882d6e3d6b5ff74ab375300b38283a7880289f50aa555ae8100b",
+      "bytes": 15672
+    },
+    "試作/district.css": {
+      "sha256": "3b326b9e3185c8d361773bae60ee01ae8b197f7d786a137247b3edf31adafad2",
+      "bytes": 3898
+    },
+    "試作/engine.js": {
+      "sha256": "916b4d9368ed72c7f481d2f0076723fe60f8ed8d8db04de2c68b90bc0f4baed5",
+      "bytes": 44422
+    },
+    "試作/index.html": {
+      "sha256": "6c9d66965aa607a4121e6f5ac102ba8b3d79d8b9dec4172b03d6d9290174289b",
+      "bytes": 16382
+    },
+    "試作/journal-theme.css": {
+      "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
+      "bytes": 10089
+    },
+    "試作/music.js": {
+      "sha256": "63c2d2c4d7b7ad9eb4592702d51e6795b16258595daaf57f20467b192e95c44b",
+      "bytes": 5044
+    },
+    "試作/musicdata.js": {
+      "sha256": "004ea7cf41acff57c830af8fe9967f4717ebb3fc4ab9284e944a3e9040929794",
+      "bytes": 978
+    },
+    "試作/notebook.js": {
+      "sha256": "82db1e6ebed0a51562db72120c367fd144447ddea69d1ceea0021535a6111a82",
+      "bytes": 3224
+    },
+    "試作/operations-ui.js": {
+      "sha256": "d6807be1e6270e75e749b3fdaf556dbe04528a8dbfc747d84aebf7c54e80e2fc",
+      "bytes": 7925
+    },
+    "試作/original-data.js": {
+      "sha256": "a189af407ae4099b94631208633e2cd0a5b7872f5251d6e0c5776703ba7d86d7",
+      "bytes": 1066705
+    },
+    "試作/storage.js": {
+      "sha256": "0210327f0240093b0d2830a665a9c5081a7cffa3dac9826dde5cc9c2c6550dec",
+      "bytes": 3168
+    },
+    "試作/storydata.js": {
+      "sha256": "0869f662cca9b8170aefaa3b4808da5064aec49c253aa2097120d541a3255805",
+      "bytes": 151879
+    },
+    "試作/style.css": {
+      "sha256": "65a824fb82e2e41414c3b6301057affa71fadb57fde4a07b7e637720b27618a9",
+      "bytes": 6057
+    },
+    "試作/system.css": {
+      "sha256": "b0d70d43a6f6aebf520a968e90e5493e2b89da3ed87dd0fd01858afc49400675",
+      "bytes": 16234
+    },
+    "試作/voyage-map.js": {
+      "sha256": "12dac61c416b44987b6c681afdf8d38b77b63155bc86aaa504e9a64db4f191d3",
+      "bytes": 5609
+    },
+    "試作/walkdata.js": {
+      "sha256": "2ee6361ec890d09d3418032f45060ab62086e7b7f2add41d2d0d0661fb9ab105",
+      "bytes": 1696
+    },
+    "画像/actors/actor.aria.adolescent.v1.png": {
+      "sha256": "854e7962ec8e2b67e3dcf337b2008eebdb1113d533011881e6faf1f7864feaac",
+      "bytes": 2054263
+    },
+    "画像/actors/actor.aria.adult.v1.png": {
+      "sha256": "9dbdc28d8e84111b2bc4c293c1f2152e9a7ddbc1b117c8c118f709c0e47df101",
+      "bytes": 2167057
+    },
+    "画像/actors/actor.aria.child.v1.png": {
+      "sha256": "f66ca119ff7fcb2568e312e8ea1f73cce49d83930c8dbb1b98bde37229a19b7c",
+      "bytes": 2226751
+    },
+    "画像/actors/actor.elina.expedition_leader.v1.png": {
+      "sha256": "d01e367f21bd83d79a2db22c02331a64d1ffd8935971a67a3daababde5abc8a0",
+      "bytes": 2105583
+    },
+    "画像/actors/actor.elina.walk.atlas.v1.png": {
+      "sha256": "0956def4bc7387cca030c013dcaab5303abdda167dea9c99347d54d361c5c3fb",
+      "bytes": 1367160
+    },
+    "画像/actors/actor.galdo.adolescent.v1.png": {
+      "sha256": "daf0b3b93b7fede0b70475bbc12c2ad4be5c300376b0f0bb5f5a8c23d254694e",
+      "bytes": 1828854
+    },
+    "画像/actors/actor.galdo.adult.v1.png": {
+      "sha256": "49c15af9f5e322769bfac0d7453ab1c509510d75da0a10541532030fd4c186e8",
+      "bytes": 1925337
+    },
+    "画像/actors/actor.galdo.child.v1.png": {
+      "sha256": "c866c6eecdf7d53111021a9f27e77e25bbafa2ee4baa43ca39776385c4853d88",
+      "bytes": 1858217
+    },
+    "画像/actors/actor.galdo.fifties.v1.png": {
+      "sha256": "72c14bd709f8d55c327c6ecba0f24329a689c21514a4c21af53a7d9ae7c071db",
+      "bytes": 1934439
+    },
+    "画像/actors/actor.galdo.middle_age.v1.png": {
+      "sha256": "66d3ad25b78469806f2374b35d0a443074ab8cf3885bace60daa52d40dcda663",
+      "bytes": 1948787
+    },
+    "画像/actors/actor.gran.warrior_chief.v1.png": {
+      "sha256": "c8a6a4d7dbe538c14ad71386461f607d1dbb2e5fc2016a2acd72aaff421feb6b",
+      "bytes": 2067331
+    },
+    "画像/actors/actor.julius.researcher.v1.png": {
+      "sha256": "f230d3d83b12a288177ed5bc74ce2a5621a4dfcaccd89b71795bf53388f875a3",
+      "bytes": 1779215
+    },
+    "画像/actors/actor.julius.young.v1.png": {
+      "sha256": "433b6fc0a50c5d63b43e1f73b983997f1a86857a56fb919cc213b417c0f42d1d",
+      "bytes": 1730849
+    },
+    "画像/actors/actor.leon.guard.v1.png": {
+      "sha256": "7f17cbb2335e06cf81843580a95a5874352180449e024a12b8a4d04a22c47f76",
+      "bytes": 2029267
+    },
+    "画像/actors/actor.milena.queen.v1.png": {
+      "sha256": "d8131e9732fb2be9252742ce6f2d91155de05f28c1f0a089242b70b48314463b",
+      "bytes": 2265325
+    },
+    "画像/actors/actor.rooga.hunter_king.v1.png": {
+      "sha256": "1b53c33fd2e41de205fef5bedd49145a0ae8bd5c5ad0ac8716156dd0a9ad394d",
+      "bytes": 2300578
+    },
+    "画像/actors/actor.rowan.first_contact.v1.png": {
+      "sha256": "f0c7c704bb30e9ded4e7c0967c7883700ddfac2f25e61eb92f803cce3c944bc5",
+      "bytes": 1999164
+    },
+    "画像/actors/actor.seira.harbor_supervisor.v1.png": {
+      "sha256": "11790b1fdac6bf97510f6e92e7087e8582272624f4401a3ca7f17d296aa3c451",
+      "bytes": 1951036
+    },
+    "画像/actors/actor.shopkeeper.antique.v1.png": {
+      "sha256": "18f272dd12e4308c24f440ecede2e4d6ecacf77cbb6e70f2bba19ada2183bb5a",
+      "bytes": 1773844
+    },
+    "画像/actors/actor.souta.modern.v1.png": {
+      "sha256": "8b2e8e740778def718f2d049148087a3695ac7d52420c9f87f70c8846b8deb7d",
+      "bytes": 1088726
+    },
+    "画像/actors/creature.mite.v1.png": {
+      "sha256": "8f0f6ad947ba4468ce94e4df125cbb65c084ce9cb41e8791e3f3f01428406e44",
+      "bytes": 2054550
+    },
+    "画像/background/bg.assembly.four_civilizations.v1.png": {
+      "sha256": "7782a83d1a1c7be37740ae51cae18068ae098a3c1d1d820c0a4a4d92e8dc6fff",
+      "bytes": 3904265
+    },
+    "画像/background/bg.beast.three_peoples.handshake.v1.png": {
+      "sha256": "4e673374702739f9116e5456c0ba8e668a76d2ba8c361c63da79abdfe6b1a60c",
+      "bytes": 3543650
+    },
+    "画像/background/bg.beast.village.night_warning.v1.png": {
+      "sha256": "3e3f27ad9d9aa8399a535ca50056b7f2136dc0210f28f26e9c17d40ffaf0d64b",
+      "bytes": 3552020
+    },
+    "画像/background/bg.city.arcadia.community_festival.v1.png": {
+      "sha256": "4e74e015557d72e889ca4cd0b9380ec35f245bf479c2c8490e6a45eca358524a",
+      "bytes": 3387686
+    },
+    "画像/background/bg.city.arcadia.eternal_night.memorial.v1.png": {
+      "sha256": "1c3b845b3efb4e5650edbef81c7101d4add52822842c4d7f92715367caa56365",
+      "bytes": 3410825
+    },
+    "画像/background/bg.city.arcadia.network_night.v1.png": {
+      "sha256": "d6564ce5f9924f08b00d4411967d274ebeb6d1e7133866eebbfdd8ba052dca86",
+      "bytes": 3729836
+    },
+    "画像/background/bg.city.arcadia.tower_ready.v1.png": {
+      "sha256": "2ec78979ba6b2c10606ab23ea1e35ae783e668e8ac372904b81436b3fe7fe868",
+      "bytes": 3777891
+    },
+    "画像/background/bg.city.neo_arcadia.six_months.v1.png": {
+      "sha256": "621762d99199669fc13426dfadd919bc45dae60839f8d65d43f513cff811cb8a",
+      "bytes": 3868115
+    },
+    "画像/background/bg.city.seres.port.night.v1.png": {
+      "sha256": "73de2e9130d6864793eb61442c3a1dc0b52d647685da01e749a6e0c96b240935",
+      "bytes": 3471055
+    },
+    "画像/background/bg.city.seres.street.v1.png": {
+      "sha256": "dd1c6c3e93f42d5aabd9b303a57a9728af3adbae4b25d68472a88846236bb83f",
+      "bytes": 3757582
+    },
+    "画像/background/bg.district.magic_workshop.night.v1.png": {
+      "sha256": "bc19c96a9b83a81a438553489f04b39bfb34304e635d0ca9ddb391ab7c01ffe3",
+      "bytes": 3561487
+    },
+    "画像/background/bg.dwald.lakeside.night.v1.png": {
+      "sha256": "619fa1c27d21fefdf20e8454e1d39e07f3272a1f5343eb0bba12863375fd7cf8",
+      "bytes": 3314417
+    },
+    "画像/background/bg.dwald.palace.throne_room.v1.png": {
+      "sha256": "db1c71d0f4e38f876a9f932fc1c66389d060146b80f6682364a6195ffb9222e6",
+      "bytes": 3567225
+    },
+    "画像/background/bg.dwald.workshop.third_forge.v1.png": {
+      "sha256": "77a0a044c9bbb3774b272b0755f078275a666e979554785aa153091b38ab96d1",
+      "bytes": 3743540
+    },
+    "画像/background/bg.institute.ocean_faculty.classroom.v1.png": {
+      "sha256": "0f19af83c2a0502ef05b8ccc360dee3440361e25d24afe788f81bb70640b07a3",
+      "bytes": 3609940
+    },
+    "画像/background/bg.institute.underground_tech_wing.v1.png": {
+      "sha256": "6101e371802b9511858f6419a17ea54849da5524e060c920d8e7d4a590ba0fc7",
+      "bytes": 2944149
+    },
+    "画像/background/bg.interior.geography.known_world.v1.png": {
+      "sha256": "95246c8b4f94f37a4ac0752cb2bfe353ac84825a8ac5e8780d551bb5d8928e20",
+      "bytes": 3116731
+    },
+    "画像/background/bg.interior.research.red_light.v1.png": {
+      "sha256": "bc64ba40aaa662fcfc7daf7e569e5bee6eb0dec43f844fdebbb25dd34c096278",
+      "bytes": 2981712
+    },
+    "画像/background/bg.interior.temple_institute.library.night.v1.png": {
+      "sha256": "b660ca8d5851bf820be9b6b2f2ab009db106281fe562d23a4b49f0a97516f989",
+      "bytes": 3200478
+    },
+    "画像/background/bg.market.crowded_trade_lane.v1.png": {
+      "sha256": "c1d463c81268b32122adeb2f2d9350a55e6a6b06c480ade816e776e228a62536",
+      "bytes": 3640471
+    },
+    "画像/background/bg.ocean.open_sea.night.v1.png": {
+      "sha256": "da71ace960bc1387c62f273157f8493522bfa5f0688d70281587d29bd2ed4052",
+      "bytes": 2301437
+    },
+    "画像/background/bg.ocean.open_sea.v1.png": {
+      "sha256": "0b36016f220516e85a43a3c9f1dfc07d96f1f9ab83bc9aa7f444751181d3ee0e",
+      "bytes": 2635863
+    },
+    "画像/background/bg.ocean.trial.single_ship.v1.png": {
+      "sha256": "ddd6bb0c1cdcc427ade9e80a36db8bcb9354a8e48b1ec1d95382be0d16407fe0",
+      "bytes": 2451642
+    },
+    "画像/background/bg.port.west.departure.v1.png": {
+      "sha256": "eada1dd5a60870d81b71bb15cea89d28f739d56a67e6fd66fc5318377361fa17",
+      "bytes": 4004915
+    },
+    "画像/background/bg.port.west.five_berthed.v1.png": {
+      "sha256": "757f2ffa4694c3e6ce0dbda150b370164708bf0852854c6a26b6696ff530a8a9",
+      "bytes": 3991503
+    },
+    "画像/background/bg.port.west.lighthouse_night.v1.png": {
+      "sha256": "957acae5b25fa7af13b1a91f9775f34451404614ccf3b975c6adf6241f363356",
+      "bytes": 2967330
+    },
+    "画像/background/bg.prologue.antique_purchase.v1.png": {
+      "sha256": "5a46f7e571552cf2bc1709a5df5d23febb875dd147b73d849e9d233c59104b1f",
+      "bytes": 2686869
+    },
+    "画像/background/bg.prologue.first_observation.v1.png": {
+      "sha256": "5c5271fbce2eaf6e192482377522fe768b337e6f4808209370d19f82a025c694",
+      "bytes": 2126242
+    },
+    "画像/background/bg.river.magic_boat.crossing.v1.png": {
+      "sha256": "5af1b439ba684f259e965db5f50cbb0d92735c2507060f03be87c6a7e8c9050f",
+      "bytes": 3395961
+    },
+    "画像/background/bg.seres.hall.sea_chart.v1.png": {
+      "sha256": "2a5f99e9088c6b37b7f20e098e601546b9ba7b8aae63485530f653b6b80c4b0a",
+      "bytes": 3691609
+    },
+    "画像/background/bg.seres.workshop.magic_exchange.v1.png": {
+      "sha256": "21580c1f4b350b60eec59ce55f153535c31c6c01e8ba38eeff3851a692f881fd",
+      "bytes": 3321899
+    },
+    "画像/background/bg.ship.ocean.departure_check.v1.png": {
+      "sha256": "6aada38065252ae5fb38aa465c3e72c1c959125626a626acae4410e6220bbff0",
+      "bytes": 3268023
+    },
+    "画像/background/bg.ship.ocean.land_sighted.v1.png": {
+      "sha256": "0c3b42d009f4ec380e22e96d63ca3be179d47ec03221bc5e7183881c2c01c6c3",
+      "bytes": 3092933
+    },
+    "画像/background/bg.ship.ocean.underway.v1.png": {
+      "sha256": "3aaefc488c23c6e6222229893675b01951aaf26d4f25afb3c5e1807b52052c49",
+      "bytes": 3036515
+    },
+    "画像/background/bg.western_continent.shore_pavement.v1.png": {
+      "sha256": "e6030d09e4997d6f1280290dd88d0b167abef821e261225b6ad7e83018a7860b",
+      "bytes": 4028558
+    },
+    "画像/background/bg.world.arcadia.irrigated.v1.png": {
+      "sha256": "f90c1fe1911a7b8be72b3555e9798f78d88a5f63724a410e8274c6653dd2f34f",
+      "bytes": 3516337
+    },
+    "画像/background/bg.world.arcadia.night.v1.png": {
+      "sha256": "2f1b3498164697011e299bffa490f4fb491df02df50f69d4f07626192a73c95c",
+      "bytes": 2996169
+    },
+    "画像/background/bg.world.arcadia.watered.v1.png": {
+      "sha256": "f55ce8420802f5193fedce7a91e5ab3c88f2f8392e8f033498142d665f4a127a",
+      "bytes": 3458127
+    },
+    "画像/concept/concept.academy.young_inventors.v1.png": {
+      "sha256": "e4c89c88887ab329e880d93f3ad46aeb3ef6edf83a0d3c69da92101872e3cb3f",
+      "bytes": 3446666
+    },
+    "画像/concept/concept.beast.northern_defense.v1.png": {
+      "sha256": "141d918787c13f7ba5c979a40e7866d9e56a48026cdea88a90e448c09c998229",
+      "bytes": 3642673
+    },
+    "画像/concept/concept.beast.rooga.return.v1.png": {
+      "sha256": "5ee7630a555090ef870c5f43b6cc1f78b9cb949dde430f8275e8e41099c778ff",
+      "bytes": 3621345
+    },
+    "画像/concept/concept.beast.village.first_visit.v1.png": {
+      "sha256": "2d9ddb3ebfda9107cb74a98abd91523f04a8202e53e2054b4bd885ce6273d099",
+      "bytes": 3787204
+    },
+    "画像/concept/concept.city.arcadia.calendar_festival.v1.png": {
+      "sha256": "d8057aca66bb7351c135ef5751664729cddb9b68f26d52f19e35b568520b2b2a",
+      "bytes": 3589900
+    },
+    "画像/concept/concept.city.arcadia.day.v1.png": {
+      "sha256": "003f2063736dd37afecbaeff691ba02c6a2bb2b29001909bfe24fa0f824bc69b",
+      "bytes": 3871107
+    },
+    "画像/concept/concept.city.arcadia.memorial.v1.png": {
+      "sha256": "1df5e1495204a7170fe6c2df553853e16d20291cb8577ffb743d4f25f58465ea",
+      "bytes": 3696192
+    },
+    "画像/concept/concept.city.arcadia.tower_construction.v1.png": {
+      "sha256": "22df9c6eabe7df2283ff111107b70bdf74fda0f074cc3f6d009b468a29d995a1",
+      "bytes": 3697029
+    },
+    "画像/concept/concept.city.dwald.first_reveal.v1.png": {
+      "sha256": "1f787ec7b90b3431c163f3a9f3e87ba1f04b93a51a7dc6003d9c88801275560e",
+      "bytes": 3930186
+    },
+    "画像/concept/concept.city.dwald.forge_street.v1.png": {
+      "sha256": "eeb34e63e67b387f433172af05df4ec0550eb6d888136bd3840e5a0c7454efb4",
+      "bytes": 3642891
+    },
+    "画像/concept/concept.city.neo_arcadia.construction.v1.png": {
+      "sha256": "442381ae1ba682aec0189007329519f6ad181e99d82acccf65a302ee33b85898",
+      "bytes": 3885325
+    },
+    "画像/concept/concept.city.neo_arcadia.living.v1.png": {
+      "sha256": "77c1d940abe3dc0c38f2627e17c41ba0d8ce87db01d79c43a5c7e05da310e5db",
+      "bytes": 3835051
+    },
+    "画像/concept/concept.city.seres.port.v1.png": {
+      "sha256": "bbdde07971df4cb719652955131d6014a2c0880da20405d49bad25b8cf3de1dc",
+      "bytes": 3814031
+    },
+    "画像/concept/concept.district.frontier.v1.png": {
+      "sha256": "a619e4e993f81ebe1a986a18486d3cd6fab8b8f539e22397ed18ab0c91711d01",
+      "bytes": 4037505
+    },
+    "画像/concept/concept.district.magic_workshop.construction.v1.png": {
+      "sha256": "8544ef06eac44558365e71ebbf95c37eb17f1c2da871e72521a4958dfdfb7fad",
+      "bytes": 3970926
+    },
+    "画像/concept/concept.expedition.known_land.v1.png": {
+      "sha256": "42b6195811bd1118cedecb0451db1864dd81f602fe46634cedc7b1e939693687",
+      "bytes": 3793083
+    },
+    "画像/concept/concept.expedition.western_ocean.v1.png": {
+      "sha256": "2f11e3f8a2eecd9facb4bb8b7594b2d3672b45edb85b4c5d686dc7e845efe081",
+      "bytes": 3730902
+    },
+    "画像/concept/concept.forest.first_contact.v1.png": {
+      "sha256": "84bfbecd77d43f73ab65c877be2414a53f631e7172cc356edf19683241552f97",
+      "bytes": 3541118
+    },
+    "画像/concept/concept.forest.village.first_visit.v1.png": {
+      "sha256": "2dceb17bd3bbee64d4bf10bc31fef70dec3160767b3d1f748131c90d6a06eff6",
+      "bytes": 3892595
+    },
+    "画像/concept/concept.frontier.light_sword.v1.png": {
+      "sha256": "ad0748dd6ace82f29155122239d875db6a67c14bb9fe3109fb98ed4ff6ce77fa",
+      "bytes": 3406611
+    },
+    "画像/concept/concept.interior.assembly.shared_future.v1.png": {
+      "sha256": "fdca7b2278ba7fe7f367077a64a3fa52039272522ed96787b52b7f3af7680e38",
+      "bytes": 3529729
+    },
+    "画像/concept/concept.interior.genesis_city.model.v1.png": {
+      "sha256": "0738173efddc3d5e722067566a712ecab7e824e2cbf450e4f931b78dd8173b50",
+      "bytes": 3627544
+    },
+    "画像/concept/concept.interior.geography.local_maps.v1.png": {
+      "sha256": "9460b5a50512b2786ce42b7cdfed1b4e3abf4cd89fb0254d42fc7930c4d6e242",
+      "bytes": 3112149
+    },
+    "画像/concept/concept.interior.magic_workshop.production.v1.png": {
+      "sha256": "ed109af2bec30b1530d8b016e5d8a38d9631cb838e0fdc7dfd3396533ad86efc",
+      "bytes": 3382781
+    },
+    "画像/concept/concept.interior.research.circuit.v1.png": {
+      "sha256": "66b97aa7f94d3310f72427e99b39b2d08885ee4c65d804892520a88613f29cac",
+      "bytes": 2891327
+    },
+    "画像/concept/concept.interior.research.heart.v1.png": {
+      "sha256": "f1035ab7b77b598cc9342c24fb06e5e47e208572ae20c360c0d6f4101a070921",
+      "bytes": 2947449
+    },
+    "画像/concept/concept.interior.research.v1.png": {
+      "sha256": "9609196b12cad6f93c5138113021b67397c29e4e774381719e946f31ca6f5a39",
+      "bytes": 3201877
+    },
+    "画像/concept/concept.interior.temple.discussion.v1.png": {
+      "sha256": "914ce4020e9f0602901cc03ec6da296a517f8b557a177dcf675944611f3c4516",
+      "bytes": 3628919
+    },
+    "画像/concept/concept.interior.temple_institute.assembly.v1.png": {
+      "sha256": "df8d910ee3e95191316a08c4cb1244f8b753a2380b51fe14848b71a25ae4bbc5",
+      "bytes": 3358773
+    },
+    "画像/concept/concept.interior.temple_institute.library.v1.png": {
+      "sha256": "2dc9fd5a90ed3ed6b4ce548c9fd8e89eaaa42d45aef9cde4f460721dbd9194ce",
+      "bytes": 3547661
+    },
+    "画像/concept/concept.late.aerl.v1.png": {
+      "sha256": "f51947a7918089fbb583f51c6d85b313235997f32e5d947db5f0206c466d57b3",
+      "bytes": 3064310
+    },
+    "画像/concept/concept.late.archive.v1.png": {
+      "sha256": "19a98ae64c65b82e6cbc9c05614722365379237cb8821289558981b53bbcac13",
+      "bytes": 3517390
+    },
+    "画像/concept/concept.late.crystal.v1.png": {
+      "sha256": "de0d5d60f90b3d9dc2b25b28e7acdd452795508cfb8a5cf1f61da6744e8ff5f2",
+      "bytes": 3239509
+    },
+    "画像/concept/concept.late.ending.v1.png": {
+      "sha256": "587d66b42228c31883551616302030c25009d742341e00661f8f04e898ee9357",
+      "bytes": 2602481
+    },
+    "画像/concept/concept.late.hope.v1.png": {
+      "sha256": "4a9ab56309c7fd99136b3be888fe4eabd89aef2d542737bb5c21340d8c147ca7",
+      "bytes": 3058198
+    },
+    "画像/concept/concept.late.marine.v1.png": {
+      "sha256": "d68e83d51112bd67080abd42d93a1866ef19473a0c23e9ca6288169913d2db95",
+      "bytes": 3408468
+    },
+    "画像/concept/concept.late.memorial.v1.png": {
+      "sha256": "372e29d90fd28d9f856e904b4a776bc5b0af08f3ba5fcaf2dc8b63cf3fd7b584",
+      "bytes": 2937096
+    },
+    "画像/concept/concept.late.outer.v1.png": {
+      "sha256": "5d20ce2627141c574bc0f6b0c4b3d8c8b13811d3bb76ad1563730a5a162cd42d",
+      "bytes": 2746488
+    },
+    "画像/concept/concept.late.recordroom.v1.png": {
+      "sha256": "36df208882d6a4013af7e53ba7e30b28c698bb7bd64efdbb6caf30e69a132083",
+      "bytes": 3076632
+    },
+    "画像/concept/concept.late.rivaria.v1.png": {
+      "sha256": "ba3d700c9a785dd5a3f8defd0a5723572e2f77631e8df88c1ed125632fde6ecc",
+      "bytes": 3588915
+    },
+    "画像/concept/concept.late.whitecity.v1.png": {
+      "sha256": "a6852f656dede12fc28b1915e5a856abc51a4249268823685c94994e53a2ecf0",
+      "bytes": 3127170
+    },
+    "画像/concept/concept.late.worldtree.v1.png": {
+      "sha256": "fd2f2a6ac27543541cf2399b794615a5321c2a2f55acc91351fd346e51683d3e",
+      "bytes": 2979767
+    },
+    "画像/concept/concept.market.household_lamps.v1.png": {
+      "sha256": "982cbc17982eb37988b5d902313cce90f665023705c6ff5672e3295e4ffaf5c4",
+      "bytes": 3572783
+    },
+    "画像/concept/concept.port.west.city.v1.png": {
+      "sha256": "587f7ea627baed40c03a0c84c3314887aee86034e8cc9a276fde7cc8de92b9ad",
+      "bytes": 4032297
+    },
+    "画像/concept/concept.port.west.construction.v1.png": {
+      "sha256": "462dd40abc6e5bfada033e1c4aaab9d89b508249196d725d1221ecdc6eca8291",
+      "bytes": 3675209
+    },
+    "画像/concept/concept.river.magic_boat.launch.v1.png": {
+      "sha256": "900f19bca57e81094f86166179e2d1a642d8b52bd880a73cf8cad9e243fe085a",
+      "bytes": 3654172
+    },
+    "画像/concept/concept.room.souta.night.v1.png": {
+      "sha256": "ab1683be69564dbaf66e295e59104c13fc2596fb427047a0b12463b315a80239",
+      "bytes": 2321438
+    },
+    "画像/concept/concept.ship.ocean.cabin.v1.png": {
+      "sha256": "3cc046d9751d1e3fa73377a9ddd23a776a077df1ecdd59a46d3333ec7729ad47",
+      "bytes": 2625998
+    },
+    "画像/concept/concept.ship.ocean.deck.v1.png": {
+      "sha256": "00b68c199ada3740efe6cf328c3888606ae940ab968174a8c88cf34beb552dad",
+      "bytes": 2986268
+    },
+    "画像/concept/concept.ship.ocean.first_generation.v1.png": {
+      "sha256": "bd9f0d4af257ea702619668c41c7a62414d481d28d8a1c43632ab8e7e97bd79f",
+      "bytes": 3083002
+    },
+    "画像/concept/concept.shop.antique.v1.png": {
+      "sha256": "45cffc6e67c58bc1f75ded89e7ffe9195d02809cd6b4950962424f1e2a0df495",
+      "bytes": 2677828
+    },
+    "画像/concept/concept.western.trail.footprints.v1.png": {
+      "sha256": "fa40e3390c87d27d0b0c55bb3d1a2ed9ef0987f35d19aab2277d03aa68cf6add",
+      "bytes": 3565627
+    },
+    "画像/effects/fx.water.first.v1.png": {
+      "sha256": "1cf9b42bd68043fb8199dc0c7a58a051f98d0f8c4c30b63877125660546b8dd5",
+      "bytes": 917484
+    },
+    "画像/effects/ui.navigation.knowledge.atlas.v1.png": {
+      "sha256": "0222bbf2090a85c167756b4b51e74d889d7054e1795338a38ca4f0a678b92698",
+      "bytes": 648095
+    },
+    "画像/props/prop.broken_led.v1.png": {
+      "sha256": "3ad65ca0adadef47b172b1cb09ff8bb236e6923b91fbb7cfc65d41c214469261",
+      "bytes": 618045
+    },
+    "画像/props/prop.crystal_steel.first_blade.v1.png": {
+      "sha256": "9c1426e5a47dfb4d65f78131b2b39848e461207c20995861f798e623a3dbb931",
+      "bytes": 454526
+    },
+    "画像/props/prop.crystal_steel.ingot.v1.png": {
+      "sha256": "f3af008e97ea227aa772998cceb72c01f176f23400d43183901b428793585972",
+      "bytes": 1131456
+    },
+    "画像/props/prop.eternal_lamp.household.v1.png": {
+      "sha256": "7e20dcc4cb807d9ee8913e66b530e8e4ac45d7b6f644b6f250d0d8595d3194ec",
+      "bytes": 1336594
+    },
+    "画像/props/prop.harbor.cargo_group.v1.png": {
+      "sha256": "8997ae2f0dc169aa7ffb021dbc5fbde6ee2958732666e61a9b3b6ff94874a04f",
+      "bytes": 1578178
+    },
+    "画像/props/prop.harbor.shipyard.v1.png": {
+      "sha256": "a5d8260e59cc6d782298cb25b15ac4238167476961d4134ff1f4f8df694eb228",
+      "bytes": 2078495
+    },
+    "画像/props/prop.harbor.warehouse.v1.png": {
+      "sha256": "91b2c5ccc91984dbb98bd8733dbaf8017190798140f378635fa0f4fdf8ae541a",
+      "bytes": 1899514
+    },
+    "画像/props/prop.light_sword.v1.png": {
+      "sha256": "68c92a9f2f8d9899d0f78e3bf2338de1da1ce5dacf9c39cb723cf6ae3870162b",
+      "bytes": 754523
+    },
+    "画像/props/prop.magic_rangefinder.v1.png": {
+      "sha256": "e3285dacef2069d4827d3651fdc8a5a3c9e5e9e72a168b6894728ad3bf8efb43",
+      "bytes": 1898839
+    },
+    "画像/props/prop.navigation.logbook.v1.png": {
+      "sha256": "bf3d5b1361cfca338e65f6afde1cbcaddda9c78379705d03e6b6c1f5e2505240",
+      "bytes": 1469043
+    },
+    "画像/props/prop.ship.ocean.map_token.v1.png": {
+      "sha256": "23178157a3bd4b5910da193e67dd9e42bdcc2b45c61385cf7d12e3070b47d780",
+      "bytes": 940330
+    },
+    "画像/props/prop.tools.creator.atlas.v1.png": {
+      "sha256": "8b344a0398c06586d9e8875fdbf3a936e169b88d8467d86017bbab159ce5f0c6",
+      "bytes": 850409
+    },
+    "試作/audio/crisis.mp3": {
+      "sha256": "e4f7cf65094c3a4c1e4255333fe2ca4b2a75b7fe644c9e868bb25aa71b26964e",
+      "bytes": 1482126
+    },
+    "試作/audio/daily.mp3": {
+      "sha256": "6be61bf75cf9a990d5f038ad8d7cf5691c1c296e7da3025741d07f14b8feac92",
+      "bytes": 3215612
+    },
+    "試作/audio/discovery.mp3": {
+      "sha256": "3b71580ad46da9ec63ba508c013c44962f6434dc6d70d9542687c6fdc31b0961",
+      "bytes": 1465825
+    },
+    "試作/audio/farewell.mp3": {
+      "sha256": "feae93af00dd1cbdf2810d0a67a08a997874e8b40dbc9409ab8681ab3854df87",
+      "bytes": 1500934
+    },
+    "試作/audio/inheritance.mp3": {
+      "sha256": "0d7a07d2963d705bf07a4c8e53a0ae4ecec48142635a31e8a707a54e25a5b7f1",
+      "bytes": 4385132
+    },
+    "試作/audio/title.mp3": {
+      "sha256": "9cd908bb9d22315f27e480c2fc40c30f212ecf7d1363d5fcbd20653a6f68ef25",
+      "bytes": 4389241
+    }
+  },
+  "bytes": 381238321
+}
