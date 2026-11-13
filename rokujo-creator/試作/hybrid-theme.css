@@ -1,0 +1,115 @@
+/* 0.29 / A contemporary observation room facing a fantasy world.
+   Concept: concept.ui.hybrid.observatory. Decorations never receive input. */
+body[data-ui-theme="fantasy-modern"]{
+ --bg:#0b1424;--panel:#12243c;--line:#9eb5d32e;--text:#eaf1fb;--muted:#b7c7dc;--gold:#dec18b;--green:#86ded7;
+ background-color:#0b1424;
+ background-image:radial-gradient(circle at 12% 18%,#b6ddff80 0 1px,transparent 1.6px),radial-gradient(circle at 77% 10%,#b6ddff60 0 1px,transparent 1.6px),radial-gradient(circle at 92% 42%,#b6ddff60 0 1px,transparent 1.6px),radial-gradient(circle at 41% 63%,#b6ddff40 0 1px,transparent 1.6px),radial-gradient(ellipse at 78% 0,#20556a70,transparent 55%),radial-gradient(ellipse at 12% 58%,#30375b55,transparent 58%),linear-gradient(145deg,#0b1424,#122a3c 58%,#111b30);
+ background-size:373px 311px,463px 397px,597px 433px,677px 521px,auto,auto,auto;background-attachment:fixed;
+ font-family:"Yu Gothic UI","Meiryo",sans-serif;
+}
+body[data-ui-theme] header{background:linear-gradient(100deg,#0c192bee,#12283ceb);border-bottom:1px solid #c8b58080;box-shadow:0 8px 30px #02071055;backdrop-filter:blur(14px)}
+body[data-ui-theme] .brand{display:grid;grid-template-columns:38px 1fr;column-gap:12px;align-items:center;color:#eef4fc;letter-spacing:.07em}
+body[data-ui-theme] .brand span:not(.hybrid-orb){color:#b9cbe0;letter-spacing:.12em;grid-column:2}
+.hybrid-orb{grid-column:1;grid-row:1/3;position:relative;width:31px;height:31px;border:1px solid #d8bc84;border-radius:50%;background:radial-gradient(circle at 36% 30%,#e6fdff,#64c9e4 14%,#376cbd 42%,#142b59 70%);box-shadow:0 0 20px #5ac6e640}
+.hybrid-orb::before,.hybrid-orb::after{content:"";position:absolute;inset:7px -6px;border:1px solid #e0c58d;border-radius:50%;transform:rotate(-32deg);pointer-events:none}.hybrid-orb::after{inset:-5px 8px;transform:rotate(32deg)}
+body[data-ui-theme] button{border-color:#91afca66;background:linear-gradient(135deg,#203d57,#142c45);color:#edf5ff;border-radius:8px;box-shadow:inset 0 1px #d6f3ff12;transition:background .16s,border-color .16s,box-shadow .16s}
+body[data-ui-theme] button:hover:not(:disabled){background:linear-gradient(135deg,#2b5669,#1c3b57);border-color:#c2dce3;filter:none;box-shadow:0 0 16px #54c9d820}
+body[data-ui-theme] button:focus-visible,body[data-ui-theme] a:focus-visible,body[data-ui-theme] select:focus-visible,body[data-ui-theme] input:focus-visible{outline:3px solid #75dce5;outline-offset:3px}
+body[data-ui-theme] button:disabled{background:#d4dce5;color:#4e6076;border-color:#aab8c8;opacity:1;box-shadow:none;cursor:not-allowed}
+body[data-ui-theme] button.primary{background:linear-gradient(120deg,#116367,#12545b);border:1px solid #e1c38b;color:#f4ffff;box-shadow:inset 0 1px #bdf7ec55,0 4px 18px #1bc8ce18}
+body[data-ui-theme] #constructionBanner{background:#0c1727;color:#d7c69f;border-color:#aeb8c33b}
+body[data-ui-theme] .title{position:relative;isolation:isolate;overflow:hidden;border:1px solid #c8b58280;background:radial-gradient(circle at 95% 10%,#2c64815c,transparent 48%),linear-gradient(120deg,#0f2035ed,#172b42f2);border-radius:14px;box-shadow:0 24px 70px #02081466,inset 0 0 0 5px #a5bacb08}
+body[data-ui-theme] .title::after{content:"";position:absolute;width:360px;height:360px;right:-150px;top:-175px;border:1px solid #71cfdf40;border-radius:50%;box-shadow:0 0 0 18px #79c7dd08,0 0 0 19px #a3cfd826,0 0 0 60px #79c7dd05,0 0 0 61px #c4b47c30;pointer-events:none;z-index:-1}
+body[data-ui-theme] .title h1{color:#edf5ff;text-shadow:0 4px 25px #020a1c55}body[data-ui-theme] .title h1 em{color:#e4cfaa}body[data-ui-theme] .title .eyebrow{color:#8cdbde}
+body[data-ui-theme] .title .muted{color:#bfcee1}body[data-ui-theme] .civ-seed-label{color:#d7e4f4}body[data-ui-theme] .civ-seed-label input,body[data-ui-theme] .civ-seed-label select{background:#eaf0f7;color:#263850;border:1px solid #b3c4d5;border-radius:6px;min-height:42px}
+body[data-ui-theme] .tools,body[data-ui-theme] .story,body[data-ui-theme] .stat,body[data-ui-theme] .story-progress,body[data-ui-theme] #fieldNotebook,body[data-ui-theme] dialog{
+ --text:#263850;--muted:#53647b;color:#263850;background:linear-gradient(135deg,#f5f7f8f5,#e4edf2f2);border:1px solid #b6b6a0;border-radius:10px;outline-color:#c5b58155;box-shadow:inset 0 1px #ffffff,0 14px 35px #030c1d40;
+}
+body[data-ui-theme] dialog::backdrop{background:#071324cf;backdrop-filter:blur(7px)}body[data-ui-theme] dialog h2,body[data-ui-theme] dialog h3{color:#263850}
+body[data-ui-theme] dialog input,body[data-ui-theme] dialog select,body[data-ui-theme] dialog textarea{background:#f9fbfd;color:#263850;border-color:#acbdce;border-radius:6px}
+body[data-ui-theme] .notebook-heading{border-left:4px solid #b49c69;background:#e0eaf0}.notebook-tabs{border-radius:8px}body[data-ui-theme] .notebook-page{border-left-color:#b6a46d77}
+body[data-ui-theme] .time-controls{background:#142e45;color:#e7f2ff;border-color:#bfae7c}body[data-ui-theme] .world{border-color:#acb59e;background:#102c3b;box-shadow:0 0 0 4px #83bbcd0c,0 16px 35px #030a1966}
+body[data-ui-theme] #settingsDialog .music-settings{background:#edf4f7;border-color:#acbbcb}body[data-ui-theme] #settingsDialog .music-settings legend{color:#3b566d}
+body[data-ui-theme] #campaignDialog{--text:#263850;--muted:#53647b;color:#263850;background:linear-gradient(130deg,#f4f7f9,#e1ebf1);border-color:#b6b6a0;border-radius:12px;box-shadow:inset 0 0 0 4px #ffffff55,0 25px 75px #02091888}
+body[data-ui-theme] #campaignDialog h2,body[data-ui-theme] #campaignDialog h3,body[data-ui-theme] #campaignDialog h4,body[data-ui-theme] #campaignDialog p,body[data-ui-theme] #campaignDialog label,body[data-ui-theme] #campaignDialog small,body[data-ui-theme] #campaignDialog blockquote,body[data-ui-theme] #campaignDialog article{color:#2a4056}
+body[data-ui-theme] #campaignDialog .campaign-nav{background:#dfe9f0;border-color:#aebfcf}body[data-ui-theme] #campaignDialog .campaign-nav [aria-pressed=true]{background:#194b5a!important;color:#f4ffff!important;border-color:#c7b079!important;box-shadow:inset 0 -2px #8adbd9!important}
+body[data-ui-theme] #campaignDialog button{background:linear-gradient(130deg,#24475c,#172f49);color:#f2f7fd;border-color:#9bafb9;border-radius:7px}body[data-ui-theme] #campaignDialog button:disabled{background:#d0dae4;color:#536276}
+body[data-ui-theme] #campaignDialog .campaign-source article,body[data-ui-theme] #campaignDialog .campaign-cards section,body[data-ui-theme] #campaignDialog .campaign-work,body[data-ui-theme] #campaignDialog .campaign-person,body[data-ui-theme] #campaignDialog .campaign-depots section{background:#f7fafbd9;border-color:#b6c5d2;box-shadow:none}
+body[data-ui-theme] #campaignDialog .campaign-source>summary,body[data-ui-theme] #campaignDialog .eyebrow{color:#5c6579}body[data-ui-theme] #campaignDialog .campaign-art{border-color:#b8b38b;background:#142b40}body[data-ui-theme] #campaignDialog .campaign-art figcaption{background:#173147;color:#dbe9f7}
+body[data-ui-theme] #campaignDialog .campaign-guide{background:#d8eaf080;border-color:#8eadbf}body[data-ui-theme] #campaignDialog input,body[data-ui-theme] #campaignDialog select,body[data-ui-theme] #campaignDialog textarea,body[data-ui-theme] #campaignDialog option{background:#f8fbfd;color:#263850;border-color:#aabfcf}
+body[data-ui-theme] #campaignDialog .campaign-stocks span{background:#edf3f8;color:#2a435a;border-color:#b1beca}body[data-ui-theme] #campaignDialog .campaign-footer button:last-child:not(:disabled){background:linear-gradient(120deg,#17656c,#164a5b);color:#f2ffff}
+body[data-ui-theme] #civilizationScreen{--civ-paper:#edf3f7;--civ-line:#b9ad87;color:#293b51}
+body[data-ui-theme] #civilizationScreen h1,body[data-ui-theme] #civilizationScreen h2,body[data-ui-theme] #civilizationScreen h3{color:#263b53}
+body[data-ui-theme] #civilizationScreen button{font-family:inherit;background:linear-gradient(125deg,#24475d,#17324c);color:#eef7ff;border-color:#8dabbc;border-radius:8px;box-shadow:inset 0 1px #d4edff17;min-height:44px}
+body[data-ui-theme] #civilizationScreen button:disabled{background:#d5dfe7;color:#526177;border-color:#b2becb;opacity:1;box-shadow:none}
+body[data-ui-theme] #civilizationScreen button:hover:not(:disabled){background:linear-gradient(125deg,#2c5b6f,#21445e);border-color:#c9d9d6;filter:none}
+body[data-ui-theme] #civilizationScreen select{background:#f8fbfd;color:#263b53;border:1px solid #acbecd;border-radius:6px;color-scheme:light}
+body[data-ui-theme] #civilizationScreen .civ-heading h1{color:#f0f5fd!important;font-size:29px;letter-spacing:.03em;font-family:'Yu Mincho',serif}
+body[data-ui-theme] #civilizationScreen .civ-heading .eyebrow{color:#8cd9de;letter-spacing:.08em}body[data-ui-theme] .civ-heading small{color:#b7c9df}.civ-top-actions button{font-size:13px}
+body[data-ui-theme] .civ-ribbon{background:transparent;border:0;padding:0;gap:9px;box-shadow:none}
+body[data-ui-theme] .civ-stat{position:relative;border:1px solid #c6be9e;border-radius:8px;background:linear-gradient(125deg,#f4f7f9,#dfeaf0);color:#253b53;box-shadow:inset 0 1px #fff,0 7px 18px #020a1933;padding:12px 15px}
+body[data-ui-theme] .civ-stat::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#6aa9b2,transparent);pointer-events:none}
+body[data-ui-theme] .civ-stat small{color:#51657b;letter-spacing:.02em}body[data-ui-theme] .civ-stat strong{font-family:'Segoe UI','Yu Gothic UI',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:24px;color:#213952;letter-spacing:.02em}
+body[data-ui-theme] .civ-navigation,body[data-ui-theme] .civ-world{background:linear-gradient(145deg,#142c43ee,#0e2035ed);border:1px solid #baad83;border-radius:12px;box-shadow:inset 0 0 0 4px #9dc6d409,0 16px 35px #02091866;backdrop-filter:blur(10px)}
+body[data-ui-theme] .civ-navigation{padding:13px}body[data-ui-theme] #civilizationScreen .civ-navigation h2{color:#dcebf8}body[data-ui-theme] .civ-unit-list{border-color:#91adc447}
+body[data-ui-theme] #civilizationScreen .civ-navigation>button{display:flex;gap:10px;align-items:center;text-align:left;padding:11px 10px;margin-bottom:8px;background:transparent;border-color:transparent;color:#d2e1f1;font-size:14px}
+body[data-ui-theme] #civilizationScreen .civ-navigation>button[aria-pressed=true]{background:linear-gradient(110deg,#2c596774,#3a526459);border:1px solid #dfc48c;color:#fff9e8;box-shadow:inset 0 0 0 2px #efd7a011,0 0 18px #d2be8126}
+.civ-tab-icon{width:22px;height:22px;min-width:22px;color:#d4c59f;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+body[data-ui-theme] .civ-side,body[data-ui-theme] .civ-selection,body[data-ui-theme] .civ-decision,body[data-ui-theme] .civ-tutorial,body[data-ui-theme] .civ-help{position:relative;background:linear-gradient(120deg,#f4f7f9f5,#e4edf2f2);border:1px solid #bcb392;border-radius:10px;box-shadow:inset 0 0 0 4px #ffffff55,0 12px 32px #020b1c40;color:#293c53}
+body[data-ui-theme] .civ-side::before,body[data-ui-theme] .civ-tutorial::before,body[data-ui-theme] .civ-help::before{content:"";position:absolute;inset:5px;border:1px solid #b0a47c55;border-radius:6px;pointer-events:none}
+body[data-ui-theme] #civilizationScreen .civ-world>h2{color:#dbeef8!important;font-family:'Yu Mincho',serif;letter-spacing:.03em}body[data-ui-theme] .civ-world{padding:13px}
+body[data-ui-theme] .civ-map-tools{color:#c5d9ed}body[data-ui-theme] .civ-map-wrap{border-color:#a9b8b8;border-radius:7px;box-shadow:inset 0 0 20px #2a789822;scrollbar-color:#8cacb5 #17334a}
+body[data-ui-theme] .civ-side label,body[data-ui-theme] .civ-tech-tree small,body[data-ui-theme] .civ-muted{color:#52657b}body[data-ui-theme] .civ-disabled-reason{color:#76542c}
+body[data-ui-theme] .civ-tech-tree>section,body[data-ui-theme] .civ-foreign,body[data-ui-theme] .civ-district-controls,body[data-ui-theme] .civ-late-tech{border-color:#a6bacb66}
+body[data-ui-theme] .civ-tech-tree .researched{background:#54aead18;border-left:3px solid #318d94;border-radius:6px}body[data-ui-theme] #civilizationScreen progress{accent-color:#318d94}
+body[data-ui-theme] .civ-source-text{border-color:#a6bacb88;color:#2a4056}body[data-ui-theme] .civ-help summary{color:#3e5b71}
+body[data-ui-theme] .civ-turn-footer{background:linear-gradient(105deg,#142d43ed,#163c4aeb);border:1px solid #b9b58a;border-radius:11px;box-shadow:inset 0 1px #aadce520,0 12px 30px #02091866;color:#e1edf8}
+body[data-ui-theme] #civilizationScreen #civEndTurn{border:1px solid #e0c58e!important;background:linear-gradient(120deg,#17656c,#164853);box-shadow:inset 0 0 0 3px #a6e7de10,0 0 22px #48c5cd23;color:#f5ffff;font-family:'Yu Mincho',serif!important;border-radius:9px}
+body[data-ui-theme] #civilizationScreen #civEndTurn:disabled{background:#c6d3dc;color:#4b6075;box-shadow:none;border-color:#97aebe!important}
+body[data-ui-theme] .civ-feedback{color:#efd4a6}
+@media(max-width:760px){body[data-ui-theme]{background-attachment:scroll}body[data-ui-theme] header{backdrop-filter:none}body[data-ui-theme] .brand{grid-template-columns:25px 1fr;gap:8px;letter-spacing:.02em}.hybrid-orb{width:22px;height:22px}.hybrid-orb::before{inset:5px -4px}.hybrid-orb::after{inset:-4px 5px}body[data-ui-theme] .civ-navigation{padding:10px}body[data-ui-theme] #civilizationScreen .civ-navigation>button{font-size:13px;gap:7px;margin-bottom:0;padding:10px 9px}.civ-tab-icon{width:19px;height:19px;min-width:19px}body[data-ui-theme] .civ-ribbon{gap:7px}body[data-ui-theme] .civ-stat{padding:9px 10px}body[data-ui-theme] .civ-stat strong{font-size:20px}body[data-ui-theme] .civ-side,body[data-ui-theme] .civ-selection{padding:14px}body[data-ui-theme] .civ-side,body[data-ui-theme] .civ-navigation,body[data-ui-theme] .civ-world{backdrop-filter:none}}
+@media(prefers-reduced-motion:reduce){body[data-ui-theme] button{transition:none}}
+body[data-ui-theme].reduced-motion button{transition:none}
+
+body[data-ui-theme] #civilizationScreen :is(button,select):focus-visible,body[data-ui-theme] dialog :is(button,input,select,textarea):focus-visible{outline:3px solid #84e2e8;outline-offset:3px;box-shadow:0 0 0 6px #122a42!important}
+@media(max-width:540px){body[data-ui-theme] header{height:auto;min-height:76px;flex-wrap:wrap;gap:10px;padding:12px 16px}body[data-ui-theme] .brand{flex:1 0 100%;font-size:17px;grid-template-columns:27px 1fr}body[data-ui-theme] header nav{width:100%;justify-content:space-between;gap:6px}body[data-ui-theme] header button{font-size:12px;min-height:44px;padding:9px 10px}}
+
+body[data-ui-theme] .civ-heading{position:relative;isolation:isolate;min-height:94px;border-bottom:1px solid #8fb7c333;padding-bottom:14px}
+body[data-ui-theme] .civ-heading::before{content:"";position:absolute;z-index:-1;width:260px;height:260px;right:30%;top:-145px;border:1px solid #78d6df4d;border-radius:50%;box-shadow:0 0 0 12px #8ddde108,0 0 0 13px #bfccae33,0 0 0 37px #9ad9db05,0 0 0 38px #75cadb26;pointer-events:none}
+body[data-ui-theme] .civ-heading::after{content:"";position:absolute;z-index:-1;right:30%;top:-145px;width:260px;height:260px;background:linear-gradient(30deg,transparent 49.6%,#7bcbd638 50%,transparent 50.4%),linear-gradient(-30deg,transparent 49.6%,#d3c58b29 50%,transparent 50.4%);border-radius:50%;pointer-events:none}
+body[data-ui-theme] .civ-stat::before{content:"";position:absolute;right:12px;top:12px;width:6px;height:6px;transform:rotate(45deg);border:1px solid #b6a77d;pointer-events:none}
+@media(max-width:760px){body[data-ui-theme] .civ-heading::before,body[data-ui-theme] .civ-heading::after{opacity:.4;right:5%;width:150px;height:150px;top:-80px}body[data-ui-theme] .civ-heading{min-height:0}}
+
+/* The accepted concept: warm ivory, fine gold filigree and a modern observation surface. */
+body[data-ui-theme] .civ-stat{background:linear-gradient(125deg,#fffdf7,#ecebe3);border-color:#b9a77f}
+body[data-ui-theme] .civ-side,body[data-ui-theme] .civ-selection,body[data-ui-theme] .civ-decision,body[data-ui-theme] .civ-tutorial,body[data-ui-theme] .civ-help{background:linear-gradient(125deg,#fcfbf5f7,#eeece3f5);border-color:#b39b6e}
+body[data-ui-theme] #civilizationScreen .civ-side button:not(:disabled){background:linear-gradient(110deg,#fffdf8,#e9e6da);color:#2d4054;border-color:#b6a27e;box-shadow:inset 0 0 0 2px #ffffff80,0 2px 6px #44452f12}
+body[data-ui-theme] #civilizationScreen .civ-side button:hover:not(:disabled){background:linear-gradient(110deg,#f5fbf7,#e1eeea);border-color:#739f9f}
+body[data-ui-theme] .civ-navigation,body[data-ui-theme] .civ-world{position:relative}
+body[data-ui-theme] .civilization-view{background-color:#0b1424}
+body[data-ui-theme].civilization-view header{height:66px}
+body[data-ui-theme].civilization-view main{padding-top:18px}
+body[data-ui-theme] .civ-ribbon .civ-stat strong{line-height:1.35}
+body[data-ui-theme] .civ-ribbon .civ-stat small{line-height:1.5}
+body[data-ui-theme] #civAchievement{font-size:14px;padding:10px 16px;margin:12px 0}
+body[data-ui-theme] .civ-tutorial{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:12px 16px}
+body[data-ui-theme] #civilizationScreen .civ-tutorial h2{font-size:15px;margin:0}
+body[data-ui-theme] #civilizationScreen .civ-tutorial p{font-size:13px;margin:0;flex:1 1 400px}
+body[data-ui-theme] .civ-tutorial button{margin:0;padding:7px 12px}
+body[data-ui-theme] .civ-top-actions>button:nth-child(-n+2){display:none}
+body[data-ui-theme] .civ-top-actions .civ-tutorial-reopen{margin:0}
+@media(min-width:1201px){body[data-ui-theme] #civMap[data-zoom="1"]{height:50vh;min-width:0!important;width:100%!important}body[data-ui-theme] .civ-side{max-height:calc(100vh - 310px)}}
+@media(max-width:760px){body[data-ui-theme].civilization-view header{height:auto}body[data-ui-theme] .civ-tutorial{display:block}body[data-ui-theme] .civ-tutorial button{margin:6px 5px 0 0}}
+
+body[data-ui-theme] .civ-side::after,body[data-ui-theme] .civ-world::after,body[data-ui-theme] .civ-navigation::after{content:"";position:absolute;inset:2px;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cg%20transform%3D%22rotate%280%2016%2016%29%22%20fill%3D%22none%22%20stroke%3D%22%23c1a46c%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M2%2030V9L9%202H30M6%2028V11L11%206H28M2%2016h8M16%202v8%22%2F%3E%3Cpath%20d%3D%22M9%205l4%204-4%204-4-4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"),url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cg%20transform%3D%22rotate%2890%2016%2016%29%22%20fill%3D%22none%22%20stroke%3D%22%23c1a46c%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M2%2030V9L9%202H30M6%2028V11L11%206H28M2%2016h8M16%202v8%22%2F%3E%3Cpath%20d%3D%22M9%205l4%204-4%204-4-4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"),url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cg%20transform%3D%22rotate%28270%2016%2016%29%22%20fill%3D%22none%22%20stroke%3D%22%23c1a46c%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M2%2030V9L9%202H30M6%2028V11L11%206H28M2%2016h8M16%202v8%22%2F%3E%3Cpath%20d%3D%22M9%205l4%204-4%204-4-4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"),url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cg%20transform%3D%22rotate%28180%2016%2016%29%22%20fill%3D%22none%22%20stroke%3D%22%23c1a46c%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M2%2030V9L9%202H30M6%2028V11L11%206H28M2%2016h8M16%202v8%22%2F%3E%3Cpath%20d%3D%22M9%205l4%204-4%204-4-4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-position:left top,right top,left bottom,right bottom;background-size:22px 22px;background-repeat:no-repeat}
+
+body[data-ui-theme] .civ-heading::after{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20260%20260%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2381d8df%22%20opacity%3D%22.5%22%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22130%22%20r%3D%22118%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22130%22%20r%3D%2294%22%2F%3E%3Cpath%20d%3D%22M130%2022L232%20188H28ZM130%20238L28%2072H232Z%22%2F%3E%3Cpath%20d%3D%22M130%206v19M130%20235v19M6%20130h19M235%20130h19M43%2043l15%2015M202%20202l15%2015M43%20217l15-15M202%2058l15-15%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22130%22%20r%3D%2226%22%20stroke%3D%22%23dec490%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/contain no-repeat;opacity:.45}
+
+body[data-ui-theme] .civ-heading::before{border-color:#d6be813d;box-shadow:0 0 28px #68d6dc16;opacity:.6}
+body[data-ui-theme] #civEndTurn::before{content:"";display:inline-block;vertical-align:middle;width:29px;height:29px;margin-right:10px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e4c88e%22%20stroke-width%3D%221%22%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2215%22%2F%3E%3Cpath%20d%3D%22M20%200v40M0%2020h40M7%207l26%2026M7%2033L33%207M20%205l5%2015-5%2015-5-15z%22%2F%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%223%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/contain no-repeat;pointer-events:none}
+@media(max-width:760px){body[data-ui-theme] #civEndTurn::before{display:none}}
+
+body[data-ui-theme] #civilizationScreen{--civ-paper:#f6f3ea;--civ-line:#b39b6e}
+body[data-ui-theme] .civ-stat small{display:flex;align-items:center;gap:7px}
+.civ-resource-icon{width:19px;height:19px;min-width:19px;stroke:#8a7042;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+@media(max-width:760px){body[data-ui-theme] .civ-stat small{gap:4px}.civ-resource-icon{width:15px;height:15px;min-width:15px}}

@@ -1,7 +1,7 @@
 {
-  "version": "0.28-civilization-expansion",
+  "version": "0.29-fantasy-modern-ui",
   "construction": true,
-  "pngCount": 133,
+  "pngCount": 134,
   "video": {
     "url": "../videos/rokujo-creator-3min.mp4",
     "sha256": "1ef212fcb3661c0b4dd7dc615946d398e3bd59fe9c51846c262e440950906e49",
@@ -10,8 +10,8 @@
   },
   "files": {
     "index.html": {
-      "sha256": "34a5b68e61ad62d1d113959e6649be6da99d12180ef5fd4dc9e9f086494cf43d",
-      "bytes": 3893
+      "sha256": "ee5f210915702567761af54c074294dac0ab2af24eb0587f92938b73cb945329",
+      "bytes": 4134
     },
     "試作/app.js": {
       "sha256": "c3e12b7fa5dfcc6ae27bb395691f0bf523eec1fb08e0e1158020aadf39920a9a",
@@ -50,8 +50,8 @@
       "bytes": 294637
     },
     "試作/civilization-ui.js": {
-      "sha256": "ce2cc678e739495919c7cde5514da3718ea0ecc515a1a11d3b7aaf08e45a79d5",
-      "bytes": 33171
+      "sha256": "97bfd0ebd150b512e02b1e397c9c6c514acab55845f3e1a1ea5dcea3d3832510",
+      "bytes": 35361
     },
     "試作/civilization.css": {
       "sha256": "98746a9a6c080c1b370ec516f8fbadaa791e96df311605f90f5f9142e7dfb281",
@@ -93,9 +93,13 @@
       "sha256": "8ca54f5432cf3c3b2919c05498f5d89f723dd10f5227fa8486cee8f6dc7e0bbe",
       "bytes": 45050
     },
+    "試作/hybrid-theme.css": {
+      "sha256": "caf9903ef0dac1e1a31bdf68dbc0ef0febdc104664d83e83203d24ee4ae47f8a",
+      "bytes": 21823
+    },
     "試作/index.html": {
-      "sha256": "6851857631cc9556d94b67aafdb961c7a614872c0eacae5353ef0690eb6656e9",
-      "bytes": 17856
+      "sha256": "9d8fee83bb727fb818875cf996ffdf640efe8852b2eefee9952e9d947c12c091",
+      "bytes": 18012
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
@@ -122,8 +126,8 @@
       "bytes": 1066705
     },
     "試作/storage.js": {
-      "sha256": "31e234362ebb885a0b7a03c4b9f7a24fe13fa232eb8d94293678c45943a5d7c7",
-      "bytes": 3178
+      "sha256": "5936c4d35a79564ceb2bd5435845616d6d6ac8f582c120953bd040cfcb2cf4d3",
+      "bytes": 3173
     },
     "試作/storydata.js": {
       "sha256": "0869f662cca9b8170aefaa3b4808da5064aec49c253aa2097120d541a3255805",
@@ -597,6 +601,10 @@
       "sha256": "e0a321fc6ec4d748eedf3cd75153806fe0b246a65c3a75d5b6bf34987f4d3570",
       "bytes": 3048504
     },
+    "画像/concept/concept.ui.hybrid.observatory.v1.png": {
+      "sha256": "ba3b8c06f2a409505fd6e2051697804378e30142e49c022f0ec6dedd84e60887",
+      "bytes": 3088904
+    },
     "画像/concept/concept.western.trail.footprints.v1.png": {
       "sha256": "fa40e3390c87d27d0b0c55bb3d1a2ed9ef0987f35d19aab2277d03aa68cf6add",
       "bytes": 3565627
@@ -702,5 +710,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 403173329
+  "bytes": 406286638
 }
