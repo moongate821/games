@@ -120,3 +120,6 @@ body[data-ui-theme] .civ-city-vignette{background:none;height:110px}.civ-city-vi
 body[data-ui-theme] dialog,body[data-ui-theme] #campaignDialog,body[data-ui-theme] .tools,body[data-ui-theme] .story,body[data-ui-theme] #fieldNotebook{background:linear-gradient(125deg,#fffaf0,#e8dfcc);border:2px solid #bea16c;outline:1px solid #ddc99b;outline-offset:-7px;border-radius:4px;--text:#2e423d;--muted:#596553;color:#2e423d}
 body[data-ui-theme] dialog h2,body[data-ui-theme] dialog h3{color:#2e423d;font-family:'Yu Mincho',serif}body[data-ui-theme] dialog button{background:linear-gradient(#fffaf0,#e5dac2);border-color:#b8a075;color:#2a433d;box-shadow:inset 0 0 0 2px #fff8;border-radius:5px}
 body[data-ui-theme] #settingsDialog .music-settings,body[data-ui-theme] #campaignDialog .campaign-nav{background:#e8e0cb;border-color:#bca77d}body[data-ui-theme] #campaignDialog :is(.campaign-work,.campaign-person,.campaign-source article,.campaign-cards section,.campaign-depots section){background:#fffaf0c9;border-color:#bbad88}
+
+body[data-ui-theme] .civ-city-vignette{height:76px}.civ-city-vignette svg{width:76px;height:76px;margin:auto;overflow:hidden}
+@media(min-width:821px){body[data-ui-theme] #civMap{height:calc(100dvh - 500px)}}
