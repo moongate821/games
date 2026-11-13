@@ -15,7 +15,7 @@
  }
  function envelope(state){
   if(!E.validate(state))throw Error('保存前の確認に失敗しました。');
-  return {formatVersion:2,contentVersion:'0.26-concept-and-music',saveId:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),savedAt:new Date().toISOString(),state:E.clone(state)};
+  return {formatVersion:2,contentVersion:'0.27-civilization-foundation',saveId:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),savedAt:new Date().toISOString(),state:E.clone(state)};
  }
  function repository(storage){
   function readKey(key){

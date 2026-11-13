@@ -11,10 +11,10 @@
   const active=info.enabled&&info.status==='playing';$('musicToggle').textContent=active?'音楽を消す':['muted','locked'].includes(info.status)?'音楽を再生':'音楽を再開';$('musicToggle').setAttribute('aria-pressed',String(active));$('musicToggle').title=labels[info.status]||'';
  }});
  music.channels.forEach(a=>{a.hidden=true;a.className='bgm-channel';document.body.append(a);});
- function syncMusic(){const campaign=campaignUI?.context?.(),ending=campaign?.endingTrack&&campaign.tab==='story',fixed=musicPrefs.track!=='auto'&&!ending;music.scene(ending?'inheritance':fixed?musicPrefs.track:RokujoMusic.select({playing,state,event:replay?.entry||state?.story.queued[0],view,campaign}),{reading:!!(campaign||replay||state?.story.queued[0]?.pages),repeat:fixed?musicPrefs.repeat:null});}
+ function syncMusic(){const campaign=campaignUI?.context?.(),ending=campaign?.endingTrack&&campaign.tab==='story',fixed=musicPrefs.track!=='auto'&&!ending;music.scene(ending?'inheritance':fixed?musicPrefs.track:civilizationUI?.active()?'daily':RokujoMusic.select({playing,state,event:replay?.entry||state?.story.queued[0],view,campaign}),{reading:!!(campaign||replay||state?.story.queued[0]?.pages),repeat:fixed?musicPrefs.repeat:null});}
  function saveMusicPrefs(){const previous=musicPrefs.track;musicPrefs={enabled:$('musicEnabled').checked,volume:Number($('musicVolume').value)/100,track:$('musicTrack').value,repeat:$('musicRepeat').checked};if(previous!==musicPrefs.track)campaignUI?.clearEndingSong?.();music.preferences(musicPrefs);syncMusic();$('musicRepeat').disabled=musicPrefs.track==='auto';$('musicVolumeValue').textContent=Math.round(musicPrefs.volume*100)+'%';try{storage.setItem('rokujo_creator_audio_settings',JSON.stringify(musicPrefs));}catch{tell('音楽の設定を保存できませんでした。この画面では適用しています。');}}
 
- let notebook=null,districtUI=null,continuationUI=null,campaignUI=null;
+ let notebook=null,districtUI=null,continuationUI=null,campaignUI=null,civilizationUI=null;
  let state=null,playing=false,view='world',selected='lab',auto=false,timer=null,speed=1,effectTimer,confirmation=null,manualSignature='',leaveAfterSave=false,loadingToken=0,filter='all',library='research',storyConfirmation=null,replay=null;
  let surveyStart=null,surveyMessage='',archiveSelection=null,archiveMessage='',civicSelection='origin';
  let settings={font:'1',motion:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -36,10 +36,10 @@
  function begin(candidate,fromSave=false){
   candidate=E.upgrade(candidate);if(!E.validate(candidate)){tell('記録の内容を確認できません。現在の世界は変更していません。');return;}
   stop();loadingToken++;document.querySelectorAll('dialog[open]').forEach(d=>d.close());
-  notebook?.reset();campaignUI?.reset();surveyStart=null;surveyMessage='';archiveSelection=null;archiveMessage='';civicSelection='origin';state=E.clone(candidate);playing=true;view='world';selected='lab';confirmation=null;storyConfirmation=null;replay=null;manualSignature=fromSave?JSON.stringify(state):'';leaveAfterSave=false;
-  clearTimeout(effectTimer);$('waterEffect').hidden=true;$('title').hidden=true;$('game').hidden=false;tell('');render();showEvent();
+  notebook?.reset();campaignUI?.reset();civilizationUI?.reset();surveyStart=null;surveyMessage='';archiveSelection=null;archiveMessage='';civicSelection='origin';state=E.clone(candidate);playing=true;view='world';selected='lab';confirmation=null;storyConfirmation=null;replay=null;manualSignature=fromSave?JSON.stringify(state):'';leaveAfterSave=false;
+  clearTimeout(effectTimer);$('waterEffect').hidden=true;$('title').hidden=true;$('game').hidden=false;tell('');render();showEvent();if(state.civilization)civilizationUI?.open();
  }
- function toTitle(){stop();playing=false;loadingToken++;clearTimeout(effectTimer);$('waterEffect').hidden=true;document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('game').hidden=true;$('title').hidden=false;state=null;updateRecoveryButton();syncMusic();}
+ function toTitle(){stop();civilizationUI?.reset();playing=false;loadingToken++;clearTimeout(effectTimer);$('waterEffect').hidden=true;document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('game').hidden=true;$('title').hidden=false;state=null;updateRecoveryButton();syncMusic();}
  function worldKey(s){const arc=s.narrative.step;return s.municipal.observed.length===5?'networkNight':arc>=15?'towerReady':arc===14?'towerConstruction':arc>=7?'nightcity':arc>=2?'memorial':arc===1?'city':s.world.stage===0?'night':s.world.stage>=4?'irrigated':'wet';}
  function currentKey(){if(['ocean','underground'].includes(view))return view;if(view==='defense')return 'northernDefense';if(view==='audience')return state.narrative.step>=81?'friendship':'roogaReturn';if(view==='model')return 'genesisModel';if(view==='neoLiving')return 'neoLiving';if(view==='beast')return state.narrative.step>=73?'beastNight':'beastVillage';if(view==='sharedAssembly')return 'sharedAssembly';if(view==='festival')return state.narrative.step>=62?'communityFestival':'calendarFestival';if(view==='river')return state.narrative.step>=48?'boatCrossing':'boatLaunch';if(view==='contact')return 'firstContact';if(view==='forest')return 'forestVillage';if(view==='geography')return state.narrative.step>=44?'atlas':'geography';if(view==='expedition')return 'expedition';if(view==='institute')return 'instituteLibrary';if(view==='assembly')return 'instituteAssembly';if(view==='academy')return 'academyHall';if(view==='newcity')return state.narrative.step>=31?'westLater':'westBuild';if(view==='factory')return 'factoryInside';if(view==='district')return 'factoryNight';if(view==='room')return 'room';if(view==='workshop')return state.narrative.circuitProgress===3?'circuit':state.narrative.step>=9?'heart':state.narrative.eternalProgress===3?'workshopLit':'workshop';return worldKey(state);}
  function profiles(){const arc=state.narrative.step;return {aria:arc>=11?'ariaAdult':arc===0||arc===3?'aria':'ariaTeen',galdo:arc>=39?'galdoFifties':arc>=11?'galdoMiddle':arc===0?'galdo':arc<4?'galdoTeen':'galdoAdult'};}
@@ -86,7 +86,7 @@
   const next=E.storyNextInfo(state);$('storyProgress').hidden=stage<4;$('nextStory').textContent=next.title;$('nextStory').disabled=!next.enabled;$('storyProgressText').textContent=next.reason||next.elapsed;
   if(!auto)$('stopReason').textContent=stage<2?'今は村の危機を助ける段階です。':state.story.queued.length?'新しい出来事を確かめてください。':state.crisis.emergency?'安定した時点から考え直せます。':'観察や画面の切替では、時は進みません。';
   if(state.campaign){const c=RokujoCampaign.status(state.campaign);$('phase').textContent='第'+c.episode+'話 '+c.chapter.title;$('objective').textContent=c.completed===300?'第300話までの物語を見届けた。記録を読み返し、世界間の運営を続けられる。':'旅の続きを開き、場面の観察と共同作業を進めよう。';$('storyProgress').hidden=true;$('viewName').textContent=view==='world'?'序盤の街区・運営模型':'序盤の観測記録：'+$('viewName').textContent.replace(/^序盤の観測記録：/,'');}
-  renderDetail();renderPeople();renderNetwork();renderIndustry();renderScholars();districtUI?.render();continuationUI?.render();campaignUI?.render();
+  renderDetail();renderPeople();renderNetwork();renderIndustry();renderScholars();districtUI?.render();continuationUI?.render();campaignUI?.render();civilizationUI?.render();
   $('log').replaceChildren(...state.chronicle.slice(0,5).map(entry=>{const li=node('li');li.append(node('strong',`${entry.title}［${entry.tick}刻］`),node('div',entry.text));return li;}));
   draw();
  }
@@ -300,7 +300,7 @@
   $('slots').replaceChildren(...[1,2,3].map(i=>{
    const saved=repo.slot(i),el=node('section',undefined,'slot');el.dataset.slot=i;
    el.append(node('h3',`記録 ${i}`));
-   if(saved.state){const arc=saved.state.narrative.step,image=node('img',undefined,'thumb');image.src=paths[worldKey(saved.state)];image.alt='保存した時点の町';el.append(image);el.append(node('p',`${arc?RokujoStory.chapters[arc].title:E.titles[saved.state.world.stage]} · 観察刻 ${saved.state.world.tick}`),node('p',`${saved.status==='legacy'?'旧試作の記録（原本を残して移行）':'形式2 · '+saved.contentVersion} · ${saved.savedAt}`));}
+   if(saved.state){if(saved.state.civilization)el.append(node('p','文明運営・ターン '+saved.state.civilization.turn+' ／ 都市 '+saved.state.civilization.cities.length));const arc=saved.state.narrative.step,image=node('img',undefined,'thumb');image.src=saved.state.civilization?RokujoCivilizationUI.preview(saved.state.civilization):paths[worldKey(saved.state)];image.alt=saved.state.civilization?'保存した文明の探索範囲と都市の略図':'保存した時点の町';el.append(image);el.append(node('p',saved.state.civilization?`文明運営 · ${RokujoCivilization.status(saved.state.civilization).era}`:`${arc?RokujoStory.chapters[arc].title:E.titles[saved.state.world.stage]} · 観察刻 ${saved.state.world.tick}`),node('p',`${saved.status==='legacy'?'旧試作の記録（原本を残して移行）':'形式2 · '+saved.contentVersion} · ${saved.savedAt}`));}
    else el.append(node('p',saved.status==='empty'?'記録がありません。':saved.reason));
    const actions=node('div',undefined,'slot-actions'),save=node('button','保存'),load=node('button',saved.status==='legacy'?'旧記録から再開':'再開');save.dataset.save=i;load.dataset.load=i;save.disabled=!playing;load.disabled=!saved.state;
    save.onclick=()=>{
@@ -327,6 +327,7 @@
  let prologuePage=0;
  function showPrologue(){const [title,src,body]=prologue[prologuePage];$('prologueTitle').textContent=title;$('prologueArt').dataset.fallback='0';$('prologueArt').dataset.page=String(prologuePage+1);$('prologueArt').src=src;renderPrologueCast(prologuePage===0);$('prologueText').textContent=body;$('prologuePage').textContent=(prologuePage+1)+' / '+prologue.length+' 頁 · 保存した箱庭は変更しません。';$('prologueNext').textContent=prologuePage===prologue.length-1?'箱庭を覗く':'次の頁';$('prologueDialog').scrollTop=0;}
  $('readPrologue').onclick=()=>{music.resume();prologuePage=0;showPrologue();$('prologueDialog').showModal();$('prologueDialog').scrollTop=0;};$('prologueClose').onclick=()=>$('prologueDialog').close();$('prologueNext').onclick=()=>{if(prologuePage<prologue.length-1){prologuePage++;showPrologue();}else{$('prologueDialog').close();begin(E.create());}};
+ $('newCivilization').onclick=()=>{if(dirty()&&!confirm('未保存の進行を離れ、新しい文明を始めますか？'))return;try{const seed=Number($('civilizationSeed').value);const candidate=E.civilizationCommand(E.create(),'start',{seed});begin(candidate);}catch(e){tell(e.message);}};
  $('newGame').onclick=()=>{music.resume();if(!dirty()||confirm('未保存の進行を離れ、新しい箱庭を始めますか？'))begin(E.create());};
  $('continue').onclick=()=>{music.resume();openRecords();};$('records').onclick=()=>openRecords();$('recover').onclick=()=>{music.resume();loadSaved(repo.recovery(),'復旧記録');};
  $('step').onclick=()=>{stop();advance();};$('pause').onclick=()=>stop('自動進行を止めました。');$('auto').onclick=toggleAuto;
@@ -366,6 +367,7 @@
  document.addEventListener('keydown',e=>{if(e.repeat||!playing||modalOpen()||document.activeElement!==$('world'))return;if(e.code==='Space'){e.preventDefault();stop();}else if(e.code==='ArrowRight'){e.preventDefault();stop();advance();}});
  districtUI=RokujoDistrictUI.create({getState:()=>state,command:(op,params)=>{if(modalOpen())throw Error('今の画面を閉じてください。');stop('街区の計画を確認しています。');state=E.develop(state,op,params,state.revision);render();recovery();}});
  campaignUI=RokujoCampaignUI.create({onChange:syncMusic,getState:()=>state,command:(op,p)=>{stop('人々の物語と共同作業を見守っています。');state=E.campaignCommand(state,op,p,state.revision);render();recovery();}});
+ civilizationUI=RokujoCivilizationUI.create({getState:()=>state,onChange:syncMusic,command:(op,p)=>{stop('文明の判断を確認しています。');state=E.civilizationCommand(state,op,p,state.revision);render();recovery();}});
  continuationUI=RokujoContinuation.create({getState:()=>state,command:op=>{stop('原文を読んでいる間は停止しています。');state=E.continueOriginal(state,op,state.revision);render();recovery();}});
  notebook=RokujoNotebook.create({getState:()=>state,onSelect:()=>stop('観測の手帖を読んでいます。')});
  for(const [key,url] of Object.entries(paths)){let im;Object.defineProperty(art,key,{get(){if(!im){im=new Image();im.decoding='async';im.onload=()=>draw();im.onerror=()=>{im.failed=true;draw();tell('画像の一部を読み込めませんでした。画像フォルダの場所を確認してください。');};im.src=url;}return im;}});}

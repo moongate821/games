@@ -1,5 +1,5 @@
 'use strict';
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./storydata.js'),require('./development.js'),require('./continuation.js'),require('./campaign.js'));else root.RokujoEngine=factory(root.RokujoStory,root.RokujoDevelopment,root.RokujoContinuation,root.RokujoCampaign);})(globalThis,(N,D,C,P)=>{
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./storydata.js'),require('./development.js'),require('./continuation.js'),require('./campaign.js'),require('./civilization.js'));else root.RokujoEngine=factory(root.RokujoStory,root.RokujoDevelopment,root.RokujoContinuation,root.RokujoCampaign,root.RokujoCivilization);})(globalThis,(N,D,C,P,V)=>{
  const clone=value=>JSON.parse(JSON.stringify(value));
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
@@ -89,7 +89,7 @@
   for(const [id,offset] of Object.entries(s.story.pageOffsets)){const e=s.story.queued.find(e=>e.id===id)||s.story.journal.find(e=>e.id===id);if(!e||!integer(offset,0,(e.pages?.length||1)-1))return false;}
   if(!s.crisis||!['waterZero','foodZero'].every(k=>integer(s.crisis[k],0,1000000))||!['waterCritical','foodCritical','emergency'].every(k=>typeof s.crisis[k]==='boolean'))return false;
   if(!Array.isArray(s.chronicle)||s.chronicle.length>5000||!s.chronicle.every(e=>e&&text(e.id)&&text(e.kind)&&text(e.title)&&text(e.text)&&integer(e.tick,0,s.world.tick)))return false;
-  if(!C.validate(s.continuation,s)||!P.validate(s.campaign,s))return false;
+  if(!V.validate(s.civilization)||!C.validate(s.continuation,s)||!P.validate(s.campaign,s))return false;
   if(nested)return s.checkpoint===null;
   return s.checkpoint===null||validateCore(s.checkpoint,true);
  }
@@ -306,5 +306,6 @@
   if(s.phase>=2){const base=create();base.tutorial={rescue:true,rain:true,light:true};base.world.stage=2;base.resources.water=66;makeCheckpoint(base);n.checkpoint=base.checkpoint;}
   assert(n);return n;
  }
- return Object.freeze({config,create,campaignCommand,continueOriginal,developmentStatus,develop,validate:validateCore,applyAction,actionInfo,forecast,researchStatus,step,ready,turnPage,acknowledge,storyNextInfo,advanceStory,networkStatus,observeNetwork,industryStatus,voiceStatus,hearVoice,academyStatus,inspectInvention,surveyStatus,measureRoute,expeditionStatus,fileExpedition,contactStatus,drawContact,civicStatus,encounterStatus,planningStatus,togglePlanLink,resetPlanning,upgrade,restoreCheckpoint,migrate,titles,clone});
+ function civilizationCommand(s,op,p={},expectedRevision=s.revision){assert(s);if(expectedRevision!==s.revision)throw Error('状況が変わりました。');const n=clone(s);if(op==='start'&&!n.civilization){if(p.seed!==undefined&&!integer(p.seed,0,4294967295))throw Error('世界の種は0〜4294967295の整数です。');n.civilization=V.initial(p.seed);}else n.civilization=V.command(n.civilization,op,p);n.revision++;makeCheckpoint(n);assert(n);return n;}
+ return Object.freeze({config,create,civilizationCommand,campaignCommand,continueOriginal,developmentStatus,develop,validate:validateCore,applyAction,actionInfo,forecast,researchStatus,step,ready,turnPage,acknowledge,storyNextInfo,advanceStory,networkStatus,observeNetwork,industryStatus,voiceStatus,hearVoice,academyStatus,inspectInvention,surveyStatus,measureRoute,expeditionStatus,fileExpedition,contactStatus,drawContact,civicStatus,encounterStatus,planningStatus,togglePlanLink,resetPlanning,upgrade,restoreCheckpoint,migrate,titles,clone});
 });
