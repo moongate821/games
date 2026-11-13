@@ -264,7 +264,7 @@
  function resetPlanning(s,expectedRevision=s.revision){assert(s);if(expectedRevision!==s.revision||!planningStatus(s).enabled||!s.planning.links.length)throw Error('今は模型を戻せません。');const n=clone(s);n.revision++;n.planning.links=[];makeCheckpoint(n);assert(n);return n;}
  function encounterStatus(s){const known=(step,id)=>s.narrative.step>=step&&s.story.read.includes('story.arcadia.'+id),defenseKnown=known(76,'north_aftermath'),kingKnown=known(77,'hunter_king_story'),kingSeen=known(79,'rooga_return'),friendshipKnown=known(81,'three_peoples_pact');return {available:defenseKnown,defenseKnown,kingKnown,kingSeen,friendshipKnown,defense:defenseKnown?{enemyCount:'三十以上',duration:'約一時間',deaths:0,severeInjuries:'数名'}:null};}
  function upgrade(old){
-  if(!old||old.schemaVersion!==2)return old;const n=clone(old);
+  if(!old||old.schemaVersion!==2)return old;const n=clone(old);if(n.civilization)n.civilization=V.migrate(n.civilization);
   if(!n.narrative)n.narrative={version:1,step:0,eternalProgress:0,eternalCompletedTick:null,circuitProgress:0,circuitCompletedTick:null};
   if(n.narrative.circuitProgress===undefined)n.narrative.circuitProgress=0;
   if(n.narrative.circuitCompletedTick===undefined)n.narrative.circuitCompletedTick=null;
@@ -306,6 +306,6 @@
   if(s.phase>=2){const base=create();base.tutorial={rescue:true,rain:true,light:true};base.world.stage=2;base.resources.water=66;makeCheckpoint(base);n.checkpoint=base.checkpoint;}
   assert(n);return n;
  }
- function civilizationCommand(s,op,p={},expectedRevision=s.revision){assert(s);if(expectedRevision!==s.revision)throw Error('状況が変わりました。');const n=clone(s);if(op==='start'&&!n.civilization){if(p.seed!==undefined&&!integer(p.seed,0,4294967295))throw Error('世界の種は0〜4294967295の整数です。');n.civilization=V.initial(p.seed);}else n.civilization=V.command(n.civilization,op,p);n.revision++;makeCheckpoint(n);assert(n);return n;}
+ function civilizationCommand(s,op,p={},expectedRevision=s.revision){assert(s);if(expectedRevision!==s.revision)throw Error('状況が変わりました。');const n=clone(s);if(op==='start'&&!n.civilization){if(p.seed!==undefined&&!integer(p.seed,0,4294967295))throw Error('世界の種は0〜4294967295の整数です。');n.civilization=V.initial(p.seed,p);}else n.civilization=V.command(n.civilization,op,p);n.revision++;makeCheckpoint(n);assert(n);return n;}
  return Object.freeze({config,create,civilizationCommand,campaignCommand,continueOriginal,developmentStatus,develop,validate:validateCore,applyAction,actionInfo,forecast,researchStatus,step,ready,turnPage,acknowledge,storyNextInfo,advanceStory,networkStatus,observeNetwork,industryStatus,voiceStatus,hearVoice,academyStatus,inspectInvention,surveyStatus,measureRoute,expeditionStatus,fileExpedition,contactStatus,drawContact,civicStatus,encounterStatus,planningStatus,togglePlanLink,resetPlanning,upgrade,restoreCheckpoint,migrate,titles,clone});
 });

@@ -37,7 +37,7 @@
   candidate=E.upgrade(candidate);if(!E.validate(candidate)){tell('記録の内容を確認できません。現在の世界は変更していません。');return;}
   stop();loadingToken++;document.querySelectorAll('dialog[open]').forEach(d=>d.close());
   notebook?.reset();campaignUI?.reset();civilizationUI?.reset();surveyStart=null;surveyMessage='';archiveSelection=null;archiveMessage='';civicSelection='origin';state=E.clone(candidate);playing=true;view='world';selected='lab';confirmation=null;storyConfirmation=null;replay=null;manualSignature=fromSave?JSON.stringify(state):'';leaveAfterSave=false;
-  clearTimeout(effectTimer);$('waterEffect').hidden=true;$('title').hidden=true;$('game').hidden=false;tell('');render();showEvent();if(state.civilization)civilizationUI?.open();
+  clearTimeout(effectTimer);$('waterEffect').hidden=true;$('title').hidden=true;$('game').hidden=false;tell('');render();showEvent();if(state.civilization)civilizationUI?.open();recovery();
  }
  function toTitle(){stop();civilizationUI?.reset();playing=false;loadingToken++;clearTimeout(effectTimer);$('waterEffect').hidden=true;document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('game').hidden=true;$('title').hidden=false;state=null;updateRecoveryButton();syncMusic();}
  function worldKey(s){const arc=s.narrative.step;return s.municipal.observed.length===5?'networkNight':arc>=15?'towerReady':arc===14?'towerConstruction':arc>=7?'nightcity':arc>=2?'memorial':arc===1?'city':s.world.stage===0?'night':s.world.stage>=4?'irrigated':'wet';}
@@ -327,7 +327,7 @@
  let prologuePage=0;
  function showPrologue(){const [title,src,body]=prologue[prologuePage];$('prologueTitle').textContent=title;$('prologueArt').dataset.fallback='0';$('prologueArt').dataset.page=String(prologuePage+1);$('prologueArt').src=src;renderPrologueCast(prologuePage===0);$('prologueText').textContent=body;$('prologuePage').textContent=(prologuePage+1)+' / '+prologue.length+' 頁 · 保存した箱庭は変更しません。';$('prologueNext').textContent=prologuePage===prologue.length-1?'箱庭を覗く':'次の頁';$('prologueDialog').scrollTop=0;}
  $('readPrologue').onclick=()=>{music.resume();prologuePage=0;showPrologue();$('prologueDialog').showModal();$('prologueDialog').scrollTop=0;};$('prologueClose').onclick=()=>$('prologueDialog').close();$('prologueNext').onclick=()=>{if(prologuePage<prologue.length-1){prologuePage++;showPrologue();}else{$('prologueDialog').close();begin(E.create());}};
- $('newCivilization').onclick=()=>{if(dirty()&&!confirm('未保存の進行を離れ、新しい文明を始めますか？'))return;try{const seed=Number($('civilizationSeed').value);const candidate=E.civilizationCommand(E.create(),'start',{seed});begin(candidate);}catch(e){tell(e.message);}};
+ $('newCivilization').onclick=()=>{if(dirty()&&!confirm('未保存の進行を離れ、新しい文明を始めますか？'))return;try{const seed=Number($('civilizationSeed').value);const candidate=E.civilizationCommand(E.create(),'start',{seed,map:$('civilizationMap').value,difficulty:$('civilizationDifficulty').value});begin(candidate);}catch(e){tell(e.message);}};
  $('newGame').onclick=()=>{music.resume();if(!dirty()||confirm('未保存の進行を離れ、新しい箱庭を始めますか？'))begin(E.create());};
  $('continue').onclick=()=>{music.resume();openRecords();};$('records').onclick=()=>openRecords();$('recover').onclick=()=>{music.resume();loadSaved(repo.recovery(),'復旧記録');};
  $('step').onclick=()=>{stop();advance();};$('pause').onclick=()=>stop('自動進行を止めました。');$('auto').onclick=toggleAuto;
