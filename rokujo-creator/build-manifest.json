@@ -1,7 +1,7 @@
 {
-  "version": "0.30-observatory-rebuild",
+  "version": "0.31-illustrated-world",
   "construction": true,
-  "pngCount": 137,
+  "pngCount": 140,
   "video": {
     "url": "../videos/rokujo-creator-3min.mp4",
     "sha256": "1ef212fcb3661c0b4dd7dc615946d398e3bd59fe9c51846c262e440950906e49",
@@ -10,12 +10,12 @@
   },
   "files": {
     "index.html": {
-      "sha256": "4ab5e8734e12d23f7d1b6ab5aa6e78a30eb66933ffcb60bf47878e054c57a785",
-      "bytes": 4186
+      "sha256": "80ad3dc2866a8f6880036d75a5f86590ab367587b70d328875d1c82c1bbbcec8",
+      "bytes": 4246
     },
     "試作/app.js": {
-      "sha256": "c3e12b7fa5dfcc6ae27bb395691f0bf523eec1fb08e0e1158020aadf39920a9a",
-      "bytes": 97506
+      "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
+      "bytes": 97974
     },
     "試作/art.css": {
       "sha256": "4158ce87784759ffd7a209eb601805ff4151b376d7e65eda2e2ad00391d368c5",
@@ -42,24 +42,28 @@
       "bytes": 14924
     },
     "試作/civilization-expansion.js": {
-      "sha256": "3e7678a647f6ab41ebf397d1264dd4c09a833b7b7cc4b4fdb51bdffc04ed85db",
-      "bytes": 28628
+      "sha256": "2b2e652e21fe2be277d78e0a27047aeb28c77adf2d949e7169db5f3b43cce8f4",
+      "bytes": 29159
     },
     "試作/civilization-story.js": {
       "sha256": "8eb178dcc1fcada7d94f97daa9f105fda4448b7cd45ba1bc82273bc429427c8c",
       "bytes": 294637
     },
     "試作/civilization-ui.js": {
-      "sha256": "99bafe05cb219cfd7224475b49f59530a15f905e65a85bd6a55236bf42dd9983",
-      "bytes": 39105
+      "sha256": "5fbd967f7aadaac84a33820ad79ee8fb17a2f541bf64398d27eced951c0c13f9",
+      "bytes": 48820
+    },
+    "試作/civilization-world.js": {
+      "sha256": "b99c0cdf9946ec5c3bd0e937eb04d07dbed5d79e151ef0e78d439142fa098158",
+      "bytes": 4993
     },
     "試作/civilization.css": {
       "sha256": "98746a9a6c080c1b370ec516f8fbadaa791e96df311605f90f5f9142e7dfb281",
       "bytes": 7943
     },
     "試作/civilization.js": {
-      "sha256": "ecbce0726151e5e5f6944f1742f67f3f3a8612d8509ad5d3ceffaff115bb420a",
-      "bytes": 21480
+      "sha256": "d35a8b6df7ccb75571547a1fe8a790b365a27ce3db0f75e4670128d0b299e8dc",
+      "bytes": 21826
     },
     "試作/concept-theme.css": {
       "sha256": "bb5fdd85bdee821476e68f209c21243d31ea5e76a11248bb92ad1c9f280b8164",
@@ -94,12 +98,12 @@
       "bytes": 45050
     },
     "試作/hybrid-theme.css": {
-      "sha256": "1cfb5d4824f415792d4c9787ef7638a094895e75d5e3e0bd47bf37f1718b216c",
-      "bytes": 29824
+      "sha256": "10b6782a7b29522939ed9ead5fdcf0585e32eab6852e8906b2833ec372f67a9b",
+      "bytes": 40461
     },
     "試作/index.html": {
-      "sha256": "530436c3ac5984331611601396a9c9ed16b6edb18f3cf84148aac69ff699b213",
-      "bytes": 18193
+      "sha256": "2c1a111050bbb1e6dcdcfd3785a832023d6c08dae2306298ac3cfa0c0d79f10f",
+      "bytes": 18672
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
@@ -272,6 +276,10 @@
     "画像/background/bg.city.seres.street.v1.png": {
       "sha256": "dd1c6c3e93f42d5aabd9b303a57a9728af3adbae4b25d68472a88846236bb83f",
       "bytes": 3757582
+    },
+    "画像/background/bg.civ.observatory.world.v1.png": {
+      "sha256": "9f01c2e18e8cb7aed6d9ab4e11e7e5a042e9f44ee46a909803d661037a4bb710",
+      "bytes": 3559041
     },
     "画像/background/bg.district.magic_workshop.night.v1.png": {
       "sha256": "bc19c96a9b83a81a438553489f04b39bfb34304e635d0ca9ddb391ab7c01ffe3",
@@ -621,10 +629,6 @@
       "sha256": "1cf9b42bd68043fb8199dc0c7a58a051f98d0f8c4c30b63877125660546b8dd5",
       "bytes": 917484
     },
-    "画像/effects/ui.civ.buildings.atlas.v1.png": {
-      "sha256": "ad5bb21fc5e411ce3175014ab764634018025f51eb509e8a9761a5f02496efcb",
-      "bytes": 2794447
-    },
     "画像/effects/ui.civ.improvements.atlas.v1.png": {
       "sha256": "ae0cf8960b3f4e2eb38614bfde75a07cdfe8bbe00cb4be1036c32464cce103aa",
       "bytes": 2977595
@@ -637,6 +641,10 @@
       "sha256": "9458da48a3290071c97f835f18c7aadcfdc4aef5f25d06374ad5ee519f91c738",
       "bytes": 2332744
     },
+    "画像/effects/ui.civ.settlements.atlas.v2.png": {
+      "sha256": "d1426046ab2784f49d6635a604869fbcf8f305bf8df28d27901dd9bc903b55bc",
+      "bytes": 3038704
+    },
     "画像/effects/ui.civ.units.atlas.v1.png": {
       "sha256": "b75a24ce620d3bd659bc0ca5bcaf6473698b5d69a7c089d3aba20d7ac208c672",
       "bytes": 2336256
@@ -644,6 +652,14 @@
     "画像/effects/ui.navigation.knowledge.atlas.v1.png": {
       "sha256": "0222bbf2090a85c167756b4b51e74d889d7054e1795338a38ca4f0a678b92698",
       "bytes": 648095
+    },
+    "画像/effects/ui.observatory.controls.atlas.v1.png": {
+      "sha256": "9860e93d6552defd0bd864c6b6eab50e4d1c093301edf70a72671637f5c600dd",
+      "bytes": 1898614
+    },
+    "画像/effects/ui.observatory.ivory.frame.v1.png": {
+      "sha256": "54e092ce9969de8e714030043b4cd61cb651e2634aa925baca85ddb2a0bb6ac7",
+      "bytes": 1834513
     },
     "画像/props/prop.broken_led.v1.png": {
       "sha256": "3ad65ca0adadef47b172b1cb09ff8bb236e6923b91fbb7cfc65d41c214469261",
@@ -722,5 +738,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 416314299
+  "bytes": 423877953
 }
