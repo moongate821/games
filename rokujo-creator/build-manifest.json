@@ -1,5 +1,5 @@
 {
-  "version": "0.32-fixed-layout",
+  "version": "0.33-display-controls",
   "construction": true,
   "pngCount": 140,
   "video": {
@@ -10,8 +10,8 @@
   },
   "files": {
     "index.html": {
-      "sha256": "e0a6625918f256d0c9e2cd28ede282e67a501b480a7a951a6257478c28896df5",
-      "bytes": 4386
+      "sha256": "cded5697baf12a4a398d0fac9566090688a1197eb38a9f120923a222c274d1e4",
+      "bytes": 4435
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -102,7 +102,7 @@
       "bytes": 40461
     },
     "試作/index.html": {
-      "sha256": "90bc088dadc956ac4aa9ed30614672e1476e9874674243f7a59fcdd01b273673",
+      "sha256": "76328dc1591162a877e729e1f69b4ade6b5fa3224abcff543954265eb0822835",
       "bytes": 18912
     },
     "試作/journal-theme.css": {
@@ -134,12 +134,12 @@
       "bytes": 1384
     },
     "試作/reference.html": {
-      "sha256": "5c40970cc96644dea49d2cd9224372c94a463f47589e622cb1b56d1e0d2e9731",
-      "bytes": 1072
+      "sha256": "494f00f429ca6f456cf4f7fe0e21663a9d912c9a0963e68e6eb644e01bdfd584",
+      "bytes": 1115
     },
     "試作/reference.js": {
-      "sha256": "bddb8305d24490099eb67aa79c41b38c902d8d2dfb0e4e933b86645d1d9fc6fb",
-      "bytes": 1660
+      "sha256": "0c8a1ba99b353db4b0de7e7a7712179649f46893605e2bb7e133f95e5d1aeea9",
+      "bytes": 2845
     },
     "試作/storage.js": {
       "sha256": "5936c4d35a79564ceb2bd5435845616d6d6ac8f582c120953bd040cfcb2cf4d3",
@@ -750,5 +750,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 423883102
+  "bytes": 423884379
 }
