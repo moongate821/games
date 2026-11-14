@@ -4,14 +4,14 @@
   "pngCount": 140,
   "video": {
     "url": "../videos/rokujo-creator-3min.mp4",
-    "sha256": "1ef212fcb3661c0b4dd7dc615946d398e3bd59fe9c51846c262e440950906e49",
-    "bytes": 17397653,
+    "sha256": "29b72b7ec0c9021deb282f40ca11dc75d50cf1863f051ad96517c99a2e393e06",
+    "bytes": 18985046,
     "durationSeconds": 180
   },
   "files": {
     "index.html": {
-      "sha256": "80ad3dc2866a8f6880036d75a5f86590ab367587b70d328875d1c82c1bbbcec8",
-      "bytes": 4246
+      "sha256": "25e3fe3bd72b30352674d11a811982a348098c71fcf0fccefd4940d035f95068",
+      "bytes": 4225
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -50,8 +50,8 @@
       "bytes": 294637
     },
     "試作/civilization-ui.js": {
-      "sha256": "5fbd967f7aadaac84a33820ad79ee8fb17a2f541bf64398d27eced951c0c13f9",
-      "bytes": 48820
+      "sha256": "93644f9cd802a0554a36520eb9719adf9009e9e142aabd95fa69d085573f4a5d",
+      "bytes": 49473
     },
     "試作/civilization-world.js": {
       "sha256": "b99c0cdf9946ec5c3bd0e937eb04d07dbed5d79e151ef0e78d439142fa098158",
@@ -102,7 +102,7 @@
       "bytes": 40461
     },
     "試作/index.html": {
-      "sha256": "2c1a111050bbb1e6dcdcfd3785a832023d6c08dae2306298ac3cfa0c0d79f10f",
+      "sha256": "b2bf10b3ac433bdcf56a4ae07cf2259ec0031ebacae8711b66eeac8e772d0b6a",
       "bytes": 18672
     },
     "試作/journal-theme.css": {
@@ -738,5 +738,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 423877953
+  "bytes": 423878585
 }
