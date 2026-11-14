@@ -1,5 +1,5 @@
 {
-  "version": "0.31-illustrated-world",
+  "version": "0.32-fixed-layout",
   "construction": true,
   "pngCount": 140,
   "video": {
@@ -10,8 +10,8 @@
   },
   "files": {
     "index.html": {
-      "sha256": "25e3fe3bd72b30352674d11a811982a348098c71fcf0fccefd4940d035f95068",
-      "bytes": 4225
+      "sha256": "e0a6625918f256d0c9e2cd28ede282e67a501b480a7a951a6257478c28896df5",
+      "bytes": 4386
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -102,8 +102,8 @@
       "bytes": 40461
     },
     "試作/index.html": {
-      "sha256": "b2bf10b3ac433bdcf56a4ae07cf2259ec0031ebacae8711b66eeac8e772d0b6a",
-      "bytes": 18672
+      "sha256": "90bc088dadc956ac4aa9ed30614672e1476e9874674243f7a59fcdd01b273673",
+      "bytes": 18912
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
@@ -128,6 +128,18 @@
     "試作/original-data.js": {
       "sha256": "a189af407ae4099b94631208633e2cd0a5b7872f5251d6e0c5776703ba7d86d7",
       "bytes": 1066705
+    },
+    "試作/reference.css": {
+      "sha256": "3d322bf052f09bc7ae236a5db0f1c8b60376bc486e63d2a52c9bf6b7261e2628",
+      "bytes": 1384
+    },
+    "試作/reference.html": {
+      "sha256": "5c40970cc96644dea49d2cd9224372c94a463f47589e622cb1b56d1e0d2e9731",
+      "bytes": 1072
+    },
+    "試作/reference.js": {
+      "sha256": "bddb8305d24490099eb67aa79c41b38c902d8d2dfb0e4e933b86645d1d9fc6fb",
+      "bytes": 1660
     },
     "試作/storage.js": {
       "sha256": "5936c4d35a79564ceb2bd5435845616d6d6ac8f582c120953bd040cfcb2cf4d3",
@@ -738,5 +750,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 423878585
+  "bytes": 423883102
 }
