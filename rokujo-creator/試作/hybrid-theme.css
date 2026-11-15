@@ -226,3 +226,7 @@ body[data-ui-theme] #civFeedback:not(:empty){padding:10px;border:2px solid #9c58
 
 .civ-knowledge-progress{padding:9px;border:1px solid #bba16e;margin:0 0 12px;background:#f5ecd9}.civ-knowledge-progress summary{font-weight:700;cursor:pointer}.civ-knowledge-progress p{font-size:12px!important;line-height:1.75}.civ-reader-application{padding:14px;background:#ebe4cf;border:1px solid #b49b69}.civ-reader-application small{display:block}
 @media(min-width:1051px){body[data-ui-theme] .civ-layout{height:calc(100dvh - 175px);grid-template-rows:minmax(0,1fr) 190px;align-items:stretch}body[data-ui-theme] .civ-side{height:100%;max-height:none;min-height:0}body[data-ui-theme] .civ-turn-footer{height:100%;min-height:0;justify-content:flex-end}body[data-ui-theme] #civEndTurn{flex-shrink:0}body[data-ui-theme] .civ-navigation{max-height:100%;overflow:auto}body[data-ui-theme] .civ-world{max-height:100%;align-self:start}}
+
+.civ-request-card{padding:10px 0;border-top:1px solid #bca370}.civ-request-card h4{font-size:17px;margin:8px 0}.civ-request-card small,.civ-budget-tools small{display:block;line-height:1.8;margin:5px 0 9px}.civ-request-card>p{padding:8px;background:#e8e6ce;border-left:3px solid #9c9d65}.civ-budget-tools{padding:8px;border:1px solid #b59d74}.civ-budget-tools button{display:block;width:100%;margin:8px 0}
+
+body[data-ui-theme] .civ-side .civ-request-card small,body[data-ui-theme] .civ-side .civ-project-card small,body[data-ui-theme] .civ-side .civ-budget-tools small{color:#55452f!important;opacity:1}

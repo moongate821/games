@@ -1,5 +1,5 @@
 {
-  "version": "0.34-review-and-endgame",
+  "version": "0.35-community-and-culture",
   "construction": true,
   "pngCount": 140,
   "video": {
@@ -10,8 +10,8 @@
   },
   "files": {
     "index.html": {
-      "sha256": "e61ae973c49bd58dc5ddc2831806436f1af9014064005a5aeccbe75d11d0a5d4",
-      "bytes": 4543
+      "sha256": "f53fead7445fb9ec4d6ff0161f4c247ff90f24e3e3a67ae0fb96b4e5bdfa64a8",
+      "bytes": 4507
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -42,16 +42,20 @@
       "bytes": 14924
     },
     "試作/civilization-expansion.js": {
-      "sha256": "2326b892a60eed74fd0c931e8e50f83d3cb882449f77e9687fa3d21044b292c7",
-      "bytes": 34521
+      "sha256": "b885f611a1312107ec7220e37e7d998ff3a3b8a69c1ec2b192cf86d9069d19a7",
+      "bytes": 36189
+    },
+    "試作/civilization-living.js": {
+      "sha256": "5d33774178ebffe148104cadc76c006e10c8eebfaa841ab5f4d32f6a375617c3",
+      "bytes": 10539
     },
     "試作/civilization-story.js": {
       "sha256": "8eb178dcc1fcada7d94f97daa9f105fda4448b7cd45ba1bc82273bc429427c8c",
       "bytes": 294637
     },
     "試作/civilization-ui.js": {
-      "sha256": "ecd27b5df90668bf8c06f200eed111508ef1bf5011f0794d0979d159f5c9a8b1",
-      "bytes": 60673
+      "sha256": "23dae02eb0a8f54fafab5de7b3f22e64f0cf4ffbdc6c88c1427d7df3bfbafced",
+      "bytes": 65240
     },
     "試作/civilization-world.js": {
       "sha256": "b99c0cdf9946ec5c3bd0e937eb04d07dbed5d79e151ef0e78d439142fa098158",
@@ -98,12 +102,12 @@
       "bytes": 45050
     },
     "試作/hybrid-theme.css": {
-      "sha256": "95334467005e6828e4a38cfb87b0b16faf1dad7d8c4d9071e2dd723f8d7ff0ca",
-      "bytes": 43466
+      "sha256": "04633a2cf9d905f8520713841d449c593e73e7923d211f0fa170b20c98a3baa0",
+      "bytes": 44075
     },
     "試作/index.html": {
-      "sha256": "2c473f7075fba2a92e0811e8e801cd32d8192c67a768ebded9ef14b5ebc2fab1",
-      "bytes": 18912
+      "sha256": "70de3439b88f0a27b6d5aed96133b6919fa3a641ef3323d9ee980cd89f5522f8",
+      "bytes": 18973
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
@@ -142,8 +146,8 @@
       "bytes": 4183
     },
     "試作/storage.js": {
-      "sha256": "ffa811d0f4d20759a66340ed4c2df4bf713fa8ab11b2c45bc6c7be884c35854a",
-      "bytes": 3174
+      "sha256": "16a8a563a4ad100f39f3d8a05b5fcba2abe6abefb3081be9f66150481ccfa216",
+      "bytes": 3177
     },
     "試作/storydata.js": {
       "sha256": "0869f662cca9b8170aefaa3b4808da5064aec49c253aa2097120d541a3255805",
@@ -750,5 +754,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 423905732
+  "bytes": 423923143
 }
