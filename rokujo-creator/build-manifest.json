@@ -1,18 +1,18 @@
 {
   "version": "0.35-community-and-culture",
-  "construction": true,
+  "construction": false,
   "pngCount": 140,
   "video": {
     "version": "0.35",
     "url": "../videos/rokujo-creator-3min.mp4",
-    "sha256": "b4d3462c9397ae499bcdd172294bebb9cb15421417b6d33f807ba79c732559fa",
-    "bytes": 17754481,
+    "sha256": "5338f24c0a4b65159e6b13909717b694dbb0aa117e7fe6b06d9ec932a1396795",
+    "bytes": 17846130,
     "durationSeconds": 180
   },
   "files": {
     "index.html": {
-      "sha256": "4891e599b2c679e6c54ad7d2ce83404af9dcd9910fe67328eb66056f47f25c6e",
-      "bytes": 4591
+      "sha256": "f0ef297a3714de62bc26c8732ee793429071668d175b92baa9e80bd922279ab6",
+      "bytes": 4436
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -103,12 +103,12 @@
       "bytes": 45050
     },
     "試作/hybrid-theme.css": {
-      "sha256": "04633a2cf9d905f8520713841d449c593e73e7923d211f0fa170b20c98a3baa0",
+      "sha256": "ad2c4f612c4c4779633b6c3f076d081e6808d57ddd7991d38765b250a2cbd6f2",
       "bytes": 44075
     },
     "試作/index.html": {
-      "sha256": "8d713b2cc786406da544c044f91fd4d4cafb2d44ab7b5d137d6248a0f405f61f",
-      "bytes": 18973
+      "sha256": "789364e47644b4220696c00692220cdab03608dfd7ab93a3da629ac47298c47b",
+      "bytes": 18771
     },
     "試作/journal-theme.css": {
       "sha256": "52f99fb3a94f8778d1c6cb52798fd013d7aee47855f3d270d92a8242652b3878",
@@ -755,5 +755,5 @@
       "bytes": 4388614
     }
   },
-  "bytes": 423922612
+  "bytes": 423922255
 }

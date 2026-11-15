@@ -158,7 +158,7 @@ body[data-ui-theme] .civ-top-actions .civ-tutorial-reopen{display:block}
  body[data-ui-theme].civilization-view header .brand{position:absolute;top:25px;left:12px;width:235px;z-index:2;grid-template-columns:88px minmax(0,1fr)}
  body[data-ui-theme].civilization-view header nav{position:fixed;left:14px;bottom:7px;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);width:235px;gap:3px;padding:4px;background:#0d2a3de8;border:1px solid #bca16a;border-radius:5px}
  body[data-ui-theme].civilization-view header nav button{min-height:44px;padding:4px 1px;font-size:10px}
- body[data-ui-theme].civilization-view main{max-width:1900px;padding:12px 14px 55px}
+ body[data-ui-theme].civilization-view main{max-width:1900px;padding:38px 14px 55px}
  body[data-ui-theme] .civ-heading{display:none}
  body[data-ui-theme] .civ-ribbon{margin:0 0 16px 250px;gap:8px;min-height:82px;align-items:center}
  body[data-ui-theme] .civ-layout{grid-template-columns:180px minmax(0,1fr) 330px;gap:12px}
