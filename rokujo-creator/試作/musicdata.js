@@ -1,8 +1,8 @@
 window.RokujoMusicTracks={
   "title": {
     "id": "bgm.rokujo.title",
-    "title": "ポケットの中の未来",
-    "src": "audio/title.mp3",
+    "title": "窓辺に灯した問い",
+    "src": "audio/title.mp3?v=b43b7b37e3d7",
     "loop": false
   },
   "daily": {
