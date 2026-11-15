@@ -22,6 +22,8 @@ h1 { font-size:1.8rem; margin:0 0 4px; }
 .video { margin:0 0 12px; border-radius:10px; overflow:hidden; background:#000; }
 .video img.titleimg { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; background:#000; }
 .video video { display:block; width:100%; aspect-ratio:16/9; background:#000; }
+.video.portrait { background:radial-gradient(ellipse at center,#26213c,#0c101d 76%); padding-top:8px; }
+.video.portrait video { width:min(100%,420px,calc(78vh * .5625)); height:auto; aspect-ratio:9/16; margin-inline:auto; object-fit:contain; background:#080c18; }
 .vcap { font-size:.75rem; color:#ccc; padding:4px 8px; background:#111; }
 .video.dev { aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px;
   background:repeating-linear-gradient(45deg,#2a1020 0 14px,#1a0a14 14px 28px); color:#ffd6e4; font-size:.85rem; line-height:1.7; }
@@ -69,9 +71,9 @@ h1 { font-size:1.8rem; margin:0 0 4px; }
   <article class="card" style="--c:#cfff85">
     <h2>PULSE 音ゲーム</h2>
     <div class="pubdate">📅 2026年11月15日 公開</div>
-    <p>音楽フォルダーの新曲21曲＋既存8曲、全29曲。4・6・8レーン×3難易度。虹色の光跡と、コンボで段階的に発光する歌詞。歌詞の行時刻は音声解析による推定、未一致の行は全文表示で確認。iPhone・iPad・PC対応。</p>
-    <div class="video"><video controls playsinline preload="none" poster="videos/PULSE_60秒_縦型.jpg?v=cbbeba2022cc" src="videos/PULSE_60秒_縦型.mp4?v=cbbeba2022cc"></video>
-      <div class="vcap">▶ 縦型60秒PV・星屑オーバークロック／EXPERT・8レーン・AUTO観賞／音楽付き・約17.4MB</div></div>
+    <p>全29曲。4・6・8レーンと3段階の難易度で、ノーツをラインに合わせてタップ。長いノーツは押し続けて演奏しよう。コンボで虹色に輝く歌詞と、ノーミス達成の大花火。iPhone・iPadはタッチ、PCはキーボードで遊べます。下の60秒動画では、基本操作から終了演出までを説明しています（AUTO観賞）。</p>
+    <div class="video portrait"><video controls playsinline preload="none" poster="videos/PULSE_60秒_縦型.jpg?v=839b183a57ef" src="videos/PULSE_60秒_縦型.mp4?v=839b183a57ef"></video>
+      <div class="vcap">▶ 遊び方テロップ付き・縦型60秒PV／EXPERT・8レーンのAUTO観賞／ノーミス終了演出まで収録・音楽付き・約45.7MB</div></div>
     <a class="play" href="pulse/">あそぶ ▶</a>
     <figure class="qr"><svg width="132" height="132" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h33v33h-33z"/><path class="qrline" stroke="#111" d="M2 2.5h7m4 0h2m2 0h1m3 0h1m2 0h7m-29 1h1m5 0h1m1 0h3m2 0h1m1 0h6m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m3 0h2m2 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h4m1 0h1m3 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m2 0h1m2 0h5m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m5 0h6m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h6m2 0h1m2 0h1m-21 1h1m1 0h1m1 0h1m1 0h1m2 0h3m1 0h1m3 0h1m2 0h1m3 0h1m2 0h1m-27 1h3m1 0h1m3 0h1m6 0h3m1 0h3m2 0h1m2 0h1m-29 1h1m2 0h1m2 0h5m1 0h1m7 0h3m3 0h3m-28 1h1m1 0h1m4 0h1m1 0h4m1 0h4m1 0h1m1 0h1m1 0h1m2 0h1m-25 1h1m1 0h3m5 0h1m2 0h2m1 0h4m2 0h1m1 0h2m-28 1h2m1 0h2m1 0h1m1 0h3m1 0h2m1 0h2m3 0h2m2 0h1m2 0h1m-29 1h2m1 0h1m1 0h3m1 0h1m3 0h2m2 0h2m3 0h2m1 0h1m1 0h2m-29 1h5m3 0h3m2 0h5m1 0h1m4 0h2m1 0h1m-28 1h1m1 0h2m2 0h1m2 0h2m1 0h2m1 0h4m2 0h2m2 0h1m1 0h2m-26 1h3m2 0h1m3 0h2m2 0h1m5 0h1m2 0h2m1 0h1m-29 1h1m2 0h1m2 0h1m3 0h1m6 0h1m2 0h4m3 0h2m-28 1h1m1 0h2m3 0h2m1 0h1m1 0h3m1 0h1m3 0h1m2 0h2m1 0h1m-28 1h1m1 0h1m3 0h1m5 0h3m1 0h2m2 0h5m-17 1h2m1 0h1m4 0h1m3 0h1m3 0h1m1 0h3m-29 1h7m3 0h1m1 0h2m4 0h3m1 0h1m1 0h2m1 0h2m-29 1h1m5 0h1m2 0h1m2 0h3m1 0h5m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h2m2 0h5m-25 1h1m1 0h3m1 0h1m2 0h1m1 0h3m2 0h1m2 0h1m3 0h2m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h2m7 0h1m5 0h3m2 0h1m-29 1h1m5 0h1m2 0h2m5 0h3m1 0h1m6 0h1m-28 1h7m1 0h1m1 0h3m1 0h5m1 0h4m3 0h2"/></g></svg><figcaption>https://moongate821.github.io/games/pulse/</figcaption></figure>
   </article>
