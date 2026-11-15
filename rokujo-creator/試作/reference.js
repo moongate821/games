@@ -2,13 +2,21 @@
 'use strict';
 const baseWidth=1600,baseHeight=1050,preferenceKey='rokujo_creator_reference_display_v1';
 const viewport=document.getElementById('displayViewport'),space=document.getElementById('frameSpace'),frame=document.getElementById('referenceGame'),toolbar=document.querySelector('.display-controls'),output=document.getElementById('viewScale');
-let mode='fit',scale=1;
+let mode='fit',scale=1,focusToken=0;
 try{const saved=JSON.parse(localStorage.getItem(preferenceKey));if(saved&&saved.mode==='manual'&&Number.isFinite(saved.scale)&&saved.scale>=.15&&saved.scale<=2){mode='manual';scale=saved.scale;}}catch{}
 function savePreference(){try{localStorage.setItem(preferenceKey,JSON.stringify({mode,scale}));}catch{}}
 function redraw(){const availableWidth=document.documentElement.clientWidth,availableHeight=Math.max(150,innerHeight-toolbar.getBoundingClientRect().height);viewport.style.height=availableHeight+'px';if(mode==='fit')scale=Math.min(availableWidth/baseWidth,availableHeight/baseHeight);scale=Math.max(.15,Math.min(2,scale));frame.style.transform='scale('+scale+')';space.style.width=baseWidth*scale+'px';space.style.height=baseHeight*scale+'px';output.value=Math.round(scale*100)+'%';document.getElementById('fitView').setAttribute('aria-pressed',String(mode==='fit'));document.getElementById('actualView').setAttribute('aria-pressed',String(mode==='manual'&&scale===1));}
 function viewCenter(){return {x:Math.max(0,Math.min(baseWidth,(viewport.scrollLeft+viewport.clientWidth/2-space.offsetLeft)/scale)),y:Math.max(0,Math.min(baseHeight,(viewport.scrollTop+Math.min(viewport.clientHeight,baseHeight*scale)/2)/scale))};}
 function manualZoom(next){const center=viewCenter();mode='manual';scale=Math.max(.15,Math.min(2,next));redraw();viewport.scrollTo({left:space.offsetLeft+center.x*scale-viewport.clientWidth/2,top:center.y*scale-Math.min(viewport.clientHeight,baseHeight*scale)/2,behavior:'instant'});savePreference();}
-document.getElementById('fitView').onclick=()=>{mode='fit';redraw();viewport.scrollTo(0,0);savePreference();};
+document.getElementById('fitView').onclick=()=>{mode='fit';frame.contentWindow.postMessage({type:'rokujo-view-region',key:'reset',token:++focusToken},'*');document.getElementById('focusView').value='';redraw();viewport.scrollTo(0,0);savePreference();};
+document.getElementById('focusView').onchange=e=>{const key=e.target.value;if(key)frame.contentWindow.postMessage({type:'rokujo-view-region',key,token:++focusToken,width:viewport.clientWidth,height:viewport.clientHeight},'*');};
+addEventListener('message',event=>{
+ const data=event.data;if(event.source!==frame.contentWindow||!data||data.type!=='rokujo-view-region-result'||data.token!==focusToken)return;
+ if(data.error){document.getElementById('displayMessage').textContent=data.error;document.getElementById('focusView').value='';return;}
+ const rect=data.rect,key=data.key;if(!rect||![rect.left,rect.top,rect.width,rect.height].every(Number.isFinite)||rect.width<=0||!['side','map','reader'].includes(key))return;
+ manualZoom(key==='map'||key==='reader'?1:Math.min(2,Math.max(1,viewport.clientWidth/(rect.width+20))));
+ viewport.scrollTo({left:space.offsetLeft+(rect.left+rect.width/2)*scale-viewport.clientWidth/2,top:key==='side'||key==='reader'?rect.top*scale:(rect.top+rect.height/2)*scale-viewport.clientHeight/2,behavior:'instant'});document.getElementById('displayMessage').textContent='全体を見るときは「画面に合わせる」で戻れます。';
+});
 document.getElementById('actualView').onclick=()=>manualZoom(1);
 document.getElementById('zoomIn').onclick=()=>manualZoom(scale*1.25);
 document.getElementById('zoomOut').onclick=()=>manualZoom(scale/1.25);
