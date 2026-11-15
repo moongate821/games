@@ -3,15 +3,16 @@
   "construction": true,
   "pngCount": 140,
   "video": {
+    "version": "0.35",
     "url": "../videos/rokujo-creator-3min.mp4",
-    "sha256": "29b72b7ec0c9021deb282f40ca11dc75d50cf1863f051ad96517c99a2e393e06",
-    "bytes": 18985046,
+    "sha256": "3d36f9fdf52fdbdcc3a99ae4b5f8fa7c996e89a7dfee2663a288ac73132141aa",
+    "bytes": 17700869,
     "durationSeconds": 180
   },
   "files": {
     "index.html": {
-      "sha256": "f53fead7445fb9ec4d6ff0161f4c247ff90f24e3e3a67ae0fb96b4e5bdfa64a8",
-      "bytes": 4507
+      "sha256": "da8efd87265b66ff2ea906b0d5b0bbda1efbf0877e5a60b3e637d5573fd8e8d3",
+      "bytes": 4564
     },
     "試作/app.js": {
       "sha256": "d4f60889513167568bd68ac7c31ba0b1b7003c8f1a3cde997419fb62493d8001",
@@ -754,5 +755,5 @@
       "bytes": 4389241
     }
   },
-  "bytes": 423923143
+  "bytes": 423923200
 }
