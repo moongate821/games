@@ -11,18 +11,27 @@
     const threshold={easy:.32,normal:.15,hard:.055}[difficulty];
     const pattern=lanes===4?[0,2,1,3,1,2,0,3,2,1,3,0,1,3,2,0]:lanes===6?[0,3,1,4,2,5,1,4,0,5,2,3,1,5,2,4]:[0,4,2,6,1,5,3,7,2,5,0,7,3,4,1,6];
     let last=-10, index=0;
+    const arrangement=track.arrangement;
+    const accents=new Set(arrangement?.accents||[]),holdCues=new Set(arrangement?.holds||[]);
     for(const attack of track.onsets) {
-      if(attack.time-last<gap || attack.strength<threshold)continue;
-      const lane=pattern[index%16];
+      let section;for(const s of arrangement?.sections||[])if(s.time<=attack.time)section=s.kind;else break;
+      const peak=section==='chorus',quiet=['intro','break','outro'].includes(section);
+      const localGap=gap*(arrangement?(quiet?1.35:peak?.86:1.1):1);
+      if(attack.time-last<localGap || (!accents.has(attack.time)&&attack.strength<threshold*(quiet?1.3:1)))continue;
+      const climb=[...Array(lanes).keys(),...Array(lanes).keys()].map((n,i)=>i<lanes?n:lanes-1-n);
+      const cross=Array.from({length:lanes},(_,i)=>i%2?lanes/2+Math.floor(i/2):Math.floor(i/2));
+      const wave=Array.from({length:lanes},(_,i)=>i%2?lanes/2+Math.floor(i/2):lanes/2-1-Math.floor(i/2));
+      const motif=arrangement?(peak?(arrangement.pattern==='sakura'?climb:arrangement.pattern==='cross'?cross:wave):section==='build'?climb:pattern):pattern;
+      const lane=motif[index%motif.length];
       let chosen=-1;
       for(let k=0;k<lanes;k++){const candidate=(lane+k)%lanes;if(busy[candidate]<attack.time){chosen=candidate;break;}}
       if(chosen<0)continue;
-      const hold=index%({easy:17,normal:13,hard:11}[difficulty])===9;
+      const hold=arrangement?holdCues.has(attack.time):index%({easy:17,normal:13,hard:11}[difficulty])===9;
       const duration=hold ? Math.min(60/track.bpm*(difficulty==='easy'?1:2),track.duration-.7-attack.time) : 0;
       const end=duration>.3 ? attack.time+duration : attack.time;
       notes.push({time:LEAD+attack.time,end:LEAD+end,lane:mirror?lanes-1-chosen:chosen,strength:attack.strength});
       busy[chosen]=end+.12;
-      if(difficulty!=='easy' && index%(difficulty==='hard'?5:13)===4) {
+      if(difficulty!=='easy' && (arrangement?(peak&&(accents.has(attack.time)||index%(difficulty==='hard'?6:15)===4)):index%(difficulty==='hard'?5:13)===4)) {
         const chord=(chosen+lanes/2)%lanes;
         if(busy[chord]<attack.time){notes.push({time:LEAD+attack.time,end:LEAD+attack.time,lane:mirror?lanes-1-chord:chord,strength:attack.strength});busy[chord]=attack.time+.12;}
       }

@@ -28,7 +28,7 @@
     }
   }
   function start(detail){
-    stop();generation++;const level=tier(detail);result.dataset.finishTier=level;banner.hidden=level==='none';canvas.hidden=level==='none';
+    stop();generation++;const level=detail.mode==='practice'?'none':tier(detail);result.dataset.finishTier=level;banner.hidden=level==='none';canvas.hidden=level==='none';
     if(level==='none')return;
     theme=themes[level];document.getElementById('finishTitle').textContent=theme.title;document.getElementById('finishLabel').textContent=theme.label;
     document.getElementById('finishDemo').textContent=detail.auto?'AUTO DEMO / オート観賞・記録なし':'';
