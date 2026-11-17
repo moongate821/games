@@ -40,10 +40,11 @@ function hitSound(lane,grade,hold=false){if(!app.context||app.context.state!=='r
 function feedback({note,grade,delta,combo},head=false){
   app.dirty=true;
   app.judgment={grade,delta,time:clock(),hold:head,combo:combo??app.game.combo};
+  const shine=PulseDepth.judge(app.game,grade,clock(),head);
   window.dispatchEvent(new CustomEvent('pulse:judgment',{detail:{grade,time:clock(),head,session:app.game}}));
   if(grade!=='miss'){
     app.flashes[note.lane]=clock();hitSound(note.lane,grade,head);
-    if(preferences.effects){app.bursts.push({lane:note.lane,time:clock(),color:colors[note.lane],seed:note.id,milestone:!head&&combo>0&&combo%25===0});app.bursts=app.bursts.slice(-48);}
+    if(preferences.effects){app.bursts.push({lane:note.lane,time:clock(),color:colors[note.lane],seed:note.id,grade,head,perfectChain:shine.streak,glowLevel:shine.level,milestone:!head&&combo>0&&combo%25===0});app.bursts=app.bursts.slice(-48);}
   }
   $('timingValue').textContent=grade==='miss'?'MISS':`${delta<0?'FAST':delta>.015?'SLOW':'JUST'} ${Math.round(delta*1000)>0?'+':''}${Math.round(delta*1000)} ms`;
   $('timingMeter').firstElementChild.style.left=`${Math.max(0,Math.min(100,50+delta/(app.game?.timing.good||.16)*50))}%`;
