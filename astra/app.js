@@ -8,7 +8,7 @@
  let w=1,h=1,particles=[],rings=[],links=[],lastHit=null,lastFrame=performance.now(),pointer={down:false,x:-1,y:-1,id:null},activeTrace=null;
  let records={},storageAvailable=true,finished=false,lyricText='',reduced=matchMedia('(prefers-reduced-motion: reduce)');
  const key='astra-records-v1',sigils=['✧','✦','⋆','✺','✵','✧'];
- try{records=JSON.parse(localStorage.getItem(key)||'{}');if(!records||Array.isArray(records)||typeof records!=='object')records={};$('offset').value=Math.max(-300,Math.min(300,Number(localStorage.getItem('astra-offset'))||0));$('fx').checked=!reduced.matches&&localStorage.getItem('astra-fx')!=='off';}catch{storageAvailable=false;}
+ try{records=JSON.parse(localStorage.getItem(key)||'{}');if(!records||Array.isArray(records)||typeof records!=='object')records={};$('offset').value=Math.max(-300,Math.min(300,Number(localStorage.getItem('astra-offset'))||0));$('fx').checked=!reduced.matches&&localStorage.getItem('astra-fx')!=='off';const savedMotion=localStorage.getItem('astra-motion');if(['auto','wave','cylinder','zigzag','comet'].includes(savedMotion))$('motionSelect').value=savedMotion;}catch{storageAvailable=false;}
  const offset=()=>Math.max(-300,Math.min(300,Number($('offset').value)||0))/1000;
  const now=()=>audio.currentTime-offset();
  const fx=()=>$('fx').checked&&!reduced.matches;
@@ -17,10 +17,10 @@
  function duration(s){return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
  function recordId(){return chosen.id+':'+mode;}
  function refresh(){
-  const shown=tracks.filter(t=>(filter==='all'||t.category===filter)&&t.title.toLowerCase().includes(($('songSearch').value||'').trim().toLowerCase()));$('songCount').textContent=shown.length+' / '+tracks.length+' TRACKS';const scroll=$('songList').scrollTop;$('songList').replaceChildren();
+  const shown=tracks.filter(t=>(filter==='all'||t.category===filter)&&t.title.toLowerCase().includes(($('songSearch').value||'').trim().toLowerCase()));if(shown.length&&!shown.some(t=>t.id===chosen.id))chosen=shown[0];$('songCount').textContent=shown.length+' / '+tracks.length+' TRACKS';$('songSelect').replaceChildren();for(const t of shown){const option=document.createElement('option');option.value=t.id;option.textContent=t.title+' · '+duration(t.duration);$('songSelect').append(option);}$('songSelect').value=chosen.id;for(const id of ['start','demo','lyricsOpen','songSelect'])$(id).disabled=!shown.length;const scroll=$('songList').scrollTop;$('songList').replaceChildren();
   shown.forEach((t,i)=>{const b=document.createElement('button');b.className='song'+(chosen.id===t.id?' active':'');b.setAttribute('aria-pressed',chosen.id===t.id?'true':'false');const icon=document.createElement('span');icon.className='sigil';icon.textContent=sigils[i%sigils.length];const body=document.createElement('span');const title=document.createElement('strong');title.textContent=t.title;const meta=document.createElement('small');meta.textContent=t.category+' · '+duration(t.duration)+' · '+t.origin;body.append(title,meta);const score=document.createElement('span');score.className='record';const r=records[t.id+':'+mode];score.textContent=r?(r.full?'✧ 完成':Math.round(r.accuracy)+'%'):'↗';b.append(icon,body,score);b.onclick=()=>{chosen=t;refresh();};$('songList').append(b);});
-  $('songList').scrollTop=scroll;$('chosenTitle').textContent=chosen.title;
-  const notes=C.chart(chosen,mode);$('chosenMeta').textContent=`${chosen.category} · ${duration(chosen.duration)} · ${notes.length} STARS / ${notes.filter(n=>n.type==='trace').length} TRACE`;
+  $('songList').scrollTop=scroll;$('chosenTitle').textContent=shown.length?chosen.title:'曲が見つかりません';
+  const notes=C.chart(chosen,mode);$('chosenMeta').textContent=`${chosen.category} · ${duration(chosen.duration)} · ${notes.length} STARS / ${notes.filter(n=>n.type==='trace').length} TRACE`;const record=records[recordId()];$('bestRecord').textContent=record?'BEST '+record.accuracy.toFixed(1)+'% · '+record.maxCombo+' COMBO'+(record.full?' · ✧ 星座完成':''):'まだ見ぬ星座を、この一曲で。';if(!shown.length){$('chosenMeta').textContent='ジャンルや検索語を変えてください。';$('bestRecord').textContent='';}
  }
  function resize(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const ow=w,oh=h;w=r.width;h=r.height;if(ow>1&&oh>1){const points=new Set(links.flatMap(l=>[l.a,l.b]));if(lastHit)points.add(lastHit);for(const p of [...points,...particles,...rings]){p.x*=w/ow;p.y*=h/oh;}}const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);}
  new ResizeObserver(resize).observe($('arena'));
@@ -45,7 +45,7 @@
   if(particles.length>550)particles.splice(0,particles.length-550);if(rings.length>24)rings.splice(0,rings.length-24);
  }
  function judge(n,value){if(!session.judge(n,value))return;const p=xy(n.type==='trace'?C.position(n,n.end):n);
-  if(value!=='MISS'){if(lastHit)links.push({a:lastHit,b:p,time:now()});lastHit=p;if(links.length>30)links.shift();}
+  if(value!=='MISS'){if(lastHit)links.push({a:lastHit,b:p,time:now()});lastHit=p;if(links.length>12)links.shift();}
   else lastHit=null;
   burst(p,value);visuals.typography.hit(value);$('judgment').textContent=value;$('judgment').style.color=value==='MISS'?'#c998af':value==='PERFECT'?'#fff1d3':'#99e6df';$('judgment').classList.remove('pop');void $('judgment').offsetWidth;$('judgment').classList.add('pop');
   $('combo').textContent=session.combo>=2?session.combo:'';$('comboLabel').textContent=session.combo>=2?'STARS CONNECTED':'';
@@ -75,15 +75,15 @@
    for(const n of session.notes)if(!n.done&&!n.started&&time>n.time+C.MODES[mode].window)judge(n,'MISS');
   }
   $('score').textContent=String(session.score).padStart(7,'0');$('accuracy').textContent=session.accuracy.toFixed(2)+'%';$('remaining').textContent=duration(Math.max(0,chosen.duration-audio.currentTime));$('progress').style.width=Math.min(100,audio.currentTime/chosen.duration*100)+'%';
-  const line=(chosen.lyricTiming||[]).find(l=>audio.currentTime>=l.time&&audio.currentTime<l.end);
-  currentLine=line;const text=line?line.text:'♪  ♫  ✧';if(text!==lyricText){lyricText=text;$('lyric').textContent=text;}
+  const line=AstraLyricSync.lineAt(chosen.lyricTiming||[],audio.currentTime);
+  currentLine=line;const text=line?line.text:'♪';$('lyric').classList.toggle('instrumental',!line);if(text!==lyricText){lyricText=text;$('lyric').textContent=text;}
   $('lyricLabel').textContent=line?'LYRICS / ESTIMATED TIMING':'MUSIC / 星をつないで';
   const pulse=musicPulse(audio.currentTime),beat=pulse.beat;currentBeat=beat;currentEnergy=pulse.energy;
   const percent=Math.min(100,Math.max(0,100*audio.currentTime/chosen.duration)),next=session.notes.find(n=>!n.done);$('journeyPercent').textContent=Math.floor(percent)+'%';$('starProgress').textContent=session.judged+' / '+session.notes.length+' STARS';$('remaining').textContent=duration(audio.currentTime)+' / '+duration(chosen.duration);document.querySelector('.progress').setAttribute('aria-valuenow',Math.floor(percent));
   const phase=percent>=90?3:percent>=66?2:percent>=33?1:0,phases=['第1章 / 星の入口','第2章 / 光の航路','第3章 / 天の川へ','FINALE / 星座の完成へ'];$('journeyStage').textContent=phases[phase];if(phase>chapter){chapter=phase;if(fx()){$('chapterFlash').textContent=phases[phase];$('chapterFlash').classList.remove('reveal');void $('chapterFlash').offsetWidth;$('chapterFlash').classList.add('reveal');visuals.explode(.5,.14,65,110,200+phase*55);}}
   $('nextAction').textContent=activeTrace?'TRACE #'+(activeTrace.id+1)+' / 動く光を追って':next?'NEXT #'+(next.id+1)+' / '+(next.type==='trace'?'押したまま、流星をなぞる':'輪が重なったらタップ'):'FINALE / もうすぐ星座完成';$('nextAction').classList.toggle('tracing',!!activeTrace);if(!activeTrace&&performance.now()>gestureHintUntil)$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';
-  $('lyric').classList.toggle('spark',session.streak>=3&&fx());$('lyric').style.transform=fx()?`scale(${1+beat*.045+Math.min(session.streak,32)*.001})`:'none';
-  if(session.streak>=8&&fx())$('lyric').style.color=`hsl(${40+Math.sin(time*.5)*80},85%,85%)`;else $('lyric').style.color='';
+  $('lyric').classList.toggle('spark',session.streak>=3&&fx());$('lyric').style.transform=fx()&&!line?`scale(${1+beat*.025})`:'none';
+  $('lyric').style.color='';
  }
  function finish(){
   if(finished||!session)return;finished=true;audio.pause();for(const n of session.notes)if(!n.done)judge(n,'MISS');state='result';pointer.down=false;pointer.id=null;activeTrace=null;
@@ -102,10 +102,10 @@
  function star(x,y,r,color){ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rad=i%2?r*.24:r;const px=x+Math.cos(a)*rad,py=y+Math.sin(a)*rad;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fillStyle=color;ctx.fill();}
  function curve(n){const a=xy(n),b=xy({x:n.cx,y:n.cy}),c=xy({x:n.tx,y:n.ty});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(b.x,b.y,c.x,c.y);}
  function draw(time,dt){
-  ctx.clearRect(0,0,w,h);const r=radius();visuals.update(dt,{enabled:fx(),w,h,pointer:state==='playing'?pointer:{down:false},line:currentLine,streak:session?.streak||0,beat:currentBeat,energy:currentEnergy,songTime:audio.currentTime,track:chosen});visuals.background(ctx,w,h);
+  ctx.clearRect(0,0,w,h);const r=radius();visuals.update(dt,{enabled:fx(),w,h,pointer:state==='playing'?pointer:{down:false},line:currentLine,streak:session?.streak||0,beat:currentBeat,energy:currentEnergy,songTime:audio.currentTime,track:chosen,motion:$('motionSelect').value});visuals.background(ctx,w,h);
   ctx.save();ctx.globalAlpha=.28;circle(w*.5,h*.51,Math.min(w,h)*.46,'#e9c78b28');circle(w*.5,h*.51,Math.min(w,h)*.32,'#e9c78b16');ctx.restore();
   for(let i=0;i<55;i++){const x=((i*137.57)%997)/997*w,y=((i*297.17)%991)/991*h;ctx.globalAlpha=.2+.3*Math.sin(i+time*.5)**2;star(x,y,i%7===0?3:1.2,'#c9e4ec');}ctx.globalAlpha=1;
-  for(const l of links){const alpha=Math.max(.05,.4-(time-l.time)*.012);const g=ctx.createLinearGradient(l.a.x,l.a.y,l.b.x,l.b.y);g.addColorStop(0,`rgba(233,199,139,${alpha})`);g.addColorStop(1,`rgba(153,230,223,${alpha})`);ctx.strokeStyle=g;ctx.lineWidth=fx()?1.5:1;ctx.beginPath();ctx.moveTo(l.a.x,l.a.y);ctx.lineTo(l.b.x,l.b.y);ctx.stroke();star(l.a.x,l.a.y,3,'#e9c78b80');star(l.b.x,l.b.y,4,'#99e6df90');}
+  for(const l of links){const alpha=Math.max(.035,.26-(time-l.time)*.018);const g=ctx.createLinearGradient(l.a.x,l.a.y,l.b.x,l.b.y);g.addColorStop(0,`rgba(233,199,139,${alpha})`);g.addColorStop(1,`rgba(153,230,223,${alpha})`);ctx.strokeStyle=g;ctx.lineWidth=fx()?1.5:1;ctx.beginPath();ctx.moveTo(l.a.x,l.a.y);ctx.lineTo(l.b.x,l.b.y);ctx.stroke();star(l.a.x,l.a.y,3,'#e9c78b80');star(l.b.x,l.b.y,4,'#99e6df90');}
   const next=session?.notes.find(n=>!n.done);
   if(next&&!next.started&&next.time-time<1.65){const p=xy(next);ctx.save();ctx.strokeStyle='#ffe6ae99';ctx.lineWidth=1.5;if(lastHit){ctx.setLineDash([3,8]);ctx.beginPath();ctx.moveTo(lastHit.x,lastHit.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);const u=fx()?(Math.max(0,time)*.7)%1:1;star(lastHit.x+(p.x-lastHit.x)*u,lastHit.y+(p.y-lastHit.y)*u,5,'#fff1bf');}ctx.fillStyle='#ffe6ae';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('▼ NEXT',p.x,Math.max(w>h?42:68,p.y-r*2.6-10));ctx.restore();}
   const notes=session?session.notes.filter(n=>!n.done&&n.time-time<1.65&&(n.end>=time-.25||n.started)):[];
@@ -139,15 +139,17 @@
  }
  function frame(stamp){const dt=Math.min(.1,(stamp-lastFrame)/1000);lastFrame=stamp;if(['playing','paused','result','loading'].includes(state)){const t=now();if(state==='playing')update(t,dt);draw(t,state==='paused'?0:dt);}requestAnimationFrame(frame);}requestAnimationFrame(frame);
  $('start').onclick=()=>start(false);$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('resume').onclick=resume;$('retry').onclick=()=>start(session?.auto||false);$('leave').onclick=home;$('back').onclick=home;$('again').onclick=()=>start(session.auto);$('cancelLoad').onclick=home;
- $('helpOpen').onclick=()=>showDialog('help');$('lyricsOpen').onclick=()=>{$('lyricsTitle').textContent=chosen.title;$('fullLyrics').textContent=chosen.lyrics;showDialog('lyricsDialog');};
+ $('helpOpen').onclick=()=>showDialog('help');$('lyricsOpen').onclick=()=>{$('lyricsTitle').textContent=chosen.title;$('fullLyrics').textContent=chosen.lyrics;const sync=chosen.lyricSyncSummary;$('syncSummary').textContent=sync?'歌詞表示：'+sync.alignedLines+' / '+sync.authoredLines+'行を音源と照合（時刻は推定）。照合できない区間には音符を流します。':'';showDialog('lyricsDialog');};
  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
- document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});refresh();});
- document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));refresh();});
- $('songSearch').addEventListener('input',refresh);
+ $('genreSelect').onchange=()=>{filter=$('genreSelect').value;refresh();};
+ $('difficultySelect').onchange=()=>{mode=$('difficultySelect').value;refresh();};
+ $('songSelect').onchange=()=>{chosen=tracks.find(t=>t.id===$('songSelect').value)||chosen;refresh();};
+ $('motionSelect').onchange=()=>{try{localStorage.setItem('astra-motion',$('motionSelect').value);}catch{}};
+ $('songSearch').addEventListener('input',refresh);$('libraryFold').addEventListener('toggle',()=>{if(!$('libraryFold').open&&$('songSearch').value){$('songSearch').value='';refresh();}});
  $('offset').onchange=()=>{$('offset').value=Math.round(offset()*1000);try{localStorage.setItem('astra-offset',$('offset').value);}catch{}};
  $('fx').onchange=()=>{try{localStorage.setItem('astra-fx',$('fx').checked?'on':'off');}catch{}};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('pagehide',pause);
- document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;if(e.code==='Space'||e.code==='Escape'){if(state==='playing'){e.preventDefault();pause();}else if(state==='paused'){e.preventDefault();resume();}}});
+ document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT','SUMMARY'].includes(e.target.tagName))return;if(e.code==='Space'||e.code==='Escape'){if(state==='playing'){e.preventDefault();pause();}else if(state==='paused'){e.preventDefault();resume();}}});
  $('pauseDialog').addEventListener('cancel',e=>{e.preventDefault();resume();});$('result').addEventListener('cancel',e=>{e.preventDefault();home();});
  audio.addEventListener('ended',()=>{if(state==='playing')finish();});audio.addEventListener('error',()=>{if(state==='playing'||state==='paused'){home();toast('音楽の読み込みが中断されました。もう一度お試しください。');}});
  // Read-only runtime inspection for reproducible QA; no input automation is shipped.

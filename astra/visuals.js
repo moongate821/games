@@ -19,22 +19,22 @@
    for(let i=0;i<count;i++){const a=i*2.39996+Math.random()*.25,v=.2+Math.random()*.8;this.dust.push({x,y,vx:Math.cos(a)*speed*v,vy:Math.sin(a)*speed*v,age:0,life:.45+Math.random()*.65,size:1+Math.random()*3,hue:hue+i*360/count});}
    if(this.dust.length>320)this.dust.splice(0,this.dust.length-320);
   }
-  update(dt,{enabled,w,h,pointer,line,streak=0,beat=0,songTime=this.clock,track={id:'',genre:'',bpm:140},energy=0}){
-   this.enabled=enabled;this.typography.update(dt,{enabled,songTime,line,track,energy,beat,streak});
+  update(dt,{enabled,w,h,pointer,line,streak=0,beat=0,songTime=this.clock,track={id:'',genre:'',bpm:140},energy=0,motion='auto'}){
+   this.enabled=enabled;this.typography.update(dt,{enabled,songTime,line,track,energy,beat,streak,motion});
    if(!enabled){this.clear();return;}
    this.clock+=dt;this.beat=beat;this.streak=streak;
    // Freeze all decorative motion when paused, as well as the audio clock.
    if(dt<=0)return;
    const key=line?line.time+':'+line.text:'notes';
-   if(!line&&(key!==this.lyricKey||this.clock-this.lastLyric>2.3)){
+   if(!line&&(key!==this.lyricKey||this.clock-this.lastLyric>3.2)){
     this.lyricKey=key;this.lastLyric=this.clock;const index=this.lyricSerial++;
-    this.lyrics.push({text:line?line.text:['♪　♫　✧','✧　♩　♪'][index%2],x:.18+(index*.237)% .64,y:-.12,age:0,life:8,angle:(index%2?1:-1)*(.13+index%3*.11),size:34+(index%4)*18,hue:(index*61+175)%360,vx:(index%2?-.015:.022),vy:.10+(index%3)*.018,font:index%3});
+    this.lyrics.push({text:['♪','♫','♩'][index%3],x:.18+(index%3)*.3,y:-.1,age:0,life:9.2,angle:0,size:24+(index%3)*4,hue:[185,225,265][index%3],startX:.15+(index%3)*.32,controlX:index%2?.18:.82,endX:index%2?.78:.22,font:0});
     if(this.lyrics.length>3)this.lyrics.shift();
    }
    if(this.clock>=this.nextMeteor){this.nextMeteor=this.clock+1.8;this.meteors.push({x:-.18+Math.random()*.95,y:-.16,vx:.16+Math.random()*.16,vy:.28+Math.random()*.18,age:0,life:4.3,hue:160+Math.random()*140});}
    if(this.clock>=this.nextPlanet){this.nextPlanet=this.clock+10;this.planets.push({x:.15+Math.random()*.7,y:-.08,age:0,life:13,r:.065+Math.random()*.04,hue:190+Math.random()*140,angle:Math.random()-.5});}
    if(pointer.down){this.emit+=dt;while(this.emit>.04){this.emit-=.04;this.heldEmissions++;this.explode(pointer.x/w,pointer.y/h,2,38,170+this.clock*80);}}else this.emit=0;
-   for(const p of this.lyrics){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;}
+   for(const p of this.lyrics){p.age+=dt;const u=p.age/p.life,v=1-u;p.x=v*v*p.startX+2*v*u*p.controlX+u*u*p.endX;p.y=-.1+u*1.22;p.angle=Math.sin(u*Math.PI*2)*.13;}
    for(const p of this.meteors){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;}
    for(const p of this.planets){p.age+=dt;p.y+=.095*dt;p.x+=Math.sin(this.clock*.3)*dt*.008;}
    for(const p of this.dust){p.age+=dt;p.x+=p.vx*dt/w;p.y+=p.vy*dt/h;p.vy+=32*dt;}
@@ -54,7 +54,8 @@
    }
    this.typography.draw(ctx,w,h);
    for(const p of this.lyrics){
-    ctx.save();ctx.translate(p.x*w,p.y*h);ctx.rotate(p.angle);const pulse=1+this.beat*.12+Math.min(this.streak,32)*.002;ctx.scale(pulse,pulse);ctx.globalAlpha=Math.min(.34,p.age*.3,(p.life-p.age)*.24);ctx.fillStyle=`hsl(${p.hue+this.clock*9},90%,80%)`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${p.font===2?'italic ':''}${p.font===1?'700':'400'} ${Math.min(p.size,w*.16)}px ${p.font===0?'"Yu Mincho",serif':'"Yu Gothic UI",sans-serif'}`;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;ctx.fillText(p.text,0,0,w*.94);ctx.restore();
+    const fade=Math.min(1,p.age*.8,(p.life-p.age)*.8),alpha=fade*(this.typography.active?.12:.3),u=p.age/p.life,tail=Math.max(0,u-.06),v=1-tail,tx=(v*v*p.startX+2*v*tail*p.controlX+tail*tail*p.endX)*w,ty=(-.1+tail*1.22)*h;
+    ctx.save();ctx.globalAlpha=alpha*.45;ctx.strokeStyle=`hsl(${p.hue},65%,76%)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,ty);ctx.quadraticCurveTo((tx+p.x*w)*.5+7,(ty+p.y*h)*.5,p.x*w,p.y*h);ctx.stroke();ctx.translate(p.x*w,p.y*h);ctx.rotate(p.angle);ctx.globalAlpha=alpha;ctx.fillStyle=`hsl(${p.hue},65%,80%)`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${Math.max(18,Math.min(p.size,w*.075))}px Georgia,serif`;ctx.fillText(p.text,0,0);ctx.restore();
    }
    ctx.restore();
   }
