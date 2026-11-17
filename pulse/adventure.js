@@ -66,7 +66,7 @@
  }
  function onHome(){exit.hidden=true;resultPanel.hidden=true;if(activeCourse){const original=activeCourse.original;activeCourse=null;app.track=original.track;app.lanes=original.lanes;app.difficulty=original.difficulty;renderPads();}}
  const themes={sakura:{label:'桜の舞台',a:'#ff9bc9',b:'#c7a6ff'},neon:{label:'NEON CITY',a:'#79edff',b:'#d09aff'},storm:{label:'雷光の舞台',a:'#a3aaff',b:'#f4c780'},orbit:{label:'ORBITAL SKY',a:'#cfff85',b:'#a5bfff'}};
- function stage(ctx,w,h,line,t,state,prefs){
+ function stage(ctx,w,h,line,t,state,prefs,geometry=null){
   const songTime=Math.max(0,t-Core.LEAD),s=A.section(state.track,songTime),theme=themes[state.track.stageTheme]||themes.orbit,key=state.track.id+'/'+s.time;
   const phase={intro:'INTRO',verse:'VERSE',build:'BUILD',chorus:'サビ',peak:'PEAK',break:'INTERLUDE',outro:'FINALE'}[s.kind]||'VERSE',run=state.run||{};
   if(sceneKey!==key){sceneKey=key;document.querySelector('.field').style.setProperty('--scene-a',theme.a+'24');document.querySelector('.field').style.setProperty('--scene-b',theme.b+'14');$('stageStatus').textContent=`${theme.label} / ${phase} · ${run.mode==='practice'?`練習${run.iteration}回目・記録なし`:run.mode==='course'?`COURSE ${run.courseIndex+1}/3`:state.auto?'AUTO・記録なし':'FEEL THE ORBIT'}`;}
@@ -75,7 +75,7 @@
   if(state.track.stageTheme==='sakura'){
    for(let i=0;i<23;i++){const x=(i*137+Math.sin(songTime*.35+i)*28+w)%w,y=(songTime*(12+power*10)+i*91)%(line+70)-35;ctx.save();ctx.translate(x,y);ctx.rotate(songTime*.55+i);ctx.fillStyle=i%2?theme.a:theme.b;ctx.beginPath();ctx.moveTo(0,-5);ctx.bezierCurveTo(8,-4,8,4,0,8);ctx.bezierCurveTo(-6,3,-6,-2,0,-5);ctx.fill();ctx.restore();}
   }else if(state.track.stageTheme==='neon'){
-   ctx.strokeStyle=theme.a;for(let i=0;i<9;i++){ctx.beginPath();ctx.moveTo(w/2+(i-4)*12,0);ctx.lineTo((i-4)*w/5+w/2,line);ctx.stroke();}ctx.strokeStyle=theme.b;for(let i=0;i<7;i++){const y=(songTime*(15+power*20)+i*line/7)%line;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+   ctx.strokeStyle=theme.a;for(let i=0;i<9;i++){const u=(i-4)/4+.5,a=geometry?geometry.point(u,0):{x:w/2+(i-4)*12,y:0},b=geometry?geometry.point(u,1):{x:(i-4)*w/5+w/2,y:line};ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}ctx.strokeStyle=theme.b;for(let i=0;i<7;i++){const phase=(songTime*.08+i/7)%1,a=geometry?geometry.point(-.45,phase):{x:0,y:phase*line},b=geometry?geometry.point(1.45,phase):{x:w,y:phase*line};ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
   }else if(state.track.stageTheme==='storm'){
    for(let side=0;side<2;side++){ctx.strokeStyle=side?theme.a:theme.b;ctx.lineWidth=peak?2:1;ctx.beginPath();for(let i=0;i<14;i++){const x=(side?w-12:12)+Math.sin(i*2.2+songTime*3)*(4+pulse*7),y=i/13*line;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}
   }else{
