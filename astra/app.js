@@ -2,7 +2,7 @@
 (()=>{
  'use strict';
  const $=id=>document.getElementById(id),C=AstraCore,tracks=ASTRA_LIBRARY;
- const visuals=new AstraVisuals();let currentLine=null,currentBeat=0,chapter=0,gestureHintUntil=0;
+ const visuals=new AstraVisuals();let currentLine=null,currentBeat=0,currentEnergy=0,onsetIndex=-1,lastMusicTime=-1,chapter=0,gestureHintUntil=0;
  const canvas=$('sky'),ctx=canvas.getContext('2d'),audio=new Audio();audio.preload='metadata';
  let chosen=tracks[0],mode='normal',filter='all',session=null,state='home',token=0;
  let w=1,h=1,particles=[],rings=[],links=[],lastHit=null,lastFrame=performance.now(),pointer={down:false,x:-1,y:-1,id:null},activeTrace=null;
@@ -13,6 +13,7 @@
  const now=()=>audio.currentTime-offset();
  const fx=()=>$('fx').checked&&!reduced.matches;
  function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');setTimeout(()=>$('toast').classList.remove('visible'),5000);}
+ function musicPulse(t){const ons=chosen.onsets;if(lastMusicTime<0||t<lastMusicTime||t-lastMusicTime>1){let lo=0,hi=ons.length;while(lo<hi){const m=(lo+hi)>>>1;if(ons[m].time<=t)lo=m+1;else hi=m;}onsetIndex=lo-1;}while(onsetIndex+1<ons.length&&ons[onsetIndex+1].time<=t)onsetIndex++;lastMusicTime=t;const last=ons[onsetIndex];let sum=0,count=0;for(let i=onsetIndex;i>=0&&t-ons[i].time<1.5&&count<16;i--){sum+=ons[i].strength;count++;}return{beat:last?Math.max(0,1-(t-last.time)/.18):0,energy:Math.min(1,count?sum/count*1.4:0)};}
  function duration(s){return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
  function recordId(){return chosen.id+':'+mode;}
  function refresh(){
@@ -29,8 +30,8 @@
  function showDialog(id){if(!$(id).open)$(id).showModal();}
  function closeDialogs(){document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
  async function start(auto=false){
-  closeDialogs();const myToken=++token;audio.pause();session=new C.Session(chosen,mode,auto);activeTrace=null;particles=[];rings=[];links=[];lastHit=null;finished=false;pointer.down=false;pointer.id=null;lyricText='';currentLine=null;currentBeat=0;chapter=0;visuals.reset();visuals.enabled=fx();$('chapterFlash').textContent='';$('journeyPercent').textContent='0%';$('journeyStage').textContent='第1章 / 星の入口';$('nextAction').textContent='NEXT / 輪が重なったらタップ';state='loading';$('loading').hidden=false;$('home').hidden=true;$('play').hidden=false;document.body.classList.add('playing');
-  $('playTitle').textContent=chosen.title;$('playMode').textContent=C.MODES[mode].label+(auto?' / AUTO 観賞':' / TAP + TRACE');$('statusLabel').textContent=auto?'AUTO / 記録には保存しません':'DRAW YOUR CONSTELLATION';$('judgment').textContent='';$('combo').textContent='';$('comboLabel').textContent='';$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';$('lyric').textContent='♪';resize();audio.src=chosen.src;audio.currentTime=0;
+  closeDialogs();const myToken=++token;audio.pause();session=new C.Session(chosen,mode,auto);activeTrace=null;particles=[];rings=[];links=[];lastHit=null;finished=false;pointer.down=false;pointer.id=null;lyricText='';currentLine=null;currentBeat=0;currentEnergy=0;onsetIndex=-1;lastMusicTime=-1;chapter=0;visuals.reset();visuals.enabled=fx();$('chapterFlash').textContent='';$('journeyPercent').textContent='0%';$('journeyStage').textContent='第1章 / 星の入口';$('nextAction').textContent='NEXT / 輪が重なったらタップ';state='loading';$('loading').hidden=false;$('home').hidden=true;$('play').hidden=false;document.body.classList.add('playing');
+  $('playTitle').textContent=chosen.title;$('playMode').textContent='ASTRA / '+C.MODES[mode].label+(auto?' / AUTO 観賞':' / TAP + TRACE');$('statusLabel').textContent=auto?'AUTO / 記録には保存しません':'DRAW YOUR CONSTELLATION';$('judgment').textContent='';$('combo').textContent='';$('comboLabel').textContent='';$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';$('lyric').textContent='♪';resize();audio.src=chosen.src;audio.currentTime=0;
   try{await audio.play();if(myToken!==token)return;state='playing';$('loading').hidden=true;}catch(e){if(myToken!==token)return;home();toast('音楽を読み込めませんでした。接続を確認して、もう一度開始してください。');console.warn('Audio start',e.name);}
  }
  function home(){++token;audio.pause();audio.removeAttribute('src');audio.load();state='home';activeTrace=null;pointer.down=false;pointer.id=null;closeDialogs();$('loading').hidden=true;$('home').hidden=false;$('play').hidden=true;document.body.classList.remove('playing','high-glow');refresh();}
@@ -46,7 +47,7 @@
  function judge(n,value){if(!session.judge(n,value))return;const p=xy(n.type==='trace'?C.position(n,n.end):n);
   if(value!=='MISS'){if(lastHit)links.push({a:lastHit,b:p,time:now()});lastHit=p;if(links.length>30)links.shift();}
   else lastHit=null;
-  burst(p,value);$('judgment').textContent=value;$('judgment').style.color=value==='MISS'?'#c998af':value==='PERFECT'?'#fff1d3':'#99e6df';$('judgment').classList.remove('pop');void $('judgment').offsetWidth;$('judgment').classList.add('pop');
+  burst(p,value);visuals.typography.hit(value);$('judgment').textContent=value;$('judgment').style.color=value==='MISS'?'#c998af':value==='PERFECT'?'#fff1d3':'#99e6df';$('judgment').classList.remove('pop');void $('judgment').offsetWidth;$('judgment').classList.add('pop');
   $('combo').textContent=session.combo>=2?session.combo:'';$('comboLabel').textContent=session.combo>=2?'STARS CONNECTED':'';
  }
  function point(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
@@ -58,7 +59,7 @@
   const n=session.notes.filter(n=>!n.done&&!n.started&&Math.abs(n.time-time)<=C.MODES[mode].window&&dist(p,xy(n))<=r).sort((a,b)=>Math.abs(a.time-time)-Math.abs(b.time-time))[0];
   if(!n)return;
   const value=C.grade(time-n.time,mode);
-  if(n.type==='trace'){n.started=true;n.head=value;n.covered=0;activeTrace=n;burst(xy(n),value);$('playHint').textContent='押したまま、動く星を追いかけよう';}
+  if(n.type==='trace'){n.started=true;n.head=value;n.covered=0;activeTrace=n;burst(xy(n),value);visuals.typography.hit(value);$('playHint').textContent='押したまま、動く星を追いかけよう';}
   else judge(n,value);
  });
  canvas.addEventListener('pointermove',e=>{if(pointer.id!==e.pointerId)return;Object.assign(pointer,point(e));});
@@ -77,7 +78,7 @@
   const line=(chosen.lyricTiming||[]).find(l=>audio.currentTime>=l.time&&audio.currentTime<l.end);
   currentLine=line;const text=line?line.text:'♪  ♫  ✧';if(text!==lyricText){lyricText=text;$('lyric').textContent=text;}
   $('lyricLabel').textContent=line?'LYRICS / ESTIMATED TIMING':'MUSIC / 星をつないで';
-  const beat=chosen.onsets.some(o=>Math.abs(o.time-audio.currentTime)<.055)?1:0;currentBeat=beat;
+  const pulse=musicPulse(audio.currentTime),beat=pulse.beat;currentBeat=beat;currentEnergy=pulse.energy;
   const percent=Math.min(100,Math.max(0,100*audio.currentTime/chosen.duration)),next=session.notes.find(n=>!n.done);$('journeyPercent').textContent=Math.floor(percent)+'%';$('starProgress').textContent=session.judged+' / '+session.notes.length+' STARS';$('remaining').textContent=duration(audio.currentTime)+' / '+duration(chosen.duration);document.querySelector('.progress').setAttribute('aria-valuenow',Math.floor(percent));
   const phase=percent>=90?3:percent>=66?2:percent>=33?1:0,phases=['第1章 / 星の入口','第2章 / 光の航路','第3章 / 天の川へ','FINALE / 星座の完成へ'];$('journeyStage').textContent=phases[phase];if(phase>chapter){chapter=phase;if(fx()){$('chapterFlash').textContent=phases[phase];$('chapterFlash').classList.remove('reveal');void $('chapterFlash').offsetWidth;$('chapterFlash').classList.add('reveal');visuals.explode(.5,.14,65,110,200+phase*55);}}
   $('nextAction').textContent=activeTrace?'TRACE #'+(activeTrace.id+1)+' / 動く光を追って':next?'NEXT #'+(next.id+1)+' / '+(next.type==='trace'?'押したまま、流星をなぞる':'輪が重なったらタップ'):'FINALE / もうすぐ星座完成';$('nextAction').classList.toggle('tracing',!!activeTrace);if(!activeTrace&&performance.now()>gestureHintUntil)$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';
@@ -101,12 +102,12 @@
  function star(x,y,r,color){ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rad=i%2?r*.24:r;const px=x+Math.cos(a)*rad,py=y+Math.sin(a)*rad;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fillStyle=color;ctx.fill();}
  function curve(n){const a=xy(n),b=xy({x:n.cx,y:n.cy}),c=xy({x:n.tx,y:n.ty});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(b.x,b.y,c.x,c.y);}
  function draw(time,dt){
-  ctx.clearRect(0,0,w,h);const r=radius();visuals.update(dt,{enabled:fx(),w,h,pointer:state==='playing'?pointer:{down:false},line:currentLine,streak:session?.streak||0,beat:currentBeat});visuals.background(ctx,w,h);
+  ctx.clearRect(0,0,w,h);const r=radius();visuals.update(dt,{enabled:fx(),w,h,pointer:state==='playing'?pointer:{down:false},line:currentLine,streak:session?.streak||0,beat:currentBeat,energy:currentEnergy,songTime:audio.currentTime,track:chosen});visuals.background(ctx,w,h);
   ctx.save();ctx.globalAlpha=.28;circle(w*.5,h*.51,Math.min(w,h)*.46,'#e9c78b28');circle(w*.5,h*.51,Math.min(w,h)*.32,'#e9c78b16');ctx.restore();
   for(let i=0;i<55;i++){const x=((i*137.57)%997)/997*w,y=((i*297.17)%991)/991*h;ctx.globalAlpha=.2+.3*Math.sin(i+time*.5)**2;star(x,y,i%7===0?3:1.2,'#c9e4ec');}ctx.globalAlpha=1;
   for(const l of links){const alpha=Math.max(.05,.4-(time-l.time)*.012);const g=ctx.createLinearGradient(l.a.x,l.a.y,l.b.x,l.b.y);g.addColorStop(0,`rgba(233,199,139,${alpha})`);g.addColorStop(1,`rgba(153,230,223,${alpha})`);ctx.strokeStyle=g;ctx.lineWidth=fx()?1.5:1;ctx.beginPath();ctx.moveTo(l.a.x,l.a.y);ctx.lineTo(l.b.x,l.b.y);ctx.stroke();star(l.a.x,l.a.y,3,'#e9c78b80');star(l.b.x,l.b.y,4,'#99e6df90');}
   const next=session?.notes.find(n=>!n.done);
-  if(next&&!next.started&&next.time-time<1.65){const p=xy(next);ctx.save();ctx.strokeStyle='#ffe6ae99';ctx.lineWidth=1.5;if(lastHit){ctx.setLineDash([3,8]);ctx.beginPath();ctx.moveTo(lastHit.x,lastHit.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);const u=fx()?(Math.max(0,time)*.7)%1:1;star(lastHit.x+(p.x-lastHit.x)*u,lastHit.y+(p.y-lastHit.y)*u,5,'#fff1bf');}ctx.fillStyle='#ffe6ae';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('▼ NEXT',p.x,p.y-r*2.6-10);ctx.restore();}
+  if(next&&!next.started&&next.time-time<1.65){const p=xy(next);ctx.save();ctx.strokeStyle='#ffe6ae99';ctx.lineWidth=1.5;if(lastHit){ctx.setLineDash([3,8]);ctx.beginPath();ctx.moveTo(lastHit.x,lastHit.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);const u=fx()?(Math.max(0,time)*.7)%1:1;star(lastHit.x+(p.x-lastHit.x)*u,lastHit.y+(p.y-lastHit.y)*u,5,'#fff1bf');}ctx.fillStyle='#ffe6ae';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('▼ NEXT',p.x,Math.max(w>h?42:68,p.y-r*2.6-10));ctx.restore();}
   const notes=session?session.notes.filter(n=>!n.done&&n.time-time<1.65&&(n.end>=time-.25||n.started)):[];
   for(const n of [...notes].reverse()){
    const p=xy(n),delta=n.time-time,alpha=Math.max(0,Math.min(1,(1.65-delta)*2));ctx.globalAlpha=alpha;
@@ -118,9 +119,9 @@
    if(!n.started&&!(session.auto&&time>n.time)){
     const glow=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.2);glow.addColorStop(0,n.type==='trace'?'#99e6df25':'#e9c78b28');glow.addColorStop(1,'#00000000');ctx.fillStyle=glow;ctx.fillRect(p.x-r*2.2,p.y-r*2.2,r*4.4,r*4.4);
     if(n===next){ctx.save();ctx.shadowColor='#ffe9ab';ctx.shadowBlur=fx()?24:0;circle(p.x,p.y,r+4,'#fff1b8',2);ctx.restore();}
-    ctx.fillStyle='#0b1428e8';ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();circle(p.x,p.y,r,n.type==='trace'?'#99e6df':'#e9c78b',1.5);
+    if(n===next){const core=ctx.createRadialGradient(p.x-r*.2,p.y-r*.2,0,p.x,p.y,r);core.addColorStop(0,'#fff9e7');core.addColorStop(.76,'#ffe6ae');core.addColorStop(1,'#bd9758');ctx.fillStyle=core;}else ctx.fillStyle='#0b1428e8';ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();circle(p.x,p.y,r,n.type==='trace'?'#99e6df':'#e9c78b',1.5);
     const approach=r+Math.max(0,Math.min(1,delta/1.65))*r*1.9;circle(p.x,p.y,approach,n.type==='trace'?'#99e6df90':'#e9c78b90',delta<.15?3:1.2);
-    ctx.fillStyle='#f3eddf';ctx.font=`${Math.round(r*.7)}px Georgia`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(n.id+1),p.x,p.y);
+    ctx.fillStyle=n===next?'#172032':'#f3eddf';ctx.font=`${Math.round(r*.7)}px Georgia`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(n.id+1),p.x,p.y);
     ctx.font='8px sans-serif';ctx.fillStyle=n.type==='trace'?'#99e6df':'#98a7bd';ctx.fillText(n.type==='trace'?'TRACE':'TAP',p.x,p.y+r+13);
    }
    if((n.started||session.auto)&&time>=n.time&&time<=n.end&&n.type==='trace'){
