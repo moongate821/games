@@ -1,0 +1,143 @@
+/* ASTRA: one-pointer constellation rhythm. Music time is the only gameplay clock. */
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id),C=AstraCore,tracks=ASTRA_LIBRARY;
+ const canvas=$('sky'),ctx=canvas.getContext('2d'),audio=new Audio();audio.preload='metadata';
+ let chosen=tracks[0],mode='normal',filter='all',session=null,state='home',token=0;
+ let w=1,h=1,particles=[],rings=[],links=[],lastHit=null,lastFrame=performance.now(),pointer={down:false,x:-1,y:-1,id:null},activeTrace=null;
+ let records={},storageAvailable=true,finished=false,lyricText='',reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ const key='astra-records-v1',sigils=['✧','✦','⋆','✺','✵','✧'];
+ try{records=JSON.parse(localStorage.getItem(key)||'{}');if(!records||Array.isArray(records)||typeof records!=='object')records={};$('offset').value=Math.max(-300,Math.min(300,Number(localStorage.getItem('astra-offset'))||0));$('fx').checked=!reduced.matches&&localStorage.getItem('astra-fx')!=='off';}catch{storageAvailable=false;}
+ const offset=()=>Math.max(-300,Math.min(300,Number($('offset').value)||0))/1000;
+ const now=()=>audio.currentTime-offset();
+ const fx=()=>$('fx').checked&&!reduced.matches;
+ function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');setTimeout(()=>$('toast').classList.remove('visible'),5000);}
+ function duration(s){return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+ function recordId(){return chosen.id+':'+mode;}
+ function refresh(){
+  const shown=tracks.filter(t=>filter==='all'||t.category===filter);$('songCount').textContent=shown.length+' TRACKS';$('songList').replaceChildren();
+  shown.forEach((t,i)=>{const b=document.createElement('button');b.className='song'+(chosen.id===t.id?' active':'');b.setAttribute('aria-pressed',chosen.id===t.id?'true':'false');const icon=document.createElement('span');icon.className='sigil';icon.textContent=sigils[i%sigils.length];const body=document.createElement('span');const title=document.createElement('strong');title.textContent=t.title;const meta=document.createElement('small');meta.textContent=t.category+' · '+duration(t.duration)+' · '+t.origin;body.append(title,meta);const score=document.createElement('span');score.className='record';const r=records[t.id+':'+mode];score.textContent=r?(r.full?'✧ 完成':Math.round(r.accuracy)+'%'):'↗';b.append(icon,body,score);b.onclick=()=>{chosen=t;refresh();};$('songList').append(b);});
+  $('chosenTitle').textContent=chosen.title;
+  const notes=C.chart(chosen,mode);$('chosenMeta').textContent=`${chosen.category} · ${duration(chosen.duration)} · ${notes.length} STARS / ${notes.filter(n=>n.type==='trace').length} TRACE`;
+ }
+ function resize(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const ow=w,oh=h;w=r.width;h=r.height;if(ow>1&&oh>1){const points=new Set(links.flatMap(l=>[l.a,l.b]));if(lastHit)points.add(lastHit);for(const p of [...points,...particles,...rings]){p.x*=w/ow;p.y*=h/oh;}}const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);}
+ new ResizeObserver(resize).observe($('arena'));
+ function xy(p){return{x:p.x*w,y:p.y*h};}
+ function radius(){return Math.max(25,Math.min(35,Math.min(w,h)*.065));}
+ function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+ function showDialog(id){if(!$(id).open)$(id).showModal();}
+ function closeDialogs(){document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
+ async function start(auto=false){
+  closeDialogs();const myToken=++token;audio.pause();session=new C.Session(chosen,mode,auto);activeTrace=null;particles=[];rings=[];links=[];lastHit=null;finished=false;pointer.down=false;pointer.id=null;lyricText='';state='loading';$('loading').hidden=false;$('home').hidden=true;$('play').hidden=false;document.body.classList.add('playing');
+  $('playTitle').textContent=chosen.title;$('playMode').textContent=C.MODES[mode].label+(auto?' / AUTO 観賞':' / TAP + TRACE');$('statusLabel').textContent=auto?'AUTO / 記録には保存しません':'DRAW YOUR CONSTELLATION';$('judgment').textContent='';$('combo').textContent='';$('comboLabel').textContent='';$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';$('lyric').textContent='♪';resize();audio.src=chosen.src;audio.currentTime=0;
+  try{await audio.play();if(myToken!==token)return;state='playing';$('loading').hidden=true;}catch(e){if(myToken!==token)return;home();toast('音楽を読み込めませんでした。接続を確認して、もう一度開始してください。');console.warn('Audio start',e.name);}
+ }
+ function home(){++token;audio.pause();audio.removeAttribute('src');audio.load();state='home';activeTrace=null;pointer.down=false;pointer.id=null;closeDialogs();$('loading').hidden=true;$('home').hidden=false;$('play').hidden=true;document.body.classList.remove('playing','high-glow');refresh();}
+ function pause(){if(state!=='playing')return;state='paused';audio.pause();pointer.down=false;pointer.id=null;showDialog('pauseDialog');}
+ async function resume(){if(state!=='paused')return;try{await audio.play();$('pauseDialog').close();state='playing';}catch{toast('続けるボタンをもう一度押してください。');}}
+ function burst(p,value,extra=false){
+  if(!fx()||value==='MISS')return;
+  const tier=Math.min(4,Math.floor(session.streak/8)),count=extra?(typeof extra==='number'?extra:120):value==='PERFECT'?30+tier*15:12;
+  rings.push({...p,life:1,age:0,hue:session.streak*21,perfect:value==='PERFECT',tier});
+  for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,v=40+Math.random()*(100+tier*35);particles.push({...p,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.8,max:1.3,hue:i*360/count+session.streak*19,size:1+Math.random()*2.4});}
+  if(particles.length>550)particles.splice(0,particles.length-550);
+ }
+ function judge(n,value){if(!session.judge(n,value))return;const p=xy(n.type==='trace'?C.position(n,n.end):n);
+  if(value!=='MISS'){if(lastHit)links.push({a:lastHit,b:p,time:now()});lastHit=p;if(links.length>30)links.shift();}
+  else lastHit=null;
+  burst(p,value);$('judgment').textContent=value;$('judgment').style.color=value==='MISS'?'#c998af':value==='PERFECT'?'#fff1d3':'#99e6df';$('judgment').classList.remove('pop');void $('judgment').offsetWidth;$('judgment').classList.add('pop');
+  $('combo').textContent=session.combo>=2?session.combo:'';$('comboLabel').textContent=session.combo>=2?'STARS CONNECTED':'';
+ }
+ function point(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+ canvas.addEventListener('pointerdown',e=>{
+  if(state!=='playing'||session.auto||pointer.down)return;e.preventDefault();const p=point(e);pointer={...p,down:true,id:e.pointerId};canvas.setPointerCapture(e.pointerId);
+  const time=now(),r=radius()*1.55;
+  if(activeTrace){return;}
+  const n=session.notes.filter(n=>!n.done&&!n.started&&Math.abs(n.time-time)<=C.MODES[mode].window&&dist(p,xy(n))<=r).sort((a,b)=>Math.abs(a.time-time)-Math.abs(b.time-time))[0];
+  if(!n)return;
+  const value=C.grade(time-n.time,mode);
+  if(n.type==='trace'){n.started=true;n.head=value;n.covered=0;activeTrace=n;burst(xy(n),value);$('playHint').textContent='押したまま、動く星を追いかけよう';}
+  else judge(n,value);
+ });
+ canvas.addEventListener('pointermove',e=>{if(pointer.id!==e.pointerId)return;Object.assign(pointer,point(e));});
+ function release(e){if(e.pointerId===pointer.id){pointer.down=false;pointer.id=null;}}
+ canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);
+ function update(time,dt){
+  if(session.auto){for(const n of session.notes){if(!n.done&&time>=n.end)judge(n,'PERFECT');}}
+  else{
+   if(activeTrace){const n=activeTrace,lo=Math.max(n.time,time-dt),hi=Math.min(time,n.end),span=Math.max(0,hi-lo);
+    if(pointer.down&&dist(pointer,xy(C.position(n,(lo+hi)/2)))<=radius()*1.8)n.covered+=span;
+    if(time>=n.end){judge(n,C.traceGrade(n.covered/(n.end-n.time),n.head));activeTrace=null;$('playHint').textContent='輪が重なる瞬間にタップ / 流星は押したままなぞる';}
+   }
+   for(const n of session.notes)if(!n.done&&!n.started&&time>n.time+C.MODES[mode].window)judge(n,'MISS');
+  }
+  $('score').textContent=String(session.score).padStart(7,'0');$('accuracy').textContent=session.accuracy.toFixed(2)+'%';$('remaining').textContent=duration(Math.max(0,chosen.duration-audio.currentTime));$('progress').style.width=Math.min(100,audio.currentTime/chosen.duration*100)+'%';
+  const line=(chosen.lyricTiming||[]).find(l=>audio.currentTime>=l.time&&audio.currentTime<l.end);
+  const text=line?line.text:'♪  ♫  ✧';if(text!==lyricText){lyricText=text;$('lyric').textContent=text;}
+  $('lyricLabel').textContent=line?'LYRICS / ESTIMATED TIMING':'MUSIC / 星をつないで';
+  const beat=chosen.onsets.some(o=>Math.abs(o.time-audio.currentTime)<.055)?1:0;
+  $('lyric').classList.toggle('spark',session.streak>=3&&fx());$('lyric').style.transform=fx()?`scale(${1+beat*.045+Math.min(session.streak,32)*.001})`:'none';
+  if(session.streak>=8&&fx())$('lyric').style.color=`hsl(${40+Math.sin(time*.5)*80},85%,85%)`;else $('lyric').style.color='';
+ }
+ function finish(){
+  if(finished||!session)return;finished=true;audio.pause();for(const n of session.notes)if(!n.done)judge(n,'MISS');state='result';pointer.down=false;pointer.id=null;activeTrace=null;
+  const s=session,full=s.counts.MISS===0;document.body.classList.toggle('high-glow',fx()&&s.accuracy>=80);
+  $('resultMode').textContent=C.MODES[mode].label+(s.auto?' / AUTO 観賞':' / YOUR CONSTELLATION');$('resultRank').textContent=s.rank;$('resultArt').textContent=full?'✺':s.accuracy>=90?'✵':s.accuracy>=80?'✧':'⋆';$('resultTitle').textContent=chosen.title;$('resultCelebration').textContent=full?'CONGRATULATIONS / すべての星がつながった':s.accuracy>=90?'夜空いっぱいのオーロラを、あなたに。':s.accuracy>=80?'光のかけらが、星座になった。':'次の一音で、もっと遠くへ。';$('resultScore').textContent=String(s.score).padStart(7,'0');$('resultStats').innerHTML=`<span>精度 <b>${s.accuracy.toFixed(2)}%</b></span><span>最大コンボ <b>${s.maxCombo}</b></span>`;
+  for(const [k,v]of Object.entries(s.counts)){const el=document.createElement('span');el.textContent=k+' ';const b=document.createElement('b');b.textContent=v;el.append(b);$('resultStats').append(el);}
+  if(s.auto)$('recordNote').textContent='AUTO観賞 / 自己ベストには保存しません';
+  else{const old=records[recordId()],best=!old||s.score>old.score;
+   records[recordId()]={score:best?s.score:old.score,accuracy:best?s.accuracy:old.accuracy,full:full||Boolean(old?.full),maxCombo:Math.max(s.maxCombo,old?.maxCombo||0)};
+   try{localStorage.setItem(key,JSON.stringify(records));$('recordNote').textContent=best?'NEW BEST / この端末に記録しました':'この端末にプレイ記録を保存しました';}catch{storageAvailable=false;$('recordNote').textContent='保存容量またはブラウザー設定により記録を保存できませんでした';}
+  }
+  const celebration=full?120:s.accuracy>=90?75:s.accuracy>=80?40:12;burst({x:w*.3,y:h*.3},'PERFECT',celebration);burst({x:w*.7,y:h*.45},'PERFECT',celebration);showDialog('result');
+ }
+ function circle(x,y,r,color,width=1){ctx.beginPath();ctx.arc(x,y,Math.max(0,r),0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
+ function star(x,y,r,color){ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rad=i%2?r*.24:r;const px=x+Math.cos(a)*rad,py=y+Math.sin(a)*rad;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fillStyle=color;ctx.fill();}
+ function curve(n){const a=xy(n),b=xy({x:n.cx,y:n.cy}),c=xy({x:n.tx,y:n.ty});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(b.x,b.y,c.x,c.y);}
+ function draw(time,dt){
+  ctx.clearRect(0,0,w,h);const r=radius();
+  ctx.save();ctx.globalAlpha=.28;circle(w*.5,h*.51,Math.min(w,h)*.46,'#e9c78b28');circle(w*.5,h*.51,Math.min(w,h)*.32,'#e9c78b16');ctx.restore();
+  for(let i=0;i<55;i++){const x=((i*137.57)%997)/997*w,y=((i*297.17)%991)/991*h;ctx.globalAlpha=.2+.3*Math.sin(i+time*.5)**2;star(x,y,i%7===0?3:1.2,'#c9e4ec');}ctx.globalAlpha=1;
+  for(const l of links){const alpha=Math.max(.05,.4-(time-l.time)*.012);const g=ctx.createLinearGradient(l.a.x,l.a.y,l.b.x,l.b.y);g.addColorStop(0,`rgba(233,199,139,${alpha})`);g.addColorStop(1,`rgba(153,230,223,${alpha})`);ctx.strokeStyle=g;ctx.lineWidth=fx()?1.5:1;ctx.beginPath();ctx.moveTo(l.a.x,l.a.y);ctx.lineTo(l.b.x,l.b.y);ctx.stroke();star(l.a.x,l.a.y,3,'#e9c78b80');star(l.b.x,l.b.y,4,'#99e6df90');}
+  const notes=session?session.notes.filter(n=>!n.done&&n.time-time<1.65&&(n.end>=time-.25||n.started)):[];
+  for(const n of [...notes].reverse()){
+   const p=xy(n),delta=n.time-time,alpha=Math.max(0,Math.min(1,(1.65-delta)*2));ctx.globalAlpha=alpha;
+   if(n.type==='trace'){
+    ctx.setLineDash([4,7]);curve(n);ctx.strokeStyle='#a4e7e399';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
+    const end=xy({x:n.tx,y:n.ty});star(end.x,end.y,9,'#a4e7e3a0');
+   }
+   if(!n.started&&!(session.auto&&time>n.time)){
+    const glow=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.2);glow.addColorStop(0,n.type==='trace'?'#99e6df25':'#e9c78b28');glow.addColorStop(1,'#00000000');ctx.fillStyle=glow;ctx.fillRect(p.x-r*2.2,p.y-r*2.2,r*4.4,r*4.4);
+    ctx.fillStyle='#0b1428e8';ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();circle(p.x,p.y,r,n.type==='trace'?'#99e6df':'#e9c78b',1.5);
+    const approach=r+Math.max(0,Math.min(1,delta/1.65))*r*1.9;circle(p.x,p.y,approach,n.type==='trace'?'#99e6df90':'#e9c78b90',delta<.15?3:1.2);
+    ctx.fillStyle='#f3eddf';ctx.font=`${Math.round(r*.7)}px Georgia`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(n.id+1),p.x,p.y);
+    ctx.font='8px sans-serif';ctx.fillStyle=n.type==='trace'?'#99e6df':'#98a7bd';ctx.fillText(n.type==='trace'?'TRACE':'TAP',p.x,p.y+r+13);
+   }
+   if((n.started||session.auto)&&time>=n.time&&time<=n.end&&n.type==='trace'){
+    const pos=xy(C.position(n,time));ctx.save();ctx.shadowColor='#99e6df';ctx.shadowBlur=fx()?25:0;star(pos.x,pos.y,20,'#fff9dc');circle(pos.x,pos.y,r*1.4,'#99e6df80');ctx.restore();
+    if(fx()){for(let i=1;i<=12;i++){const q=xy(C.position(n,time-i*.025));ctx.globalAlpha=alpha*(1-i/13)*.7;star(q.x,q.y,10-i*.55,`hsl(${160+i*16},90%,80%)`);}}
+   }
+   ctx.globalAlpha=1;
+  }
+  if(fx()){
+   for(const e of rings){e.age+=dt;e.life-=dt*1.7;if(e.life<=0)continue;ctx.globalAlpha=e.life;const rr=20+e.age*(110+e.tier*25);circle(e.x,e.y,rr,`hsl(${e.hue},95%,80%)`,2);if(e.perfect){circle(e.x,e.y,rr*.68,'#fff7de',3);ctx.save();ctx.shadowColor='#ffe8b4';ctx.shadowBlur=22;star(e.x,e.y,Math.max(0,30*(1-e.age)), '#ffffff');ctx.restore();for(let i=0;i<6;i++){const a=i*Math.PI/3+e.age;star(e.x+Math.cos(a)*rr,e.y+Math.sin(a)*rr,5,`hsl(${e.hue+i*60},100%,85%)`);}}}
+   for(const p of particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=12*dt;ctx.globalAlpha=Math.max(0,p.life/p.max);star(p.x,p.y,p.size,`hsl(${p.hue},85%,82%)`);}
+   particles=particles.filter(p=>p.life>0);rings=rings.filter(e=>e.life>0);ctx.globalAlpha=1;
+  }else{particles=[];rings=[];}
+ }
+ function frame(stamp){const dt=Math.min(.1,(stamp-lastFrame)/1000);lastFrame=stamp;if(['playing','paused','result','loading'].includes(state)){const t=now();if(state==='playing')update(t,dt);draw(t,state==='paused'?0:dt);}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+ $('start').onclick=()=>start(false);$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('resume').onclick=resume;$('retry').onclick=()=>start(session?.auto||false);$('leave').onclick=home;$('back').onclick=home;$('again').onclick=()=>start(session.auto);$('cancelLoad').onclick=home;
+ $('helpOpen').onclick=()=>showDialog('help');$('lyricsOpen').onclick=()=>{$('lyricsTitle').textContent=chosen.title;$('fullLyrics').textContent=chosen.lyrics;showDialog('lyricsDialog');};
+ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+ document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});refresh();});
+ document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));refresh();});
+ $('offset').onchange=()=>{$('offset').value=Math.round(offset()*1000);try{localStorage.setItem('astra-offset',$('offset').value);}catch{}};
+ $('fx').onchange=()=>{try{localStorage.setItem('astra-fx',$('fx').checked?'on':'off');}catch{}};
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('pagehide',pause);
+ document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;if(e.code==='Space'||e.code==='Escape'){if(state==='playing'){e.preventDefault();pause();}else if(state==='paused'){e.preventDefault();resume();}}});
+ $('pauseDialog').addEventListener('cancel',e=>{e.preventDefault();resume();});$('result').addEventListener('cancel',e=>{e.preventDefault();home();});
+ audio.addEventListener('ended',()=>{if(state==='playing')finish();});audio.addEventListener('error',()=>{if(state==='playing'||state==='paused'){home();toast('音楽の読み込みが中断されました。もう一度お試しください。');}});
+ // Read-only runtime inspection for reproducible QA; no input automation is shipped.
+ Object.defineProperty(globalThis,'ASTRA_DEBUG',{get:()=>({state,session,track:chosen,mode,time:now(),width:w,height:h,activeTrace,pointer,storageAvailable})});
+ refresh();
+})();
