@@ -11,8 +11,8 @@
   },
   "files": {
     "index.html": {
-      "sha256": "2dbb07afdefb514f69db78e1e800161014bcf0d2b4ad808896e252e4b2e131e8",
-      "bytes": 4788
+      "sha256": "de724c1cc1754b6c350a316a31efeac4febd913bb1db99f81be99cffd7f795f2",
+      "bytes": 4801
     },
     "試作/app.js": {
       "sha256": "77ecca817eca5b2c698bfa51708eff1f9def0f0589d56b844fede7a901d10b3d",
@@ -139,8 +139,8 @@
       "bytes": 1473
     },
     "試作/reference.html": {
-      "sha256": "b711152d60d9b3932201118db7798d22bf70d2271c27643486150a83e77385f0",
-      "bytes": 1365
+      "sha256": "d4e3f3a02af3dc056e8ca9ca745fe001d72904f20ce252f076d7468cfcfe9488",
+      "bytes": 1382
     },
     "試作/reference.js": {
       "sha256": "6617f5aa573ae1f1032ed73f0939efc139b32bd91fc233a909f3fcc2401f2a01",
@@ -755,7 +755,7 @@
       "bytes": 4388614
     }
   },
-  "bytes": 262604181,
+  "bytes": 262604211,
   "webpCount": 140,
   "publicationImages": "WebP; original production PNG files preserved"
 }
