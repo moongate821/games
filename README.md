@@ -36,5 +36,4 @@
 - GRAVITY CORE: https://moongate821.github.io/games/gravity-core/ — 中心の核へ、流動するスライム球を撃ち込む放射状重力の合体パズル。素早い合体で得点と反重力の充電を稼ぎ、宇宙を漂うBGMとともに回る核へ挑む。【工事中】
 - RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。連鎖で敵の増援を妨害し、赤い車の進軍を止めるひとり用サバイバー。
 - 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
-- NEXARIA WILDS: https://moongate821.github.io/games/nexaria-wilds/ — 動物たちが銃を持つ世界の、斜め見下ろしドット絵の脱出シューター。森・海・砂漠・氷河・雪山の全10面を巡り、山頂の白き王へ。【作成中】
 - 三次元チェス: https://moongate821.github.io/games/chess3d/ — 3段の盤で指す立体チェス。AI対戦・4種類の駒と盤・BGM13曲。艦隊運用は集中砲火と修理。異世界モードでは王・ドラゴン・冒険者・魔法使い・召喚士・精霊のMeshy彩色駒を選べ、竜炎・召喚・魔法陣で戦う。
