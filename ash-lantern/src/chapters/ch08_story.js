@@ -100,6 +100,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'ui.voice_wave', kind: 'ui', file: 'img/ui_voice_wave.png', spec: '声の波形の演出・白い線・256x64', status: '調整中', fallback: 'bg_battle', priority: '低', owner: 'Codex', note: '第8章 実験装置の演出。第14章でも再利用' }
+    { id: 'ui.voice_wave', kind: 'ui', file: 'img/ui_voice_wave.webp', spec: '声の波形の演出・白い線・256x64', status: '調整中', fallback: 'bg_battle', priority: '低', owner: 'Codex', note: '第8章 実験装置の演出。第14章でも再利用' }
   ]
 });

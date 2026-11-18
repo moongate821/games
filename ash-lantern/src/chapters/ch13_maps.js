@@ -1,7 +1,7 @@
 'use strict';
 /* 第13章 maps: C13_CORE(灰の冠の中枢・洞窟風)。灰の海 C12_SEA の東の洞窟の口(42,11〜12)から入る。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c13',
     maps: {

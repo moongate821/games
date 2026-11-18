@@ -1,7 +1,7 @@
 'use strict';
 /* 第3章 maps: C3_PORT(港) / C3_WAREHOUSE(夜の倉庫・屋内) / C3_MARKET(市場)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: ['bld.warehouse', 'prop.small_boat', 'prop.market_stall'].includes(id) ? '調整中' : '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: ['bld.warehouse', 'prop.small_boat', 'prop.market_stall'].includes(id) ? '調整中' : '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c3',
     maps: {

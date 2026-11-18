@@ -2,7 +2,7 @@
 /* 第10章 maps: C10_SHIP(古代船の甲板) / C10_ISLES(浮島群)。
    再訪用の点: V@revisit / K@revisit(ここで足す)。C2_ROAD@revisit / C3_PORT@revisit は各マップ側にある。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c10',
     maps: {

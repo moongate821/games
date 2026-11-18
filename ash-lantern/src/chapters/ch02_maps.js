@@ -3,7 +3,7 @@
    約束: 出入口の「踏む所」は外周の道の1マス内側(x=1 / x=w-2)。到着点は *_in(その2マス内側)。
    *_in から1歩進むと west / east の点を踏む(章の到着ゾーン用)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: id === 'prop.supply_wagon' ? '調整中' : '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: id === 'prop.supply_wagon' ? '調整中' : '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c2',
     maps: {

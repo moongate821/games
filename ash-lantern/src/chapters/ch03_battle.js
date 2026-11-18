@@ -25,8 +25,8 @@ registerChapter({
     "noah": {"name": "ノア", "mhp": 40, "mmp": 8, "atk": 9, "def": 3, "spd": 14, "skills": ["noah_throw", "noah_trap"], "portrait": "battle_noah", "learn": {"5": ["noah_hook"], "8": ["noah_storm"], "10": ["noah_cut"], "12": ["noah_all"]}}
   },
   assets: [
-    {"id": "enemy.dock_rat", "kind": "enemy", "file": "img/enemy_dock_rat.png", "spec": "横200px・透明・大きなネズミ。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第3章 倉庫・港(通常)。通常画像を接続"},
-    {"id": "enemy.warehouse_guard", "kind": "enemy", "file": "img/enemy_warehouse_guard.png", "spec": "横230px・透明・小型の機械兵。身構え差分(赤い光)あり", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第3章 夜の倉庫"},
-    {"id": "enemy.crate_golem", "kind": "enemy", "file": "img/enemy_crate_golem.png", "spec": "横400px・透明・木箱を積んだ人形。身構え差分(箱が開く)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第3章 ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.dock_rat", "kind": "enemy", "file": "img/enemy_dock_rat.webp", "spec": "横200px・透明・大きなネズミ。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第3章 倉庫・港(通常)。通常画像を接続"},
+    {"id": "enemy.warehouse_guard", "kind": "enemy", "file": "img/enemy_warehouse_guard.webp", "spec": "横230px・透明・小型の機械兵。身構え差分(赤い光)あり", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第3章 夜の倉庫"},
+    {"id": "enemy.crate_golem", "kind": "enemy", "file": "img/enemy_crate_golem.webp", "spec": "横400px・透明・木箱を積んだ人形。身構え差分(箱が開く)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第3章 ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

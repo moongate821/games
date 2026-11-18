@@ -20,7 +20,7 @@ registerChapter({
     "serena_rod2": {"name": "調律棒・改", "slot": "w", "atk": 8, "only": ["serena"], "desc": "セレナ自身が組み直した調律棒。"}
   },
   assets: [
-    {"id": "enemy.royal_guard_elite", "kind": "enemy", "file": "img/enemy_royal_guard_elite.png", "spec": "横240px・透明・金縁の鎧の機械兵。身構え差分あり", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第11章(第4章の royal_guard とは強さが違うため別ID。台本は第11章でこちらを使う提案)"},
-    {"id": "enemy.rogue_device", "kind": "enemy", "file": "img/enemy_rogue_device.png", "spec": "横440px・透明・歯車と配線の塊。身構え差分(回転が速くなる)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第11章 ボス"}
+    {"id": "enemy.royal_guard_elite", "kind": "enemy", "file": "img/enemy_royal_guard_elite.webp", "spec": "横240px・透明・金縁の鎧の機械兵。身構え差分あり", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第11章(第4章の royal_guard とは強さが違うため別ID。台本は第11章でこちらを使う提案)"},
+    {"id": "enemy.rogue_device", "kind": "enemy", "file": "img/enemy_rogue_device.webp", "spec": "横440px・透明・歯車と配線の塊。身構え差分(回転が速くなる)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第11章 ボス"}
   ]
 });

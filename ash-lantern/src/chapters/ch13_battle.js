@@ -21,7 +21,7 @@ registerChapter({
     "crown_plate": {"name": "冠の欠片の胸当て", "slot": "a", "def": 16, "desc": "灰の冠の欠片を固めた胸当て。冷たい。"}
   },
   assets: [
-    {"id": "enemy.ash_shade", "kind": "enemy", "file": "img/enemy_ash_shade.png", "spec": "横230px・透明・灰色の人影。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第13章 灰の冠の中枢"},
-    {"id": "enemy.ash_crown", "kind": "enemy", "file": "img/enemy_ash_crown.png", "spec": "横460px・透明・灰の冠そのもの。身構え差分(冠が輝く)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第13章 最終ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.ash_shade", "kind": "enemy", "file": "img/enemy_ash_shade.webp", "spec": "横230px・透明・灰色の人影。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第13章 灰の冠の中枢"},
+    {"id": "enemy.ash_crown", "kind": "enemy", "file": "img/enemy_ash_crown.webp", "spec": "横460px・透明・灰の冠そのもの。身構え差分(冠が輝く)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第13章 最終ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

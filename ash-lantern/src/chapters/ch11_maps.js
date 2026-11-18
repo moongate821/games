@@ -2,7 +2,7 @@
 /* 第11章 maps: C11_HALL(玉座の間) / C11_DEVICE(装置室)。
    王都 C4_CAPITAL の城の右翼の扉(29,6)から入る(第10章完了後)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c11',
     maps: {

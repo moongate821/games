@@ -95,6 +95,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.miner', kind: 'npc', file: 'img/npc_miner.png', spec: '立ち絵80px・泥まみれの鉱夫', status: '調整中', fallback: 'npc_kid', priority: '低', owner: 'Codex', note: '第5章 鉱夫(現在は既存の人物で代用)' }
+    { id: 'npc.miner', kind: 'npc', file: 'img/npc_miner.webp', spec: '立ち絵80px・泥まみれの鉱夫', status: '調整中', fallback: 'npc_kid', priority: '低', owner: 'Codex', note: '第5章 鉱夫(現在は既存の人物で代用)' }
   ]
 });

@@ -1,7 +1,7 @@
 'use strict';
 /* 第5章 maps: C5_MINE(雨の鉱山入口) / C5_TUNNEL(坑道・洞窟風) / C5_TOWN(エマの町)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c5',
     maps: {

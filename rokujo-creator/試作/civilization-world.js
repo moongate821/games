@@ -1,4 +1,4 @@
-/* Authored geography aligned to bg.civ.observatory.world.v1.png.
+/* Authored geography aligned to bg.civ.observatory.world.v1.webp.
    Coordinates are image-space fractions; no gameplay decision uses image pixels. */
 'use strict';
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.RokujoCivilizationWorld=api;})(globalThis,()=>{

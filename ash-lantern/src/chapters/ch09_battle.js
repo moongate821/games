@@ -20,7 +20,7 @@ registerChapter({
     "noah_blade": {"name": "ノアの双刃", "slot": "w", "atk": 14, "only": ["noah"], "desc": "自分で選び直した、ノアの新しい刃。"}
   },
   assets: [
-    {"id": "enemy.deep_fish", "kind": "enemy", "file": "img/enemy_deep_fish.png", "spec": "横230px・透明・発光する魚。身構え差分なし", "status": "調整中", "fallback": "enemy_slime", "priority": "中", "owner": "Codex", "note": "第9章 海底遺跡"},
-    {"id": "enemy.deep_keeper", "kind": "enemy", "file": "img/enemy_deep_keeper.png", "spec": "横440px・透明・海底の灯台の守護者。身構え差分あり", "status": "調整中", "fallback": "enemy_crab", "priority": "高", "owner": "Codex", "note": "第9章 ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.deep_fish", "kind": "enemy", "file": "img/enemy_deep_fish.webp", "spec": "横230px・透明・発光する魚。身構え差分なし", "status": "調整中", "fallback": "enemy_slime", "priority": "中", "owner": "Codex", "note": "第9章 海底遺跡"},
+    {"id": "enemy.deep_keeper", "kind": "enemy", "file": "img/enemy_deep_keeper.webp", "spec": "横440px・透明・海底の灯台の守護者。身構え差分あり", "status": "調整中", "fallback": "enemy_crab", "priority": "高", "owner": "Codex", "note": "第9章 ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

@@ -2,7 +2,7 @@
 /* 第15章 maps: C15_ROAD(帰路・屋外)。C14_HEART の出口から西端に着き、東へ向かって新しい村へ(C16_VILLAGE)。
    西端は行き止まり(外周の森)。各地の再訪は V/K/C2_ROAD/C3_PORT の revisit 点へ goto で行く。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c15',
     maps: {

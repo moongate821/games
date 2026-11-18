@@ -2,7 +2,7 @@
 /* 第16章 maps: C16_VILLAGE(新しい炉がともる村) / C16_TABLE(食卓・屋内)。
    新しい炉は decor の大きなランタン(20,14)で仮表示(専用の描画は統括役に依頼: 報告参照)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c16',
     maps: {

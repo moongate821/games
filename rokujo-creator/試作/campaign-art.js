@@ -6,7 +6,7 @@
   marine:['海洋世界の都市',140],aerl:['浮遊世界アエル',223],ending:['骨董屋・空になった棚',300],
   crystal:['結晶世界クリスタリア',148],worldtree:['世界樹の最初の苗',117],recordroom:['記録室と庭',300]
  };
- const assets=Object.freeze(Object.fromEntries(Object.entries(definitions).map(([key,[title,first]])=>[key,Object.freeze({key,id:'concept.late.'+key,title,first,src:'../画像/concept/concept.late.'+key+'.v1.png'})])));
+ const assets=Object.freeze(Object.fromEntries(Object.entries(definitions).map(([key,[title,first]])=>[key,Object.freeze({key,id:'concept.late.'+key,title,first,src:'../画像/concept/concept.late.'+key+'.v1.webp'})])));
  // Images illustrate their named places, not every statement or every possible episode.
  // A missing match deliberately leaves a reading page without a misleading location.
  function select(episode,text){

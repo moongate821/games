@@ -80,7 +80,7 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.deck_crew', kind: 'npc', file: 'img/npc_deck_crew.png', spec: '甲板の夜の立ち絵(複数)・仲間4人が並ぶ一枚絵', status: '調整中', fallback: 'npc_mira', priority: '中', owner: 'Codex', note: '第12章 夜の甲板(今はミラの絵で代用)' },
+    { id: 'npc.deck_crew', kind: 'npc', file: 'img/npc_deck_crew.webp', spec: '甲板の夜の立ち絵(複数)・仲間4人が並ぶ一枚絵', status: '調整中', fallback: 'npc_mira', priority: '中', owner: 'Codex', note: '第12章 夜の甲板(今はミラの絵で代用)' },
     { id: 'bg.ash_sea', kind: 'bg', file: 'img/bg_ash_sea.jpg', spec: '一枚絵・灰色の海と灯火の渦', status: '調整中', fallback: 'bg_battle', priority: '中', owner: 'Codex', note: '第12〜14章' }
   ]
 });

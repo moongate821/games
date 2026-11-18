@@ -34,7 +34,7 @@
   button.onclick=()=>{stop();pos=interact(pos);paint();};dialog.querySelector('#deckClose').onclick=()=>dialog.close();dialog.addEventListener('close',stop);dialog.addEventListener('cancel',stop);
   deck.onerror=cabin.onerror=imageError;actor.onerror=paint;actor.onload=paint;actor.src=walk.file;
   function open(){const s=getState();if(!s?.development?.fleet?.ships||s.narrative.step<115)return;stop();pos=initial();dialog.showModal();imagesReady=false;canvas.hidden=true;label.textContent='船の景色を読み込み中…';button.disabled=true;
-   let loaded=0;const ready=()=>{if(++loaded===2){imagesReady=true;paint();canvas.focus();}};deck.onload=cabin.onload=ready;deck.src='../画像/concept/concept.ship.ocean.deck.v1.png';cabin.src='../画像/concept/concept.ship.ocean.cabin.v1.png';
+   let loaded=0;const ready=()=>{if(++loaded===2){imagesReady=true;paint();canvas.focus();}};deck.onload=cabin.onload=ready;deck.src='../画像/concept/concept.ship.ocean.deck.v1.webp';cabin.src='../画像/concept/concept.ship.ocean.cabin.v1.webp';
   }
   return {open};
  }

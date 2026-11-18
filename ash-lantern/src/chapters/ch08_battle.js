@@ -25,7 +25,7 @@ registerChapter({
     "serena": {"name": "セレナ", "mhp": 38, "mmp": 20, "atk": 5, "def": 3, "spd": 8, "skills": ["serena_bolt", "serena_mend", "serena_pulse"], "portrait": "battle_serena", "learn": {"10": ["serena_arc", "flame_extreme"], "11": ["serena_mend2"], "12": ["serena_burst"]}}
   },
   assets: [
-    {"id": "enemy.sand_wraith", "kind": "enemy", "file": "img/enemy_sand_wraith.png", "spec": "横220px・透明・砂でできた人影。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第8章 観測所"},
-    {"id": "enemy.observatory_guard", "kind": "enemy", "file": "img/enemy_observatory_guard.png", "spec": "横420px・透明・星見台を守る機械。身構え差分あり", "status": "調整中", "fallback": "enemy_guard", "priority": "高", "owner": "Codex", "note": "第8章 ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.sand_wraith", "kind": "enemy", "file": "img/enemy_sand_wraith.webp", "spec": "横220px・透明・砂でできた人影。身構え差分なし", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第8章 観測所"},
+    {"id": "enemy.observatory_guard", "kind": "enemy", "file": "img/enemy_observatory_guard.webp", "spec": "横420px・透明・星見台を守る機械。身構え差分あり", "status": "調整中", "fallback": "enemy_guard", "priority": "高", "owner": "Codex", "note": "第8章 ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

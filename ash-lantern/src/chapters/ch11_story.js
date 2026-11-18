@@ -98,6 +98,6 @@ registerChapter({
   },
   assets: [
     { id: 'bg.throne_hall', kind: 'bg', file: 'img/bg_throne_hall.jpg', spec: '一枚絵・白い玉座の間・高い窓の光', status: '調整中', fallback: 'bg_title', priority: '中', owner: 'Codex', note: '第4・11章 王との対話' },
-    { id: 'ui.lullaby_text', kind: 'ui', file: 'img/ui_lullaby_text.png', spec: '子守歌の歌詞の浮かぶ文字演出・淡い金', status: '調整中', fallback: 'bg_battle', priority: '低', owner: 'Codex', note: '第4・11章 子守歌' }
+    { id: 'ui.lullaby_text', kind: 'ui', file: 'img/ui_lullaby_text.webp', spec: '子守歌の歌詞の浮かぶ文字演出・淡い金', status: '調整中', fallback: 'bg_battle', priority: '低', owner: 'Codex', note: '第4・11章 子守歌' }
   ]
 });

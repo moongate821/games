@@ -83,6 +83,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'ui.letters', kind: 'ui', file: 'img/ui_letters.png', spec: '手紙の束・三通・暖色・256px', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第1章手紙・第15章 手紙の幕間の挿絵' }
+    { id: 'ui.letters', kind: 'ui', file: 'img/ui_letters.webp', spec: '手紙の束・三通・暖色・256px', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第1章手紙・第15章 手紙の幕間の挿絵' }
   ]
 });

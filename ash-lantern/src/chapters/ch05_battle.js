@@ -20,8 +20,8 @@ registerChapter({
     "gardo_mantle": {"name": "ガルドの古い肩当て", "slot": "a", "def": 8, "only": ["gardo"], "desc": "王都兵のものだった肩当て。紋章は削られている。"}
   },
   assets: [
-    {"id": "enemy.mine_bat", "kind": "enemy", "file": "img/enemy_mine_bat.png", "spec": "横190px・透明・灰色のコウモリ。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第5章 坑道(既存の cave_bat は第1章の強さのまま。第5章では mine_bat を使う提案)"},
-    {"id": "enemy.moss_golem", "kind": "enemy", "file": "img/enemy_moss_golem.png", "spec": "横260px・透明・苔むした石人形。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第5章 坑道"},
-    {"id": "enemy.mine_warden", "kind": "enemy", "file": "img/enemy_mine_warden.png", "spec": "横380px・透明・巨大な掘削機械。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第5章 中ボス"}
+    {"id": "enemy.mine_bat", "kind": "enemy", "file": "img/enemy_mine_bat.webp", "spec": "横190px・透明・灰色のコウモリ。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第5章 坑道(既存の cave_bat は第1章の強さのまま。第5章では mine_bat を使う提案)"},
+    {"id": "enemy.moss_golem", "kind": "enemy", "file": "img/enemy_moss_golem.webp", "spec": "横260px・透明・苔むした石人形。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第5章 坑道"},
+    {"id": "enemy.mine_warden", "kind": "enemy", "file": "img/enemy_mine_warden.webp", "spec": "横380px・透明・巨大な掘削機械。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第5章 中ボス"}
   ]
 });

@@ -124,7 +124,7 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.auto_keeper', kind: 'npc', file: 'img/npc_auto_keeper.png', spec: '立ち絵80px・古代の整備人形・膝を抱えた姿と起動後', status: '調整中', fallback: 'npc_guard', priority: '中', owner: 'Codex', note: '第10章 古い整備人形(今は機械兵の絵)' },
+    { id: 'npc.auto_keeper', kind: 'npc', file: 'img/npc_auto_keeper.webp', spec: '立ち絵80px・古代の整備人形・膝を抱えた姿と起動後', status: '調整中', fallback: 'npc_guard', priority: '中', owner: 'Codex', note: '第10章 古い整備人形(今は機械兵の絵)' },
     { id: 'bg.sky_isles', kind: 'bg', file: 'img/bg_sky_isles.jpg', spec: '一枚絵・浮島と雲・古代船の甲板からの眺め', status: '調整中', fallback: 'bg_title', priority: '中', owner: 'Codex', note: '第10章 離陸の場面' }
   ]
 });

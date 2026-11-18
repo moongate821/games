@@ -1,21 +1,21 @@
 'use strict';
 /* マップ・台詞などのデータ。台本は 物語・シナリオ/序章_会話イベント台本.md が元。 */
 const T = 48;
-const IMG_LIST = ['dg_icon_3506.png','dg_icon_3512.png','dg_icon_3522.png', 'dg_icon_3006.png','dg_icon_3012.png','dg_icon_1003.png','dg_icon_1052.png','dg_icon_1310.png','dg_icon_1311.png', 'prop_shop_counter.png', 'prop_shop_supplies.png', 'prop_shop_weapons.png', 'prop_shop_armor.png', 'shop_bread.png', 'shop_staff.png', 'shop_knife.png', 'shop_coat.png', 'shop_elixir.png', 'shop_potion.png', 'shop_ether.png', 'shop_sword.png', 'shop_armor.png', 'shop_charm.png', 'allen.png', 'allen_walk_v2.png', 'battle_allen_idle_v2.png', 'battle_mira_idle_v2.png', 'battle_gardo_idle_v2.png', 'battle_noah_idle_v2.png', 'battle_serena_idle_v2.png', 'prop_village_furnace_v2.png', 'npc_mayor.png', 'npc_carpenter.png', 'npc_blacksmith.png', 'npc_innkeeper.png', 'npc_lina.png',
-  'npc_granny.png', 'npc_guard.png', 'npc_kid.png', 'item_bell.png', 'item_potion.png', 'item_repair.png',
-  'bld_workshop.png', 'bld_inn.png', 'bld_workshop_front.png', 'bld_hall_front.png', 'prop_lamp.png', 'prop_tree.png', 'prop_barrel.png', 'prop_sign.png',
-  'enemy_wolf.png', 'bg_battle.jpg', 'bg_title.jpg',
-  'tile_grass.png', 'tile_path.png', 'tile_stone.png', 'tile_flower.png', 'tile_water.png', 'tile_moss.png',
-  'tile_gravel.png', 'tile_wood.png', 'tile_soil.png', 'lina_big.png',
-  'furn_table.png', 'furn_workbench.png', 'furn_table_orthogonal.png', 'furn_bed_orthogonal.png', 'furn_bench_orthogonal.png', 'furn_bookshelf_orthogonal.png', 'furn_toolrack_orthogonal.png', 'furn_jarshelf_orthogonal.png', 'prop_lamp_tall.png', 'furn_chair_orthogonal.png', 'furn_rug_orthogonal.png', 'furn_chair.png', 'furn_bed.png', 'furn_bookshelf.png', 'furn_rug.png', 'furn_lantern.png', 'furn_stove.png',
-  'furn_chest.png', 'furn_barrel.png', 'furn_crate.png', 'furn_toolrack.png', 'furn_jarshelf.png', 'furn_fence.png',
-  'furn_flowerpot.png', 'furn_well.png',
-  'tile_sand.png', 'tile_leaf.png', 'furn_cauldron.png', 'battle_mira.png', 'enemy_slime.png', 'enemy_bat.png', 'npc_mira.png', 'enemy_crab.png',
-  'npc_gardo.png', 'npc_noah.png', 'npc_serena.png', 'npc_emma.png', 'npc_alvan.png', 'battle_gardo.png', 'battle_noah.png', 'battle_serena.png', 'enemy_guard.png', 'enemy_golem.png'];
+const IMG_LIST = ['dg_icon_3506.webp','dg_icon_3512.webp','dg_icon_3522.webp', 'dg_icon_3006.webp','dg_icon_3012.webp','dg_icon_1003.webp','dg_icon_1052.webp','dg_icon_1310.webp','dg_icon_1311.webp', 'prop_shop_counter.webp', 'prop_shop_supplies.webp', 'prop_shop_weapons.webp', 'prop_shop_armor.webp', 'shop_bread.webp', 'shop_staff.webp', 'shop_knife.webp', 'shop_coat.webp', 'shop_elixir.webp', 'shop_potion.webp', 'shop_ether.webp', 'shop_sword.webp', 'shop_armor.webp', 'shop_charm.webp', 'allen.webp', 'allen_walk_v2.webp', 'battle_allen_idle_v2.webp', 'battle_mira_idle_v2.webp', 'battle_gardo_idle_v2.webp', 'battle_noah_idle_v2.webp', 'battle_serena_idle_v2.webp', 'prop_village_furnace_v2.webp', 'npc_mayor.webp', 'npc_carpenter.webp', 'npc_blacksmith.webp', 'npc_innkeeper.webp', 'npc_lina.webp',
+  'npc_granny.webp', 'npc_guard.webp', 'npc_kid.webp', 'item_bell.webp', 'item_potion.webp', 'item_repair.webp',
+  'bld_workshop.webp', 'bld_inn.webp', 'bld_workshop_front.webp', 'bld_hall_front.webp', 'prop_lamp.webp', 'prop_tree.webp', 'prop_barrel.webp', 'prop_sign.webp',
+  'enemy_wolf.webp', 'bg_battle.jpg', 'bg_title.jpg',
+  'tile_grass.webp', 'tile_path.webp', 'tile_stone.webp', 'tile_flower.webp', 'tile_water.webp', 'tile_moss.webp',
+  'tile_gravel.webp', 'tile_wood.webp', 'tile_soil.webp', 'lina_big.webp',
+  'furn_table.webp', 'furn_workbench.webp', 'furn_table_orthogonal.webp', 'furn_bed_orthogonal.webp', 'furn_bench_orthogonal.webp', 'furn_bookshelf_orthogonal.webp', 'furn_toolrack_orthogonal.webp', 'furn_jarshelf_orthogonal.webp', 'prop_lamp_tall.webp', 'furn_chair_orthogonal.webp', 'furn_rug_orthogonal.webp', 'furn_chair.webp', 'furn_bed.webp', 'furn_bookshelf.webp', 'furn_rug.webp', 'furn_lantern.webp', 'furn_stove.webp',
+  'furn_chest.webp', 'furn_barrel.webp', 'furn_crate.webp', 'furn_toolrack.webp', 'furn_jarshelf.webp', 'furn_fence.webp',
+  'furn_flowerpot.webp', 'furn_well.webp',
+  'tile_sand.webp', 'tile_leaf.webp', 'furn_cauldron.webp', 'battle_mira.webp', 'enemy_slime.webp', 'enemy_bat.webp', 'npc_mira.webp', 'enemy_crab.webp',
+  'npc_gardo.webp', 'npc_noah.webp', 'npc_serena.webp', 'npc_emma.webp', 'npc_alvan.webp', 'battle_gardo.webp', 'battle_noah.webp', 'battle_serena.webp', 'enemy_guard.webp', 'enemy_golem.webp'];
 
-IMG_LIST.push('item_armorbreak_powder.png', 'item_weakening_powder.png', 'item_scroll_cataclysm.png', 'prop_deck_rail.png', 'prop_ship_hatch.png', 'prop_ship_mast_open.png', 'prop_ship_stern.png', 'furn_bench_concept.png', 'prop_shop_supplies_concept.png', 'prop_shop_forge_concept.png', 'prop_undersea_column.png', 'wall_workshop_concept.png', 'prop_royal_fountain.png', 'window_workshop_concept.png', 'bg_workshop_concept.png', 'prop_royal_fountain_garden.png', 'bg_harbor_warehouse.png', 'bg_mine_tunnel_concept.png', 'bg_observatory_lab_concept.png', 'bg_castle_audience_concept.png');
-IMG_LIST.push('bg_inn_remembrance.png', 'bg_escape_drain.png', 'bg_furnace_heart_concept.png');
-IMG_LIST.push('fx_status_poison.png', 'fx_status_sleep.png');
+IMG_LIST.push('item_armorbreak_powder.webp', 'item_weakening_powder.webp', 'item_scroll_cataclysm.webp', 'prop_deck_rail.webp', 'prop_ship_hatch.webp', 'prop_ship_mast_open.webp', 'prop_ship_stern.webp', 'furn_bench_concept.webp', 'prop_shop_supplies_concept.webp', 'prop_shop_forge_concept.webp', 'prop_undersea_column.webp', 'wall_workshop_concept.webp', 'prop_royal_fountain.webp', 'window_workshop_concept.webp', 'bg_workshop_concept.webp', 'prop_royal_fountain_garden.webp', 'bg_harbor_warehouse.webp', 'bg_mine_tunnel_concept.webp', 'bg_observatory_lab_concept.webp', 'bg_castle_audience_concept.webp');
+IMG_LIST.push('bg_inn_remembrance.webp', 'bg_escape_drain.webp', 'bg_furnace_heart_concept.webp');
+IMG_LIST.push('fx_status_poison.webp', 'fx_status_sleep.webp');
 
 // 地面の種類 → 画像名
 const TILE_IMG = { g: 'tile_grass', f: 'tile_flower', p: 'tile_path', s: 'tile_stone', w: 'tile_water', b: 'tile_wood',

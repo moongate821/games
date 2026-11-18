@@ -17,7 +17,7 @@
   for(let i=0;i<5;i++){
    const marker=document.createElementNS(ns,'g'),turn=document.createElementNS(ns,'g'),fallback=document.createElementNS(ns,'path'),img=document.createElementNS(ns,'image');
    marker.classList.add('voyage-marker');fallback.setAttribute('d','M0 -18L9 12L0 7L-9 12Z');fallback.setAttribute('fill','#ffdfa1');
-   img.setAttribute('href','../画像/props/prop.ship.ocean.map_token.v1.png');img.setAttribute('x',String(-627*64/1254));img.setAttribute('y',String(-626*64/1254));img.setAttribute('width','64');img.setAttribute('height','64');img.setAttribute('aria-hidden','true');img.onload=()=>fallback.setAttribute('visibility','hidden');img.onerror=()=>{img.setAttribute('visibility','hidden');fallback.setAttribute('visibility','visible');};
+   img.setAttribute('href','../画像/props/prop.ship.ocean.map_token.v1.webp');img.setAttribute('x',String(-627*64/1254));img.setAttribute('y',String(-626*64/1254));img.setAttribute('width','64');img.setAttribute('height','64');img.setAttribute('aria-hidden','true');img.onload=()=>fallback.setAttribute('visibility','hidden');img.onerror=()=>{img.setAttribute('visibility','hidden');fallback.setAttribute('visibility','visible');};
    turn.append(fallback,img);marker.append(turn);group.append(marker);markers.push({marker,turn});
   }
   let last=null;select.onchange=()=>{selected=select.value;if(last)render(last);};

@@ -1,7 +1,7 @@
 'use strict';
 /* 第6章 maps: C6_VALLEY(風の谷) / C6_FURNACE(大型炉・屋内風) / C6_TOWN(エマの仕立て屋・屋内)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c6',
     maps: {

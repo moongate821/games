@@ -7,7 +7,7 @@ const CONCEPT_SHIP = {
   C12_DECK: { image: 'bg_ship_concept_night_v2', exits: [[6,12,'岸へ']] }
 };
 (function () {
-  IMG_LIST.push('bg_ship_concept_day_v2.png', 'bg_ship_concept_night_v2.png');
+  IMG_LIST.push('bg_ship_concept_day_v2.webp', 'bg_ship_concept_night_v2.webp');
   const inside = (x,y,p) => {
     let hit=false;
     for(let i=0,j=p.length-1;i<p.length;j=i++) {

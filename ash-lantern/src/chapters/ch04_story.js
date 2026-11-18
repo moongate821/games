@@ -105,6 +105,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.captain_dart', kind: 'npc', file: 'img/npc_captain_dart.png', spec: '立ち絵80px・城の隊長(ガルドの旧友)', status: '調整中', fallback: 'npc_guard', priority: '低', owner: 'Codex', note: '第4章 隊長ダルト(現在は機械兵の絵で代用)' }
+    { id: 'npc.captain_dart', kind: 'npc', file: 'img/npc_captain_dart.webp', spec: '立ち絵80px・城の隊長(ガルドの旧友)', status: '調整中', fallback: 'npc_guard', priority: '低', owner: 'Codex', note: '第4章 隊長ダルト(現在は機械兵の絵で代用)' }
   ]
 });

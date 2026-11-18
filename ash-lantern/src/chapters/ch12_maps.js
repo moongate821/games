@@ -1,7 +1,7 @@
 'use strict';
 /* 第12章 maps: C12_SEA(灰の海) / C12_DECK(夜の甲板)。浮島群 C10_ISLES の東の船着き場から入る。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c12',
     maps: {
@@ -41,7 +41,7 @@
     ],
     assets: [
       { ...A('tile.ash_sea', 'tile', '192x192・4x4の継ぎ目なし。灰色の灰の海(波紋は別描画)。skin w→r で代用中', 'tile_gravel', '高', '第12章 灰の海(C12_SEA)'), status: '調整中' },
-      { ...A('tile.ash_ground', 'tile', '192x192・4x4の継ぎ目なし。焦げた灰の地面', 'tile_soil', '中', '第12章 灰の海の島々。乾いた灰の新画像を接続、実画面で陸と海を確認。'), file: 'img/tile_ash_ground_v2.png', status: '調整中' },
+      { ...A('tile.ash_ground', 'tile', '192x192・4x4の継ぎ目なし。焦げた灰の地面', 'tile_soil', '中', '第12章 灰の海の島々。乾いた灰の新画像を接続、実画面で陸と海を確認。'), file: 'img/tile_ash_ground_v2.webp', status: '調整中' },
       { ...A('bg.ash_horizon', 'bg', '960x540。灰の海の水平線と、遠くの冠の影', 'bg_battle', '中', '第12・13章 戦闘背景(ash_beast / ash_crown)'), status: '調整中' },
       { ...A('prop.ash_cave_mouth', 'prop', '幅4タイル・透明。灰の冠の洞窟の口', 'furn_crate', '高', '第12章 gate(41,12)の背後へ洞窟を接続、門番が見えることを確認。'), status: '調整中' }
     ]

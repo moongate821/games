@@ -74,7 +74,7 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.keeper', kind: 'npc', file: 'img/npc_keeper.png', spec: '立ち絵80px・水門守りの老人', status: '調整中', fallback: 'npc_carpenter', priority: '低', owner: 'Codex', note: '第9章 水門守り' },
+    { id: 'npc.keeper', kind: 'npc', file: 'img/npc_keeper.webp', spec: '立ち絵80px・水門守りの老人', status: '調整中', fallback: 'npc_carpenter', priority: '低', owner: 'Codex', note: '第9章 水門守り' },
     { id: 'bg.lighthouse_log', kind: 'bg', file: 'img/bg_lighthouse_log.jpg', spec: '一枚絵・海底灯台の最奥・青い光・古い日誌', status: '調整中', fallback: 'bg_battle', priority: '中', owner: 'Codex', note: '第9章 ノアの記憶の場面' }
   ]
 });

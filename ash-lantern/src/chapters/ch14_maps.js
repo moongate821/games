@@ -1,7 +1,7 @@
 'use strict';
 /* 第14章 maps: C14_HEART(炉の中心・屋内風)。灰の冠の中枢 C13_CORE の奥(12,2)から入る。出口は C15_ROAD へ。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c14',
     maps: {

@@ -21,8 +21,8 @@ registerChapter({
     "gardo_hammer": {"name": "ガルドの戦槌", "slot": "w", "atk": 7, "only": ["gardo"], "desc": "兵士時代の戦槌。握りが擦り切れている。"}
   },
   assets: [
-    {"id": "enemy.royal_guard", "kind": "enemy", "file": "img/enemy_royal_guard.png", "spec": "横230px・透明・白い鎧の兵。身構え差分なし", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第4章 王都"},
-    {"id": "enemy.chaser", "kind": "enemy", "file": "img/enemy_chaser.png", "spec": "横210px・透明・細身の追跡機。身構え差分なし", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第4章 脱出路"},
-    {"id": "enemy.chaser_prime", "kind": "enemy", "file": "img/enemy_chaser_prime.png", "spec": "横400px・透明・大型の追跡機。身構え差分(光る)あり", "status": "調整中", "fallback": "enemy_guard", "priority": "高", "owner": "Codex", "note": "第4章 ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.royal_guard", "kind": "enemy", "file": "img/enemy_royal_guard.webp", "spec": "横230px・透明・白い鎧の兵。身構え差分なし", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第4章 王都"},
+    {"id": "enemy.chaser", "kind": "enemy", "file": "img/enemy_chaser.webp", "spec": "横210px・透明・細身の追跡機。身構え差分なし", "status": "調整中", "fallback": "enemy_guard", "priority": "中", "owner": "Codex", "note": "第4章 脱出路"},
+    {"id": "enemy.chaser_prime", "kind": "enemy", "file": "img/enemy_chaser_prime.webp", "spec": "横400px・透明・大型の追跡機。身構え差分(光る)あり", "status": "調整中", "fallback": "enemy_guard", "priority": "高", "owner": "Codex", "note": "第4章 ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

@@ -19,7 +19,7 @@ registerChapter({
     "noah_hook": {"name": "ノアの鉤縄", "slot": "w", "atk": 10, "only": ["noah"], "desc": "先に小さな鉤をつけた長い縄。振り回すと風が鳴る。"}
   },
   assets: [
-    {"id": "enemy.wind_wisp", "kind": "enemy", "file": "img/enemy_wind_wisp.png", "spec": "横190px・透明・青白い炎。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第6章 谷"},
-    {"id": "enemy.furnace_guardian", "kind": "enemy", "file": "img/enemy_furnace_guardian.png", "spec": "横440px・透明・大型の守護機。身構え差分(胸の火が増す)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第6章 ボス。通常画像を接続、身構え差分は未制作"}
+    {"id": "enemy.wind_wisp", "kind": "enemy", "file": "img/enemy_wind_wisp.webp", "spec": "横190px・透明・青白い炎。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第6章 谷"},
+    {"id": "enemy.furnace_guardian", "kind": "enemy", "file": "img/enemy_furnace_guardian.webp", "spec": "横440px・透明・大型の守護機。身構え差分(胸の火が増す)あり", "status": "調整中", "fallback": "enemy_golem", "priority": "高", "owner": "Codex", "note": "第6章 ボス。通常画像を接続、身構え差分は未制作"}
   ]
 });

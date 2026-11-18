@@ -130,6 +130,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'npc.dockman', kind: 'npc', file: 'img/npc_dockman.png', spec: '立ち絵80px・港湾労働者・親方と船乗り用', status: '調整中', fallback: 'npc_innkeeper', priority: '低', owner: 'Codex', note: '第3章 親方・船乗り・屋台の主人。静止画を接続、歩行差分は未制作' }
+    { id: 'npc.dockman', kind: 'npc', file: 'img/npc_dockman.webp', spec: '立ち絵80px・港湾労働者・親方と船乗り用', status: '調整中', fallback: 'npc_innkeeper', priority: '低', owner: 'Codex', note: '第3章 親方・船乗り・屋台の主人。静止画を接続、歩行差分は未制作' }
   ]
 });

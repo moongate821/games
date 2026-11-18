@@ -69,6 +69,6 @@ registerChapter({
     ]
   },
   assets: [
-    { id: 'ui.bell_glow', kind: 'ui', file: 'img/ui_bell_glow.png', spec: '鈴が光る演出・256px・暖色', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第14章 声を手放す場面。終章でも再利用' }
+    { id: 'ui.bell_glow', kind: 'ui', file: 'img/ui_bell_glow.webp', spec: '鈴が光る演出・256px・暖色', status: '調整中', fallback: 'item_bell', priority: '中', owner: 'Codex', note: '第14章 声を手放す場面。終章でも再利用' }
   ]
 });

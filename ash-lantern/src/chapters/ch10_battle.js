@@ -18,7 +18,7 @@ registerChapter({
     "isle_plate": {"name": "浮島の鎧石", "slot": "a", "def": 12, "desc": "浮島の石を削って作った軽い鎧。"}
   },
   assets: [
-    {"id": "enemy.sky_gull", "kind": "enemy", "file": "img/enemy_sky_gull.png", "spec": "横200px・透明・大きな海鳥。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第10章 浮島"},
-    {"id": "enemy.isle_golem", "kind": "enemy", "file": "img/enemy_isle_golem.png", "spec": "横280px・透明・浮島の石人形。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第10章 浮島(強めの通常敵)"}
+    {"id": "enemy.sky_gull", "kind": "enemy", "file": "img/enemy_sky_gull.webp", "spec": "横200px・透明・大きな海鳥。身構え差分なし", "status": "調整中", "fallback": "enemy_bat", "priority": "中", "owner": "Codex", "note": "第10章 浮島"},
+    {"id": "enemy.isle_golem", "kind": "enemy", "file": "img/enemy_isle_golem.webp", "spec": "横280px・透明・浮島の石人形。身構え差分あり", "status": "調整中", "fallback": "enemy_golem", "priority": "中", "owner": "Codex", "note": "第10章 浮島(強めの通常敵)"}
   ]
 });

@@ -152,7 +152,7 @@ async function askCommand(a, canBack) {   // canBack=前の味方のコマンド
     }
   }
 }
-/* 演出(img/fx_*.png)。横に並べた正方形のコマ(1コマの一辺=画像の高さ)を順に再生する。画像が無ければ何もしない */
+/* 演出(img/fx_*.webp)。横に並べた正方形のコマ(1コマの一辺=画像の高さ)を順に再生する。画像が無ければ何もしない */
 const SKILL_FX = { light: 'light', light_plus: 'light', light_max: 'ultimate_magic', light_ex: 'ultimate_magic', rain: 'rain', rain_plus: 'rain', rain_max: 'ultimate_magic', water_extreme:'ultimate_magic', flame_extreme:'ultimate_magic', gardo_teaching: 'ultimate_attack' };
 const BATTLE_BG = { rogue_device: 'bg_throne_room', deep_keeper: 'bg_underwater', deep_fish: 'bg_underwater', ash_beast: 'bg_ash_horizon', ash_shade: 'bg_ash_core', ash_crown: 'bg_ash_core' };
 function battleBackground(enemyIds) { const id = enemyIds.slice(0, 3).find(enemy => BATTLE_BG[enemy]); return id ? BATTLE_BG[id] : null; }
@@ -545,7 +545,7 @@ function drawBattle() {
       ctx.fillStyle = i === m.idx ? '#fff4dd' : '#d9d0c2'; ctx.fillText(it[1], x + 43, yy + rh / 2, w - 65);
     });
     if (first > 0 || first + visible < m.list.length) { ctx.fillStyle = '#e8d9b6'; ctx.font = '14px ' + FONT; ctx.fillText((first > 0 ? '↑' : '') + (first + visible < m.list.length ? '↓' : ''), x + w - 22, top + 13); }
-    // 対象選択中は、選んでいる相手の頭上に矢印(img/ui_target_arrow.png。無ければ三角)
+    // 対象選択中は、選んでいる相手の頭上に矢印(img/ui_target_arrow.webp。無ければ三角)
     if (m.targets && m.idx < m.targets.length) {
       const c = m.targets[m.idx], p = posOf(B, c), im = c.side === 'enemy' ? ((IMG[c.img] || (c.fallback && IMG[c.fallback]))) : null;
       const label = labelRects.get(c);

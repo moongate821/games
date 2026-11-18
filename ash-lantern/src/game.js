@@ -253,7 +253,7 @@ function buildWorkshopStatics(id) {
   const add = (o) => statics.push(o);
   // 壁(上2行)
   add({ y: -100, draw(c) { if (!conceptRoom) drawWorkshopWall(c); } });
-  // 家具(画像素材15から切り出した img/furn_*.png)。footprint=タイル単位の当たり判定、描画は足元基準
+  // 家具(画像素材15から切り出した img/furn_*.webp)。footprint=タイル単位の当たり判定、描画は足元基準
   const furn = (img, fx, fy, fw, fh, dw, o) => {
     o = o || {};
     add({ y: (fy + fh) * T + (o.dy || 0), draw(c) {
@@ -1349,7 +1349,7 @@ GAME_ASSETS_READY.then(() => {
   Snd.bgm('title');
   requestAnimationFrame(frame);
   // 歩行画像(Codex が用意したら自動で使われる。無ければ立ち絵のまま)
-  for (const n of ['mayor', 'mayor_generated', 'carpenter', 'carpenter_generated', 'kid', 'kid_generated', 'granny', 'granny_generated', 'guard', 'guard_generated', 'mira', 'mira_generated', 'ferry', 'mother', 'elder', 'hana', 'doctor']) { const i = new Image(); i.onload = () => { IMG['walk_' + n] = i; }; i.src = (window.IMG_BASE || '') + 'img/walk_' + n + '.png'; }
+  for (const n of ['mayor', 'mayor_generated', 'carpenter', 'carpenter_generated', 'kid', 'kid_generated', 'granny', 'granny_generated', 'guard', 'guard_generated', 'mira', 'mira_generated', 'ferry', 'mother', 'elder', 'hana', 'doctor']) { const i = new Image(); i.onload = () => { IMG['walk_' + n] = i; }; i.src = (window.IMG_BASE || '') + 'img/walk_' + n + '.webp'; }
 });
 /* 配置の点検: 調べる対象・出入口・イベント位置へ歩いて行けるか、小物が水や道にかかっていないか。問題の一覧(空なら問題なし) */
 function checkLayout() {

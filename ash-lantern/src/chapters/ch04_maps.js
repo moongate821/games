@@ -2,7 +2,7 @@
 /* 第4章 maps: C4_CAPITAL(白灯王都・石畳) / C4_CASTLE(城内・屋内) / C4_ESCAPE(脱出路・洞窟風)。
    王都の城には扉が2つ: 中央(23,6)=C4_CASTLE(牢のある城内) / 右翼(29,6)=C11_HALL(玉座の間。第10章完了後に開く)。 */
 (function () {
-  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.png', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
+  const A = (id, kind, spec, fb, pr, note) => ({ id, kind, file: 'img/' + id.replace('.', '_') + '.webp', spec, status: '未制作', fallback: fb, priority: pr, owner: 'Codex', note });
   registerChapter({
     id: 'c4',
     maps: {

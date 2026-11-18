@@ -19,6 +19,6 @@ registerChapter({
     "compass_gun": {"name": "ノアの羅針銃", "slot": "w", "atk": 18, "only": ["noah"], "desc": "古い羅針盤を組み込んだ短い筒。"}
   },
   assets: [
-    {"id": "enemy.ash_beast", "kind": "enemy", "file": "img/enemy_ash_beast.png", "spec": "横330px・透明・灰をまとった獣。身構え差分あり", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第12章 灰の海(強めの通常敵)"}
+    {"id": "enemy.ash_beast", "kind": "enemy", "file": "img/enemy_ash_beast.webp", "spec": "横330px・透明・灰をまとった獣。身構え差分あり", "status": "調整中", "fallback": "enemy_wolf", "priority": "中", "owner": "Codex", "note": "第12章 灰の海(強めの通常敵)"}
   ]
 });
