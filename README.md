@@ -9,7 +9,6 @@
 - 灰の灯火と、約束の旅: https://moongate821.github.io/games/ash-lantern/ — 灯火に残る声をたどり、仲間との出会いと別れを重ねる2DファンタジーRPG。全16章・制作中の試遊版。動画で各地の探索と戦闘を紹介します（終盤の敵を含みます）。
 - ああ、青い星地球へ: https://moongate821.github.io/games/aoi-hoshi/ — 小説『ああ、青い星地球へ』のブラウザRPG。働きたくない社畜が、荒野の開拓村で目を覚ます。全16章・約30時間分の物語、街の店と宿、そうび、選択で変わる会話、艦隊戦。PC・スマホ・ゲームパッド対応。
 - SUPER RING 超人プロレス: https://moongate821.github.io/games/wrestling/ — 20人の個性派レスラーがリングで対戦。打撃・投げ・フォール・必殺技を、PCとスマートフォンのタッチ操作で楽しめます。
-- ABYSSAL CURRENT ― 深海機兵: https://moongate821.github.io/games/abyssal-current/ — 12の深海を突破する横スクロールシューティング。20種の機械海獣・12ボス・10武器。武装カプセルで10武器を解放、ゲージをためてオーバードライブ！ボス撃破後は次の面へ自動進行。PC・スマホ・ゲームパッド対応。
 - SWARM BREAKER: https://moongate821.github.io/games/swarm-breaker/ — 単機で出撃し、弱らせた敵を捕獲して仲間を増やす縦シューティング。全12面・ボス5体。PC・タッチ・ゲームパッド対応。【工事中・試遊版】
 - 沈書庫: https://moongate821.github.io/games/shizumi/ — MS-DOS風の画面で遊ぶ、死に覚えのテキストRPG。地下へ沈む書庫で、死ぬと一冊の本になる。知ったことだけが次の周に残る(激ムズ)。
 - 底鳴り: https://moongate821.github.io/games/sokonari/ — MS-DOS風のテキストRPG第2作。深度一〇九〇〇の海溝の底から、崩れた観測所をつたって海面を目指す。死んでも、知ったことは残る(激ムズ)。
@@ -35,5 +34,4 @@
 - ASTRAL CIRCLER ― 魔法陣タワーディフェンス: https://moongate821.github.io/games/astral-circler/ — 浮遊都市の中枢環を魔法陣で守るSFタワーディフェンス。全20ステージ・魔法陣7種と合成・連鎖コンボ。ウェーブで刻印を拾い、最高品質を記録して次の戦いへ持ち込めます。PC・スマホ対応。
 - GRAVITY CORE: https://moongate821.github.io/games/gravity-core/ — 中心の核へ、流動するスライム球を撃ち込む放射状重力の合体パズル。素早い合体で得点と反重力の充電を稼ぎ、宇宙を漂うBGMとともに回る核へ挑む。【工事中】
 - RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。連鎖で敵の増援を妨害し、赤い車の進軍を止めるひとり用サバイバー。
-- 弾幕突撃戦闘機: https://moongate821.github.io/games/void-force/ — Rタイプ風の横スクロール弾幕シューティング。全20面。フォースとビットを育てて、画面を埋める弾幕を抜ける(激ムズ)。
 - 三次元チェス: https://moongate821.github.io/games/chess3d/ — 3段の盤で指す立体チェス。AI対戦・4種類の駒と盤・BGM13曲。艦隊運用は集中砲火と修理。異世界モードでは王・ドラゴン・冒険者・魔法使い・召喚士・精霊のMeshy彩色駒を選べ、竜炎・召喚・魔法陣で戦う。
