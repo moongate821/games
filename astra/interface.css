@@ -1,0 +1,76 @@
+/* ASTRA interface — midnight glass, chart lines and luminous instrument accents. */
+:root{--ink:#080e19;--paper:#edf6ff;--muted:#a4b5ca;--gold:#efd5a2;--aqua:#8aeee3;--line:#bbdcff25}
+body{background:radial-gradient(ellipse at 10% 28%,#14364780,transparent 48%),linear-gradient(110deg,#070e18cc,#080e19ef),url(assets/celestial.png) center/cover fixed}
+button,select,input{transition:background .2s,border-color .2s,box-shadow .2s}
+button{border-radius:5px}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--aqua);outline-offset:4px}
+.masthead{max-width:1320px;margin:auto;padding:0 38px;height:82px;border-bottom:1px solid #b5ddff1c}
+.wordmark{font:600 25px/1 Georgia,serif;letter-spacing:.22em}.wordmark::first-letter{color:var(--aqua)}
+.masthead>span{font:9px/1.5 sans-serif;letter-spacing:.32em;color:#a2bbce}
+.masthead>.quiet{border:1px solid #b5ddff26;border-radius:4px;padding:8px 16px;color:#c6d8e6;min-height:40px}
+.atelier{max-width:1240px;padding:48px 38px 40px;gap:7%!important;grid-template-columns:1fr 1fr!important;align-items:center}
+.art-hero{min-height:610px;justify-content:center;padding-bottom:8px}
+.art-hero>.eyebrow{display:flex;gap:12px;align-items:center;letter-spacing:.24em;color:var(--aqua);font-size:9px}
+.art-hero>.eyebrow:before{content:'';width:25px;height:1px;background:var(--aqua);box-shadow:0 0 12px #8aeee3}
+.art-hero h1{font-size:clamp(36px,4.2vw,59px);line-height:1.48;letter-spacing:.04em;margin:23px 0 20px;font-weight:500}
+.art-hero h1 em{color:#efd5a2;text-shadow:0 0 40px #efd5a21c}
+.art-hero p{font-size:13px;line-height:2;color:#a9bfd1;letter-spacing:.06em}
+.hero-orbit{width:min(100%,340px)!important;height:285px;max-height:285px!important;min-height:230px;flex:none;align-self:center;margin:8px 0 0}
+.hero-orbit svg{width:100%;height:100%;overflow:visible}
+.orbit-guide{fill:none;stroke:#a8d8ec2b;stroke-width:.8}.orbit-arc{fill:none;stroke:#82e4dc;stroke-width:1.2;stroke-dasharray:80 200 45 155;transform-origin:170px 140px;animation:atlas-orbit 32s linear infinite}
+.orbit-inner{stroke:#efd5a273;stroke-width:.8;fill:none;stroke-dasharray:3 9}.orbit-route{fill:none;stroke:#99e6df8c;stroke-width:1.2}.orbit-star{fill:#f6e9c9;filter:drop-shadow(0 0 9px #a1fff4)}
+.orbit-core{fill:url(#orbitGlow);stroke:#c9fff1;stroke-width:.7}.orbit-label{fill:#a4c4d6;font:7px sans-serif;letter-spacing:2px}.orbit-point{fill:#8aeee3;filter:drop-shadow(0 0 4px #8aeee3)}
+@keyframes atlas-orbit{to{transform:rotate(360deg)}}
+.hero-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid #c1e3ff20;padding:18px 0 0;margin-top:auto}
+.hero-foot span{display:flex;flex-direction:column;gap:6px;color:#9bb2c8;font-size:8px;letter-spacing:.16em}
+.hero-foot strong{font:400 22px/1.1 Georgia,serif;color:#d8edf5;letter-spacing:.08em}
+.control-card{position:relative;padding:28px!important;background:linear-gradient(140deg,#182a3ad9,#0b1524f0 60%);border:1px solid #91d9e544!important;border-radius:8px;box-shadow:0 28px 75px #0005,inset 0 1px #d3f5ff12;isolation:isolate}
+.control-card:before{content:'';position:absolute;left:-1px;top:26px;width:2px;height:56px;background:#8aeee3;box-shadow:0 0 14px #8aeee380;pointer-events:none}
+.control-card .sectiontop{margin-bottom:24px;align-items:center}
+.control-card .sectiontop h2{font:500 20px/1.5 'Yu Gothic UI','Hiragino Sans',sans-serif;letter-spacing:.08em}
+.sectiontop #songCount{color:#a2e7de;border:1px solid #8aeee329;background:#8aeee30a;padding:6px 8px;font:9px/1.3 monospace;letter-spacing:.07em;border-radius:3px;white-space:nowrap}
+.chooser-grid{gap:13px 12px}.chooser-grid label,.motion-label{color:#b0c1d0;font-size:10px;letter-spacing:.08em;gap:8px}
+select{background:#081423;color:#edf6ff;border:1px solid #a8cce533;border-radius:4px;min-height:46px;padding-inline:12px;font-size:13px}
+select:hover{border-color:#8aeee380}select:focus-visible{outline-color:var(--aqua);box-shadow:0 0 0 4px #8aeee310}
+.selected-art{margin:22px 0 20px;padding:20px 14px;gap:16px;background:linear-gradient(115deg,#8aeee30c,transparent 75%);border-top:1px solid #9be5dc2d;border-bottom:1px solid #9be5dc2d;min-height:128px}
+.selected-art:before{background:none}.selected-sigil{width:52px;height:64px;display:grid;place-items:center;font-size:44px;color:#a5f9ed;text-shadow:0 0 25px #8aeee34d;border:1px solid #8aeee332;border-radius:50% 50% 4px 4px;background:radial-gradient(ellipse,#8aeee316,transparent)}
+.selected-art .eyebrow{color:#8aeee3;font-size:7px;letter-spacing:.19em}.selected-art h2{font-family:'Yu Gothic UI','Hiragino Sans',sans-serif;font-weight:500;font-size:22px;line-height:1.6;margin:8px 0 6px}
+.selected-art p{color:#b1c3d4;font-size:10px;line-height:1.8}.selected-art small{font-size:10px;color:#e5d1ac}
+.control-card>.primary{min-height:56px;background:linear-gradient(105deg,#b9f5e4,#87dedb);color:#092431;font-weight:700;font-size:14px;letter-spacing:.09em;border-radius:4px;box-shadow:0 5px 25px #56d8cb1c,inset 0 1px #fff6;border:1px solid #cefff299}
+.control-card>.primary:hover{background:linear-gradient(105deg,#dcfff1,#b4f6f2);box-shadow:0 4px 32px #72ebd93d}.control-card>.primary span{font-size:20px;line-height:1;transform:translateY(1px)}
+.aux-actions{gap:8px;margin:10px 0 17px}.aux-actions button{flex:1;border:1px solid #a4cfe31c;color:#bdd0df;background:#08142155;font-size:11px;min-height:42px}
+.aux-actions button:hover{border-color:#8aeee36b;color:#e3fff7;background:#8aeee310}
+.fold{border-top:1px solid #aacfe31c}.fold summary{min-height:46px;font-size:11px;color:#bacbda}.fold summary:after{color:#8aeee3;font-size:18px}.fold[open]{padding-bottom:3px}
+.song-search{border-radius:4px}.control-card .song{border-radius:4px;background:#091423a6;border-color:#b4d6e21c;min-height:62px}.control-card .song.active{background:linear-gradient(90deg,#8aeee319,#8aeee305);border-color:#8aeee36b;color:#c5fff5}.song .record{color:#e6d3ad}.song .sigil{color:#a7e8e6}
+.control-card>.footnote{color:#a7bacb;line-height:1.8;font-size:10px!important}.pagefoot{max-width:1240px;margin:0 auto;padding:22px 38px;border-color:#a9cde21a;color:#839db3;font-size:9px}
+/* Compact instruments leave the sky open for moving touch targets. */
+.playhead{height:72px;flex-shrink:0;background:linear-gradient(90deg,#091625ed,#101d30db);border-bottom:1px solid #8aeee32b;gap:14px}
+.playhead #pause{border:1px solid #a3dfed42;background:#8aeee30b;border-radius:5px;width:44px;height:44px;flex-shrink:0;color:#b5fff0;padding:0;font-size:18px}
+.playing-title small{font:8px/1.5 monospace;letter-spacing:.15em;color:#8aeee3}.playing-title h2{font-weight:600;font-size:14px;letter-spacing:.03em}
+.metrics{flex-shrink:0;padding-left:12px;border-left:1px solid #b4ddeb26}.metrics span{font:500 25px/1.25 'Bahnschrift','Arial',sans-serif;letter-spacing:.05em;color:#f1f7ff}.metrics span:before{content:'SCORE';display:block;color:#93b4ca;font:7px/1.6 sans-serif;letter-spacing:.22em}.metrics small{color:#93e6d9;font:10px/1.7 monospace}.metrics small:before{content:'ACCURACY ';font-size:7px;color:#8cabc0;letter-spacing:.04em}
+.journey{height:36px;background:linear-gradient(90deg,#8aeee30d,#0a1523aa);border-color:#a2d7e61c;padding-inline:24px}.journey b{font:400 22px/1 Georgia,serif;color:#b8f5e8}.journey span{color:#b0c4d5;font-size:9px}.journey>div{gap:12px}
+.arena-label{color:#a4bed0;letter-spacing:.15em}.next-banner{color:#f0dcaf;letter-spacing:.04em;background:#091726a3;border-left:2px solid #e5ce96;padding:5px 9px;border-radius:0 3px 3px 0;top:40px;font-size:10px;max-width:calc(100% - 44px)}
+.next-banner.tracing{border-left-color:#8aeee3;color:#b9fff0}.combo-block{opacity:.55}.combo-block strong{font:400 72px/1 'Bahnschrift',Georgia,serif;color:#defff7;letter-spacing:-.04em;text-shadow:0 0 30px #8aeee32b}.combo-block small{font:7px/2.8 sans-serif;letter-spacing:.28em;color:#b6d5e2}
+#judgment{font-size:14px;letter-spacing:.25em;text-shadow:0 0 20px currentColor}.bottom-hint{color:#a5bbce;letter-spacing:.03em}
+.lyrics-wrap{height:90px;border-top:1px solid #b4e8ed20;background:linear-gradient(180deg,#0b1a2ae8,#080f1ee8);padding:11px 18px 10px}.lyrics-wrap small{color:#84cbbf;letter-spacing:.22em;font-size:7px}#lyric{margin-top:9px;color:#e4edf6;font-size:clamp(17px,2.3vw,25px)}
+.progress{height:4px;margin-top:0;background:#8aeee310;overflow:hidden}.progress i{background:linear-gradient(90deg,#8aeee3,#bfd8fd,#edd8b4);box-shadow:0 0 15px #8aeee3}.progress-dots{inset:-5px 0 auto;font-size:11px;color:#c9f7ee}
+dialog{border:1px solid #8aeee34f;background:radial-gradient(ellipse at 0 0,#1a3a46a1,transparent 70%),#0c1727;border-radius:9px;box-shadow:0 35px 120px #000b,inset 0 1px #c7ffff14}dialog::backdrop{background:#020a14cc;backdrop-filter:blur(12px)}dialog .primary{background:#a0ecdf;color:#092431;border-radius:4px}dialog h2{letter-spacing:.03em}#resultScore{font-family:'Bahnschrift',Arial,sans-serif;font-size:56px;color:#effff9;letter-spacing:.03em}#resultArt{color:#b3f4e4}#resultStats{border-color:#8aeee330}#resultStats b{color:#c0f5e9}#resultRank{font-size:23px;letter-spacing:.03em}
+@media(min-width:1500px){.atelier{grid-template-columns:1fr 1fr!important;gap:7%!important}.control-card{border-left:1px solid #91d9e544!important}}
+@media(max-width:760px){
+ .masthead{height:62px;padding:0 20px;margin:0 10px}.wordmark{font-size:21px}.masthead>.quiet{font-size:11px;min-height:36px;padding:6px 12px}
+ .atelier{padding:25px 18px 22px;max-width:540px}.art-hero{min-height:0;padding:0 0 24px;border:0}.art-hero>.eyebrow{font-size:7px;letter-spacing:.17em}.art-hero>.eyebrow:before{width:18px}
+ .art-hero h1{font-size:31px;line-height:1.45;margin:15px 0 10px;position:relative;z-index:1}.art-hero p{font-size:11px;line-height:1.9;position:relative;z-index:1}
+ .hero-orbit{position:absolute;right:-5px!important;top:16px!important;width:153px!important;height:158px!important;min-height:0;opacity:.66;pointer-events:none;margin:0}.hero-foot{display:none}
+ .control-card{padding:21px!important;border-radius:7px}.control-card .sectiontop{margin-bottom:22px}.control-card .sectiontop h2{font-size:19px}#songCount{font-size:8px!important}.chooser-grid{gap:13px 10px}
+ .chooser-grid select,.motion-label select,.offset input,.control-card .song-search{font-size:16px;min-height:46px}
+ .selected-art{margin:18px 0;padding:17px 10px;gap:12px;min-height:120px}.selected-sigil{font-size:34px;width:43px;height:55px}.selected-art h2{font-size:19px;line-height:1.55}.selected-art p,.selected-art small{font-size:10px}.selected-art .eyebrow{font-size:6px}
+ .aux-actions{margin:10px 0 14px}.control-card>.footnote{font-size:10px!important;line-height:1.8}.pagefoot{padding:19px 20px;font-size:8px;gap:10px}.pagefoot span{max-width:45%;text-align:right}
+ .playhead{height:67px;gap:10px;padding-inline:12px}.playhead #pause{width:40px;min-height:44px}.playing-title h2{font-size:12px}.playing-title small{font-size:7px}.metrics{padding-left:9px}.metrics span{font-size:21px}.metrics small{font-size:9px}.metrics small:before{font-size:6px}
+ .journey{height:34px;padding-inline:15px}.journey b{font-size:20px}.journey span{font-size:8px}.journey>div{gap:9px}.next-banner{left:14px;max-width:calc(100% - 28px);top:36px;font-size:9px}.combo-block strong{font-size:57px}.lyrics-wrap{height:81px;padding-top:9px}.arena-label{top:15px}.progress{height:4px}
+}
+@media(max-width:360px){.atelier{padding-inline:13px}.control-card{padding:16px!important}.art-hero h1{font-size:28px}.hero-orbit{width:135px!important;opacity:.45}.selected-art{padding-inline:7px}.selected-art h2{font-size:17px}.selected-sigil{width:34px}.masthead{padding-inline:12px}.metrics span{font-size:18px}.metrics small:before{content:''}}
+@media(max-height:550px) and (orientation:landscape){.playhead{height:48px;padding-block:3px}.playhead #pause{height:40px;min-height:40px}.metrics span{font-size:18px}.metrics span:before{display:none}.playing-title h2{margin-top:1px}.journey{height:27px;padding-block:2px}.journey b{font-size:17px}.journey span{font-size:8px}.lyrics-wrap{height:48px;padding:3px 12px}.lyrics-wrap small{font-size:6px}#arena{min-height:170px}.arena-label{top:6px}.next-banner{top:22px;font-size:8px;padding:3px 7px}.combo-block strong{font-size:34px}.combo-block small{font-size:6px}.progress{height:3px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media(max-width:760px){.masthead>.quiet{min-height:44px}.playhead #pause{width:44px}.aux-actions button{min-height:44px}}
+@media(pointer:coarse){select,.chooser-grid select,.motion-label select,.offset input,.control-card .song-search{font-size:16px}}
+@media(max-height:550px) and (orientation:landscape){#play{min-height:100dvh}}
