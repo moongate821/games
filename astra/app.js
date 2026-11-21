@@ -2,6 +2,7 @@
 (()=>{
  'use strict';
  const $=id=>document.getElementById(id),C=AstraCore,M=AstraNoteMotion,tracks=ASTRA_LIBRARY;
+ for(const total of document.querySelectorAll('[data-track-total]'))total.textContent=tracks.length;
  const visuals=new AstraVisuals();let currentLine=null,currentBeat=0,currentEnergy=0,onsetIndex=-1,lastMusicTime=-1,chapter=0,gestureHintUntil=0;
  const canvas=$('sky'),ctx=canvas.getContext('2d'),audio=new Audio();audio.preload='metadata';
  let chosen=tracks[0],mode='normal',filter='all',session=null,state='home',token=0;
