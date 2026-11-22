@@ -34,4 +34,5 @@
 - ASTRAL CIRCLER ― 魔法陣タワーディフェンス: https://moongate821.github.io/games/astral-circler/ — 浮遊都市の中枢環を魔法陣で守るSFタワーディフェンス。全20ステージ・魔法陣7種と合成・連鎖コンボ。ウェーブで刻印を拾い、最高品質を記録して次の戦いへ持ち込めます。PC・スマホ対応。
 - GRAVITY CORE: https://moongate821.github.io/games/gravity-core/ — 中心の核へ、流動するスライム球を撃ち込む放射状重力の合体パズル。素早い合体で得点と反重力の充電を稼ぎ、宇宙を漂うBGMとともに回る核へ挑む。【工事中】
 - RALLY DROP SURVIVORS: https://moongate821.github.io/games/rally-drop/ — ラリーXの煙幕・玉突き・S旗を、落ち物パズルに。連鎖で敵の増援を妨害し、赤い車の進軍を止めるひとり用サバイバー。
+- AETHER RUSH: https://moongate821.github.io/games/aether-rush/ — F-Zero風の反重力ポリゴンレース。全20コース・4機体・8台バトル。ドリフトとブーストで駆け抜けろ。
 - 三次元チェス: https://moongate821.github.io/games/chess3d/ — 3段の盤で指す立体チェス。AI対戦・4種類の駒と盤・BGM13曲。艦隊運用は集中砲火と修理。異世界モードでは王・ドラゴン・冒険者・魔法使い・召喚士・精霊のMeshy彩色駒を選べ、竜炎・召喚・魔法陣で戦う。
