@@ -104,7 +104,7 @@ function pickDialog(title, items, { note, okText = '選ぶ', wide } = {}) {
                 class: 'row' + (i === sel ? ' sel' : '') + (it.disabled ? ' disabled' : ''),
                 onclick: () => { if (it.disabled) return; if (sel === i || Nav.usingPad) { closeDialog(it.id); } else { sel = i; build(); if (Nav.usingPad) setFocus(rows[sel]); } },
             },
-                it.face ? h('img', { class: 'ic', src: it.face, alt: '' }) : it.icon ? itemIcon(it.icon) : it.uiIcon ? icon(it.uiIcon) : null,
+                it.face ? h('img', { class: 'ic', src: it.face, alt: '' }) : it.image ? h('img', { class: 'ic', src: it.image, alt: '', onerror: e => { e.target.onerror = null; e.target.src = A.uiUrl('icon_magic'); } }) : it.icon ? itemIcon(it.icon) : it.uiIcon ? icon(it.uiIcon) : null,
                 h('div', { class: 'grow' }, h('div', {}, it.label), it.sub ? h('div', { class: 'sub' }, it.sub) : null),
                 it.price !== undefined ? h('div', { class: 'price' }, it.price + 'G') : null);
             rows.push(row);

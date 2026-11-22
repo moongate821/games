@@ -68,15 +68,16 @@ function act(cmd, args) {
     const segs = splitMessage(res.msg);
     const speed = G.settings.msgSpeed ?? 2;
     if (speed === 0 || segs.length <= 1 || !res.snap) {
+        if (res.musicCue && typeof playMusicCue === 'function') playMusicCue(res.musicCue);
         logMessage(res.msg);
         if (typeof refresh === 'function') refresh();
         return res;
     }
-    playSegments(segs, before, res.snap, speed);
+    playSegments(segs, before, res.snap, speed, res.musicCue);
     return res;
 }
 
-async function playSegments(segs, before, after, speed) {
+async function playSegments(segs, before, after, speed, musicCue = null) {
     G.busy = true;
     document.body.classList.add('busy');
     G.snap = JSON.parse(JSON.stringify(before));   // 表示中は、行動の前の状態から、メッセージに合わせて少しずつ変える
@@ -94,6 +95,7 @@ async function playSegments(segs, before, after, speed) {
         G.snap = after;
         G.busy = false;
         document.body.classList.remove('busy');
+        if (musicCue && typeof playMusicCue === 'function') playMusicCue(musicCue);
         if (typeof refresh === 'function') refresh();
     }
 }

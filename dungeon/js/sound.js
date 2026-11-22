@@ -14,7 +14,8 @@ const SND = {
                 this.master.gain.value = 0.5;
                 this.master.connect(this.ctx.destination);
             }
-            if (this.ctx.state !== 'running') this.ctx.resume().then(() => { BGM.cur = null; updateMusic(); });
+            if (this.ctx.state !== 'running' && !this.unlocking) this.unlocking = this.ctx.resume().then(() => updateMusic()).catch(() => {}).finally(() => { this.unlocking = null; });
+            else if (this.ctx.state === 'running') updateMusic();
             // iOS: 無音の1サンプルを鳴らして、音を有効にする
             const b = this.ctx.createBuffer(1, 1, 22050), src = this.ctx.createBufferSource();
             src.buffer = b; src.connect(this.ctx.destination); src.start(0);
@@ -73,67 +74,136 @@ const SND = {
     },
 };
 
-// ---------- BGM(2026-09-26追加。audio/bgm/NN_key.m4a を、Web Audioで切れ目なく繰り返す) ----------
+// ---------- BGM: retryable loading, race-safe transitions, bounded decoded-audio cache ----------
 const BGM = {
     cur: null, want: null, src: null, gain: null, list: null, buffers: {},
-    volume() { return [0, 0.22, 0.42, 0.7][G.settings.bgm ?? 2]; },
+    pending: null, catalogRequest: null, loads: new Map(), generation: 0,
+    retryAt: 0, failedKey: null, lastError: null, maxCacheBytes: 32 * 1024 * 1024,
+    volume() {
+        const n = Number(G.settings.bgm ?? 2);
+        return [0, 0.22, 0.42, 0.7][Number.isInteger(n) && n >= 0 && n <= 3 ? n : 2];
+    },
     async loadList() {
-        if (!this.list) { try { this.list = await (await fetch('audio/bgm.json')).json(); } catch (_) { this.list = []; } }
-        return this.list;
+        if (this.list) return this.list;
+        if (!this.catalogRequest) this.catalogRequest = (async () => {
+            const response = await fetch('audio/bgm.json');
+            if (!response.ok) throw new Error('Music catalog: ' + response.status);
+            const rows = await response.json();
+            if (!Array.isArray(rows) || rows.some(e => !e.key || !/^[a-zA-Z0-9_]+$/.test(e.file) || !(e.seconds > 0)))
+                throw new Error('Invalid music catalog');
+            return this.list = rows;
+        })().finally(() => { this.catalogRequest = null; });
+        return this.catalogRequest;
+    },
+    async loadBuffer(entry, ctx) {
+        if (this.buffers[entry.key]) return this.buffers[entry.key];
+        if (!this.loads.has(entry.key)) this.loads.set(entry.key, (async () => {
+            const response = await fetch(`audio/bgm/${entry.file}.m4a`);
+            if (!response.ok) throw new Error('Music file: ' + response.status);
+            const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+            if (!(buffer.duration > 0)) throw new Error('Empty music file');
+            return buffer;
+        })().finally(() => { this.loads.delete(entry.key); }));
+        return this.loads.get(entry.key);
+    },
+    cache(key, buffer) {
+        delete this.buffers[key];
+        this.buffers[key] = buffer;
+        let size = Object.values(this.buffers).reduce((n, b) => n + b.length * b.numberOfChannels * 4, 0);
+        for (const old of Object.keys(this.buffers)) {
+            if (size <= this.maxCacheBytes) break;
+            if (old === key) continue; // An oversized active song is retained alone.
+            const b = this.buffers[old]; size -= b.length * b.numberOfChannels * 4;
+            delete this.buffers[old];
+        }
     },
     async play(key) {
-        this.want = key;
+        if (!key || typeof key !== 'string') { this.want = null; this.stop(); return; }
+        if (this.want !== key) { this.want = key; this.generation++; this.pending = null; }
         const ctx = SND.ctx;
-        if (!key || !ctx || ctx.state !== 'running') return;   // 音は、最初の操作で有効になってから
-        if (this.volume() <= 0) { this.stop(0.3); this.cur = null; return; }
-        if (this.cur === key) { if (this.gain) this.gain.gain.setTargetAtTime(this.volume(), ctx.currentTime, 0.2); return; }
-        this.cur = key;
-        const entry = (await this.loadList()).find(e => e.key === key);
-        if (!entry) return;
-        let buf = this.buffers[key];
-        if (!buf) {
-            try { buf = await ctx.decodeAudioData(await (await fetch(`audio/bgm/${entry.file}.m4a`)).arrayBuffer()); }
-            catch (_) { return; }
-            this.buffers[key] = buf;
+        if (!ctx || ctx.state !== 'running') return;
+        if (document.hidden || this.volume() <= 0) { this.stop(0.15); return; }
+        if (this.cur === key && this.src) {
+            this.gain.gain.setTargetAtTime(this.volume(), ctx.currentTime, 0.2);
+            return;
         }
-        if (this.want !== key) return;   // 読み込む間に、場面が変わった
-        this.stop(0.6);
-        const src = ctx.createBufferSource(), g = ctx.createGain();
-        src.buffer = buf; src.loop = true;
-        // 1ループの長さは、作ったときの長さ(圧縮で付く前後の無音を除く)
-        const extra = Math.max(0, buf.duration - entry.seconds);
-        src.loopStart = Math.min(extra, 0.1); src.loopEnd = src.loopStart + Math.min(entry.seconds, buf.duration);
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(Math.max(this.volume(), 0.001), ctx.currentTime + 0.6);
-        src.connect(g); g.connect(ctx.destination);
-        src.start(0, src.loopStart);
-        this.src = src; this.gain = g;
+        if (this.pending?.key === key) return this.pending.promise;
+        if (this.failedKey === key && Date.now() < this.retryAt) return;
+        const id = ++this.generation;
+        const promise = (async () => {
+            try {
+                const entry = (await this.loadList()).find(e => e.key === key);
+                if (!entry) throw new Error('Unknown music: ' + key);
+                const buf = await this.loadBuffer(entry, ctx);
+                if (id !== this.generation || this.want !== key || ctx.state !== 'running' || document.hidden || this.volume() <= 0) return;
+                this.fadeOut(0.4);
+                const src = ctx.createBufferSource(), g = ctx.createGain();
+                src.buffer = buf; src.loop = entry.loop !== false;
+                const extra = Math.max(0, buf.duration - entry.seconds);
+                src.loopStart = Math.min(extra, 0.1);
+                src.loopEnd = Math.min(buf.duration, src.loopStart + entry.seconds);
+                g.gain.setValueAtTime(0.0001, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(Math.max(this.volume(), 0.001), ctx.currentTime + 0.4);
+                src.connect(g); g.connect(ctx.destination);
+                src.onended = () => { src.disconnect(); g.disconnect(); };
+                src.start(0, src.loopStart);
+                this.src = src; this.gain = g; this.cur = key;
+                this.cache(key, buf);
+                this.failedKey = null; this.retryAt = 0; this.lastError = null;
+            } catch (error) {
+                if (id === this.generation) {
+                    this.failedKey = key; this.retryAt = Date.now() + 2500;
+                    this.lastError = String(error.message || error);
+                }
+            } finally { if (this.pending?.id === id) this.pending = null; }
+        })();
+        this.pending = { key, id, promise };
+        return promise;
     },
-    stop(fade = 0.5) {
-        const ctx = SND.ctx;
-        if (!this.src || !ctx) return;
-        const src = this.src, g = this.gain;
-        g.gain.cancelScheduledValues(ctx.currentTime);
-        g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + fade);
-        src.stop(ctx.currentTime + fade + 0.05);
-        this.src = null; this.gain = null;
+    fadeOut(fade = 0.4) {
+        const ctx = SND.ctx, src = this.src, g = this.gain;
+        this.src = null; this.gain = null; this.cur = null;
+        if (!src || !ctx) return;
+        try {
+            g.gain.cancelScheduledValues(ctx.currentTime);
+            g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + Math.max(0.01, fade));
+            src.stop(ctx.currentTime + Math.max(0.01, fade) + 0.05);
+        } catch (_) { try { src.disconnect(); g.disconnect(); } catch (_) {} }
     },
+    stop(fade = 0.4) { this.generation++; this.pending = null; this.fadeOut(fade); },
 };
 
-// 今の場面のBGM: 画面が決めたもの(キャラ作成・物語など) → タイトル → 街の施設 → ゲームの場面(C#の MusicKey)
-const FACILITY_MUSIC = { Guild: 'guild', Inn: 'inn', Temple: 'temple', Blacksmith: 'smith', TrainingHall: 'smith' };
+const FACILITY_MUSIC = { Guild: 'guild', Inn: 'inn', Temple: 'temple', Blacksmith: 'smith', TrainingHall: 'smith', Casino: 'battle2', Arena: 'foe' };
+function playMusicCue(key, milliseconds = 3500) {
+    G.musicCue = { key, until: Date.now() + milliseconds, state: G.snap?.state, facility: G.facility?.id };
+    updateMusic();
+}
 function updateMusic() {
+    if (document.hidden) { BGM.stop(0.1); return; }
+    if (G.musicPaused) { BGM.stop(0.1); return; }
     let key = G.musicOverride;
+    if (G.snap?.state === 'GameOver') { key = 'gameover'; G.musicCue = null; }
     if (!key) {
         const titleShown = document.getElementById('title') && !document.getElementById('title').hidden;
         if (titleShown || !G.snap || G.snap.state === 'Title') key = 'title';
+        else if (G.snap.music === 'arena') key = 'arena';
         else if (G.snap.state === 'Town' && G.facility) key = FACILITY_MUSIC[G.facility.type] || 'shop';
         else key = G.snap.music || 'town';
-    }
-    BGM.play(key);
+        const cue = G.musicCue;
+        if (cue && (cue.until <= Date.now() || cue.state !== G.snap?.state || cue.facility !== G.facility?.id || ['Battle', 'GameOver', 'Title'].includes(G.snap?.state) || key === 'ending')) G.musicCue = null;
+        else if (cue) key = cue.key;
+    } else G.musicCue = null;
+    return BGM.play(key);
 }
 setInterval(() => { if (!G.busy) updateMusic(); }, 700);
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { BGM.stop(0.1); return; }
+    const ctx = SND.ctx;
+    if (ctx?.state === 'suspended') ctx.resume().then(() => updateMusic()).catch(() => {});
+    else updateMusic();
+});
+window.addEventListener('pagehide', () => BGM.stop(0.1));
 
 // メッセージの内容から、効果音・エフェクト・振動を決める(Windows版の PlaySfxForMessage / TryPlayEffect と同じ対応)
 function onLogMessage(message) {

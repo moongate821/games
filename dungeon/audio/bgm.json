@@ -211,7 +211,7 @@
   "key": "battle2",
   "file": "24_battle2",
   "title": "魔物の群れ",
-  "place": "強い敵・3体以上・モンスターハウス",
+  "place": "強い敵・3体以上・モンスターハウス・カジノ",
   "seconds": 24.0,
   "bpm": 160
  },
@@ -220,7 +220,7 @@
   "key": "foe",
   "file": "25_foe",
   "title": "徘徊する強敵",
-  "place": "強敵との戦闘",
+  "place": "強敵との戦闘・闘技場受付",
   "seconds": 26.6667,
   "bpm": 144
  },
@@ -247,7 +247,7 @@
   "key": "victory",
   "file": "28_victory",
   "title": "封印は解かれた",
-  "place": "ボスを倒したあとの階",
+  "place": "戦闘勝利・依頼達成・ボス撃破後",
   "seconds": 29.0909,
   "bpm": 132
  },
@@ -268,5 +268,25 @@
   "place": "ダンジョン制覇",
   "seconds": 34.2857,
   "bpm": 112
+ },
+ {
+  "no": 31,
+  "key": "credits_song",
+  "file": "31_credits_song",
+  "title": "月の下のエピローグ",
+  "place": "クレジット・音楽室",
+  "seconds": 177.0,
+  "source": "作者提供・Gemini制作フォルダ",
+  "loop": true
+ },
+ {
+  "no": 32,
+  "key": "arena",
+  "file": "32_arena",
+  "title": "孤高の剣聖",
+  "place": "闘技場の挑戦中・音楽室",
+  "seconds": 181.7,
+  "source": "作者提供・Gemini制作フォルダ",
+  "loop": true
  }
 ]

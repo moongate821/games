@@ -32,6 +32,7 @@ const STORY_TRIAL =
 const STORY_CREDITS =
     'Dungeon Explorer(ダンジョンエクスプローラー)\n\nWizardry と トルネコの大冒険 に憧れて作られた、\n一人称視点のダンジョンRPG。\n\n' +
     'プログラム: Claude Code(Anthropic)との共同制作\n画像: Gemini、Microsoft 365 Copilot による生成\n効果音: ゲーム内で合成(チップチューン)\n\n' +
+    '追加楽曲: 作者提供の制作音源\n「孤高の剣聖」「月の下のエピローグ」\n\n' +
     '参考にした作品: Wizardry、Wizardry Variants Daphne、トルネコの大冒険 ほか\n\n遊んでくれて、ありがとう。';
 
 const playerName = () => (G.snap && G.snap.party[0] ? G.snap.party[0].name : '冒険者');
@@ -328,7 +329,7 @@ async function pickEnemy(title) {
 async function pickSkillCommand(member) {
     const skills = api('skills', { member }).data;
     if (!skills.length) { logMessage('使えるスキルが無い。'); refresh(); return null; }
-    const id = await pickDialog('スキルを使う', skills.map(k => ({ id: k.id, label: k.text })), { wide: true });
+    const id = await pickDialog('スキルを使う', skills.map(k => ({ id: k.id, label: k.text, image: k.artwork ? `img/skill/${k.artwork}.webp` : null, uiIcon: 'icon_magic' })), { wide: true });
     if (id === null) return null;
     const sk = skills.find(k => k.id === id);
     if (sk.heal) {
@@ -379,7 +380,7 @@ async function skillFlow() {
     if (m === null) return;
     const skills = api('skills', { member: m }).data;
     if (!skills.length) { logMessage('使えるスキルが無い。'); refresh(); return; }
-    const id = await pickDialog('スキルを使う', skills.map(k => ({ id: k.id, label: k.text })), { wide: true });
+    const id = await pickDialog('スキルを使う', skills.map(k => ({ id: k.id, label: k.text, image: k.artwork ? `img/skill/${k.artwork}.webp` : null, uiIcon: 'icon_magic' })), { wide: true });
     if (id === null) return;
     const sk = skills.find(k => k.id === id);
     let target = null;
@@ -427,7 +428,7 @@ async function fieldSpellFlow() {
     if (c === null) return;
     const spells = api('fieldSpells', { member: c }).data;
     if (!spells.length) { logMessage(`${G.snap.party[c].name}は、戦闘外で使える呪文を覚えていない。`); refresh(); return; }
-    const skill = await pickDialog('呪文を選ぶ', spells.map(k => ({ id: k.id, label: k.text })), { wide: true });
+    const skill = await pickDialog('呪文を選ぶ', spells.map(k => ({ id: k.id, label: k.text, image: k.artwork ? `img/skill/${k.artwork}.webp` : null, uiIcon: 'icon_magic' })), { wide: true });
     if (skill === null) return;
     const t = await pickMember('誰に唱えますか?', false);
     if (t !== null) act('cast', { skill, caster: c, target: t });
@@ -561,7 +562,7 @@ async function showMap() {
 async function showStory(title, text) {
     // 物語とクレジットの間は、BGMを変える
     const prev = G.musicOverride;
-    G.musicOverride = text === STORY_TRIAL ? 'story' : text === STORY_CREDITS ? 'ending' : prev;
+    G.musicOverride = text === STORY_TRIAL ? 'story' : text === STORY_CREDITS ? 'credits_song' : prev;
     updateMusic();
     try { return await dialog({ title, body: h('div', { class: 'msg' }, text), buttons: [{ text: '閉じる', value: true, cls: 'primary' }] }); }
     finally { G.musicOverride = prev; updateMusic(); }
@@ -615,6 +616,7 @@ async function showMenu() {
     add('log', 'ログを見る', 'icon_item');
     if (s.state !== 'Battle') { add('save', 'セーブする', 'icon_save'); add('load', 'ロードする', 'icon_load'); }
     add('settings', '設定', 'icon_torch');
+    if (s.state === 'Town') add('music', '音楽室', 'icon_runes');
     add('guide', '操作ガイド', 'icon_key');
     add('title', 'タイトルへ(セーブしていない内容は消えます)', 'icon_move');
     const id = await pickDialog('メニュー', items, { okText: '選ぶ' });
@@ -628,6 +630,7 @@ async function showMenu() {
         case 'save': return act('save');
         case 'load': return act('load');
         case 'settings': return showSettings();
+        case 'music': return showMusicRoom();
         case 'guide': return showGuide();
         case 'title': if (await confirmBox('タイトルへ', 'タイトルに戻ります。セーブしていない内容は消えます。よろしいですか?')) location.reload();
     }
@@ -641,6 +644,7 @@ function showTitle() {
     add('ゲームを始める', createFlow);
     add(G.hasSave ? 'つづきから' : 'つづきから(セーブなし)', () => { const r = act('load'); }, !G.hasSave);
     add('設定', showSettings);
+    add('音楽室', showMusicRoom);
     add('操作ガイド', showGuide);
     add('クレジット', () => showStory('クレジット', STORY_CREDITS));
     if (window.installPrompt) add('アプリとして追加', async () => { const p = window.installPrompt; window.installPrompt = null; await p.prompt(); showTitle(); });
