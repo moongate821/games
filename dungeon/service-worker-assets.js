@@ -33,11 +33,11 @@ self.assetsManifest = {
       "url": "_framework\/dotnet.runtime.8.0.34.nm68240y20.js"
     },
     {
-      "hash": "sha256-o7ZVPljYs9V4NfhQSaBU9GIESToOzCKbpUBGf\/gmWU4=",
+      "hash": "sha256-3XlEY4nwvZUYzg4ia8vPeFyM1x68KuIqNesViHlF6vg=",
       "url": "_framework\/blazor.boot.json"
     },
     {
-      "hash": "sha256-H776lNxKHDvYlKB\/4m9X0VZqoAW6O3\/sluASVR8NYc0=",
+      "hash": "sha256-onRkupjVYbtTcCgULTY\/nGrzQStQwjoi1lgLmmcA5DU=",
       "url": "_framework\/Game.App.wasm"
     },
     {
@@ -69,7 +69,7 @@ self.assetsManifest = {
       "url": "_framework\/Game.Systems.wasm"
     },
     {
-      "hash": "sha256-AOqo1ILLdRcQ069vBjdcB1kswXP2wpQCEV84i8ZKZK4=",
+      "hash": "sha256-35x7+8ZllLD1vJf7s8e4Xn7mM0wPraixEQOERddN+WQ=",
       "url": "_framework\/Game.Web.wasm"
     },
     {
@@ -4621,6 +4621,14 @@ self.assetsManifest = {
       "url": "img\/skill\/ATTACK_WIND_ST.webp"
     },
     {
+      "hash": "sha256-9+oT5wJcwT05zfa5CAYKR\/lyzTvkUsLJk6y9Y7\/5E7Y=",
+      "url": "img\/skill\/BUFF_ALL_PARTY.webp"
+    },
+    {
+      "hash": "sha256-\/cMAsAKadMa7s6ZZMMZNLl+wvUSYoIop1B6iKSkNJ5s=",
+      "url": "img\/skill\/BUFF_ALL_SELF.webp"
+    },
+    {
       "hash": "sha256-2spnMFAa5TNIuWdGLRnD1vdPzZMWgQwSyvrmMcFQrHs=",
       "url": "img\/skill\/BUFF_ATTACK_PARTY.webp"
     },
@@ -4629,12 +4637,24 @@ self.assetsManifest = {
       "url": "img\/skill\/BUFF_ATTACK_SELF.webp"
     },
     {
+      "hash": "sha256-zRjYSS9BcFKG+5YEWsMa+IxDE4lq8yA9G0Remtbq1wM=",
+      "url": "img\/skill\/BUFF_CRIT_SELF.webp"
+    },
+    {
       "hash": "sha256-PXPHFt5aoliptesALRqsLwLLF719dRDHf8pzFrii5Pg=",
       "url": "img\/skill\/BUFF_DEFENSE_PARTY.webp"
     },
     {
       "hash": "sha256-XeDZch2pgWDldVKhUKnskb1kXOGy02v8I6R8QrcAGdY=",
       "url": "img\/skill\/BUFF_DEFENSE_SELF.webp"
+    },
+    {
+      "hash": "sha256-H7h8AFCA0bKaDuXTTTlYHkKvrOkkO\/HA\/+esyumovq8=",
+      "url": "img\/skill\/BUFF_EVADE_PARTY.webp"
+    },
+    {
+      "hash": "sha256-eqJSWN5On6\/h4Qpjj+yD5QM9IJzqGfPSHN9Tf6vGBGU=",
+      "url": "img\/skill\/BUFF_EVADE_SELF.webp"
     },
     {
       "hash": "sha256-5R53\/ELk54wI\/JFKBDHnDg9Zxe2cvC3mmX5q+cHMeMM=",
@@ -4651,6 +4671,26 @@ self.assetsManifest = {
     {
       "hash": "sha256-+12d8ZL2oGeliHrv90JrfXpL38FDxfOFrWe6GxaRgdU=",
       "url": "img\/skill\/CURE_ALL.webp"
+    },
+    {
+      "hash": "sha256-cnrgdRilx\/m74a\/fzHcuHD4ZWiHYBnxJHfi06s5PWOM=",
+      "url": "img\/skill\/DEBUFF_ATTACK_AOE.webp"
+    },
+    {
+      "hash": "sha256-ikKdd6uKjXLFQ8X9KzzkouSvsesLE3NY\/HOwo8kBWh4=",
+      "url": "img\/skill\/DEBUFF_ATTACK_ST.webp"
+    },
+    {
+      "hash": "sha256-t2GD\/M6Y5H7HRdbygSXlFS4pgMmZ3\/PmsfNXAzTREKc=",
+      "url": "img\/skill\/DEBUFF_DEFENSE_AOE.webp"
+    },
+    {
+      "hash": "sha256-lfypyvPjPoxh4ntmSxm39quYs3YoIF5DA6X20NF\/K34=",
+      "url": "img\/skill\/DEBUFF_HIT_ST.webp"
+    },
+    {
+      "hash": "sha256-mAc+1wYFFlOO9FEKsoGHzvY15gCFjlEBfaLwBabX6z0=",
+      "url": "img\/skill\/DEBUFF_SPEED_ST.webp"
     },
     {
       "hash": "sha256-yZni5XX4MQGcCCg5Z+eFUSJefZMi9drDI8o9ohTWpes=",
@@ -4689,6 +4729,42 @@ self.assetsManifest = {
       "url": "img\/skill\/NEUTRAL_ST.webp"
     },
     {
+      "hash": "sha256-NTFst2b+tzGc4OIoxO2avYSXysWP2wi4Ux8NljLF5OE=",
+      "url": "img\/skill\/PASSIVE_AGI.webp"
+    },
+    {
+      "hash": "sha256-TIH94YH5NFONFx11G6NytTUcoyYvYH\/5W9u+dCA4fwE=",
+      "url": "img\/skill\/PASSIVE_BEASTKILLER.webp"
+    },
+    {
+      "hash": "sha256-lKhNykWekBMGNmwsUMGwRkhBn4lJrcLGwQde3Ll1WTw=",
+      "url": "img\/skill\/PASSIVE_BOSSKILLER.webp"
+    },
+    {
+      "hash": "sha256-uNMdpnybcv9b5hIKiENOrZ341gSB4UGp52BgLk9vdBY=",
+      "url": "img\/skill\/PASSIVE_DRAGONKILLER.webp"
+    },
+    {
+      "hash": "sha256-nShou1XL0vEcMylaW2Beev4zNqZM8QEEoQZYSiox8a0=",
+      "url": "img\/skill\/PASSIVE_EQUIP.webp"
+    },
+    {
+      "hash": "sha256-OulZYcodu+3zGmdzA6FdK+xkg6m1piSb91JD1D2dhWA=",
+      "url": "img\/skill\/PASSIVE_FIRSTSTRIKE.webp"
+    },
+    {
+      "hash": "sha256-oLkXeabwT3qtQ6OSD6F1wFHacaNZcK+mJF9Wq\/Ve9NA=",
+      "url": "img\/skill\/PASSIVE_INT.webp"
+    },
+    {
+      "hash": "sha256-OifPeSzvfR1zulHPI2sdUcNLmF1cMjYcS+IeSFYjyA0=",
+      "url": "img\/skill\/PASSIVE_STR.webp"
+    },
+    {
+      "hash": "sha256-W3PFY7SkGBVqMdE2ueF91jSYJKxQKKND+gL9DVgq47Y=",
+      "url": "img\/skill\/PASSIVE_VIT.webp"
+    },
+    {
       "hash": "sha256-yEQ7qFTC0H7Sk7DZ82\/F1b6oIa\/XWHrHJdNLLQTcjrk=",
       "url": "img\/skill\/PHYS_AOE.webp"
     },
@@ -4701,8 +4777,64 @@ self.assetsManifest = {
       "url": "img\/skill\/PHYS_ST.webp"
     },
     {
+      "hash": "sha256-H+AibGT9VDKN8k\/J4V8vtf87faNeKhibmDUlqlrWPEs=",
+      "url": "img\/skill\/RESERVE_01.webp"
+    },
+    {
+      "hash": "sha256-TO\/4R0rdeNhIgIDN4lbiG+g1dJ58Z3JTt6tG1Hzdaoo=",
+      "url": "img\/skill\/RESERVE_02.webp"
+    },
+    {
+      "hash": "sha256-BMs0bw1ubVdXdTr6v9ZsEwWzhnbDlT9H+fUFc4KcvoM=",
+      "url": "img\/skill\/RESERVE_03.webp"
+    },
+    {
+      "hash": "sha256-7x39s7KW0tPrRpf8NuD40nTz+T+0WzYaPLA0KxaB\/0I=",
+      "url": "img\/skill\/RESERVE_04.webp"
+    },
+    {
+      "hash": "sha256-jr5DDnfXcCzU+Cl08rKJQyTky4Pz6ZhJilHs0Hkga8c=",
+      "url": "img\/skill\/RESERVE_05.webp"
+    },
+    {
       "hash": "sha256-oG68EXF3WA8rt6O0Ug+uALmy3n9YSwbbX5OUDgxNToI=",
       "url": "img\/skill\/REVIVE.webp"
+    },
+    {
+      "hash": "sha256-r9rVwjB8pB+cJBLE\/ti5noNt3PEK5ndF1ZPia2ul3qc=",
+      "url": "img\/skill\/SPECIAL_DAMAGECUT.webp"
+    },
+    {
+      "hash": "sha256-ULGU58tg0WA5WmxSmi\/irVO5MqRnWks0Ja54rFGlWIg=",
+      "url": "img\/skill\/SPECIAL_EXPUP.webp"
+    },
+    {
+      "hash": "sha256-j27YCBFG+1SVMDvWkoPR3j\/mtr5PgZROs\/r\/J5Uaa4E=",
+      "url": "img\/skill\/SPECIAL_FLEEHELP.webp"
+    },
+    {
+      "hash": "sha256-vRRLhkmTPc4WtiXd3ZMroJbQBb+AYK0q2b1MUI2\/AbM=",
+      "url": "img\/skill\/SPECIAL_GOLDUP.webp"
+    },
+    {
+      "hash": "sha256-SO3ObJrb7gg4O9RuB96g9lURu2T1C4UkkdkmSIPQn7E=",
+      "url": "img\/skill\/SPECIAL_STEAL.webp"
+    },
+    {
+      "hash": "sha256-qkVPRGmwjoRxcl8ZCTFWNAAWqWNP3kIi9seq5sHM0lc=",
+      "url": "img\/skill\/SPECIAL_TAUNT.webp"
+    },
+    {
+      "hash": "sha256-Z2IUwRGdhOUskHdU7F42evR4\/NLV6buJRakSnidGwZw=",
+      "url": "img\/skill\/SPECIAL_TRAPDETECT.webp"
+    },
+    {
+      "hash": "sha256-WJ\/pW5qjdLSPsIYkFLKmdHY7\/4ScItMjxPV2SZowtGM=",
+      "url": "img\/skill\/SPECIAL_WEAKPOINT.webp"
+    },
+    {
+      "hash": "sha256-YbWHK2Y+SZdmNx4d+pyD0qpeWWGxOjJdJnEHCwDT7P0=",
+      "url": "img\/skill\/STATUS_INSTANTDEATH.webp"
     },
     {
       "hash": "sha256-WQDlfaXvUVOGfXUtDdbAK6URyN5c6SJ9ipQEj6F2Jgk=",
@@ -4901,5 +5033,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "NMvPXuN\/-4991e308"
+  "version": "buoY3969-4991e308"
 };
