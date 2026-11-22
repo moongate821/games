@@ -247,6 +247,19 @@ function dungeonActions() {
     if (d.onShop) a.push({ label: '行商の道具屋で買う', icon: 'icon_general_store', cls: 'primary', onClick: dungeonShopFlow });
     if (d.onStairs) a.push({ label: '階段を下りる', icon: 'icon_stairs', cls: 'primary', onClick: () => act('stairs') });
     if (d.secretDoor) a.push({ label: '深淵の底の扉を開ける', sub: '終焉竜ニヒルに挑む', icon: 'icon_stairs', cls: 'primary', onClick: () => act('secretDoor') });
+    if (d.relicChallenge && !d.pendingChest) a.push({
+        label: d.relicRematch ? '封印の試練・再戦' : '封印の試練に挑む',
+        sub: d.relicRematch ? '大魔法を中断して勝つと道具を獲得' : '',
+        icon: 'icon_attack', onClick: () => act('challengeRelic')
+    });
+    if (d.innRelicRematches?.length && !d.pendingChest) a.push({
+        label: '旅の宿屋で封印の試練に再挑戦', icon: 'icon_attack', onClick: async () => {
+            const floor = await pickDialog('再挑戦する試練', d.innRelicRematches.map(r => ({
+                id: r.floor, label: r.chamber, sub: '大魔法を中断して勝つと道具を獲得'
+            })), { okText: '挑む' });
+            if (floor !== null) act('rematchRelic', { floor });
+        }
+    });
     if (d.bossName && !d.cleared) a.push({ label: `ボス[${d.bossName}]に挑む`, icon: 'icon_attack', onClick: () => act('boss') });
     a.push({ label: '全体マップ', icon: 'icon_map', onClick: showMap });
     if (d.stairsKnown) a.push({ label: '出口へ自動移動', icon: 'icon_stairs', onClick: () => act('autoStairs') });

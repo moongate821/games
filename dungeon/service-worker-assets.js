@@ -33,15 +33,15 @@ self.assetsManifest = {
       "url": "_framework\/dotnet.runtime.8.0.34.nm68240y20.js"
     },
     {
-      "hash": "sha256-3XlEY4nwvZUYzg4ia8vPeFyM1x68KuIqNesViHlF6vg=",
+      "hash": "sha256-VE1\/77yXLsDfePzQd+H28Rwg3Rc\/n2W0uNGMtqx6vig=",
       "url": "_framework\/blazor.boot.json"
     },
     {
-      "hash": "sha256-onRkupjVYbtTcCgULTY\/nGrzQStQwjoi1lgLmmcA5DU=",
+      "hash": "sha256-YJcBk7mNXvwCIJfO4WgDqq0DKz0RH9HnqWnj3fVuCUA=",
       "url": "_framework\/Game.App.wasm"
     },
     {
-      "hash": "sha256-BKm1tOf911j0Vj2u7jWlieOgpCAPQLYCZ3RF3ywLO8k=",
+      "hash": "sha256-UhkUVP3WI9wmrvY6AQxcTQoBdGpUjEOELVCv2kiP9JU=",
       "url": "_framework\/Game.Content.wasm"
     },
     {
@@ -57,19 +57,19 @@ self.assetsManifest = {
       "url": "_framework\/Game.Definitions.wasm"
     },
     {
-      "hash": "sha256-JfYn7Hz5xahBecijBJoBPBeg1j4ERCEq+v4WB2zHhsk=",
+      "hash": "sha256-RCEeCT59LUCbbfIpX4NdgEVUmfurn8BwRpCt1jLnxtk=",
       "url": "_framework\/Game.Entities.wasm"
     },
     {
-      "hash": "sha256-p6py7+qBJZCxdexHkoEpvkwIHMXyP89QwUIRF0mylFY=",
+      "hash": "sha256-\/bEppz6Mv3ZrOBs2l7GnNUR4F40oYkrNB4ACyd72W7g=",
       "url": "_framework\/Game.Persistence.wasm"
     },
     {
-      "hash": "sha256-Nb5w+bDjbZV5cMNYbcs\/xLDdbnz7cCvL9+aGtB69kmM=",
+      "hash": "sha256-GHTu7csN3BJrfcr1wg1QILPJxm0Oc9Tvx1kymwW6Qt0=",
       "url": "_framework\/Game.Systems.wasm"
     },
     {
-      "hash": "sha256-35x7+8ZllLD1vJf7s8e4Xn7mM0wPraixEQOERddN+WQ=",
+      "hash": "sha256-sIj28PmxMTADREwGlKkXqQeUS7Gdg6CVmyESS9+cqtg=",
       "url": "_framework\/Game.Web.wasm"
     },
     {
@@ -981,7 +981,7 @@ self.assetsManifest = {
       "url": "css\/slot.css"
     },
     {
-      "hash": "sha256-L3uA8etkWAkZzT1ik+fkKQN9qe9yG6TAk58jWAoVcdY=",
+      "hash": "sha256-bhcn7bL6AKs1hwjbPS7LsOF\/ReaeyBQfs8X7wdZalA0=",
       "url": "data\/localization_en.json"
     },
     {
@@ -3165,6 +3165,18 @@ self.assetsManifest = {
       "url": "img\/item\/3051.webp"
     },
     {
+      "hash": "sha256-ceXUxRyvHxZgCfeUCwsHlGkVz8\/ETRDF7EU0b04lIwg=",
+      "url": "img\/item\/3090.webp"
+    },
+    {
+      "hash": "sha256-W01f0d6i5L95kRqRvL24s+HnFCzOBPElOe6o7PDD3Gs=",
+      "url": "img\/item\/3091.webp"
+    },
+    {
+      "hash": "sha256-cPl1gHCxW0ze7gR65VZ8q58JybvU9k3FcsrE+kSqEMc=",
+      "url": "img\/item\/3092.webp"
+    },
+    {
       "hash": "sha256-9alNVqn+Vl0smg+nLMhpSoMj5R2RqxyxhOlyfF4DunQ=",
       "url": "img\/item\/3500.webp"
     },
@@ -3795,6 +3807,34 @@ self.assetsManifest = {
     {
       "hash": "sha256-An0LAR1Q90nOFcHJtnaw96v8EHRaxTIfW\/NFkgZEyTI=",
       "url": "img\/item\/9050.webp"
+    },
+    {
+      "hash": "sha256-JD9qbDYYJTLxqNZeOoJ4KRh\/65\/EEoEm8gXjuWUcIdA=",
+      "url": "img\/item\/9051.webp"
+    },
+    {
+      "hash": "sha256-T7b2C8wbPtrICCyvpQlrQ6ym7MQOnWJTkeYSwjmypW0=",
+      "url": "img\/item\/9052.webp"
+    },
+    {
+      "hash": "sha256-TYgAdABYilouDu9wC7GWaXzOR6bzfqyYinNeRg\/yf8w=",
+      "url": "img\/item\/9053.webp"
+    },
+    {
+      "hash": "sha256-Q1IZW1hugiU2AuNQPmO5GPzeBBIod1k2ryxxHHzZ9b8=",
+      "url": "img\/item\/9054.webp"
+    },
+    {
+      "hash": "sha256-7Hi8fpA6InXRASPH0CQ7Q4FGfi43vRpplVQAEypwD10=",
+      "url": "img\/item\/9055.webp"
+    },
+    {
+      "hash": "sha256-pTpAcRUnX7ZdwrM8vNm4HRjTTapWv2ldgLSW1BtxZ10=",
+      "url": "img\/item\/9056.webp"
+    },
+    {
+      "hash": "sha256-gv8v+VGRzJ8zmtLfJMqxDZnZ\/v3QocrZkuOHqT3V5RA=",
+      "url": "img\/item\/9057.webp"
     },
     {
       "hash": "sha256-jWgWRtLvDFLAqshe1aMAMFpUN\/EOG+6HXke8oTkzSuk=",
@@ -4989,7 +5029,7 @@ self.assetsManifest = {
       "url": "js\/assets.js"
     },
     {
-      "hash": "sha256-oxuhkB3DBZ\/7TgYtWDw8eY1pgy9UGDdRgUr8O2H9opY=",
+      "hash": "sha256-FHogUzrcszTiLn5rZOWSVd+XUTSZq8tet\/3CHwiIy6s=",
       "url": "js\/flows.js"
     },
     {
@@ -5033,5 +5073,5 @@ self.assetsManifest = {
       "url": "manifest.webmanifest"
     }
   ],
-  "version": "buoY3969-4991e308"
+  "version": "ladb\/Xvu-4991e308"
 };
