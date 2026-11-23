@@ -8,7 +8,8 @@ window.GAME = {
   start: "river",
   defaults: { labels: false, sparkle: false, idleFx: false, cameo: false },
   // 時計: 午後4:00に始まり、場面に入るたびに進む。80で午後6:00。鐘が鳴って、法廷が始まる。
-  clock: { counter: "tick", limit: 80, next: "bell", startMin: 16 * 60, minPerTick: 120 / 80, msg: "遠くで、鐘が、鳴りはじめた。" },
+  clock: { counter: "tick", limit: 80, next: "bell", startMin: 16 * 60, minPerTick: 120 / 80, msg: "遠くで、鐘が、鳴りはじめた。",
+    warn: ["日が、傾きはじめた。", "どこかで、鐘の音が、した気がする。", "鐘が、近い。**急がないと**。"] },
   items: {
     ledger: { name: "帳簿", prop: "i_ledger", desc: "ハートの女王商会、厨房の台帳。最後のページが、破られている。" },
     watch: { name: "こわれた懐中時計", prop: "i_watch", desc: "針は、六時で止まっている。裏蓋に、刻みがある。" },
@@ -46,6 +47,33 @@ window.GAME = {
     bad: { name: "静かに、重い結末", color: "#6a4a7a", rank: "D" },
     loop: { name: "くりかえし", color: "#3f7fa8", rank: "E" },
     stuck: { name: "動けない", color: "#7a7a7a", rank: "E" }
+  },
+  puzzles: [
+    { id: "cat", scene: "cat_ok", name: "イモムシの三つの問い", en: "The Caterpillar's three questions" },
+    { id: "pigeon", scene: "pigeon_ok", name: "ハトの三段論法", en: "The Pigeon's syllogism" },
+    { id: "cheshire", scene: "cheshire_ok", name: "猫の逆さの論理", en: "The Cat's reversed logic" },
+    { id: "hall", scene: "tears", name: "広間の大きさの順番", en: "The order of sizes in the hall" },
+    { id: "dodo", scene: "dodo_right", name: "賞品の勘定", en: "The prize count" },
+    { id: "seat", scene: "tea_seat_ok", name: "席の回転", en: "The rotating seats" },
+    { id: "raven", scene: "tea_raven_ok", name: "カラスと書き物机", en: "The raven and the writing-desk" },
+    { id: "dm", scene: "tea_dm_ok", name: "ヤマネの「ま」", en: "The Dormouse's M-words" },
+    { id: "watch", scene: "watch_inside", name: "止まった時計の裏蓋", en: "Inside the stopped watch" },
+    { id: "count", scene: "croquet_count_ok", name: "兵隊の数", en: "The soldiers' count" },
+    { id: "hoop", scene: "croquet_hoop_ok", name: "輪の順番", en: "The order of the hoops" },
+    { id: "queen", scene: "queen_yes", name: "女王のごきげん", en: "The Queen's mood" },
+    { id: "lesson", scene: "school_lesson_ok", name: "授業の計算", en: "The lesson sum" },
+    { id: "dance", scene: "school_dance_ok", name: "カドリールの並び", en: "The Quadrille line-up" },
+    { id: "maze", scene: "maze_center", name: "生け垣の迷路の暗号", en: "The hedge-maze code" },
+    { id: "letter", scene: "secret_letter", name: "秘密の庭の手紙", en: "The letter in the secret garden" },
+    { id: "ledger", scene: "court_ledger", name: "帳簿の数字", en: "The figures in the ledger" },
+    { id: "wit", scene: "court_wit_ok", name: "証人たちの論理", en: "The witnesses' logic" },
+    { id: "verse", scene: "court_verse_ok", name: "詩の頭文字", en: "The poem's first letters" },
+    { id: "shelf", scene: "court_shelf", name: "証拠品の棚", en: "The evidence shelf" }
+  ],
+  // 謎の答えの場面に入ったときの、音と枠の合図(場面idの正規表現)
+  fx: {
+    wrong: "(_wrong$|^cat_angry$|^queen_hmm$|^croquet_early$|^tea_dm_wrong$|^court_wit_wrong$|^court_verse_wrong$|^school_.*_wrong$|^dodo_wrong$)",
+    ok: "(_ok$|^queen_yes$|^watch_inside$|^secret_letter$|^court_win$|^school_hint$|^dodo_right$|^croquet_.*_ok$|^court_ledger$|^court_shelf$)"
   },
   scenes: {}
 };

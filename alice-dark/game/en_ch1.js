@@ -5,7 +5,7 @@ Object.assign(window.GAME_EN, {
   eyebrow: "AN INTERACTIVE PICTURE BOOK FOR GROWN-UPS",
   subtitle: "Solve the riddles. Get past six o'clock. A very hard picture book for adults.",
   credit: "Based on Lewis Carroll's Alice's Adventures in Wonderland (1865). Art: Gemini (watercolor).",
-  clock: { msg: "Somewhere far off, a bell begins to ring." },
+  clock: { msg: "Somewhere far off, a bell begins to ring.", warn: ["The day is beginning to lean.", "Somewhere, a bell seemed to sound.", "The bell is near. **Hurry.**"] },
   items: {
     ledger: { name: "The ledger", desc: "The kitchen accounts of the Queen of Hearts & Co. The last page has been torn out." },
     watch: { name: "Broken pocket watch", desc: "The hands are stuck at six. There is an engraving on the back." },

@@ -40,10 +40,19 @@
       set(k, v) { try { localStorage.setItem(K(k), JSON.stringify(v)); } catch (e) { /* 保存できなくても遊べる */ } }
     };
     eng.endings = store.get("endings", {});
-    const settings = Object.assign({ size: 1, labels: false, sparkle: true, sound: true, music: 0.7, sfx: 0.8, idleFx: true, cameo: true }, game.defaults || {}, store.get("settings", {}));
+    const settings = Object.assign({ size: 1, labels: false, sparkle: true, sound: true, music: 0.7, sfx: 0.8, idleFx: true, cameo: true, songs: true, hard: false }, game.defaults || {}, store.get("settings", {}));
     const audio = (game.audio && root.BookAudio) ? root.BookAudio.create(game) : null;
-    if (audio) { audio.on = !!settings.sound; audio.music = settings.music; audio.sfxVol = settings.sfx; }
+    if (audio) { audio.on = !!settings.sound; audio.music = settings.music; audio.sfxVol = settings.sfx; audio.songs = settings.songs !== false; }
     const snd = (n) => { if (audio) audio.sfx(n); };
+    // 上級(鐘がはやく鳴る): 時計の限界を 80→60 に。1手あたりの進む分も、それに合わせる
+    function applyHard() { const c = game.clock; if (!c) return; if (!c.limit0) c.limit0 = c.limit; c.limit = settings.hard ? Math.round(c.limit0 * 0.75) : c.limit0; c.minPerTick = 120 / c.limit; }
+    applyHard();
+    // 解いた謎の記録(game.puzzles = [{ id, scene, name, en }])。何周しても、残る
+    const solved = store.get("solved", {});
+    function trackPuzzle() {
+      const id = eng.state && eng.state.scene; const p = (game.puzzles || []).find((x) => x.scene === id);
+      if (p && !solved[p.id]) { solved[p.id] = 1; store.set("solved", solved); setTimeout(() => toast(LANG === "en" ? "Riddle solved: " + (p.en || p.name) : "謎を解いた: " + p.name), 600); }
+    }
     const saveSettings = () => store.set("settings", settings);
 
     const endingIds = Object.keys(game.scenes).filter((id) => game.scenes[id].ending);
@@ -619,6 +628,28 @@
       const t = eng.state.counters[c.counter] || 0, total = Math.min(c.startMin + Math.floor(t * c.minPerTick), 24 * 60 - 1), hh = Math.floor(total / 60), mm = String(total % 60).padStart(2, "0");
       return LANG === "en" ? `${hh - 12}:${mm} PM` : `午後${hh - 12}:${mm}`;
     }
+    // 時計が進むほど、絵の縁が夕焼けに染まり、終盤は脈打つ(game.clock があるときだけ)
+    let warned = 0;
+    function duskUpdate(sc) {
+      const c = game.clock; if (!c || !eng.state || !ui.artFrame) return;
+      const t = eng.state.counters[c.counter] || 0, r = sc.ending ? 0 : Math.max(0, Math.min(1, (t - c.limit * 0.35) / (c.limit * 0.65)));
+      ui.artFrame.style.setProperty("--dusk", r.toFixed(3));
+      ui.artFrame.classList.toggle("late", !sc.ending && t >= c.limit * 0.85);
+    }
+    // 鐘が近づく知らせ(場面に入って時計をまたいだときに、一度だけ)
+    function clockWarn() {
+      const c = game.clock; if (!c || !eng.state || eng.scene().ending) return;
+      const t = eng.state.counters[c.counter] || 0, lv = t >= c.limit * 0.92 ? 3 : t >= c.limit * 0.78 ? 2 : t >= c.limit * 0.6 ? 1 : 0;
+      if (lv > warned) { warned = lv; const w = (game.clock.warn || [])[lv - 1]; if (w) { toast(w); if (lv >= 2) snd("tick"); } }
+      else if (lv < warned) warned = lv;
+    }
+    // 謎の答えの場面(game.fx の正規表現)に入ったとき、枠と音で「正解/不正解」を伝える
+    function sceneFx() {
+      const f = game.fx; if (!f || !eng.state) return;
+      const id = eng.state.scene;
+      if (f.wrong && new RegExp(f.wrong).test(id)) { snd("locked"); frameFx("wrong"); }
+      else if (f.ok && new RegExp(f.ok).test(id)) { snd("item"); frameFx("glow"); }
+    }
     function renderText() {
       stopRead();
       clearFloaters(true);
@@ -630,6 +661,7 @@
       ui.right.style.setProperty("--accent", z.color || (sc.ending && game.endingKinds[sc.ending.kind].color) || "#8a6a3a");
       ui.zone.textContent = sc.ending ? T("― 結末 ―") : (z.name || "");
       ui.caption.textContent = sc.ending ? "― " + sc.ending.name + " ―" : T("挿絵 ― ") + sc.title;
+      duskUpdate(sc);
       ui.folio.textContent = sc.ending ? `No. ${String(endingNo(sc.id)).padStart(2, "0")} / ${endingIds.length}` : (clockStr() ? clockStr() + "   " : "") + `${pageIdx + 1} / ${pgs.length}`;
       const pg = pgs[pageIdx];
       const kids = [...headNodes(sc, pg.first), textNode(pg.items)];
@@ -751,6 +783,7 @@
           pageIdx = 0; render();
           persist();
           if (res.msg) toast(res.msg);
+          trackPuzzle(); clockWarn(); sceneFx();
           if (isProgress(entry.opt)) setTimeout(() => frameFx("glow"), 800);
         }, "next");
         return;
@@ -794,10 +827,21 @@
       ui.menu.replaceChildren(
         h("button", { type: "button", disabled: !eng.canBack(), onclick: () => { toggleMenu(false); doBack(); } }, "↩ ひとつ前の分かれ道へ"),
         h("button", { type: "button", onclick: () => { toggleMenu(false); doRestart(); } }, "⟲ はじめから"),
+        ...((game.hints && game.hints.length) ? [h("button", { type: "button", onclick: () => { toggleMenu(false); useHint(); } }, "💡 ヒント(時間が3すすむ)")] : []),
         h("button", { type: "button", onclick: () => { toggleMenu(false); openMemo(); } }, "📝 メモ"),
         h("button", { type: "button", onclick: () => { toggleMenu(false); openShelf(); } }, "📚 結末の本棚"),
         h("button", { type: "button", onclick: () => { toggleMenu(false); openSettings(); } }, "⚙ せってい"),
         h("button", { type: "button", onclick: () => { toggleMenu(false); persist(); showCover(); } }, "📖 表紙へ"));
+    }
+    // ヒント: いまの場面に合う謎のヒントを出す。見るたびに、時計が3進む
+    function useHint() {
+      const id = eng.state.scene, hnt = (game.hints || []).find((x) => x.scenes.includes(id));
+      if (!hnt) { modal(T("ヒント"), [h("p", { class: "sb-shelf-lead" }, T("ここには、ヒントがありません。"))]); return; }
+      const c = game.clock; let forced = false;
+      if (c && !eng.scene().ending) { eng.state.counters[c.counter] = (eng.state.counters[c.counter] || 0) + 3; forced = !!(root.BookCore && root.BookCore.clockCheck(game, eng.state)); }
+      persist();
+      modal(T("ヒント"), [h("p", { class: "sb-shelf-lead" }, hnt.text)]);
+      if (forced) { pageIdx = 0; render(); lastArtKey = ""; renderArt(true); } else { duskUpdate(eng.scene()); renderText(); }
     }
     function openMemo() {
       let v = ""; try { v = localStorage.getItem(K("memo")) || ""; } catch (e) { /* 無視 */ }
@@ -835,14 +879,18 @@
       modal("結末の本棚", [
         h("p", { class: "sb-shelf-lead" }, `これまでに ${got} / ${endingIds.length} の午後に出会いました。`),
         h("div", { class: "sb-bar", "aria-hidden": "true" }, h("i", { style: `width:${Math.round(got / endingIds.length * 100)}%` })),
-        ...sections], true);
+        ...sections,
+        ...(game.puzzles && game.puzzles.length ? [h("section", { class: "sb-shelf-sec", style: "--rc:#8a6a3a" },
+          h("h4", null, h("span", { class: "sb-chip" }, LANG === "en" ? "Riddles solved" : "解いた謎"), h("span", { class: "sb-count" }, `${game.puzzles.filter((x) => solved[x.id]).length} / ${game.puzzles.length}`)),
+          h("ol", null, game.puzzles.map((x, i) => h("li", { class: solved[x.id] ? "got" : "lock" }, h("span", { class: "no" }, String(i + 1).padStart(2, "0")), h("span", { class: "nm" }, solved[x.id] ? (LANG === "en" ? (x.en || x.name) : x.name) : "？？？？？")))))] : [])], true);
     }
     function openSettings() {
       const sizeBtn = (v, t) => h("button", { type: "button", class: "sb-seg" + (settings.size === v ? " on" : ""), onclick: () => { settings.size = v; saveSettings(); applySettings(); openSettings(); } }, t);
-      const tog = (key, t) => h("label", { class: "sb-toggle" }, h("input", { type: "checkbox", checked: !!settings[key], onchange: (ev) => { settings[key] = ev.target.checked; saveSettings(); applySettings(); if (key === "sound" && audio) { audio.unlock(); audio.setOn(settings.sound); if (ui.soundBtn) ui.soundBtn.textContent = settings.sound ? "🔊" : "🔇"; } } }), t);
+      const tog = (key, t) => h("label", { class: "sb-toggle" }, h("input", { type: "checkbox", checked: !!settings[key], onchange: (ev) => { settings[key] = ev.target.checked; saveSettings(); applySettings(); if (key === "hard") { applyHard(); duskUpdate(eng.scene()); renderText(); } if (key === "songs" && audio) audio.setSongs(settings.songs); if (key === "sound" && audio) { audio.unlock(); audio.setOn(settings.sound); if (ui.soundBtn) ui.soundBtn.textContent = settings.sound ? "🔊" : "🔇"; } } }), t);
       modal("せってい", [
         ...(root.BookI18n ? [h("div", { class: "sb-set" }, h("b", null, "言語 / Language"), h("div", null, ...["ja", "en"].map((l) => h("button", { type: "button", class: "sb-seg" + (LANG === l ? " on" : ""), onclick: () => { if (LANG !== l) root.BookI18n.setLang(l); } }, l === "ja" ? "日本語" : "English"))))] : []),
         h("div", { class: "sb-set" }, h("b", null, "もじの大きさ"), h("div", null, sizeBtn(0.9, "小"), sizeBtn(1, "ふつう"), sizeBtn(1.15, "大"), sizeBtn(1.3, "とても大"))),
+        ...(game.clock ? [h("div", { class: "sb-set" }, tog("hard", "上級: 鐘がはやく鳴る(時間の限界が、4分の3に)"))] : []),
         h("div", { class: "sb-set" }, tog("labels", "絵の中のものの名前を、いつも出す")),
         ...(TTS ? [h("div", { class: "sb-set" }, h("b", null, "よみあげの はやさ"), h("div", null, ...[[0.7, "ゆっくり"], [0.9, "ふつう"], [1.1, "はやい"]].map((p) => h("button", { type: "button", class: "sb-seg" + ((settings.readRate || 0.9) === p[0] ? " on" : ""), onclick: () => { settings.readRate = p[0]; saveSettings(); openSettings(); } }, p[1]))))] : []),
         h("div", { class: "sb-set" }, tog("sparkle", "さわれるものに、きらきらを付ける")),
@@ -850,6 +898,7 @@
         h("div", { class: "sb-set" }, tog("cameo", "ときどき、特別なキャラクターが、ひとこと言いに来る")),
         ...(audio ? [
           h("div", { class: "sb-set" }, tog("sound", "音を出す(BGMと効果音)")),
+          ...((game.audio && game.audio.themes && Object.values(game.audio.themes).some((t) => t.file)) ? [h("div", { class: "sb-set" }, tog("songs", "場面によって、歌入りの曲を流す(切ると、自動作曲のBGM)"))] : []),
           h("div", { class: "sb-set" }, h("b", null, "BGMの大きさ"), h("input", { type: "range", min: "0", max: "100", value: String(Math.round(settings.music * 100)), oninput: (ev) => { settings.music = ev.target.value / 100; saveSettings(); audio.setMusic(settings.music); } })),
           h("div", { class: "sb-set" }, h("b", null, "効果音の大きさ"), h("input", { type: "range", min: "0", max: "100", value: String(Math.round(settings.sfx * 100)), oninput: (ev) => { settings.sfx = ev.target.value / 100; saveSettings(); audio.setSfx(settings.sfx); }, onchange: () => snd("pick") }))
         ] : []),

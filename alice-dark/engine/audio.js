@@ -22,9 +22,9 @@
 
   function create(game, hooks) {
     const cfg = game.audio || { themes: {} };
-    const A = { ctx: null, on: true, music: 0.7, sfxVol: 0.8, started: false, cur: null };
+    const A = { ctx: null, on: true, music: 0.7, sfxVol: 0.8, started: false, cur: null, songs: true };
     let master, musicBus, sfxBus, reverb, wet, noiseBuf;
-    let timer = 0, theme = null, themeName = "", bar = 0, nextT = 0, rand = null, runId = 0; let curMul = 1;
+    let fileEl = null, fileGain = null; let timer = 0, theme = null, themeName = "", bar = 0, nextT = 0, rand = null, runId = 0; let curMul = 1;
 
     function init() {
       if (A.ctx) return true;
@@ -157,6 +157,8 @@
       runId++; clearTimeout(timer);
       if (!A.ctx || !musicBus) return;
       // 古い曲は、いったん音量を下げて切り替える(新しい母線をつくる)
+      const oldEl = fileEl; fileEl = null; fileGain = null;
+      if (oldEl) setTimeout(() => { try { oldEl.pause(); oldEl.removeAttribute("src"); oldEl.load(); } catch (e) { /* 無視 */ } }, (fade == null ? 0.8 : fade) * 1000 + 400);
       const old = musicBus, t = A.ctx.currentTime;
       old.gain.cancelScheduledValues(t); old.gain.setValueAtTime(old.gain.value, t); old.gain.linearRampToValueAtTime(0.0001, t + (fade == null ? 0.8 : fade));
       musicBus = A.ctx.createGain(); musicBus.gain.value = 0; musicBus.connect(master);
@@ -174,6 +176,16 @@
       const t = A.ctx.currentTime;
       curMul = Math.pow(10, (th.gainDb || 0) / 20);
       musicBus.gain.setValueAtTime(0.0001, t); musicBus.gain.linearRampToValueAtTime(0.34 * A.music * curMul, t + 1.2);
+      if (th.file && A.songs && root.Audio) {     // 歌入りの曲(音楽ファイル)。読めなければ、自動作曲に切りかえる
+        let el = null;
+        try {
+          el = new root.Audio(th.file); el.loop = true; el.preload = "auto"; fileEl = el;
+          const srcNode = A.ctx.createMediaElementSource(el); srcNode.connect(musicBus);
+          el.addEventListener("error", () => { if (fileEl === el) { fileEl = null; loop(runId); } }, { once: true });
+          const pr = el.play(); if (pr && pr.catch) pr.catch(() => { if (fileEl === el) { fileEl = null; loop(runId); } });
+          return;
+        } catch (e) { fileEl = null; }
+      }
       const run = runId; loop(run);
     }
 
@@ -223,7 +235,8 @@
     A.sfx = function (name) { if (!A.on || A.sfxVol <= 0 || !A.started || !init() || !SFX[name]) return; try { SFX[name](); } catch (e) { /* 音が出なくても遊べる */ } };
     A.theme = function (name) { A.cur = name; if (A.started) playTheme(name); };
     A.themeForScene = function (sc) {
-      if (sc.ending) return cfg.kindTheme && cfg.kindTheme[sc.ending.kind];
+      if (cfg.sceneTheme && cfg.sceneTheme[sc.id]) return cfg.sceneTheme[sc.id];
+      if (sc.ending) return (cfg.endingTheme && cfg.endingTheme[sc.id]) || (cfg.kindTheme && cfg.kindTheme[sc.ending.kind]);
       return cfg.zoneTheme && cfg.zoneTheme[sc.zone];
     };
     A.scene = function (sc, isNew) {
@@ -236,6 +249,7 @@
     A.setOn = function (v) { A.on = !!v; if (!A.on) { stopMusic(0.4); themeName = ""; theme = null; } else if (A.cur) { themeName = ""; if (A.started) playTheme(A.cur); } };
     A.setMusic = function (v) { A.music = v; if (musicBus && A.ctx) musicBus.gain.value = 0.34 * v * curMul; if (v <= 0) { stopMusic(0.3); themeName = ""; theme = null; } else if (A.cur && !theme && A.started) playTheme(A.cur); };
     A.setSfx = function (v) { A.sfxVol = v; if (sfxBus) sfxBus.gain.value = 0.8 * v; };
+    A.setSongs = function (v) { A.songs = !!v; if (A.cur && A.started && A.on) { themeName = ""; theme = null; playTheme(A.cur); } };
     A.names = Object.keys(SFX);
     A.scales = SCALES;
     return A;

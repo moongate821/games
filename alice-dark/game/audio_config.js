@@ -33,3 +33,21 @@ window.GAME.audio = {
     stuck:   { gainDb: 4.0, root: 48, scale: "minor",  bpm: 48,  meter: 4, inst: "bell",     lead: "bell",   bass: false, pad: true, density: 0.2,  chords: [0, 0, 1, 0], arp: false, seed: 61 }
   }
 };
+
+/* 歌入りの曲(音楽ファイル audio/*.mp3。6.音楽\Gemini制作 の曲を、80kbpsに縮めて音量をそろえたもの)。
+ * ファイルが読めない・設定で切ったときは、同じ名前の元のテーマ(自動作曲)が鳴る。 */
+(function () {
+  const A = window.GAME.audio, T = A.themes;
+  const song = (name, base, file, gainDb) => { T[name] = Object.assign({}, T[base], { file: "audio/" + file + ".mp3", gainDb: gainDb || 0 }); };
+  song("song_court", "court", "court", 0);     // 666回目のループ(時計の音と焦り) ── 法廷と鐘
+  song("song_tea", "tea", "tea", 0);           // イカサマ・ルーレット(回る、回る) ── 席が回るお茶会
+  song("song_garden", "garden", "garden", 0);  // 赤い靴のタンゴ ── 赤い庭
+  song("song_rose", "duchess", "rose", 0);     // ブラック・ローズ ── 公爵夫人の家
+  song("song_six", "true", "six", 0);          // 汽車を待つ人 ── 六時の駅
+  song("song_true", "true", "true", 0);        // 旅の終わりの駅 ── 真の結末
+  song("song_loop", "loop", "loop", 0);        // ミラー・ミラー ── くりかえしの結末
+  song("song_bad", "bad", "bad", 0);           // ゴースト ── 重い結末
+  Object.assign(A.zoneTheme, { court: "song_court", tea: "song_tea", garden: "song_garden", duchess: "song_rose", six: "song_six" });
+  A.sceneTheme = { bell: "song_court" };
+  Object.assign(A.kindTheme, { true: "song_true", loop: "song_loop", bad: "song_bad" });
+})();

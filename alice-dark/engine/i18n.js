@@ -21,7 +21,7 @@
     "↩ ひとつ前の分かれ道へ": "↩ Back to the last fork", "⟲ はじめから": "⟲ Start over", "⚙ せってい": "⚙ Settings",
     "📖 表紙へ": "📖 Cover", "📚 結末の本棚": "📚 Shelf of Endings", "📝 メモ": "📝 Notes", "しおりメニュー": "Bookmark menu",
     "つぎのページへ": "Next page", "閉じる": "Close", "音のオンオフ": "Sound on/off", "音を出す(BGMと効果音)": "Sound (music and effects)",
-    "BGMの大きさ": "Music volume", "効果音の大きさ": "Effects volume", "もじの大きさ": "Text size",
+    "場面によって、歌入りの曲を流す(切ると、自動作曲のBGM)": "Play songs with vocals in some scenes (off = generated background music)", "上級: 鐘がはやく鳴る(時間の限界が、4分の3に)": "Expert: the bell rings sooner (time limit cut to three quarters)", "💡 ヒント(時間が3すすむ)": "💡 Hint (costs 3 time units)", "ヒント": "Hint", "ここには、ヒントがありません。": "No hint is available here.", "BGMの大きさ": "Music volume", "効果音の大きさ": "Effects volume", "もじの大きさ": "Text size",
     "小": "S", "ふつう": "M", "大": "L", "とても大": "XL", "ゆっくり": "Slow", "はやい": "Fast", "よみあげの はやさ": "Reading speed",
     "さわれるものに、きらきらを付ける": "Sparkle on things you can touch",
     "絵の中のものの名前を、いつも出す": "Always show the names of things in the picture (a hint)",
@@ -66,6 +66,7 @@
     Object.keys(en.items || {}).forEach((id) => { if (game.items[id]) Object.assign(game.items[id], en.items[id]); });
     Object.keys(en.zones || {}).forEach((id) => { if (game.zones[id]) Object.assign(game.zones[id], en.zones[id]); });
     Object.keys(en.endingKinds || {}).forEach((id) => { if (game.endingKinds[id]) Object.assign(game.endingKinds[id], en.endingKinds[id]); });
+    if (en.hints && game.hints) game.hints.forEach((hh, i) => { if (en.hints[i]) hh.text = en.hints[i]; });
     if (en.clock && game.clock) Object.assign(game.clock, en.clock);
     Object.keys(game.scenes).forEach((id) => {
       const sc = game.scenes[id], o = (en.scenes || {})[id];
