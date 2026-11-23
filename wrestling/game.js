@@ -37,18 +37,15 @@ function gamePointer(clientX, clientY) {
 const wasPressed = (...c) => c.some((k) => pressed[k]);
 
 // ---------- 音(効果音は合成、BGMは専用音源) ----------
+const THEME_TITLES = { clutch: 'グラビティ・ゼロ', t01: '旗を掲げろ', t02: '地獄の業火', t03: '黒鋼の騎士団', t04: '鋼鉄の巨神', t05: '竜の咆哮', t06: '赤いピックアップトラック', t07: '嵐を呼ぶ者', t08: '堕天使のレクイエム', t09: '復讐のレクイエム', t10: 'カーニバル・ド・ソル', t11: 'ドーナツ・ホリデー', t12: 'ポゴダンス', t13: 'グルーヴ・マシーン', t14: 'アイアン・ウィル', t15: 'サイバーパンク・ララバイ', t16: '光の海', t17: 'ファンキー・モンキー・ウォーク', t18: 'レゲトン・カリエンテ', t19: '永遠なる戦士', t20: 'ブラック・ローズ' };   // 入場テーマの曲名(曲の出どころは assets/music/themes/曲の出どころ.md)
 const Snd = {
-  ac: null, bgmOn: true, bgmTimer: null, bgmMode: '', tracks: null, playPending: false,
+  ac: null, bgmOn: true, bgmTimer: null, bgmMode: '', wantKey: '', wantSince: 0, nowTitle: '', nowT: 0, tracks: null, playPending: false,
   resume() {
     try {
       if (!this.ac) this.ac = new (window.AudioContext || window.webkitAudioContext)();
       if (this.ac.state === 'suspended') this.ac.resume();
     } catch (e) {}
-    if (!this.tracks) {
-      this.tracks = { menu: new Audio('assets/music/title.m4a'), match: new Audio('assets/music/match.m4a') };
-      for (const track of Object.values(this.tracks)) { track.loop = true; track.preload = 'none'; }
-      this.tracks.menu.volume = 0.28; this.tracks.match.volume = 0.23;
-    }
+    if (!this.tracks) this.tracks = {};   // BGMは必要になった曲だけ読み込む(入場テーマ20曲+終盤+タイトル+試合)
     if (!this.bgmTimer) this.bgmTimer = setInterval(() => this.musicTick(), 150);
     this.musicTick();
   },
@@ -57,18 +54,39 @@ const Snd = {
     if (this.bgmOn) this.resume(); else if (this.tracks) for (const track of Object.values(this.tracks)) track.pause();
     try { localStorage.setItem('super-ring-bgm', this.bgmOn ? 'on' : 'off'); } catch (e) {}
   },
+  // 曲の選び方: タイトル等=menu / 選手選択=カーソルの選手の入場テーマ(試聴) / 試合=1Pの入場テーマ、終盤(体力2割以下・必殺技)でclutchへ / 結果=勝者のテーマ
+  trackKey() {
+    if (state === 'match' && M) { if (!M.clutch && (M.p.some((f) => f.ratio < 0.22) || (M.act && M.act.mv && M.act.mv.id && M.act.mv.id[0] === 'S'))) M.clutch = true; return M.clutch ? 'clutch' : 't' + String(M.p[0].no).padStart(2, '0'); }
+    if (state === 'result' && M && M.over) return 't' + String(M.over.winner.no).padStart(2, '0');
+    if (state === 'select') return 't' + String(sel + 1).padStart(2, '0');
+    return 'menu';
+  },
+  trackFor(key) {
+    if (this.tracks[key]) return this.tracks[key];
+    const src = key === 'menu' ? 'assets/music/title.m4a' : key === 'clutch' ? 'assets/music/themes/clutch.m4a' : key === 'match' ? 'assets/music/match.m4a' : 'assets/music/themes/' + key + '.m4a';
+    const t = new Audio(src); t.loop = true; t.preload = 'none'; t.volume = 0; t.tgt = key === 'menu' ? 0.28 : key === 'clutch' ? 0.34 : 0.26;
+    t.addEventListener('error', () => { if (key !== 'match') t.failed = true; });
+    return (this.tracks[key] = t);
+  },
   musicTick() {
     if (!this.tracks || SIM) return;
-    const mode = state === 'match' ? 'match' : 'menu';
-    if (mode !== this.bgmMode) {
-      for (const track of Object.values(this.tracks)) track.pause();
-      this.bgmMode = mode; this.playPending = false; this.tracks[mode].currentTime = 0;
+    let key = this.trackKey();
+    if (this.tracks[key] && this.tracks[key].failed) key = key === 'menu' ? 'menu' : 'match';
+    if (key !== this.wantKey) { this.wantKey = key; this.wantSince = performance.now(); }
+    const settle = state === 'select' ? 450 : 0;   // 選手選択で連打しても曲を読み込みすぎない
+    if (key !== this.bgmMode && performance.now() - this.wantSince >= settle) {
+      this.bgmMode = key; this.playPending = false;
+      const nt = this.trackFor(key);
+      if (state !== 'match' || key === 'clutch' || !nt.started) nt.currentTime = 0;   // 試合中の戻りは続きから(clutchは頭から)
+      nt.started = true; if (THEME_TITLES[key] && this.bgmOn) { this.nowTitle = THEME_TITLES[key]; this.nowT = 4.5; }
     }
-    if (!this.bgmOn || document.hidden) { this.tracks[mode].pause(); return; }
-    const track = this.tracks[mode];
-    if (track.paused && !this.playPending) {
-      this.playPending = true;
-      Promise.resolve(track.play()).catch(() => {}).finally(() => { this.playPending = false; });
+    const on = this.bgmOn && !document.hidden;
+    for (const k in this.tracks) {
+      const t = this.tracks[k];
+      if (k === this.bgmMode && on) {
+        if (t.paused && !this.playPending) { this.playPending = true; Promise.resolve(t.play()).catch(() => {}).finally(() => { this.playPending = false; }); }
+        const lim = t.tgt * (this.duckT > 0 ? 0.3 : 1); t.volume = t.volume > lim ? Math.max(lim, t.volume - t.tgt * 0.2) : Math.min(lim, t.volume + t.tgt * 0.3);   // 0.5秒ほどで音量が上がる
+      } else if (!t.paused) { t.volume = Math.max(0, t.volume - t.tgt * 0.35); if (t.volume <= 0.001 || !on) t.pause(); }   // 前の曲は消えるように下げる
     }
   },
   tone(f0, f1, dur, type, vol) { const a = this.ac; if (!a || SIM) return; const o = a.createOscillator(), g = a.createGain(); o.type = type || 'square'; o.frequency.setValueAtTime(f0, a.currentTime); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), a.currentTime + dur); g.gain.setValueAtTime(vol || 0.12, a.currentTime); g.gain.exponentialRampToValueAtTime(0.0008, a.currentTime + dur); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + dur + 0.02); },
@@ -81,7 +99,35 @@ const Snd = {
   special() { this.tone(300, 1200, 0.5, 'sawtooth', 0.12); },
   menu() { this.tone(700, 800, 0.05, 'square', 0.06); },
   cheer() { this.noise(0.8, 0.12, 1800); },
+  roar() { this.noise(1.7, 0.2, 1100); this.noise(1.1, 0.12, 2600); },   // 客席のどよめき(KO・必殺技)
   boom() { this.noise(0.6, 0.7, 500); this.tone(70, 25, 0.5, 'sine', 0.45); this.tone(900, 120, 0.25, 'sawtooth', 0.1); },
+  brass(f, t0, dur, vol) {   // ファンファーレ用の金管風の音(のこぎり波2本+やや低い矩形波、フィルターで明るさを付ける)
+    const a = this.ac; if (!a || SIM) return; const t = a.currentTime + t0, g = a.createGain(), fl = a.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(900, t); fl.frequency.linearRampToValueAtTime(3200, t + 0.07); fl.frequency.linearRampToValueAtTime(1800, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.03); g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.04, dur - 0.12)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    for (const [type, mul, det] of [['sawtooth', 1, 4], ['sawtooth', 1, -5], ['square', 0.5, 0]]) { const o = a.createOscillator(); o.type = type; o.frequency.value = f * mul; o.detune.value = det; o.connect(fl); o.start(t); o.stop(t + dur + 0.05); }
+    fl.connect(g); g.connect(a.destination);
+  },
+  chord(fs, t0, dur, vol) { for (const f of fs) this.brass(f, t0, dur, vol / Math.sqrt(fs.length)); },
+  duck(sec) { this.duckT = Math.max(this.duckT || 0, sec); },   // ファンファーレの間、BGMを下げる
+  fanfare(kind) {
+    if (!this.ac || SIM || !this.bgmOn) return; const C4 = 261.63, E4 = 329.63, G4 = 392, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 784, A5 = 880, C6 = 1046.5, B4 = 493.88;
+    if (kind === 'champion') {   // 優勝: 長いファンファーレ+どよめき
+      this.duck(6.5); const v = 0.2;
+      [[G4, 0, .14], [C5, .16, .14], [E5, .32, .14], [G5, .48, .5], [E5, 1.06, .14], [G5, 1.22, .14], [C6, 1.38, .8]].forEach(([f, t, d]) => this.brass(f, t, d, v));
+      this.chord([C5, E5, G5, C6], 2.3, 1.3, v * 1.5); this.chord([D5, F5, A5], 3.7, 0.4, v); this.chord([C5, E5, G5, C6], 4.15, 1.9, v * 1.6);
+      setTimeout(() => { this.noise(0.5, 0.4, 7000); this.cheer(); this.roar(); }, 2300); setTimeout(() => { this.noise(1.2, 0.35, 8000); this.roar(); }, 4150);
+    } else if (kind === 'win') {   // 勝利: 短い3連+ロングトーン
+      this.duck(3.6); const v = 0.19;
+      [[G4, 0, .12], [C5, .14, .12], [E5, .28, .12]].forEach(([f, t, d]) => this.brass(f, t, d, v)); this.chord([G4, C5, E5, G5], .44, .55, v); this.chord([C5, E5, G5, C6], 1.05, 1.5, v * 1.4);
+      setTimeout(() => this.cheer(), 1000);
+    } else if (kind === 'lose') {   // 敗北: 下がる短調
+      this.duck(3.2); const v = 0.17;
+      [[E5, 0, .3], [D5, .34, .3], [C5, .68, .3]].forEach(([f, t, d]) => this.brass(f, t, d, v)); this.chord([440, C5, E5], 1.1, 1.6, v);
+      this.tone(220, 110, 1.4, 'sawtooth', 0.07);
+    } else if (kind === 'round') {   // ラウンド開始: 短い金管の合図
+      this.duck(1.5); const v = 0.17; this.brass(C5, 0, .1, v); this.brass(C5, .13, .1, v); this.chord([C5, G5], .28, .6, v);
+    }
+  },
   zap() { this.tone(2400, 300, 0.25, 'sawtooth', 0.1); this.noise(0.15, 0.2, 6000); },
 };
 try { Snd.bgmOn = localStorage.getItem('super-ring-bgm') !== 'off'; } catch (e) {}
@@ -246,7 +292,8 @@ function newMatch(a, b, auto) {
   M = { ref: { no: 21, x: 0, face: 1, scl: 0.93, vis: { ox: 0, lift: 0, rot: 0, lie: 0, sx: 1, sy: 1, flash: 0 }, lieN: 0, mode: 'ref' }, chairs: [{ side: -1, avail: true }, { side: 1, avail: true }], gongT: 1.2, p: [p1, p2], act: null, lock: null, pin: null, time: 0, limit: 240, over: null, msg: null, msgT: 0, log: [], counts: { moves: 0, downs: 0, pins: 0, specials: 0 }, started: 0, bellT: 1.4 };
   FX.length = 0; banner = null;
   const match = M;
-  const begin = () => { if (M !== match) return; state = 'match'; Snd.bell(); say('FIGHT!', 1.2); };
+  const testHook = /auto|sim|special|vs=|nointro/i.test(location.hash);   // 試験用の入口(#auto 等)では入場演出を飛ばす
+  const begin = () => { if (M !== match) return; state = 'match'; if (SIM || testHook) { Snd.bell(); say('FIGHT!', 1.2); } else { M.intro = { t: 0, dur: 2.9 }; M.bellT = 99; } };
   if (assets.length) { state = 'loading'; Promise.all(assets).then(begin); }
   else begin();
   if (p1.no === 1 && ['S011', 'S012', 'S013'].includes(SPECIAL_TRIAL_ID)) {
@@ -274,7 +321,7 @@ function applyHit(a, d, mv, big, mult, noFx) {
   if (d.life <= 0) endMatch(a, 'KO');
   return dm;
 }
-function endMatch(w, how) { if (M.over) return; M.gongT = 1.4; M.over = { winner: w, how, t: 0 }; if (!SIM && M.p[0].human) { recordBout(M.p[0].no, w === M.p[0]); if (M.tournament) finishTournamentBout(w.no); } say(how === 'PIN' ? '3カウント!' : how === 'KO' ? 'K.O.!' : '判定', 3); Snd.bell(); Snd.cheer(); }
+function endMatch(w, how) { if (M.over) return; M.gongT = 1.4; M.over = { winner: w, how, t: 0 }; if (!SIM && M.p[0].human) { recordBout(M.p[0].no, w === M.p[0]); if (M.tournament) finishTournamentBout(w.no); } say(how === 'PIN' ? '3カウント!' : how === 'KO' ? 'K.O.!' : '判定', 3); Snd.bell(); Snd.cheer(); Snd.roar(); }
 const TXT = { '打': ['POW!', 'BAM!', 'WHAP!', 'BASH!'], '投': ['DOGOON!', 'CRASH!', 'KABOOM!', 'SLAM!'], '関': ['GRIND!', 'CRUSH!'], '地': ['THUD!', 'STOMP!'], '飛': ['IMPACT!', 'BOOM!'], 'ロ': ['WHAM!', 'RAM!'], '奥': ['DOOM!!', 'K.O.!!'], '角': ['BANG!', 'SMASH!'] };
 function fxHit(a, d, mv, tier, dm) {
   const kind = mv.kind, x = (sx(a.x) + sx(d.x)) / 2, y = GROUND - 112, k = [0.9, 1.3, 1.9, 2.8][tier], floorX = sx(d.x);
@@ -335,7 +382,7 @@ function startAct(a, d, mv, kind, extra) {
   act.rush = sp && k === '打' && /連撃|連続|ラッシュ|ストーム|雨|分身|全奥義|処刑|海嘯/.test(mv.name + ' ' + (mv.desc || ''));
   act.intro = sp ? 1.3 : 0; act.dur += act.intro;
   a.mode = 'act'; d.mode = kind === 'strike' || kind === 'whiff' || act.targetWasDown ? d.mode : 'hold';
-  if (sp) { a.gauge -= mv.gauge; M.counts.specials++; Snd.special(); flashT = 0.5; banner = { s: mv.name, t: 0, dur: act.dur, special: true, who: a }; }
+  if (sp) { a.gauge -= mv.gauge; M.counts.specials++; Snd.special(); Snd.roar(); flashT = 0.5; banner = { s: mv.name, t: 0, dur: act.dur, special: true, who: a }; }
   else if (kind !== 'whiff' && mv.rank >= 3) banner = { s: mv.name, t: 0, dur: Math.min(1.6, act.dur), who: a };
   a.power = Math.max(0, a.power - (sp ? 0 : mv.cost));
   M.act = act; a.mvName = mv.name; return act;
@@ -625,6 +672,11 @@ function stepMatch(dt) {
   if (hitStop > 0) { hitStop -= dt; return; }
   for (const f of M.p) { f.invuln = Math.max(0, (f.invuln || 0) - dt); }
   if (M.over) { M.over.t += dt; if (M.act) stepAct(dt); if (state === 'match' && M.over.t > 2.6) { state = 'result'; } return; }
+  if (M.intro) {   // 入場演出(顔の登場→VS→ゴング)。Z/Enter/Spaceで飛ばせる
+    M.intro.t += dt; M.time = 0; if (M.intro.t > 0.9 && wasPressed('KeyZ', 'Enter', 'Space')) M.intro.t = M.intro.dur;
+    if (M.intro.t >= M.intro.dur) { M.intro = null; M.bellT = 0; M.time = 0; Snd.bell(); say('FIGHT!', 1.2); }
+    return;
+  }
   if (M.bellT > 0) { M.bellT -= dt; return; }
   for (const f of M.p) f.downElapsed = f.mode === 'down' ? (f.downElapsed || 0) + dt : 0;
   if (M.time > M.limit) { const [a, b] = M.p; endMatch(a.ratio >= b.ratio ? a : b, '判定'); return; }
@@ -950,6 +1002,13 @@ function cpuWinner(a, b) {
   const score = (no) => { const s = DATA.wrestlers[String(no)].stats; return s['力'] + s['速'] + s['技'] + s['耐'] + s['気']; };
   return rnd() < clamp(0.5 + (score(a) - score(b)) * 0.018, 0.2, 0.8) ? a : b;
 }
+function simBout(a, b) {   // CPU同士の試合を、実際の試合ロジックで高速に最後まで進めて勝者を決める(能力値の合計だけで決めない)
+  const sv = { state, M, shake, flashT, slowT, hitStop, zoom, crowdT, comboT, banner, title: document.title }, fx = FX.splice(0); let r = null;
+  try { r = fastSim(240, a, b); } catch (e) { r = null; }
+  state = sv.state; M = sv.M; shake = sv.shake; flashT = sv.flashT; slowT = sv.slowT; hitStop = sv.hitStop; zoom = sv.zoom; crowdT = sv.crowdT; comboT = sv.comboT; banner = sv.banner; document.title = sv.title; FX.length = 0; FX.push(...fx); SIM = false;
+  const w = r && r.winner ? Number(Object.keys(DATA.wrestlers).find((n) => DATA.wrestlers[n].name === r.winner)) : 0;
+  return { w: w || cpuWinner(a, b), how: r && r.how ? r.how : '判定' };
+}
 function prepareTournamentRound() {
   while (T && T.slots.length > 1) {
     T.winners = [];
@@ -958,7 +1017,7 @@ function prepareTournamentRound() {
       const a = T.slots[i], b = T.slots[i + 1];
       if (!a || !b) T.winners.push(a || b || null);
       else if (a === T.player || b === T.player) { T.nextPair = i / 2; T.opponent = a === T.player ? b : a; T.winners.push(null); }
-      else T.winners.push(cpuWinner(a, b));
+      else { const r = simBout(a, b); T.winners.push(r.w); (T.history || (T.history = [])).push({ r: T.round, a, b, w: r.w, how: r.how }); }
     }
     if (T.nextPair >= 0) { T.status = 'ready'; saveTournament(); return; }
     T.slots = T.winners; T.round++;
@@ -979,6 +1038,7 @@ function startTournamentMatch() {
 function finishTournamentBout(winner) {
   if (!T || T.status !== 'ready' || T.nextPair < 0) return;
   T.winners[T.nextPair] = winner;
+  (T.history || (T.history = [])).push({ r: T.round, a: T.player, b: T.opponent, w: winner, how: M?.over?.how || '', p: 1 });
   T.status = winner === T.player ? 'won' : 'lost';
   saveTournament();
 }
@@ -1040,6 +1100,11 @@ function drawBgmButton() {
   ctx.fillStyle = Snd.bgmOn ? '#ffe070' : '#c4cad4'; ctx.textAlign = 'center'; ctx.font = 'bold 16px sans-serif';
   ctx.fillText('♪ BGM ' + (Snd.bgmOn ? 'ON' : 'OFF'), b.x + b.w / 2, b.y + b.h / 2 + 6);
 }
+function drawNowPlaying() {   // 曲が変わった時、曲名を数秒だけ出す(♪)
+  if (!(Snd.nowT > 0) || !Snd.bgmOn || helpOn || !(state === 'select' || state === 'match' || state === 'result')) return;
+  const a = Math.min(1, Snd.nowT, (4.5 - Snd.nowT) * 3 + 0.2), tx = '♪ ' + Snd.nowTitle; ctx.save(); ctx.globalAlpha = a; ctx.font = 'bold 15px sans-serif'; const w = ctx.measureText(tx).width + 28, x = state === 'select' ? 30 : 12, y = state === 'select' ? 66 : H - 112;
+  ctx.fillStyle = 'rgba(12,18,48,.82)'; ctx.fillRect(x, y, w, 26); ctx.strokeStyle = '#ffe070'; ctx.lineWidth = 1.5; ctx.strokeRect(x, y, w, 26); ctx.fillStyle = '#ffe070'; ctx.textAlign = 'left'; ctx.fillText(tx, x + 14, y + 18); ctx.restore();
+}
 function drawTrophyCup(x, y, scale) {
   ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
   ctx.fillStyle = '#b66b1e'; ctx.beginPath(); ctx.moveTo(-18, -30); ctx.quadraticCurveTo(-36, -38, -35, -12); ctx.quadraticCurveTo(-33, 0, -18, -3); ctx.lineTo(-19, -10); ctx.quadraticCurveTo(-28, -8, -27, -20); ctx.quadraticCurveTo(-26, -26, -18, -23); ctx.fill();
@@ -1049,20 +1114,44 @@ function drawTrophyCup(x, y, scale) {
   ctx.fillRect(-4, -5, 8, 14); ctx.fillRect(-14, 9, 28, 5); ctx.fillStyle = '#8c4b1c'; ctx.fillRect(-19, 14, 38, 8); ctx.fillStyle = '#ffdf70'; ctx.fillRect(-15, 15, 30, 2); ctx.restore();
 }
 function wrestlerName(no) { return DATA.wrestlers[String(no)]?.name || 'BYE'; }
+function drawTournamentSide() {   // 大会の進み具合(左)と、あなたのここまでの勝ち上がり(右)
+  const hist = (T.history || []).filter((h) => h.p); ctx.save();
+  ctx.textAlign = 'left'; ctx.font = 'bold 13px sans-serif';
+  for (let r = 0; r < 5; r++) {
+    const y = 118 + r * 19, cur = r === T.round, done = r < T.round; ctx.fillStyle = cur ? '#ffe070' : done ? '#7fd89a' : '#59679a';
+    ctx.fillText((cur ? '▶ ' : done ? '✓ ' : '　 ') + ROUND_NAMES[r], 56, y);
+  }
+  ctx.textAlign = 'left'; ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#a8c5ff'; ctx.fillText('ここまでの勝ち上がり', 700, 118);
+  ctx.font = '13px sans-serif';
+  if (!hist.length) { ctx.fillStyle = '#59679a'; ctx.fillText('(これから)', 700, 138); }
+  hist.slice(-4).forEach((h, i) => { const won = h.w === T.player, o = h.a === T.player ? h.b : h.a; ctx.fillStyle = won ? '#7fd89a' : '#ffb0b0'; ctx.fillText(`${ROUND_NAMES[h.r] || '決勝'} ${won ? '○' : '●'} ${wrestlerName(o)}${h.how ? '(' + h.how + ')' : ''}`, 700, 138 + i * 19); });
+  if (T.round > 0) {   // 前のラウンドのCPU同士の結果(実際に試合を進めて決めた勝敗)
+    ctx.fillStyle = '#a8c5ff'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('前のラウンドの結果', 700, 236); ctx.font = '12px sans-serif';
+    (T.history || []).filter((h) => !h.p && h.r === T.round - 1).slice(0, 8).forEach((h, i) => { const o = h.a === h.w ? h.b : h.a; ctx.fillStyle = '#9fb0d8'; ctx.fillText(`${wrestlerName(h.w)} ○ ${wrestlerName(o)}`, 700, 255 + i * 18); });
+  }
+  ctx.restore();
+}
+function drawTournamentPath(x, y) {   // 優勝・敗退画面の勝ち上がり一覧(1行)
+  const hist = (T.history || []).filter((h) => h.p); if (!hist.length) return; ctx.save(); ctx.textAlign = 'center'; ctx.font = '14px sans-serif'; ctx.fillStyle = '#a8c5ff';
+  ctx.fillText(hist.map((h) => `${h.w === T.player ? '○' : '●'}${wrestlerName(h.a === T.player ? h.b : h.a)}`).join('　'), x, y); ctx.restore();
+}
 function drawTournament() {
   ctx.fillStyle = '#0b1029'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center';
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 30px sans-serif'; ctx.fillText('20人トーナメント', W / 2, 79);
   ctx.fillStyle = '#172651'; ctx.fillRect(20, 10, 160, 36); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(20, 10, 160, 36); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('← タイトルへ', 100, 35);
   ctx.fillStyle = '#172651'; ctx.fillRect(190, 10, 160, 36); ctx.strokeStyle = '#ffe070'; ctx.strokeRect(190, 10, 160, 36); ctx.fillStyle = '#fff'; ctx.fillText('新しい大会', 270, 35);
   if (T.status !== 'ready') {
-    if (T.status === 'champion') { drawTrophyCup(W / 2, 286, 3); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 54px sans-serif'; ctx.fillText('優勝！', W / 2, 137); }
+    if (T.status === 'champion') { drawCelebration(280); drawTrophyCup(W / 2, 286, 3); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 54px sans-serif'; ctx.fillText('優勝！', W / 2, 137); }
     else { ctx.fillStyle = '#ffb0b0'; ctx.font = 'bold 50px sans-serif'; ctx.fillText('トーナメント敗退', W / 2, 140); }
     ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.fillText('優勝者: ' + wrestlerName(T.champion), W / 2, 367);
+    { const lost = (T.history || []).filter((h) => h.p && h.w !== T.player).pop(); if (T.status !== 'champion' && lost) { const fi = IMG.face[lost.w]; if (fi) { ctx.save(); ctx.strokeStyle = '#ffb0b0'; ctx.lineWidth = 4; ctx.strokeRect(W / 2 - 68, 196, 136, 136); ctx.drawImage(fi, W / 2 - 65, 199, 130, 130); ctx.restore(); } ctx.fillStyle = '#ffb0b0'; ctx.font = '16px sans-serif'; ctx.fillText(`${ROUND_NAMES[lost.r] || '決勝'}で ${wrestlerName(lost.w)} に敗れた`, W / 2, 432); } }
+    drawTournamentPath(W / 2, 452, 0);
     ctx.font = '18px sans-serif'; ctx.fillText(`${wrestlerName(T.player)}　${fighterRecord(T.player).wins}勝 ${fighterRecord(T.player).losses}敗　勝率 ${winRate(T.player)}　優勝 ${fighterRecord(T.player).trophies}回`, W / 2, 407);
   } else {
     ctx.fillStyle = '#a8c5ff'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(`第${T.round + 1}ラウンド　${ROUND_NAMES[T.round] || '決勝'}`, W / 2, 103);
     const a = IMG.face[T.player], b = IMG.face[T.opponent]; if (a) ctx.drawImage(a, 355, 109, 66, 66); if (b) ctx.drawImage(b, 539, 109, 66, 66);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 27px sans-serif'; ctx.fillText('VS', W / 2, 153); ctx.font = 'bold 16px sans-serif'; ctx.fillText(wrestlerName(T.player), 394, 196); ctx.fillText(wrestlerName(T.opponent), 567, 196);
+    drawTournamentSide();
     ctx.fillStyle = '#9bf'; ctx.font = '14px sans-serif'; ctx.fillText(`あなたの成績: ${fighterRecord(T.player).wins}勝 ${fighterRecord(T.player).losses}敗　勝率 ${winRate(T.player)}`, W / 2, 220);
     const matches = T.slots.length / 2, rows = Math.min(8, matches);
     for (let i = 0; i < matches; i++) {
@@ -1070,7 +1159,7 @@ function drawTournament() {
       const left = T.slots[i * 2], right = T.slots[i * 2 + 1];
       ctx.fillStyle = i === T.nextPair ? '#54471c' : '#1a2448'; ctx.fillRect(x, y, 404, 24);
       ctx.strokeStyle = i === T.nextPair ? '#ffe070' : '#394b79'; ctx.strokeRect(x, y, 404, 24);
-      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(wrestlerName(left) + (right ? '  vs  ' + wrestlerName(right) : '  不戦勝'), x + 7, y + 17);
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(([9, 19, 20].includes(left) || [9, 19, 20].includes(right) ? '★ ' : '') + wrestlerName(left) + (right ? '  vs  ' + wrestlerName(right) : '  不戦勝'), x + 7, y + 17);
       if (T.winners[i]) { ctx.textAlign = 'right'; ctx.fillStyle = '#9bf'; ctx.fillText('→ ' + wrestlerName(T.winners[i]), x + 396, y + 17); }
     }
   }
@@ -1133,11 +1222,36 @@ function drawSelect() {
   if (selectMode === 'watch') { ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText(watchFirst === null ? '先攻を決定すると、次に対戦相手を選べます' : '先攻: ' + DATA.wrestlers[String(watchFirst)].name + '　　別のレスラーを決定すると観戦開始', W / 2, 484); }
   else { const r = fighterRecord(sel + 1); ctx.fillStyle = '#ffe070'; ctx.font = 'bold 16px sans-serif'; ctx.fillText(`${r.wins}勝 ${r.losses}敗　勝率 ${winRate(sel + 1)}　優勝 ${r.trophies}回${selectMode === 'tournament' ? '　　決定すると大会開始' : ''}`, W / 2, 484); }
 }
+function drawCelebration(cy) {   // 回る金色の光と紙吹雪(結果画面・優勝画面)
+  ctx.save(); ctx.translate(W / 2, cy); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 16; i++) { const a0 = titleT * 0.5 + i / 16 * 6.283, a1 = a0 + 0.13; ctx.fillStyle = i % 2 ? 'rgba(255,220,120,.13)' : 'rgba(255,150,90,.09)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a0) * 800, Math.sin(a0) * 800); ctx.lineTo(Math.cos(a1) * 800, Math.sin(a1) * 800); ctx.fill(); } ctx.restore();
+  ctx.save(); for (let i = 0; i < 46; i++) { const sp = 70 + (i * 37) % 90, x = (i * 97.3 + Math.sin(titleT * 1.3 + i) * 26) % W, y = ((titleT * sp + i * 53) % (H + 40)) - 20; ctx.fillStyle = ['#ffe070', '#ff7060', '#6aa0ff', '#8cf0a0', '#ff90f0'][i % 5]; ctx.translate(x, y); ctx.rotate(titleT * 3 + i); ctx.fillRect(-4, -2, 8, 4); ctx.setTransform(1, 0, 0, 1, 0, 0); } ctx.restore();
+}
 function drawResult() {
   const o = M.over; ctx.fillStyle = 'rgba(0,0,20,.7)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; const w = o.winner;
+  drawCelebration(330);
   ctx.fillStyle = '#ffe070'; ctx.font = 'bold 60px sans-serif'; ctx.fillText(w.name + ' の勝ち!', W / 2, 200); ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.fillText(({ PIN: '3カウント', KO: 'K.O.', '判定': '時間切れ判定' })[o.how] + '  ' + Math.floor(M.time / 60) + '分' + Math.floor(M.time % 60) + '秒', W / 2, 250);
   const im = IMG.body[w.no]; if (im) { const hh = 190, sc = hh / im.height; ctx.drawImage(im, W / 2 - im.width * sc / 2, 280, im.width * sc, hh); }
-  if (PROP.belt) { const b = PROP.belt; ctx.drawImage(b, W / 2 - b.width * 1.3, 268, b.width * 2.6, b.height * 2.6); }  ctx.fillStyle = '#9bf'; ctx.font = '18px sans-serif'; ctx.fillText(M.tournament ? 'Z / タップで トーナメント表へ' : 'Z / タップで レスラー選択へ', W / 2, 520);
+  if (PROP.belt) { const b = PROP.belt; ctx.drawImage(b, W / 2 - b.width * 0.95, 366, b.width * 1.9, b.height * 1.9); }
+  { const c = M.counts || {}, tm = Math.floor(M.time || 0), mm = String(Math.floor(tm / 60)).padStart(2, '0') + ':' + String(tm % 60).padStart(2, '0'); ctx.save(); ctx.textAlign = 'center'; ctx.font = 'bold 17px sans-serif'; ctx.fillStyle = '#ffe9a0'; ctx.fillText(`試合時間 ${mm}　技 ${c.moves || 0}回　ダウン ${c.downs || 0}回　必殺技 ${c.specials || 0}回　　残り体力 ${Math.round(w.ratio * 100)}%`, W / 2, 492); ctx.restore(); }  ctx.fillStyle = '#9bf'; ctx.font = '18px sans-serif'; ctx.fillText(M.tournament ? 'Z / タップで トーナメント表へ' : 'Z / タップで レスラー選択へ', W / 2, 520);
+}
+function drawIntro() {   // 試合前の入場演出: 左右から顔が登場 → VS → ゴング
+  const I = M.intro, u = I.t / I.dur, [a, b] = M.p, slide = (1 - Math.min(1, I.t * 3)) * 640, out = u > 0.9 ? (u - 0.9) / 0.1 : 0;
+  ctx.save(); ctx.globalAlpha = 1 - out; ctx.fillStyle = 'rgba(6,6,24,.84)'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, 290); ctx.globalCompositeOperation = 'lighter'; const rot = I.t * 0.9; for (let i = 0; i < 20; i++) { const a0 = rot + i / 20 * 6.283, a1 = a0 + 0.1; ctx.fillStyle = i % 2 ? 'rgba(255,110,80,.10)' : 'rgba(110,150,255,.10)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a0) * 900, Math.sin(a0) * 900); ctx.lineTo(Math.cos(a1) * 900, Math.sin(a1) * 900); ctx.fill(); }
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = 1 - out;
+  for (const [f, left] of [[a, true], [b, false]]) {
+    const fi = IMG.face[f.no], dx = left ? -slide : slide, cx = left ? 230 : W - 230, col = left ? '#ff7060' : '#6aa0ff';
+    ctx.fillStyle = left ? 'rgba(120,20,20,.75)' : 'rgba(20,40,120,.75)'; ctx.beginPath(); ctx.moveTo(cx - 190 + dx, 120); ctx.lineTo(cx + 190 + dx, 120); ctx.lineTo(cx + 160 + dx, 470); ctx.lineTo(cx - 160 + dx, 470); ctx.closePath(); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.stroke();
+    if (fi) ctx.drawImage(fi, cx - 120 + dx, 140, 240, 240);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 30px sans-serif'; ctx.fillText(f.name, cx + dx, 408); ctx.fillStyle = '#ffe070'; ctx.font = '17px sans-serif'; ctx.fillText(f.type, cx + dx, 434);
+    ctx.fillStyle = '#cdd'; ctx.font = '15px sans-serif'; ctx.fillText(`力${f.st['力']} 速${f.st['速']} 技${f.st['技']} 耐${f.st['耐']} 気${f.st['気']}`, cx + dx, 458);
+    ctx.font = 'bold 18px sans-serif'; ctx.fillStyle = col; ctx.fillText(left ? '1P' : '2P', cx + dx, 108);
+  }
+  const vs = Math.min(1, Math.max(0, (I.t - 0.45) * 4)), sc = 1 + (1 - vs) * 2.2 + Math.max(0, 0.18 - Math.abs(I.t - 0.62)) * 2;
+  ctx.globalAlpha = (1 - out) * vs; ctx.translate(W / 2, 270); ctx.scale(sc, sc); ctx.rotate(-0.08); ctx.textAlign = 'center'; ctx.font = 'italic bold 118px sans-serif'; ctx.lineWidth = 12; ctx.strokeStyle = '#3a0a50'; ctx.fillStyle = '#ffe070'; ctx.strokeText('VS', 0, 40); ctx.fillText('VS', 0, 40);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = (1 - out) * Math.min(1, I.t); ctx.textAlign = 'center'; ctx.fillStyle = '#9bf'; ctx.font = '16px sans-serif'; const t = THEME_TITLES['t' + String(a.no).padStart(2, '0')]; ctx.fillText((t && Snd.bgmOn ? '♪ ' + t + '　　' : '') + (I.t > 0.9 ? 'Z / タップ: スキップ' : ''), W / 2, 505); ctx.restore();
 }
 function drawCutIn(A) {
   const u = A.t / A.intro, a = A.a, ap = Math.sin(Math.min(1, u * 1.1) * Math.PI) ** 0.5;
@@ -1209,7 +1323,7 @@ function drawMatch() {
   if (flashT > 0) { ctx.fillStyle = `rgba(${flashRGB},${Math.min(1, flashT)})`; ctx.fillRect(0, 0, W, H); }
   if (M.act && M.act.intro > 0 && M.act.t < M.act.intro) drawCutIn(M.act);
   if (M.praise) { const p = M.praise, u = p.t / p.dur, sc = 1 + Math.max(0, 0.25 - p.t) * 2; ctx.save(); ctx.translate(W / 2, 86); ctx.rotate(-0.06); ctx.scale(sc, sc); ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.font = 'bold ' + (p.tier >= 3 ? 62 : 54) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = p.tier >= 3 ? '#601070' : '#8a1010'; ctx.fillStyle = p.tier >= 3 ? '#ffb0f8' : '#ffe040'; ctx.strokeText(p.s, 0, 0); ctx.fillText(p.s, 0, 0); ctx.restore(); }
-  drawHud();
+  drawHud(); if (M.intro) drawIntro();
 }
 
 // ---------- 主ループ ----------
@@ -1219,8 +1333,16 @@ function frame(ts) {
   while (acc >= 1 / 60) { update(1 / 60); acc -= 1 / 60; }
   render(); for (const k in pressed) delete pressed[k]; requestAnimationFrame(frame);
 }
+let _fanState = '', _fanKey = '';
+function stateSound() {   // 画面が切り替わった時のファンファーレ(結果・優勝・敗退・ラウンド開始)
+  const key = state === 'result' && M ? 'result:' + (M.over ? M.over.winner.no : '') + ':' + (M.tournament ? 'T' : '') : state === 'tournament' && T ? 'tour:' + T.status + ':' + T.round : state;
+  if (key === _fanKey) return; _fanKey = key; if (SIM) return;
+  if (state === 'result' && M && M.over) Snd.fanfare(M.p[0].human ? (M.over.winner === M.p[0] ? 'win' : 'lose') : 'win');
+  else if (state === 'tournament' && T) { if (T.status === 'champion') Snd.fanfare('champion'); else if (T.status === 'eliminated') Snd.fanfare('lose'); else if (T.status === 'ready' && _fanState === 'result') Snd.fanfare('round'); }
+  _fanState = state;
+}
 function update(dt) {
-  titleT += dt;
+  titleT += dt; if (Snd.nowT > 0) Snd.nowT -= dt; if (Snd.duckT > 0) Snd.duckT -= dt; stateSound();
   if (wasPressed('KeyM')) Snd.toggleBgm();
   if (helpOn) {
     if (wasPressed('ArrowRight')) { helpNo = helpNo % 20 + 1; Snd.menu(); } if (wasPressed('ArrowLeft')) { helpNo = (helpNo + 18) % 20 + 1; Snd.menu(); }
@@ -1275,7 +1397,7 @@ loadAll().then(() => {
 
 function render() {
   const wr = document.getElementById('wrap'); if (wr) wr.classList.toggle('inmatch', state === 'match' && !helpOn);
-  render0(); if (helpOn) drawHelp(); else { if (state === 'select' || state === 'match') drawHelpBtn(); drawBgmButton(); }
+  render0(); if (helpOn) drawHelp(); else if (!(state === 'match' && M && M.intro)) { if (state === 'select' || state === 'match') drawHelpBtn(); drawBgmButton(); drawNowPlaying(); }
   if (state === 'match' && M && !M.p[0].human) {
     ctx.fillStyle = 'rgba(12,18,48,.86)'; ctx.fillRect(410, 88, 140, 28);
     ctx.strokeStyle = '#ffe070'; ctx.strokeRect(410, 88, 140, 28);
